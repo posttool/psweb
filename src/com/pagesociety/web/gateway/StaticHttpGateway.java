@@ -1,0 +1,50 @@
+package com.pagesociety.web.gateway;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class StaticHttpGateway
+{
+	public StaticHttpGateway()
+	{
+	}
+
+	private static final int SERVE_BLOCK_SIZE = 1024;
+	private static final String REQUEST_DATE_HEADER_IF_MOD_SINCE = "If-Modified-Since";
+	private static final String RESPONSE_DATE_HEADER_LAST_MOD = "Last-Modified";
+
+	public void serveFile(File file, String mimeType, HttpServletRequest request,
+			HttpServletResponse response) throws IOException, ServletException
+	{
+		if (!file.exists())
+			throw new IOException("NO SUCH RESOURCE " + file.getName());
+		if (file.isDirectory())
+			throw new IOException("DIRECTORY LISTING DISABLED");
+		long lastMod = file.lastModified() / 1000 * 1000;
+		long ifModSinc = request.getDateHeader(REQUEST_DATE_HEADER_IF_MOD_SINCE);
+		if (lastMod <= ifModSinc)
+		{
+			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+			return;
+		}
+		response.setContentType(mimeType);
+		response.setContentLength((int) file.length());
+		response.setDateHeader(RESPONSE_DATE_HEADER_LAST_MOD, lastMod);
+		FileInputStream in = new FileInputStream(file);
+		OutputStream out = response.getOutputStream();
+		byte[] buf = new byte[SERVE_BLOCK_SIZE];
+		int count = 0;
+		while ((count = in.read(buf)) >= 0)
+		{
+			out.write(buf, 0, count);
+		}
+		in.close();
+		out.close();
+	}
+}

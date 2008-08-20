@@ -1,0 +1,15 @@
+<stores>
+	<store name="LimeLifeStore" class="com.pagesociety.bdb.BDBStore">
+		<store-root-directory>
+			C:\Users\david\Desktop\LL\LimeLifeStore
+		</store-root-directory>
+	</store>
+	<store name="mysql" class="com.pagesociety.sql.SqlStore">
+		<jdbc-class>com.mysql.jdbc.Driver</jdbc-class>
+		<jdbc-connection-url>
+			jdbc:mysql://localhost/
+		</jdbc-connection-url>
+		<sql-user>root</sql-user>
+		<sql-password>hello</sql-password>
+	</store>
+</stores>

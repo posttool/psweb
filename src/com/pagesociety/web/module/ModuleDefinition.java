@@ -1,0 +1,88 @@
+package com.pagesociety.web.module;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.pagesociety.web.InitializationException;
+
+public class ModuleDefinition
+{
+	private Class<? extends Module> module;
+	private Map<String, ModuleMethod> method_map;
+	private List<ModuleMethod> methods;
+	private Map<String, Object> config_params;
+
+	public ModuleDefinition(Map<String, Object> config)
+	{
+		this.method_map = new HashMap<String, ModuleMethod>();
+		this.methods = new ArrayList<ModuleMethod>();
+		this.config_params = config;
+	}
+
+	public void reflect(Class<? extends Module> module) throws InitializationException
+	{
+		this.module = module;
+		Method declared_methods[] = module.getDeclaredMethods();
+		for (int i = 0; i < declared_methods.length; i++)
+		{
+			Export export = declared_methods[i].getAnnotation(Export.class);
+			if (export != null)
+			{
+				ModuleMethod module_method = new ModuleMethod();
+				module_method.reflect(declared_methods[i]);
+				method_map.put(module_method.getName(), module_method);
+				methods.add(module_method);
+			}
+		}
+	}
+
+	public String toString()
+	{
+		String line_break = "\n";
+		StringBuffer b = new StringBuffer();
+		b.append(module.getCanonicalName());
+		b.append(line_break);
+		for (int i = 1; i < methods.size(); i++)
+		{
+			b.append("\t");
+			b.append(methods.get(i).toString());
+			b.append(line_break);
+		}
+		return b.toString();
+	}
+
+	public Module newInstance()
+	{
+		try
+		{
+			return module.newInstance();
+		}
+		catch (InstantiationException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IllegalAccessException e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public ModuleMethod getMethod(String method_name)
+	{
+		return method_map.get(method_name);
+	}
+
+	public List<ModuleMethod> getMethods()
+	{
+		return methods;
+	}
+
+	public Map<String, Object> getConfigParams()
+	{
+		return config_params;
+	}
+}

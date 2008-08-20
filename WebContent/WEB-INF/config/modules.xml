@@ -1,0 +1,10 @@
+<modules>
+	<module>
+		<module-class>com.pagesociety.web.test.TestModule</module-class>
+		<module-params>
+			<this-is-a-param>the value</this-is-a-param>
+			<color>0xff00ff</color>
+		</module-params>
+	</module>
+
+</modules>

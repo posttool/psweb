@@ -1,0 +1,31 @@
+<project name="PSWeb build" default="clean" basedir=".">
+
+	<property name="jar.name" value="ps_web.jar" />
+	
+	<property name="web.lib" value="C:\apache-tomcat-6.0.16\lib" />	
+
+	<path id="required_libs">
+		<fileset dir="WebContent/WEB-INF/lib/" includes="*.jar"/>
+		<fileset dir="${web.lib}" includes="*.jar" />
+		<fileset file="../PSPersistence/ps_persistence.jar" />
+	</path>
+	
+	<target name="build_ps_web_jar">
+		<echo message="javac" />
+		<mkdir dir="__build_dir" />
+ 		<javac srcdir="src" destdir="__build_dir" 
+			nowarn="on" debug="on" classpathref="required_libs" target="1.5"/>
+		
+		<echo message="jar ${jar.name}" />
+		<jar destfile="${jar.name}">
+			<fileset dir="__build_dir" />
+		</jar>
+		<delete dir="__build_dir" />
+	</target>
+	
+	<target name="clean">
+		<delete dir="dbEnv" includes="**/*" />
+		<delete file="${jar.name}" />
+	</target>
+	
+</project>

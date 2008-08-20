@@ -1,0 +1,33 @@
+<application name="PSWeb Test" version="0.1" class="com.pagesociety.web.test.TestApplication" >
+
+	<web-root-url>http://localhost:8080/PSWeb</web-root-url>
+	<web-root-directory>
+		C:\eclipse_workspace\PSWeb\WebContent
+	</web-root-directory>
+
+	<static-web-root-url>
+		http://localhost:8080/PSWeb
+	</static-web-root-url>
+	<static-web-root-directory>
+		C:\eclipse_workspace\PSWeb\WebContent
+	</static-web-root-directory>
+
+	<resource-root-url>
+		http://localhost:8080/PSWeb
+	</resource-root-url>
+	<resource-root-directory>
+		C:\Users\david\Desktop\LL\Resources
+	</resource-root-directory>
+
+	<image-magick-path>
+		C:/Program Files/ImageMagick-6.3.5-Q16/convert
+	</image-magick-path>
+
+	<email-service-smtp-server>
+		mail.posttool.com
+	</email-service-smtp-server>
+	<email-service-from-address>
+		noreply@posttool.com
+	</email-service-from-address>
+
+</application>

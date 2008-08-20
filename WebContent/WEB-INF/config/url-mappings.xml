@@ -1,0 +1,26 @@
+<url-mappings>
+
+	<url-mapping name="index">
+		<url>/</url>
+		<template-path>/debug/index.fhtml</template-path>
+	</url-mapping>
+
+	<url-mapping name="testing">
+		<url>/test-(.+)/(\d+).html</url>
+		<template-path>
+			/debug/index.fhtml?age=$1&amp;id=$2
+		</template-path>
+	</url-mapping>
+
+	<url-mapping type="error" name="error">
+		<url>/debug/error.html</url>
+	</url-mapping>
+
+	<url-mapping type="maintenance" name="maintenance">
+		<url>/debug/maintenance.html</url>
+	</url-mapping>
+
+</url-mappings>
+
+
+

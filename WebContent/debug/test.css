@@ -1,0 +1,7 @@
+body
+{
+	background-image: url(${resourceUrl}/images/thingy.png);
+}
+<#if data?exists>
+${data}
+</#if>

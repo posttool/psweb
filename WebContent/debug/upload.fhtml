@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+        <title>Form examples</title>
+		<script type="text/javascript" src="${static_web_url}/js/yui-min.js"> </script>
+        <script type="text/javascript" src="${static_web_url}/js/ps-lib.js"> </script>
+		<script type="text/javascript" >
+			var MODULE_URL = "${web_url}";
+			
+			function check_progress()
+			{
+				setTimeout(do_get_upload_info,500);
+			}
+			
+			function do_get_upload_info()
+			{
+				com_pagesociety_DoModule("TestModule/getUploadInfo",[],handle_get_upload_info,null,true);
+			}
+			
+			function handle_get_upload_info(upload)
+			{
+				if (upload != null && upload.length == 1)
+				{
+					var p = upload[0].progress;
+					$("progress_info").innerHTML = p+"% complete";
+					if (upload[0].isComplete)
+						return;
+				}
+				check_progress();
+			} 
+			
+			com_pagesociety_DoModule(
+			
+				"TestModule/formTest3", ['xyz&copy;','abc&gt;', 123, ['hi','bye']], 
+				
+				function(s) 
+				{ 
+					$("form3").innerHTML += s; 
+				}
+				
+			);
+			
+			com_pagesociety_DoModule(
+			
+				"TestModule/test2", [1], 
+				
+				function(s) 
+				{ 
+					$("form3").innerHTML += s; 
+				}
+				
+			);
+		</script>
+    </head>
+	<body>
+		<h1>JSON test</h1>
+		<span id="form3"></span>
+
+		
+		<h1>Multipart Test </h1>
+		info: <span id="progress_info"></span> 
+		<form name="test2" action="${web_url}/TestModule/formTest2/.json?noencode=true"  
+			enctype="multipart/form-data" method="post" target="hidden_frame"
+			onsubmit="check_progress()">
+				
+			First Name <input name="first_name" type="text" /><br/>
+			First Name <input name="first_name" type="text" /><br/>
+			First Name <input name="first_name" type="text" /><br/>
+			First Name <input name="first_name" type="text" /><br/>
+			Last Name <input name="last_name" type="text" /><br/>
+			Picture <input type="file" name="picture" /><br/>
+			About Me <textarea name="arg2" id="about_me" ></textarea><br/>
+			Thingy <select name="thingy" ><option>o1</option><option>elephant</option></select><br/>
+			Radio <input type="radio" name="radio-test" value="rad1"/> <input type="radio" name="radio-test" value="rad2" /> <br/>
+			Checkbox <input type="checkbox" name="checkbox-test"/> <input type="checkbox" name="checkbox-test" /> <input type="checkbox" name="checkbox-test"/> <input type="checkbox" name="checkbox-test" /><br/>
+			<input type="hidden" name="ints" value="23" />
+			<input type="hidden" name="ints" value="32" />
+			<input type="hidden" name="ints" value="64" />
+			<input type="hidden" name="ints" value="46" />
+			<input type="hidden" name="ints" value="92" />
+			<input type="hidden" name="ints" value="29" />
+			<input type="submit" />
+			
+		</form>
+		
+		<iframe name="hidden_frame" id="hidden_frame" width="400" height="100" frameborder="1" ></iframe>
+	</body>
+</html>

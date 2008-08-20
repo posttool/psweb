@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+        <title>Uploader</title>
+        <script type="text/javascript" src="${static_web_url}/js/prototype-1.6.0.2.js"> </script>
+        <script type="text/javascript" src="${web_url}/debug/upload.js"> </script>
+    </head>
+    <body onload="upload_init();">
+        <div id="status">
+        	status
+        </div>
+        <div id="upload_form_and_buttons" style="display: none;">
+            <form id="upload_form" name="uploader" enctype="multipart/form-data" 
+				method="post" target="hidden_frame">
+                <input id="aaa" name="aaa" type="text" /><br/>
+                <input id="bbb" name="bbb" type="file" /><br/>
+                <input id="ddd" name="ddd" type="file" /><br/>
+            </form>
+            <a id="submit" href="#" onclick="submit_upload();" style="background-color: #aaa; width: 70px;">submit</a>
+            <a id="cancel" href="#" onclick="cancel_upload();" style="background-color: #aaa; width: 100px;">cancel</a>
+            <iframe name="hidden_frame" id="hidden_frame" width="50" height="50" frameborder="1">
+            </iframe>
+        </div>
+        <div id="previews">
+            previews
+        </div>
+    </body>
+</html>

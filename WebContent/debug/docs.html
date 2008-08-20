@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<title>Docs</title>
+
+</head>
+<body>
+<div style="padding:10px; background-color:white;">
+	
+<h1>Modules</h1>
+<#list application.modules as module_def>
+<div id="module_title_${module_def.name}" 
+	class=""
+	onclick="toggle('module_details_${module_def.name}')">
+<h2>${module_def.name}</h2>
+</div>
+<div id="module_details_${module_def.name}" >
+<#list module_def.methods as module_method>
+${module_method.returnType.simpleName} ${module_method.name}(<#list module_method.parameterTypes as ptype>${ptype.simpleName}<#if ptype_has_next>, </#if></#list>)
+<#if module_method.exceptionTypes?size != 0> throws <#list module_method.exceptionTypes as ex>${ex.simpleName}<#if ex_has_next>, </#if></#list></#if>
+<br/>
+</#list>
+</div>
+</#list>
+
+<hr/>
+<h1>Entities</h1>
+<#list entities as entity_def>
+<h2>${entity_def.name}</h2>
+<#list entity_def.fields as entity_field>
+${entity_field.typeAsString(entity_field.baseType)} <b>${entity_field.name}</b><br/>
+</#list>
+</#list>
+
+</div>
+</body>
+</html>

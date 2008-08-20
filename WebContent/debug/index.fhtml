@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>PSWeb</title>
+<style>
+body,td { font-family: arial }
+</style>
+<script type="text/javascript" src="${static_web_url}/js/yui-min.js"></script>
+<script type="text/javascript" src="${static_web_url}/js/ps-lib.js"></script>
+<script type="text/javascript">
+var MODULE_URL = "${web_url}";
+function do_test_1(b)
+{
+var mm;
+if (b)
+	mm = "TestModule/test1";
+else
+	mm = "TestModule/undoTest1";
+com_pagesociety_DoModule(mm, [], do_test_1_ok);
+}
+function do_test_1_ok(a)
+{
+	alert("OK "+a);
+	location.reload();
+}
+</script>
+</head>
+<body>
+
+<#if application.execute("TestModule/isTest1Complete", user_context, [])>
+<h1>Hi! Test 1 is for sure complete.</h1>
+<a href="javascript:do_test_1(false)">Click here to undo it.</a>
+<#else>
+<h1>Test 1 is NOT complete</h1>
+<a href="javascript:do_test_1(true)">Click here to do it.</a>
+</#if>
+
+<br/><br/>
+
+<table border="1">
+<tr><td>request_url</td><td>${request_url}</td></tr>
+<tr><td>web_url</td><td>${web_url}</td></tr>
+<tr><td>static_web_url</td><td>${static_web_url}</td></tr>
+<tr><td>resource_url</td><td>${resource_url}</td></tr>
+<tr><td>context</td><td>${user_context}</td></tr>
+<tr><td>age</td><td><#if params.age?exists>${params.age}</#if></td></tr>
+<tr><td>id</td><td><#if params.id?exists>${params.id?number}</#if></td></tr>
+</table>
+
+</body>
+</html>
