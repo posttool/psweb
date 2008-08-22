@@ -105,15 +105,7 @@ public class AmfIn
 
 	
 
-	public String getModuleName()
-	{
-		return module_method[0];
-	}
-
-	public String getMethodName()
-	{
-		return module_method[1];
-	}
+	
 
 	public List<Object> getArguments()
 	{

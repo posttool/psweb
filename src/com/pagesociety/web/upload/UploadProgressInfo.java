@@ -1,8 +1,8 @@
 package com.pagesociety.web.upload;
 
-public class UploadItemProgress
+public class UploadProgressInfo
 {
-	public static UploadItemProgress UPLOAD_PROGRESS_INIT = new UploadItemProgress();
+	public static UploadProgressInfo UPLOAD_PROGRESS_INIT = new UploadProgressInfo();
 	//
 	protected String fieldName;
 	protected String fileName;

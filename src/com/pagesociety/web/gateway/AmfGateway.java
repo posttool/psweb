@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.pagesociety.web.ErrorMessage;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.WebApplicationException;
 import com.pagesociety.web.amf.AmfConstants;
 import com.pagesociety.web.amf.AmfIn;
 import com.pagesociety.web.amf.AmfOut;
@@ -32,9 +33,8 @@ public class AmfGateway
 		try
 		{
 			amf_in = new AmfIn(request);
-			ModuleRequest module_request = new ModuleRequest();
-			module_request.setModuleName(amf_in.getModuleName());
-			module_request.setMethodName(amf_in.getMethodName());
+			String request_path = request.getRequestURI().substring(request.getContextPath().length());
+			ModuleRequest module_request = GatewayUtil.parseModuleRequest(request, request_path);
 			module_request.setArguments(amf_in.getArguments().toArray());
 			module_request.setUserContext(user_context);
 			Object return_value;
@@ -60,6 +60,11 @@ public class AmfGateway
 			response.setContentType(AmfConstants.AMF_MIME_TYPE);
 			response.setContentLength(responseLength);
 			response.getOutputStream().write(amf_out.buffer.array(), amf_out.buffer.position(), responseLength);
+		}
+		catch (WebApplicationException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		finally
 		{

@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.WebApplicationException;
 
 public class HttpRequestRouter extends HttpServlet
 {
@@ -34,6 +35,7 @@ public class HttpRequestRouter extends HttpServlet
 	private AmfGateway amf_gateway;
 	private JsonGateway json_gateway;
 	private FreemarkerGateway freemarker_gateway;
+	private FormGateway form_gateway;
 
 	public void init(ServletConfig cfg) throws ServletException
 	{
@@ -49,6 +51,7 @@ public class HttpRequestRouter extends HttpServlet
 		amf_gateway = new AmfGateway(_web_application);
 		json_gateway = new JsonGateway(_web_application);
 		freemarker_gateway = new FreemarkerGateway(_web_application);
+		form_gateway = new FormGateway(_web_application);
 		//
 		logger.info("ServletGateway init complete");
 	}
@@ -70,7 +73,15 @@ public class HttpRequestRouter extends HttpServlet
 			throws IOException, ServletException
 	{
 		long t = System.currentTimeMillis();
-		doService(request, response);
+		try
+		{
+			doService(request, response);
+		}
+		catch (WebApplicationException e)
+		{
+			e.printStackTrace();
+			throw new ServletException(e);
+		}
 		logger.debug("GET " + request.getRequestURI() + " from " + request.getRemoteHost() + " took " + (System.currentTimeMillis() - t) + "ms");
 	}
 
@@ -78,18 +89,25 @@ public class HttpRequestRouter extends HttpServlet
 			throws IOException, ServletException
 	{
 		long t = System.currentTimeMillis();
-		doService(request, response);
+		try
+		{
+			doService(request, response);
+		}
+		catch (WebApplicationException e)
+		{
+			e.printStackTrace();
+			throw new ServletException(e);
+		}
 		logger.debug("POST " + request.getRequestURI() + " from " + request.getRemoteHost() + " took " + (System.currentTimeMillis() - t) + "ms");
 	}
 
 	private void doService(HttpServletRequest request, HttpServletResponse response)
-			throws IOException, ServletException
+			throws IOException, ServletException, WebApplicationException
 	{
 		if (_is_closed)
 		{
 			// TODO
-			// if html/freemarker: serve_file(_maintenance_page, request,
-			// response);
+			// if html/freemarker: serve_file(_maintenance_page, request, response);
 			// if javascript/amf: throw new ClosedException();
 			PrintWriter out = response.getWriter();
 			out.write("CLOSED");
@@ -111,17 +129,22 @@ public class HttpRequestRouter extends HttpServlet
 				}
 			}
 		}
-		
 		// AMF
 		if (requestPath.endsWith(GatewayConstants.SUFFIX_AMF))
 		{
-			amf_gateway.doService(getUser(request, response), request, response);
+			amf_gateway.doService(get_user_context(request, response), request, response);
 			return;
 		}
 		// JSON
 		if (requestPath.endsWith(GatewayConstants.SUFFIX_JSON))
 		{
-			json_gateway.doService(getUser(request, response), request, response);
+			json_gateway.doService(get_user_context(request, response), request, response);
+			return;
+		}
+		// FORM
+		if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
+		{
+			form_gateway.doService(get_user_context_for_form(request, response), request, response);
 			return;
 		}
 		// MAPPED
@@ -137,7 +160,7 @@ public class HttpRequestRouter extends HttpServlet
 		{
 			if (requestPath.endsWith(GatewayConstants.SUFFIXES_FREEMARKER[i]))
 			{
-				freemarker_gateway.doService(getUser(request, response), requestPath, request, response);
+				freemarker_gateway.doService(get_user_context(request, response), requestPath, request, response);
 				return;
 			}
 		}
@@ -147,24 +170,61 @@ public class HttpRequestRouter extends HttpServlet
 		return;
 	}
 
-	private UserApplicationContext getUser(HttpServletRequest request,
+	///////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+	
+	private UserApplicationContext get_user_context(HttpServletRequest request,
 			HttpServletResponse response)
 	{
 		// NOTE
 		// there may be a stray user context floating around if 2 requests are
 		// made quickly
+		// TODO
+		// maybe parse cookies out of url too at some point if it ever becomes a
+		// requirement
 		String http_sess_id = null;
-		if (request.getCookies() == null || request.getCookies().length == 0)
-		{
-			http_sess_id = RandomGUID.getGUID();
-			Cookie c = new Cookie("sess_id", http_sess_id);
-			c.setMaxAge(SESSION_TIMEOUT);
-			response.addCookie(c);
-		}
-		else
+		if (request.getCookies() != null && request.getCookies().length == 1)
 		{
 			http_sess_id = request.getCookies()[0].getValue();
 		}
+		else
+		{
+			http_sess_id = RandomGUID.getGUID();
+			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
+			c.setMaxAge(SESSION_TIMEOUT);
+			response.addCookie(c);
+		}
 		return _web_application.getUserContext(HTTP, http_sess_id);
 	}
+
+	private UserApplicationContext get_user_context_for_form(HttpServletRequest request,
+			HttpServletResponse response)
+	{
+		// the session id is not passed back with firefox w/ uploads from flash
+		// so we have to look for the parameter in the request instead of
+		// looking at the cookie
+		String http_sess_id = null;
+		if (request.getParameter(GatewayConstants.SESSION_ID_KEY) != null)
+		{
+			http_sess_id = request.getParameter(GatewayConstants.SESSION_ID_KEY);
+		}
+		else if (request.getCookies() != null && request.getCookies().length == 1)
+		{
+			http_sess_id = request.getCookies()[0].getValue();
+		}
+		else
+		{
+			http_sess_id = RandomGUID.getGUID();
+			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
+			c.setMaxAge(SESSION_TIMEOUT);
+			response.addCookie(c);
+		}
+		return _web_application.getUserContext(HTTP, http_sess_id);
+	}
+	// private UserApplicationContext get_user_context(HttpServletRequest
+	// request, HttpServletResponse response)
+	// {
+	// String http_sess_id = request.getSession().getId();
+	// return _web_application.getUserContext(HTTP, http_sess_id);
+	// }
 }

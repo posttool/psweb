@@ -30,9 +30,8 @@ public class MultipartForm
 	// a listener object that could get called back (optional)
 	private MultipartFormListener listener;
 	// the upload observers, by file name
-	private Map<String, UploadItemProgress> progress;
-	private List<UploadItemProgress> progress_list;
-	private Object completion_object;
+	private Map<String, UploadProgressInfo> progress;
+	private List<UploadProgressInfo> progress_list;
 	//
 	private WeakReference<HttpServletRequest> request;
 	//
@@ -45,8 +44,8 @@ public class MultipartForm
 	private MultipartForm()
 	{
 		state = INIT;
-		progress = new HashMap<String, UploadItemProgress>();
-		progress_list = new ArrayList<UploadItemProgress>();
+		progress = new HashMap<String, UploadProgressInfo>();
+		progress_list = new ArrayList<UploadProgressInfo>();
 		upload_directory = new File(System.getProperty("java.io.tmpdir"));
 		form_parameters = new HashMap<String, List<String>>();
 		file_parameters = new HashMap<String, File>();
@@ -235,18 +234,18 @@ public class MultipartForm
 		this.listener = listener;
 	}
 
-	public void addUploadProgress(UploadItemProgress observer)
+	public void addUploadProgress(UploadProgressInfo observer)
 	{
 		this.progress.put(observer.fileName, observer);
 		this.progress_list.add(observer);
 	}
 
-	public Map<String, UploadItemProgress> getUploadProgressMap()
+	public Map<String, UploadProgressInfo> getUploadProgressMap()
 	{
 		return progress;
 	}
 
-	public List<UploadItemProgress> getUploadProgress()
+	public List<UploadProgressInfo> getUploadProgress()
 	{
 		return progress_list;
 	}
@@ -266,13 +265,5 @@ public class MultipartForm
 		return state == PARSING;
 	}
 
-	public void setCompletionObject(Object o)
-	{
-		completion_object = o;
-	}
-
-	public Object getCompletionObject()
-	{
-		return completion_object;
-	}
+	
 }

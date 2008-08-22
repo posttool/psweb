@@ -17,10 +17,13 @@ public class GatewayConstants
 	// suffixes
 	public static final String SUFFIX_JSON = ".json";
 	public static final String SUFFIX_AMF = ".amf";
+	public static final String SUFFIX_FORM = ".form";
 	// free-marker suffixes
 	public static final String SUFFIX_FREEMARKER_HTML = ".fhtml";
 	public static final String SUFFIX_FREEMARKER_CSS = ".fcss";
 	public static final String SUFFIX_FREEMARKER_JS = ".fjs";
 	public static final String[] SUFFIXES_FREEMARKER = new String[] {
 			SUFFIX_FREEMARKER_HTML, SUFFIX_FREEMARKER_CSS, SUFFIX_FREEMARKER_JS };
+	// session cookie id
+	public static final String SESSION_ID_KEY = "ps_session_id";
 }

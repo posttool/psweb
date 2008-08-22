@@ -33,7 +33,7 @@ public class JsonGateway
 		String text_response = null;
 		try
 		{
-			module_request = GatewayUtil.parseModuleRequest(request, requestPath, user_context);
+			module_request = GatewayUtil.parseModuleRequestJson(request, requestPath);
 			module_request.setUserContext(user_context);
 			module_return = _web_application.dispatch(module_request);
 			text_response = JsonEncoder.encode(module_return);

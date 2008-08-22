@@ -7,10 +7,11 @@ import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.UserApplicationContext;
+import com.pagesociety.web.gateway.GatewayConstants;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.upload.MultipartForm;
-import com.pagesociety.web.upload.UploadItemProgress;
+import com.pagesociety.web.upload.UploadProgressInfo;
 
 public class TestModule extends Module
 {
@@ -69,6 +70,12 @@ public class TestModule extends Module
 	}
 
 	@Export
+	public String getSessionId(UserApplicationContext user_context)
+	{
+		return GatewayConstants.SESSION_ID_KEY + "=" + user_context.getId();
+	}
+
+	@Export
 	public Map<String, Object> formTest2(UserApplicationContext user_context,
 			MultipartForm upload)
 	{
@@ -80,7 +87,6 @@ public class TestModule extends Module
 		Map<String, Object> result = new HashMap<String, Object>();
 		try
 		{
-			// upload.setUploadDirectory(uploadDir);
 			upload.parse();
 		}
 		catch (Exception e)
@@ -89,7 +95,7 @@ public class TestModule extends Module
 			result.put("error", e.getMessage());
 			return result;
 		}
-		upload.setCompletionObject(result);
+		upload.getUploadProgress().get(0).setCompletionObject(result);
 		result.put("picture_path", upload.getFile("picture").getAbsolutePath());
 		result.put("first_name", upload.getStringArray("first_name"));
 		result.put("ints", upload.getIntArray("ints"));
@@ -101,12 +107,12 @@ public class TestModule extends Module
 	}
 
 	@Export
-	public List<UploadItemProgress> getUploadInfo(UserApplicationContext user_context)
+	public UploadProgressInfo getUploadInfo(UserApplicationContext user_context)
 	{
 		MultipartForm current_upload = (MultipartForm) user_context.getProperty(UPLOAD_FOR_USER_KEY);
-		if (current_upload == null)
+		if (current_upload == null || current_upload.getUploadProgress().isEmpty())
 			return null;
-		return current_upload.getUploadProgress();
+		return current_upload.getUploadProgress().get(0);
 	}
 
 	@Export

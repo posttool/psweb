@@ -2,19 +2,16 @@ package com.pagesociety.web.gateway;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplicationException;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
-import com.pagesociety.web.upload.MultipartForm;
 
 public class GatewayUtil
 {
 	public static final String REQUEST_PATH_SEPARATOR = "/";
 
 	public static ModuleRequest parseModuleRequest(HttpServletRequest servlet_request,
-			String request_path, UserApplicationContext user_context)
-			throws WebApplicationException
+			String request_path) throws WebApplicationException
 	{
 		String path = request_path;
 		if (path.startsWith(REQUEST_PATH_SEPARATOR))
@@ -25,39 +22,29 @@ public class GatewayUtil
 		if (req_path_split.length < 2)
 			return module_request;
 		//
-		String module_name = req_path_split[0];
-		String method_name = req_path_split[1];
+		module_request.setModuleName(req_path_split[0]);
+		module_request.setMethodName(req_path_split[1]);
 		//
-		Object[] args;
-		String content_type = servlet_request.getContentType();
-		if (content_type != null && content_type.startsWith("multipart"))
-		{
-			args = new Object[1];
-			args[0] = new MultipartForm(servlet_request);
-		}
-		else
-		{
-			String d = servlet_request.getParameter("json");
-			args = JsonEncoder.decode(d);
-		}
-		return setupModuleRequest(module_request, module_name, method_name, args);
+		return module_request;
 	}
 
-	public static ModuleRequest setupModuleRequest(ModuleRequest module_request,
-			String module_name, String method_name, Object[] args)
+	public static ModuleRequest parseModuleRequestJson(
+			HttpServletRequest servlet_request, String request_path)
 			throws WebApplicationException
 	{
+		ModuleRequest module_request = parseModuleRequest(servlet_request, request_path);
+		//
+		String json = servlet_request.getParameter("json");
+		Object[] args = JsonEncoder.decode(json);
 		Object[] typed_args;
 		try
 		{
-			typed_args = ModuleRegistry.coerceArgs(module_name, method_name, args);
+			typed_args = ModuleRegistry.coerceArgs(module_request.getModuleName(), module_request.getMethodName(), args);
 		}
 		catch (Exception e)
 		{
-			throw new WebApplicationException("fillModuleRequest() - CANT COERCE ARGS FOR " + module_name + " " + method_name + " " + args, e);
+			throw new WebApplicationException("fillModuleRequest() - CANT COERCE ARGS FOR " + module_request.getModuleName() + " " + module_request.getMethodName() + " " + args, e);
 		}
-		module_request.setModuleName(module_name);
-		module_request.setMethodName(method_name);
 		module_request.setArguments(typed_args);
 		return module_request;
 	}

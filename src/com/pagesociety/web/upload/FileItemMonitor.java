@@ -8,12 +8,12 @@ import org.apache.commons.fileupload.disk.DiskFileItem;
 public class FileItemMonitor extends DiskFileItem
 {
 	private static final long serialVersionUID = 9192199072043214722L;
-	private UploadItemProgress observer;
+	private UploadProgressInfo observer;
 	private long bytesRead;
 	private boolean isFormField;
 
 	public FileItemMonitor(String fieldName, String contentType, boolean isFormField,
-			String fileName, File repository, UploadItemProgress observer)
+			String fileName, File repository, UploadProgressInfo observer)
 	{
 		super(fieldName, contentType, isFormField, fileName, MultipartFormConstants.DEFAULT_SIZE_THRESHOLD, repository);
 		this.observer = observer;
