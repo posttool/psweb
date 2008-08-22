@@ -20,11 +20,11 @@
 			
 			function handle_get_upload_info(upload)
 			{
-				if (upload != null && upload.length == 1)
+				if (upload != null)
 				{
-					var p = upload[0].progress;
+					var p = upload.progress;
 					$("progress_info").innerHTML = p+"% complete";
-					if (upload[0].isComplete)
+					if (upload.isComplete)
 						return;
 				}
 				check_progress();
@@ -60,7 +60,7 @@
 		
 		<h1>Multipart Test </h1>
 		info: <span id="progress_info"></span> 
-		<form name="test2" action="${web_url}/TestModule/formTest2/.json?noencode=true"  
+		<form name="test2" action="${web_url}/TestModule/formTest2/.form"  
 			enctype="multipart/form-data" method="post" target="hidden_frame"
 			onsubmit="check_progress()">
 				
