@@ -47,7 +47,7 @@ public class ModuleRegistry
 			throws InitializationException
 	{
 		if (moduleClassName == null)
-			throw new RuntimeException("IMPROPER MODULE REGISTRATION: " + moduleClassName + " A module class is required!");
+			throw new InitializationException("IMPROPER MODULE REGISTRATION: " + moduleClassName + " A module class is required!");
 		ModuleDefinition module_def = new ModuleDefinition(config);
 		Class<? extends Module> moduleClass;
 		try
@@ -59,7 +59,7 @@ public class ModuleRegistry
 			throw new InitializationException("ClassNotFound " + moduleClassName, e);
 		}
 		if (MODULES.get(moduleClass.getSimpleName()) != null)
-			throw new RuntimeException("MODULE " + moduleClass.getSimpleName() + " ALREADY DEFINED ");
+			throw new InitializationException("MODULE " + moduleClass.getSimpleName() + " ALREADY DEFINED ");
 		if (moduleClass != null)
 		{
 			module_def.reflect(moduleClass);
@@ -75,11 +75,11 @@ public class ModuleRegistry
 		return MODULE_LIST;
 	}
 
-	public static Module instantiate(String module_name)
+	public static Module instantiate(String module_name) throws InitializationException
 	{
 		ModuleDefinition module_def = MODULES.get(module_name);
 		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO SUCH MODULE " + module_name);
+			throw new InitializationException("ModuleRegistry NO SUCH MODULE " + module_name);
 		try
 		{
 			Module module = module_def.newInstance();
@@ -89,7 +89,7 @@ public class ModuleRegistry
 		catch (Exception e)
 		{
 			logger.error("instantiate(String, UserApplicationContext)", e);
-			throw new RuntimeException("ModuleRegistry UNABLE TO INSTANTIATE MODULE " + module_name, e);
+			throw new InitializationException("ModuleRegistry UNABLE TO INSTANTIATE MODULE " + module_name, e);
 		}
 	}
 
