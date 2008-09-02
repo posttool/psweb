@@ -193,9 +193,11 @@ public abstract class WebApplication
 		{
 			ModuleInfo m = _config.getModuleInfo().get(i);
 			String className = m.getClassName();
+			
 			ModuleRegistry.register(className, m.getConfig());
 			String simple_name = className.substring(className.lastIndexOf(".") + 1);
 			Module module = ModuleRegistry.instantiate(simple_name);
+			
 			_module_instances.put(simple_name, module);
 			_module_list.add(module);
 		}
