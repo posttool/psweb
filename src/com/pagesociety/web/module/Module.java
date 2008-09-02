@@ -20,6 +20,11 @@ public abstract class Module
 		return getClass().getSimpleName();
 	}
 	
+	public WebApplication getApplication()
+	{
+		return _application;
+	}
+	
 	public Map<String, Object> getProperties()
 	{
 		return _config;
@@ -35,4 +40,6 @@ public abstract class Module
 		_application = null;
 		_config = null;
 	}
+
+
 }
