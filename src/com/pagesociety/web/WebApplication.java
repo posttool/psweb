@@ -91,7 +91,7 @@ public abstract class WebApplication
 		return return_value;
 	}
 
-	public Object execute(String moduleAndMethod, UserApplicationContext user_context,
+	public Object execute( UserApplicationContext user_context,String moduleAndMethod,
 			Object... args) throws Exception
 	{
 		String[] mm = moduleAndMethod.split("/");
@@ -105,7 +105,7 @@ public abstract class WebApplication
 		return dispatch(req);
 	}
 
-	public Object execute(String moduleAndMethod, UserApplicationContext user_context,
+	public Object execute(UserApplicationContext user_context,String moduleAndMethod, 
 			freemarker.template.SimpleSequence args) throws Exception
 	{
 		Object[] obj_args = new Object[args.size()];
@@ -133,7 +133,8 @@ public abstract class WebApplication
 				obj_args[i] = args.get(i);
 			}
 		}
-		return execute(moduleAndMethod, user_context, obj_args);
+		
+		return execute(user_context,moduleAndMethod, obj_args);
 	}
 
 	public boolean isValid(ModuleRequest request)
