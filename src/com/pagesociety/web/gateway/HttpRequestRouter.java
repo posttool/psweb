@@ -7,14 +7,12 @@ import java.io.PrintWriter;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.WebApplicationException;
