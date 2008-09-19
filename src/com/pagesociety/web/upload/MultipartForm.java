@@ -3,6 +3,9 @@ package com.pagesociety.web.upload;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +81,7 @@ public class MultipartForm
 		this.request = null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void parseRequest(HttpServletRequest request) throws MultipartFormException
 	{
 		state = PARSING;
@@ -86,6 +90,13 @@ public class MultipartForm
 		{
 			ServletFileUpload upload = new ServletFileUpload();
 			upload.setFileItemFactory(new UploadItemProgressFactory(this, contentLength));
+			Enumeration<String> e = request.getParameterNames();
+			while (e.hasMoreElements())
+			{
+				String k = e.nextElement();
+				String[] v = request.getParameterValues(k);
+				form_parameters.put(k, Arrays.asList(v));
+			}
 			List<?> fileItems = upload.parseRequest(request);
 			for (int i = 0; i < fileItems.size(); i++)
 			{

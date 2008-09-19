@@ -82,7 +82,7 @@ public class FreemarkerGateway
 
 	private void doError(Exception e, UserApplicationContext user_context,
 			HttpServletRequest servlet_request, String request_path,
-			ServletResponse response) throws IOException
+			HttpServletResponse response) throws IOException
 	{
 		String url_mapped_request = _web_application.getErrorMapping();
 		PrintWriter out = response.getWriter();
@@ -95,6 +95,7 @@ public class FreemarkerGateway
 		else
 		{
 			response.setContentType(GatewayConstants.MIME_TYPE_HTML);
+			response.setStatus(404);
 			Map<String, Object> templateData = setup_template_context_object(user_context, url_mapped_request, servlet_request.getParameterMap());
 			templateData.put(EXCEPTION_KEY, e);
 			StringWriter sw = new StringWriter();
