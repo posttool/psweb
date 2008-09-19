@@ -4,6 +4,7 @@ public class UploadProgressInfo
 {
 	public static UploadProgressInfo UPLOAD_PROGRESS_INIT = new UploadProgressInfo();
 	//
+	protected String contentType;
 	protected String fieldName;
 	protected String fileName;
 	protected double progress = 0;
@@ -27,6 +28,11 @@ public class UploadProgressInfo
 		return progress;
 	}
 
+	public String getContentType()
+	{
+		return contentType;
+	}
+	
 	public long getFileSize()
 	{
 		return fileSize;
@@ -42,6 +48,7 @@ public class UploadProgressInfo
 		return complete;
 	}
 	
+
 	public void setCompletionObject(Object o)
 	{
 		complete = true;
@@ -52,4 +59,5 @@ public class UploadProgressInfo
 	{
 		return completionObject;
 	}
+	
 }

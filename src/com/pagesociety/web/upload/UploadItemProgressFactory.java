@@ -18,6 +18,7 @@ public class UploadItemProgressFactory extends DiskFileItemFactory
 	public FileItem createItem(String fieldName, String contentType, boolean isFormField, String fileName)
 	{
 		UploadProgressInfo observer = new UploadProgressInfo();
+		observer.contentType = contentType;
 		observer.fieldName = fieldName;
 		observer.fileName = fileName;
 		observer.fileSize = contentLength;
