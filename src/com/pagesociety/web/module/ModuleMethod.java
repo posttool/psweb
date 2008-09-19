@@ -9,10 +9,12 @@ import java.util.Date;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.UserApplicationContext;
+import com.pagesociety.web.WebApplicationException;
 
 public class ModuleMethod
 {
@@ -103,7 +105,7 @@ public class ModuleMethod
 		}
 		catch (IllegalAccessException iae)
 		{
-			throw new RuntimeException("No permission to access.", iae);
+			throw new WebApplicationException("No permission to access.", iae);
 		}
 	}
 
@@ -120,10 +122,10 @@ public class ModuleMethod
 		return true;
 	}
 
-	public Object[] coerceArgs(Object[] args) throws Exception
+	public Object[] coerceArgs(Object[] args) throws WebApplicationException
 	{
 		if (args.length != ptypes.length - 1)
-			throw new Exception("ModuleMethod INCORRECT # OF ARGS");
+			throw new WebApplicationException("ModuleMethod INCORRECT # OF ARGS");
 		Object[] typed_args = new Object[args.length];
 		Type[] gen_ptypes = method.getGenericParameterTypes();
 		for (int i = 1; i < ptypes.length; i++)
@@ -156,14 +158,20 @@ public class ModuleMethod
 					List<Object> typed_array_values = new ArrayList<Object>(a_args.length());
 					for (int j = 0; j < a_args.length(); j++)
 					{
-						typed_array_values.add(coerseStringToObject(pgclass, String.valueOf(a_args.get(j))));
+						try{
+							typed_array_values.add(coerseStringToObject(pgclass, String.valueOf(a_args.get(j))));
+						}catch(JSONException jse)
+						{
+							jse.printStackTrace();
+							throw new WebApplicationException("GOT A JSON EXCEPTION WHEN COERCING ARGS",jse);
+						}
 					}
 					typed_args[i-1] = typed_array_values;
 				}
 			}
 			else if (ptype.isArray())
 			{
-				throw new Exception("COERCABLE MODULE METHODS MUST SPECIFY LIST PARAMETERS (NOT ARRAYS). ");
+				throw new WebApplicationException("COERCABLE MODULE METHODS MUST SPECIFY LIST PARAMETERS (NOT ARRAYS). ");
 			}
 			else if (arg.getClass() == String.class)
 			{
@@ -181,7 +189,7 @@ public class ModuleMethod
 		return typed_args;
 	}
 
-	private static Object coerseStringToObject(Class<?> ptype, String arg)
+	private static Object coerseStringToObject(Class<?> ptype, String arg) throws WebApplicationException
 	{
 		try
 		{
@@ -215,7 +223,7 @@ public class ModuleMethod
 				// EntityDefinition def = _store.getEntityDefinition(eid[0]);
 				// long id = Long.parseLong(eid[1]);
 				// return new Entity(def, id);
-				throw new Exception("COERCABLE MODULE METHODS CANT SPECIFY ENTITIES YET");
+				throw new WebApplicationException("COERCABLE MODULE METHODS CANT SPECIFY ENTITIES YET");
 			}
 			return null;
 		}

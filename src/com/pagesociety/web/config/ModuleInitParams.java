@@ -60,12 +60,19 @@ public class ModuleInitParams
 	{
 		Map<String, Object> props = new HashMap<String, Object>();
 		NodeList l = d.getElementsByTagName(s);
+		if(l.getLength() == 0)
+			return props;
+	
 		for (int i = 0; i < l.getLength(); i++)
 		{
-			Node n = l.item(i);
-			if (n.getNodeType() == Node.ELEMENT_NODE && n.getChildNodes().getLength() != 0)
+			NodeList nl = l.item(i).getChildNodes();
+			for(int ii = 0;ii < nl.getLength();ii++)
 			{
-				props.put(n.getNodeName(), n.getFirstChild().getTextContent().trim());
+				Node n = nl.item(ii);
+				if (n.getNodeType() == Node.ELEMENT_NODE && n.getChildNodes().getLength() != 0)
+				{
+					props.put(n.getNodeName(), n.getFirstChild().getTextContent().trim());
+				}
 			}
 		}
 		return props;

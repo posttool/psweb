@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.WebApplicationException;
 import com.pagesociety.web.upload.MultipartForm;
 
 /**
@@ -98,10 +99,10 @@ public class ModuleRegistry
 	{
 		ModuleDefinition module_def = MODULES.get(module.getName());
 		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO MODULE " + module.getName());
+			throw new WebApplicationException("ModuleRegistry NO MODULE " + module.getName());
 		ModuleMethod m = module_def.getMethod(method_name);
 		if (m == null)
-			throw new RuntimeException("ModuleRegistry NO METHOD " + method_name);
+			throw new WebApplicationException("ModuleRegistry NO METHOD " + method_name);
 		return m.invoke(module, user_context, args);
 	}
 

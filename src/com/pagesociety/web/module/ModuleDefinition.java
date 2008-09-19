@@ -11,14 +11,14 @@ import com.pagesociety.web.InitializationException;
 public class ModuleDefinition
 {
 	private Class<? extends Module> module;
-	private Map<String, ModuleMethod> method_map;
-	private List<ModuleMethod> methods;
+	private Map<String, ModuleMethod> exported_method_map;
+	private List<ModuleMethod> exported_methods;
 	private Map<String, Object> config_params;
 
 	public ModuleDefinition(Map<String, Object> config)
 	{
-		this.method_map = new HashMap<String, ModuleMethod>();
-		this.methods = new ArrayList<ModuleMethod>();
+		this.exported_method_map = new HashMap<String, ModuleMethod>();
+		this.exported_methods = new ArrayList<ModuleMethod>();
 		this.config_params = config;
 	}
 
@@ -33,8 +33,8 @@ public class ModuleDefinition
 			{
 				ModuleMethod module_method = new ModuleMethod();
 				module_method.reflect(declared_methods[i]);
-				method_map.put(module_method.getName(), module_method);
-				methods.add(module_method);
+				exported_method_map.put(module_method.getName(), module_method);
+				exported_methods.add(module_method);
 			}
 		}
 	}
@@ -45,10 +45,10 @@ public class ModuleDefinition
 		StringBuffer b = new StringBuffer();
 		b.append(module.getCanonicalName());
 		b.append(line_break);
-		for (int i = 1; i < methods.size(); i++)
+		for (int i = 1; i < exported_methods.size(); i++)
 		{
 			b.append("\t");
-			b.append(methods.get(i).toString());
+			b.append(exported_methods.get(i).toString());
 			b.append(line_break);
 		}
 		return b.toString();
@@ -73,12 +73,12 @@ public class ModuleDefinition
 
 	public ModuleMethod getMethod(String method_name)
 	{
-		return method_map.get(method_name);
+		return exported_method_map.get(method_name);
 	}
 
 	public List<ModuleMethod> getMethods()
 	{
-		return methods;
+		return exported_methods;
 	}
 
 	public Map<String, Object> getConfigParams()
