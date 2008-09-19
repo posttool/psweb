@@ -173,29 +173,39 @@ public class HttpRequestRouter extends HttpServlet
 	///////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////
 	
-	private UserApplicationContext get_user_context(HttpServletRequest request,
-			HttpServletResponse response)
-	{
-		// NOTE
-		// there may be a stray user context floating around if 2 requests are
-		// made quickly
-		// TODO
-		// maybe parse cookies out of url too at some point if it ever becomes a
-		// requirement
-		String http_sess_id = null;
-		if (request.getCookies() != null && request.getCookies().length == 1)
-		{
-			http_sess_id = request.getCookies()[0].getValue();
-		}
-		else
-		{
-			http_sess_id = RandomGUID.getGUID();
-			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
-			c.setMaxAge(SESSION_TIMEOUT);
-			response.addCookie(c);
-		}
-		return _web_application.getUserContext(HTTP, http_sess_id);
-	}
+//	private UserApplicationContext get_user_context(HttpServletRequest request,
+//			HttpServletResponse response)
+//	{
+//		// NOTE
+//		// there may be a stray user context floating around if 2 requests are
+//		// made quickly
+//		// TODO
+//		// maybe parse cookies out of url too at some point if it ever becomes a
+//		// requirement
+//		String http_sess_id = null;
+//		if (request.getCookies() != null)
+//		{
+//			int s = request.getCookies().length;
+//			for (int i=0; i<s; i++)
+//			{
+//				if (request.getCookies()[i].getName().equals(GatewayConstants.SESSION_ID_KEY))
+//				{
+//					http_sess_id = request.getCookies()[i].getValue();
+//					break;
+//				}
+//			}
+//		}
+//		
+//		if (http_sess_id==null)
+//		{
+//			http_sess_id = RandomGUID.getGUID();
+//			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
+//			c.setMaxAge(SESSION_TIMEOUT);
+//			response.addCookie(c);
+//		}
+//		
+//		return _web_application.getUserContext(HTTP, http_sess_id);
+//	}
 
 	private UserApplicationContext get_user_context_for_form(HttpServletRequest request,
 			HttpServletResponse response)
@@ -208,23 +218,17 @@ public class HttpRequestRouter extends HttpServlet
 		{
 			http_sess_id = request.getParameter(GatewayConstants.SESSION_ID_KEY);
 		}
-		else if (request.getCookies() != null && request.getCookies().length == 1)
-		{
-			http_sess_id = request.getCookies()[0].getValue();
-		}
 		else
 		{
-			http_sess_id = RandomGUID.getGUID();
-			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
-			c.setMaxAge(SESSION_TIMEOUT);
-			response.addCookie(c);
+			http_sess_id = request.getSession().getId();
 		}
+		
 		return _web_application.getUserContext(HTTP, http_sess_id);
 	}
-	// private UserApplicationContext get_user_context(HttpServletRequest
-	// request, HttpServletResponse response)
-	// {
-	// String http_sess_id = request.getSession().getId();
-	// return _web_application.getUserContext(HTTP, http_sess_id);
-	// }
+	
+	private UserApplicationContext get_user_context(HttpServletRequest request, HttpServletResponse response)
+	{
+	 String http_sess_id = request.getSession().getId();
+	 return _web_application.getUserContext(HTTP, http_sess_id);
+	}
 }
