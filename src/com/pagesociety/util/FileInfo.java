@@ -171,7 +171,7 @@ public class FileInfo
 		}
 	}
 
-	private static String getExtension(String name)
+	public static String getExtension(String name)
 	{
 		int n = name.lastIndexOf('.');
 		if (n == -1)
