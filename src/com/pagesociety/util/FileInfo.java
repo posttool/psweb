@@ -19,23 +19,32 @@ public class FileInfo
 	public static final String[][] EXTENSIONS = new String[EXTENSIONS_LENGTH][];
 	static
 	{
-		EXTENSIONS[JPG] = new String[] { "jpg", "jpeg" };
-		EXTENSIONS[GIF] = new String[] { "gif" };
-		EXTENSIONS[PNG] = new String[] { "png" };
-		EXTENSIONS[MP3] = new String[] { "mp3" };
-		EXTENSIONS[WAV] = new String[] { "wav" };
-		EXTENSIONS[AIF] = new String[] { "aif", "aiff" };
-		EXTENSIONS[VOG] = new String[] { "ogm", "ogg", "vog" };
-		EXTENSIONS[AVI] = new String[] { "avi" };
-		EXTENSIONS[MOV] = new String[] { "mov" };
+		EXTENSIONS[JPG]  = new String[] { "jpg", "jpeg" };
+		EXTENSIONS[GIF]  = new String[] { "gif" };
+		EXTENSIONS[PNG]  = new String[] { "png" };
+		EXTENSIONS[MP3]  = new String[] { "mp3" };
+		EXTENSIONS[WAV]  = new String[] { "wav" };
+		EXTENSIONS[AIF]  = new String[] { "aif", "aiff" };
+		EXTENSIONS[VOG]  = new String[] { "ogm", "ogg", "vog" };
+		EXTENSIONS[AVI]  = new String[] { "avi" };
+		EXTENSIONS[MOV]  = new String[] { "mov" };
 		EXTENSIONS[DIVX] = new String[] { "divx", "xvid" };
-		EXTENSIONS[MPG] = new String[] { "mpg", "mpeg", "mp4" };
+		EXTENSIONS[MPG]  = new String[] { "mpg", "mpeg", "mp4" };
 	}
 	// "simple" types
 	public static final int IMAGE = 100;
 	public static final int AUDIO = 101;
 	public static final int VIDEO = 102;
 
+	public static String getTypeIdentifier(File f)
+	{
+		int t = getType(f);
+		if(t == -1)
+			return "???";
+		else
+			return EXTENSIONS[t][0];
+	}
+	
 	public static int getType(File file)
 	{
 		if (file == null)
@@ -55,6 +64,7 @@ public class FileInfo
 		return -1;
 	}
 
+	
 	public static int getSimpleType(File file)
 	{
 		int type = getType(file);
@@ -76,6 +86,29 @@ public class FileInfo
 			return VIDEO;
 		}
 		return -1;
+	}
+	
+	public static String getSimpleTypeAsString(File file)
+	{
+		int type = getType(file);
+		switch (type)
+		{
+			case JPG:
+			case GIF:
+			case PNG:
+				return "IMAGE";
+			case AIF:
+			case MP3:
+			case WAV:
+			case VOG:
+				return "AUDIO";
+			case AVI:
+			case MOV:
+			case DIVX:
+			case MPG:
+				return "VIDEO";
+		}
+		return "????";
 	}
 
 	public static boolean isMovie(File file)
