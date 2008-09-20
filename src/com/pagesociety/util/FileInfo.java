@@ -15,7 +15,9 @@ public class FileInfo
 	public static final int MOV = 8;
 	public static final int DIVX = 9;
 	public static final int MPG = 10;
-	public static final int EXTENSIONS_LENGTH = 11;
+	public static final int PDF = 11;
+	public static final int DOC = 12;
+	public static final int EXTENSIONS_LENGTH = 13;
 	public static final String[][] EXTENSIONS = new String[EXTENSIONS_LENGTH][];
 	static
 	{
@@ -30,20 +32,15 @@ public class FileInfo
 		EXTENSIONS[MOV]  = new String[] { "mov" };
 		EXTENSIONS[DIVX] = new String[] { "divx", "xvid" };
 		EXTENSIONS[MPG]  = new String[] { "mpg", "mpeg", "mp4" };
+		EXTENSIONS[PDF]  = new String[] { "pdf" };
+		EXTENSIONS[DOC]  = new String[] { "doc" };
 	}
 	// "simple" types
-	public static final int IMAGE = 100;
-	public static final int AUDIO = 101;
-	public static final int VIDEO = 102;
+	public static final int IMAGE    = 100;
+	public static final int AUDIO    = 101;
+	public static final int VIDEO    = 102;
+	public static final int DOCUMENT = 103;
 
-	public static String getTypeIdentifier(File f)
-	{
-		int t = getType(f);
-		if(t == -1)
-			return "???";
-		else
-			return EXTENSIONS[t][0];
-	}
 	
 	public static int getType(File file)
 	{
@@ -84,6 +81,9 @@ public class FileInfo
 		case DIVX:
 		case MPG:
 			return VIDEO;
+		case PDF:
+		case DOC:
+			return DOCUMENT;	
 		}
 		return -1;
 	}
@@ -107,6 +107,9 @@ public class FileInfo
 			case DIVX:
 			case MPG:
 				return "VIDEO";
+			case PDF:
+			case DOC:
+				return "DOCUMENT";	
 		}
 		return "????";
 	}
@@ -149,6 +152,19 @@ public class FileInfo
 		case MP3:
 		case WAV:
 		case VOG:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public static boolean isDocument(File file)
+	{
+		int t = getType(file);
+		switch (t)
+		{
+		case PDF:
+		case DOC:
 			return true;
 		default:
 			return false;
