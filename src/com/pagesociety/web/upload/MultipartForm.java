@@ -1,6 +1,7 @@
 package com.pagesociety.web.upload;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,21 +39,22 @@ public class MultipartForm
 	//
 	private WeakReference<HttpServletRequest> request;
 	//
-	public static final int INIT = 0;
-	public static final int PARSING = 1;
-	public static final int COMPLETE = 2;
-	public static final int ERROR = 3;
+	public static final int INIT 		= 0;
+	public static final int PARSING 	= 1;
+	public static final int COMPLETE 	= 2;
+	public static final int CANCELLED 	= 3;
+	public static final int ERROR 		= 4;
 	private int state;
 
 	private MultipartForm()
 	{
 		state = INIT;
-		progress = new HashMap<String, UploadProgressInfo>();
-		progress_list = new ArrayList<UploadProgressInfo>();
-		upload_directory = new File(System.getProperty("java.io.tmpdir"));
-		form_parameters = new HashMap<String, List<String>>();
-		file_parameters = new HashMap<String, File>();
-		files = new ArrayList<File>();
+		progress 			= new HashMap<String, UploadProgressInfo>();
+		progress_list 		= new ArrayList<UploadProgressInfo>();
+		upload_directory 	= new File(System.getProperty("java.io.tmpdir"));
+		form_parameters 	= new HashMap<String, List<String>>();
+		file_parameters 	= new HashMap<String, File>();
+		files 				= new ArrayList<File>();
 	}
 
 	public MultipartForm(String channelName)
@@ -65,6 +67,7 @@ public class MultipartForm
 	{
 		this();
 		this.request = new WeakReference<HttpServletRequest>(request);
+
 	}
 
 	public String getName()
@@ -134,7 +137,11 @@ public class MultipartForm
 		}
 		catch (Exception ne)
 		{
-			state = ERROR;
+			/* when we cancel it is going */
+			/* to cause an exception      */
+			if(state != CANCELLED)
+				state = ERROR;
+			
 			this.request = null;
 			if (listener != null)
 				listener.onUploadException(this, ne);
@@ -276,5 +283,19 @@ public class MultipartForm
 		return state == PARSING;
 	}
 
+	public boolean isCancelled()
+	{
+		return state == CANCELLED;
+	}
 	
+	public void cancel() throws IOException
+	{
+		HttpServletRequest request = this.request.get();
+		if(request == null)
+			return;
+
+		request.getInputStream().close();
+		state = CANCELLED;
+		request = null;	
+	}
 }
