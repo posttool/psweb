@@ -45,7 +45,7 @@ public class ModuleDefinition
 		StringBuffer b = new StringBuffer();
 		b.append(module.getCanonicalName());
 		b.append(line_break);
-		for (int i = 1; i < exported_methods.size(); i++)
+		for (int i = 0; i < exported_methods.size(); i++)
 		{
 			b.append("\t");
 			b.append(exported_methods.get(i).toString());
