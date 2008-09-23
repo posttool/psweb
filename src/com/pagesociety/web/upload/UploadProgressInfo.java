@@ -2,15 +2,14 @@ package com.pagesociety.web.upload;
 
 public class UploadProgressInfo
 {
-	public static UploadProgressInfo UPLOAD_PROGRESS_INIT = new UploadProgressInfo();
-	//
 	protected String contentType;
 	protected String fieldName;
 	protected String fileName;
 	protected double progress = 0;
 	protected long fileSize = -1;
 	protected long bytesRead = -1;
-	protected boolean complete = false;
+	/*this thing is complete when its resource object is set */
+	private boolean complete = false;
 	private Object completionObject;
 
 	public String getFieldName()
@@ -43,19 +42,19 @@ public class UploadProgressInfo
 		return bytesRead;
 	}
 	
-	public boolean isComplete()
+	public synchronized boolean isComplete()
 	{
-		return complete;
+		return complete;		
 	}
 	
 
-	public void setCompletionObject(Object o)
+	public synchronized void setCompletionObject(Object o)
 	{
-		complete = true;
 		completionObject = o;
+		complete 		 = true;
 	}
 	
-	public Object getCompletionObject()
+	public synchronized Object getCompletionObject()
 	{
 		return completionObject;
 	}

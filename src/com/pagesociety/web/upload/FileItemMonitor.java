@@ -100,7 +100,7 @@ public class FileItemMonitor extends DiskFileItem
 			bytesRead += b;
 			observer.progress = (((double) (bytesRead)) / observer.fileSize) * 100.0;
 			observer.bytesRead = bytesRead;
-			observer.complete = (bytesRead == observer.fileSize);
+			//observer.complete = (bytesRead == observer.fileSize);//
 			if (MultipartFormConstants.TESTING)
 			{
 				try

@@ -125,12 +125,10 @@ public class MultipartForm
 						listener.onFileComplete(this, f);
 				}
 			}
-			state = COMPLETE;
+
 			for (int i=0; i < this.progress_list.size(); i++)
-			{
 				this.progress_list.get(i).progress = 100;
-				this.progress_list.get(i).complete = true;
-			}
+			
 			this.request = null;
 			if (listener != null)
 				listener.onUploadComplete(this);
@@ -270,7 +268,14 @@ public class MultipartForm
 
 	public boolean isComplete()
 	{
-		return state == COMPLETE;
+		int s = progress_list.size();
+		for(int i = 0;i <s;i++)
+		{
+			UploadProgressInfo p = progress_list.get(i);
+			if(!p.isComplete())
+				return false;
+		}
+		return true;
 	}
 
 	public boolean isError()
