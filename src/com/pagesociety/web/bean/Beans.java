@@ -13,7 +13,7 @@ public class Beans
 	public static void initDefault()
 	{
 		BeanRegistry.register(ErrorMessage.class);
-		BeanRegistry.register(Entity.class, new String[] { "entityDefinition", "isEmpty", "isDirty", "dirtyAttributes" });
+		BeanRegistry.register(Entity.class, new String[] { "isDirty" });
 		BeanRegistry.register(EntityIndex.class);
 		BeanRegistry.register(FieldDefinition.class, new String[] { "isArray", "baseType" });
 		BeanRegistry.register(EntityDefinition.class);

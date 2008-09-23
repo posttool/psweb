@@ -48,6 +48,7 @@ public class AmfGateway
 			{
 				return_value = new ErrorMessage(e);
 				amf_routing = AmfConstants.ERROR_CALLBACK;
+				e.printStackTrace();
 			}
 			amf_out = new AmfOut(amf_in.version, amf_in.client_id, amf_routing, return_value);
 			int responseLength = amf_out.buffer.remaining();
