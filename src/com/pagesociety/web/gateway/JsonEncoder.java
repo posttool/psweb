@@ -16,33 +16,7 @@ import com.pagesociety.web.bean.BeanRegistry;
 
 public class JsonEncoder
 {
-	public static void main(String[] args)
-	{
-		BeanRegistry.register(Entity.class);
-		Entity e = new Entity(null);
-		Entity e1 = new Entity(null);
-		e.setId(101);
-		e.setAttribute("xxx", "yyy");
-		e.setAttribute("e1", e1);
-		e1.setId(333);
-		e1.setAttribute("aaa", "bbb");
-		e1.setAttribute("ccc", e);
-		System.out.println(encode(e1));
-		//
-		HashMap<String, Object> a = new HashMap<String, Object>();
-		HashMap<String, Object> b = new HashMap<String, Object>();
-		HashMap<String, Object> c = new HashMap<String, Object>();
-		a.put("name", "a");
-		a.put("b", b);
-		a.put("c", c);
-		b.put("name", "b");
-		b.put("name1", "bb");
-		b.put("a", a);
-		c.put("name", "c");
-		// c.put("a", a);
-		// c.put("b", b);
-		System.out.println(encode(a));
-	}
+	
 
 	public static Object[] decode(String s)
 	{

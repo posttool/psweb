@@ -2,7 +2,7 @@
 
 	<property name="jar.name" value="ps_web.jar" />
 	
-	<property name="web.lib" value="C:\apache-tomcat-6.0.16\lib" />	
+	<property name="web.lib" value="C:\apache-tomcat-5.5.20\common\lib" />	
 
 	<path id="required_libs">
 		<fileset dir="WebContent/WEB-INF/lib/" includes="*.jar"/>
