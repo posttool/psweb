@@ -57,17 +57,11 @@ public class MultipartForm
 		files 				= new ArrayList<File>();
 	}
 
-	public MultipartForm(String channelName)
-	{
-		this();
-		name = channelName;
-	}
-
 	public MultipartForm(HttpServletRequest request)
 	{
 		this();
 		this.request = new WeakReference<HttpServletRequest>(request);
-
+		parseQueryString();
 	}
 
 	public String getName()
@@ -80,30 +74,43 @@ public class MultipartForm
 		if (this.request == null)
 			throw new MultipartFormException("UPLOAD " + name + " WAS NOT CONSTRUCTED WITH A REQUEST");
 		//
-		parseRequest(request.get());
+		parseQueryString();
+		parseMultipartForm();
 		this.request = null;
 	}
 
-	@SuppressWarnings("unchecked")
-	public void parseRequest(HttpServletRequest request) throws MultipartFormException
+	public void parseQueryString() 
 	{
+		HttpServletRequest l_request = request.get();
+		if (l_request == null)
+			return;
+		Enumeration<String> e = l_request.getParameterNames();
+		while (e.hasMoreElements())
+		{
+			String k = e.nextElement();
+			String[] v = l_request.getParameterValues(k);
+			form_parameters.put(k, Arrays.asList(v));
+		}		
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void parseMultipartForm() throws MultipartFormException
+	{
+		HttpServletRequest l_request = request.get();
+		if (l_request == null)
+			throw new MultipartFormException("UPLOAD " + name + " WAS NOT CONSTRUCTED WITH A REQUEST OR REQUEST HAS BEEN GARBAGE COLLECTED");
 		state = PARSING;
-		long contentLength = Long.parseLong(request.getHeader(MultipartFormConstants.CONTENT_LENTH));
+		long contentLength = Long.parseLong(l_request.getHeader(MultipartFormConstants.CONTENT_LENTH));
 		try
 		{
 			ServletFileUpload upload = new ServletFileUpload();
 			upload.setFileItemFactory(new UploadItemProgressFactory(this, contentLength));
-			Enumeration<String> e = request.getParameterNames();
-			while (e.hasMoreElements())
-			{
-				String k = e.nextElement();
-				String[] v = request.getParameterValues(k);
-				form_parameters.put(k, Arrays.asList(v));
-			}
-			List<?> fileItems = upload.parseRequest(request);
+
+			List<?> fileItems = upload.parseRequest(l_request);
 			for (int i = 0; i < fileItems.size(); i++)
 			{
 				FileItem item = (FileItem) fileItems.get(i);
+				String nn = item.getFieldName();
 				if (item.isFormField())
 				{
 					String n = item.getFieldName();
