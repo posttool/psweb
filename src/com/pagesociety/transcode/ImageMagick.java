@@ -37,7 +37,7 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		this.gray = b;
 	}
 
-	public void exec()
+	public void exec() throws Exception 
 	{
 		String[] cmds = new String[] { EXEC_PATH, // convert
 				input.getAbsolutePath(), // input
@@ -93,6 +93,11 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 				.setRuntimeExecPath("C:\\Program Files\\ImageMagick-6.3.5-Q16\\convert.exe");
 		ImageMagick i = new ImageMagick(f1, f2);
 		i.setSize(150, 150);
+		try{
 		i.exec();
+		}catch(Exception e )
+		{
+			e.printStackTrace();
+		}
 	}
 }

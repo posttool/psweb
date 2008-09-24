@@ -24,7 +24,7 @@ public class FFMpeg extends TranscodeWorkImpl implements CmdWorkListener
 {
 	private static final Logger logger = Logger.getLogger(FFMpeg.class);
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
 		String bp1 = "C:\\Users\\david\\Desktop\\";
 		File f1 = new File(bp1 + "Goodness_LRV1115.mov");
@@ -42,7 +42,7 @@ public class FFMpeg extends TranscodeWorkImpl implements CmdWorkListener
 	// f.setAudioDisabled(true);
 	// f.exec();
 	// }
-	public static void do1(File f1, File f2)
+	public static void do1(File f1, File f2) throws Exception
 	{
 		FFMpeg f = new FFMpeg(f1, f2);
 		f.setAudioBitrate(56);
@@ -108,7 +108,7 @@ public class FFMpeg extends TranscodeWorkImpl implements CmdWorkListener
 		init = true;
 	}
 
-	public synchronized void exec()
+	public synchronized void exec() throws Exception
 	{
 		if (!init)
 			init();
@@ -116,7 +116,7 @@ public class FFMpeg extends TranscodeWorkImpl implements CmdWorkListener
 			exec2();
 	}
 
-	private synchronized void init()
+	private synchronized void init() throws Exception
 	{
 		final FFMpeg scope = this;
 		details = new FFMpeg(input);
@@ -127,7 +127,12 @@ public class FFMpeg extends TranscodeWorkImpl implements CmdWorkListener
 				durationInSeconds = details.durationInSeconds;
 				original_width = details.original_width;
 				original_height = details.original_height;
+				try{
 				scope.exec2();
+				}catch(Exception e)
+				{
+					e.printStackTrace();
+				}
 			}
 
 			public void onFileWorkError(String err_msg)
@@ -147,7 +152,7 @@ public class FFMpeg extends TranscodeWorkImpl implements CmdWorkListener
 		details.exec();
 	}
 
-	public synchronized void exec2()
+	public synchronized void exec2() throws Exception
 	{
 		String outputFile = output == null ? null : output.getPath();
 		String[] cmd = getCommandArgs(input.getPath(), outputFile, title);
