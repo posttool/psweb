@@ -6,111 +6,8 @@ import java.util.List;
 
 public class CmdWorker
 {
-	private LinkedList<CmdWork> _queue;
-	private boolean _working = false;
-	private static CmdWorker instance;
 
-	
-	public static CmdWorker getInstance()
-	{
-		if (instance == null)
-		{
-			instance = new CmdWorker();
-		}
-		return instance;
-	}
-
-	private CmdWorker()
-	{
-		_queue = new LinkedList<CmdWork>();
-	}
-
-	public static LinkedList<CmdWork> getQueue()
-	{
-		return getInstance()._queue;
-	}
-
-	public synchronized boolean pushWork(CmdWork work)
-	{
-		_queue.addLast(work);
-		return true;
-	}
-
-	public synchronized CmdWork popWork()
-	{
-		if (_queue.size() == 0)
-			return null;
-		return _queue.removeFirst();
-	}
-
-	public static void cancelWork()
-	{
-		// TODO work out the details
-		getInstance()._queue = new LinkedList<CmdWork>();
-	}
-
-	public void end(long id)
-	{
-		CmdWork work = get(id);
-		if (work == null)
-			return;
-		_queue.remove(work);
-	}
-
-	public CmdWork get(long id)
-	{
-		for (CmdWork w : _queue)
-		{
-			if (w.id == id)
-			{
-				return w;
-			}
-		}
-		return null;
-	}
-
-	public boolean isWorking()
-	{
-		return _working;
-	}
-
-	public void stopWork()
-	{
-		_working = false;
-	}
-
-	public void beginWork()
-	{
-		if (_working)
-			return;
-		_working = true;
-		Thread t = new Thread()
-		{
-			public void run()
-			{
-				while (_working)
-				{
-					CmdWork p = popWork();
-					if (p == null)
-					{
-						try
-						{
-							Thread.sleep(5000);
-						}
-						catch (Exception e)
-						{
-							e.printStackTrace();
-						}
-						continue;
-					}
-					doWork(p);
-				}
-			}
-		};
-		t.start();
-	}
-
-	public static void doWork(CmdWork work)
+	public static void doWork(CmdWork work) throws Exception
 	{
 		List<ProcessReader> process_readers = new ArrayList<ProcessReader>();
 		work.isWorking = true;
@@ -154,6 +51,7 @@ public class CmdWorker
 				e.printStackTrace();
 				if (p!=null)
 					p.destroy();
+				throw e;
 			}
 			if (exit_val != 0)
 			{
@@ -191,9 +89,5 @@ public class CmdWorker
 		work.isWorking = false;
 	}
 
-	public static void cancelWork(CmdWork work)
-	{
-		work.process.destroy();
-		work.observer.sigcomplete(work.id);
-	}
+
 }
