@@ -31,11 +31,13 @@ public class MultipartForm
 	private ArrayList<File> files;
 	// defaults to java.io.tmpdir
 	protected File upload_directory;
+	//max size of any one file in the upload
+	private long max_upload_item_size;
 	// a listener object that could get called back (optional)
 	private MultipartFormListener listener;
 	// the upload observers, by file name
 	private Map<String, UploadProgressInfo> progress;
-	private List<UploadProgressInfo> progress_list;
+	private List<UploadProgressInfo> 		progress_list;
 	//
 	private WeakReference<HttpServletRequest> request;
 	//
@@ -46,6 +48,15 @@ public class MultipartForm
 	public static final int ERROR 		= 4;
 	private int state;
 
+
+	public MultipartForm(HttpServletRequest request)
+	{
+		this();
+		this.request = new WeakReference<HttpServletRequest>(request);
+		parseQueryString();
+	}
+
+	
 	private MultipartForm()
 	{
 		state = INIT;
@@ -57,12 +68,6 @@ public class MultipartForm
 		files 				= new ArrayList<File>();
 	}
 
-	public MultipartForm(HttpServletRequest request)
-	{
-		this();
-		this.request = new WeakReference<HttpServletRequest>(request);
-		parseQueryString();
-	}
 
 	public String getName()
 	{
@@ -105,7 +110,9 @@ public class MultipartForm
 		{
 			ServletFileUpload upload = new ServletFileUpload();
 			upload.setFileItemFactory(new UploadItemProgressFactory(this, contentLength));
-
+			if(max_upload_item_size != 0)
+				upload.setFileSizeMax(max_upload_item_size);
+			
 			List<?> fileItems = upload.parseRequest(l_request);
 			for (int i = 0; i < fileItems.size(); i++)
 			{
@@ -251,6 +258,12 @@ public class MultipartForm
 	{
 		this.upload_directory = uploadDir;
 	}
+	
+	//0 means unlimited upload size
+	public void setMaxUploadItemSize(long size)
+	{
+		this.max_upload_item_size = size;
+	}
 
 	public void setListener(MultipartFormListener listener)
 	{
@@ -274,7 +287,7 @@ public class MultipartForm
 	}
 
 	public boolean isComplete()
-	{
+	{/* this upload is complete when all of the files have been parsed */
 		int s = progress_list.size();
 		for(int i = 0;i <s;i++)
 		{
