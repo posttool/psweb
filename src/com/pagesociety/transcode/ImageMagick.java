@@ -15,8 +15,13 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	{
 		EXEC_PATH = path;
 		// System.out.println("ImageMagick runtime exec path = " + path);
-	} 
-
+		try{
+			throw new Exception();
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		} 
+	}
 	private int width;
 	private int height;
 	private boolean gray;
