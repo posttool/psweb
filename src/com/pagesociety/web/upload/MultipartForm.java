@@ -166,24 +166,24 @@ public class MultipartForm
 		return form_parameters.get(name).get(0);
 	}
 
-	public String getString(String name)
+	public String getStringParameter(String name)
 	{
 		if (form_parameters.get(name) == null || form_parameters.get(name).isEmpty())
 			return null;
 		return form_parameters.get(name).get(0);
 	}
 
-	public List<String> getStringArray(String name)
+	public List<String> getStringArrayParameter(String name)
 	{
 		return form_parameters.get(name);
 	}
 
-	public int getInt(String name)
+	public int getIntParameter(String name)
 	{
 		return Text.toInt(form_parameters.get(name).get(0));
 	}
 
-	public List<Integer> getIntArray(String name)
+	public List<Integer> getIntArrayParameter(String name)
 	{
 		if (form_parameters.get(name) == null)
 			return null;
@@ -196,12 +196,12 @@ public class MultipartForm
 		return ints;
 	}
 	
-	public long getLong(String name)
+	public long getLongParameter(String name)
 	{
 		return Text.toLong(form_parameters.get(name).get(0));
 	}
 
-	public List<Long> getLongArray(String name)
+	public List<Long> getLongArrayParameter(String name)
 	{
 		if (form_parameters.get(name) == null)
 			return null;
@@ -214,12 +214,25 @@ public class MultipartForm
 		return longs;
 	}
 
-	public float getFloat(String name)
+	public float getFloatParameter(String name)
 	{
 		return Text.toFloat(form_parameters.get(name).get(0));
 	}
+	
+	public List<Float> getFloatArrayParameter(String name)
+	{
+		if (form_parameters.get(name) == null)
+			return null;
+		List<Float> floats = new ArrayList<Float>();
+		int s = form_parameters.get(name).size();
+		for (int i = 0; i < s; i++)
+		{
+			floats.add(Text.toFloat(form_parameters.get(name).get(i)));
+		}
+		return floats;
+	}
 
-	public float getDate(String name)
+	public float getDateParameter(String name)
 	{
 		throw new RuntimeException("UNIMPLEMENTED MultipartForm.getDate");
 	}

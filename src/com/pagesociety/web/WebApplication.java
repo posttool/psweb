@@ -19,6 +19,7 @@ import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
+import com.pagesociety.web.module.Module.SlotDescriptor;
 import com.pagesociety.web.template.FreemarkerRenderer;
 
 public abstract class WebApplication
@@ -35,11 +36,24 @@ public abstract class WebApplication
 	{
 		if (_instance != null)
 			throw new InitializationException("The WebApplication has already been initialized [" + getClass().getName() + "]");
-		_stores = new HashMap<String, PersistentStore>();
-		_module_instances = new HashMap<String, Module>();
-		_module_list = new ArrayList<Module>();
-		_sess_name_space_mgr = new SessionNameSpaceManager();
-		_instance = this;
+		_stores 				= new HashMap<String, PersistentStore>();
+		_module_instances 		= new HashMap<String, Module>();
+		_module_list 			= new ArrayList<Module>();
+		_sess_name_space_mgr 	= new SessionNameSpaceManager();
+		_instance 				= this;
+	}
+
+	public void init(WebApplicationInitParams config) throws InitializationException
+	{
+		_config = config;
+		//
+		Beans.initDefault();
+		FreemarkerRenderer.init(_config.getWebRootDir());
+		ModuleRegistry.init(this);
+		//
+		registerStores();
+		registerAndLinkModules();
+		registerUrls();
 	}
 
 	public static WebApplication getInstance()
@@ -142,18 +156,6 @@ public abstract class WebApplication
 		return ModuleRegistry.isValid(request);
 	}
 
-	public void init(WebApplicationInitParams config) throws InitializationException
-	{
-		_config = config;
-		//
-		Beans.initDefault();
-		FreemarkerRenderer.init(_config.getWebRootDir());
-		ModuleRegistry.init(this);
-		//
-		registerStores();
-		registerModules();
-		registerUrls();
-	}
 
 	@SuppressWarnings("unchecked")
 	public void registerStores() throws InitializationException
@@ -188,24 +190,78 @@ public abstract class WebApplication
 	}
 
 	@SuppressWarnings("unchecked")
-	public void registerModules() throws InitializationException
+	protected void registerAndLinkModules() throws InitializationException
 	{
+		/*instantiate modules*/
+		logger.info("INSTANTIATING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
-			ModuleInfo m = _config.getModuleInfo().get(i);
-			String className = m.getClassName();
+			ModuleInfo m 				= _config.getModuleInfo().get(i);
+			String module_name 			= m.getName();
+			logger.info("\tINSTANTIATING "+module_name);
+			String module_classname   	= m.getClassName();
 			
-			ModuleRegistry.register(className, m.getConfig());
-			String simple_name = className.substring(className.lastIndexOf(".") + 1);
-			Module module = ModuleRegistry.instantiate(simple_name);
-			
-			_module_instances.put(simple_name, module);
+			ModuleRegistry.register(module_name,module_classname, m.getProps());
+			Module module = ModuleRegistry.instantiate(module_name);
+			module.setup_slots();
+			_module_instances.put(module_name, module);
 			_module_list.add(module);
 		}
-	}
+		
+		logger.info("LINKING MODULES");
+		/*link modules */
+		for (int i = 0; i < _config.getModuleInfo().size(); i++)
+		{
+			ModuleInfo m_info 	    			  = _config.getModuleInfo().get(i);
+			String module_name 					  = m_info.getName();
+			logger.info("\tLINKING "+module_name);
+			
+			Map<String,String> module_info_slots  = m_info.getSlots();
+			Module module_instance  			  = _module_instances.get(module_name);
+			List<Module.SlotDescriptor> all_slots = module_instance.getSlotDescriptors();
+			
+			for(int j = 0;j < all_slots.size();j++)
+			{
+				Module.SlotDescriptor d = all_slots.get(j);
+				String slot_name   		= d.slot_name;
+				String slot_module_name = module_info_slots.get(slot_name);
+				if(slot_module_name == null)
+					if(d.required)
+						throw new InitializationException("MODULE "+module_instance.getName()+"HAS A SLOT NAMED "+d.slot_name+" OF TYPE "+d.slot_type.getName()+" WHICH UNFORTUNATELY IS REQUIRED.");
+					else
+						continue;
 
+				Object slot_instance = _module_instances.get(slot_module_name);
+				if(slot_instance == null)
+					throw new InitializationException("SLOT "+slot_name+" OF MODULE "+module_instance.getName()+" REFERS TO A MODULE NAMED "+slot_module_name+" WHICH IS UNDEFINED");
+				
+				try{
+					logger.info("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
+					module_instance.setSlot(slot_name, slot_instance);
+				}catch(SlotException se)
+				{
+					throw new InitializationException(se.getMessage());
+				}
+			}
+		}
+		
+		
+		/*init modules*/
+		logger.info("INITIALIZING MODULES");
+		for (int i = 0; i < _config.getModuleInfo().size(); i++)
+		{
+			ModuleInfo m 				= _config.getModuleInfo().get(i);
+			String module_name			= m.getName();
+			logger.info("\tINITIALIZING "+module_name);
+			_module_instances.get(m.getName()).init(this,m.getProps());
+		}
+	}
+	
+	
+	
+	
 	@SuppressWarnings("unchecked")
-	public void registerUrls() throws InitializationException
+	protected void registerUrls() throws InitializationException
 	{
 		for (int i = 0; i < _config.getUrlMapInfoItems().size(); i++)
 		{

@@ -31,7 +31,7 @@ import com.pagesociety.web.upload.MultipartForm;
  */
 public class ModuleRegistry
 {
-	private static final Logger logger = Logger.getLogger(ModuleRegistry.class);
+	private static final Logger   logger = Logger.getLogger(ModuleRegistry.class);
 	private static WebApplication _app_config;
 	// private static PersistentStore _store;
 	//
@@ -44,11 +44,11 @@ public class ModuleRegistry
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void register(String moduleClassName, Map<String, Object> config)
+	public static void register(String moduleName,String moduleClassName, Map<String, Object> config)
 			throws InitializationException
 	{
-		if (moduleClassName == null)
-			throw new InitializationException("IMPROPER MODULE REGISTRATION: " + moduleClassName + " A module class is required!");
+		if (moduleClassName == null || moduleName == null)
+			throw new InitializationException("IMPROPER MODULE REGISTRATION:  A module name attribute and module-class tag are required!");
 		ModuleDefinition module_def = new ModuleDefinition(config);
 		Class<? extends Module> moduleClass;
 		try
@@ -59,15 +59,15 @@ public class ModuleRegistry
 		{
 			throw new InitializationException("ClassNotFound " + moduleClassName, e);
 		}
-		if (MODULES.get(moduleClass.getSimpleName()) != null)
-			throw new InitializationException("MODULE " + moduleClass.getSimpleName() + " ALREADY DEFINED ");
+		if (MODULES.get(moduleName) != null)
+			throw new InitializationException("MODULE " + moduleName + " ALREADY DEFINED ");
 		if (moduleClass != null)
 		{
 			module_def.reflect(moduleClass);
-			MODULES.put(moduleClass.getSimpleName(), module_def);
+			MODULES.put(moduleName, module_def);
 			MODULE_LIST.add(module_def);
 		}
-		logger.info("ModuleRegistry registered " + moduleClass.getSimpleName() + " " + moduleClass);
+		logger.info("ModuleRegistry registered " + moduleName + " with instance of " + moduleClass);
 		logger.info(module_def);
 	}
 
@@ -84,7 +84,7 @@ public class ModuleRegistry
 		try
 		{
 			Module module = module_def.newInstance();
-			module.init(_app_config, module_def.getConfigParams());
+			module.setName(module_name);
 			return module;
 		}
 		catch (Exception e)

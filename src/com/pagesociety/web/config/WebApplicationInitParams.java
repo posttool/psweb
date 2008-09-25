@@ -8,6 +8,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.pagesociety.util.XML;
+import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.config.StoreInitParams.StoreInfo;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
@@ -16,11 +17,7 @@ public class WebApplicationInitParams
 {
 	public static final String WEB_ROOT_DIR_KEY = "web-root-directory";
 	public static final String WEB_ROOT_URL_KEY = "web-root-url";
-	public static final String STATIC_WEB_ROOT_DIR_KEY = "static-web-root-directory";
-	public static final String STATIC_WEB_ROOT_URL_KEY = "static-web-root-url";
-	public static final String RESOURCE_ROOT_DIR_KEY = "resource-root-directory";
-	public static final String RESOURCE_ROOT_URL_KEY = "resource-root-url";
-	public static final String MODULE_ROOT_URL_KEY = "module-root-url";
+
 	//
 	private File configDir;
 	//
@@ -33,17 +30,13 @@ public class WebApplicationInitParams
 	private String name;
 	private String webRootDir;
 	private String webRootUrl;
-	private String staticWebRootDir;
-	private String staticWebRootUrl;
-	private String resourceRootUrl;
-	private String resourceRootDir;
-	private String moduleRootUrl;
+
 	//
 	private StoreInitParams stores;
 	private ModuleInitParams modules;
 	private UrlMapInitParams urlMap;
 
-	public WebApplicationInitParams(File config_dir)
+	public WebApplicationInitParams(File config_dir) throws InitializationException
 	{
 		configDir = config_dir;
 		try
@@ -62,11 +55,6 @@ public class WebApplicationInitParams
 		name = application_doc.getDocumentElement().getAttribute("name");
 		webRootDir = getParameterValue(WEB_ROOT_DIR_KEY, application_doc.getDocumentElement());
 		webRootUrl = getParameterValue(WEB_ROOT_URL_KEY, application_doc.getDocumentElement());
-		staticWebRootDir = getParameterValue(STATIC_WEB_ROOT_DIR_KEY, application_doc.getDocumentElement());
-		staticWebRootUrl = getParameterValue(STATIC_WEB_ROOT_URL_KEY, application_doc.getDocumentElement());
-		resourceRootDir = getParameterValue(RESOURCE_ROOT_DIR_KEY, application_doc.getDocumentElement());
-		resourceRootUrl = getParameterValue(RESOURCE_ROOT_URL_KEY, application_doc.getDocumentElement());
-		moduleRootUrl = getParameterValue(MODULE_ROOT_URL_KEY, application_doc.getDocumentElement());
 		//
 		stores = new StoreInitParams(stores_doc);
 		modules = new ModuleInitParams(module_doc);
@@ -98,31 +86,7 @@ public class WebApplicationInitParams
 		return webRootUrl;
 	}
 
-	public String getResourceRootUrl()
-	{
-		return resourceRootUrl;
-	}
-
-	public String getResourceRootDir()
-	{
-		return resourceRootDir;
-	}
-
-	public String getStaticWebRootDir()
-	{
-		return staticWebRootDir;
-	}
-
-	public String getStaticWebRootUrl()
-	{
-		return staticWebRootUrl;
-	}
-
-	public String getModuleRootUrl()
-	{
-		return moduleRootUrl;
-	}
-
+	
 	public List<StoreInfo> getStoreInfo()
 	{
 		return stores.getInfo();

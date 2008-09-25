@@ -142,9 +142,6 @@ public class FreemarkerGateway
 		data.put(REQUEST_PARAMS_KEY, params0);
 		data.put(REQUEST_URL_KEY, request_path);
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
-		data.put(WEB_URL_STATIC_KEY, _web_application.getConfig().getStaticWebRootUrl());
-		data.put(RESOURCE_URL_KEY, _web_application.getConfig().getResourceRootUrl());
-		data.put(MODULE_URL_KEY, _web_application.getConfig().getModuleRootUrl());
 		data.put(NOW_KEY, new Date());
 		//
 		return data;

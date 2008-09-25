@@ -97,12 +97,12 @@ public class TestModule extends Module
 		}
 		upload.getUploadProgress().get(0).setCompletionObject(result);
 		result.put("picture_path", upload.getFile("picture").getAbsolutePath());
-		result.put("first_name", upload.getStringArray("first_name"));
-		result.put("ints", upload.getIntArray("ints"));
-		result.put("last_name", upload.getString("last_name"));
-		result.put("thingy", upload.getString("thingy"));
-		result.put("cb", upload.getStringArray("checkbox-test"));
-		result.put("rb", upload.getString("radio-test"));
+		result.put("first_name", upload.getStringArrayParameter("first_name"));
+		result.put("ints", upload.getIntArrayParameter("ints"));
+		result.put("last_name", upload.getStringParameter("last_name"));
+		result.put("thingy", upload.getStringParameter("thingy"));
+		result.put("cb", upload.getStringArrayParameter("checkbox-test"));
+		result.put("rb", upload.getStringParameter("radio-test"));
 		return result;
 	}
 

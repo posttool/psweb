@@ -13,13 +13,11 @@ public class ModuleDefinition
 	private Class<? extends Module> module;
 	private Map<String, ModuleMethod> exported_method_map;
 	private List<ModuleMethod> exported_methods;
-	private Map<String, Object> config_params;
 
 	public ModuleDefinition(Map<String, Object> config)
 	{
 		this.exported_method_map = new HashMap<String, ModuleMethod>();
 		this.exported_methods = new ArrayList<ModuleMethod>();
-		this.config_params = config;
 	}
 
 	public void reflect(Class<? extends Module> module) throws InitializationException
@@ -81,8 +79,4 @@ public class ModuleDefinition
 		return exported_methods;
 	}
 
-	public Map<String, Object> getConfigParams()
-	{
-		return config_params;
-	}
 }

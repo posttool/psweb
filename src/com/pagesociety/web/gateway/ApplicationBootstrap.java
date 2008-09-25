@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
+import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.config.WebApplicationInitParams;
 
@@ -30,7 +31,14 @@ public class ApplicationBootstrap extends HttpServlet
 			logger.info("-----------------------------------------------");
 			//
 			File cfg_dir = new File(config_path);
-			WebApplicationInitParams config = new WebApplicationInitParams(cfg_dir);
+			WebApplicationInitParams config;
+			try{
+				config = new WebApplicationInitParams(cfg_dir);
+			}catch(InitializationException ie)
+			{
+				ie.printStackTrace();
+				throw new ServletException("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIG",ie);
+			}
 			//
 			logger.info("Loaded config:");
 			logger.info(config.getApplicationClassName());
