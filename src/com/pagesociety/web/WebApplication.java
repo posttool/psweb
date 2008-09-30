@@ -160,6 +160,7 @@ public abstract class WebApplication
 	@SuppressWarnings("unchecked")
 	public void registerStores() throws InitializationException
 	{
+		/*
 		Class<? extends PersistentStore> storeClass = null;
 		PersistentStore store = null;
 		for (int i = 0; i < _config.getStoreInfo().size(); i++)
@@ -187,6 +188,7 @@ public abstract class WebApplication
 			_stores.put(s.getName(), store);
 			logger.info("Registered PersistentStore " + s.getName() + " " + s.getClassName());
 		}
+		*/
 	}
 
 	@SuppressWarnings("unchecked")
