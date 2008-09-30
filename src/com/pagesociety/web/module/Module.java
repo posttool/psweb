@@ -15,6 +15,12 @@ public abstract class Module
 	protected WebApplication 		_application;
 	protected Map<String, Object> 	_config;
 	protected String 				_name;
+	
+	/* slot management stuff ...called as a course of bootstrap */
+	private Map<String,SlotDescriptor>  _slot_descriptor_map  = new HashMap<String,SlotDescriptor>();
+	private List<SlotDescriptor>  		_slot_descriptor_list = new ArrayList<SlotDescriptor>();
+	private Map<String,Object>   		_slot_instance_map    = new HashMap<String,Object>();
+	
 	public void init(WebApplication web_app, Map<String, Object> config) throws InitializationException
 	{
 		_application = web_app;
@@ -60,10 +66,7 @@ public abstract class Module
 		_config = null;
 	}
 
-	/* slot management stuff ...called as a course of bootstrap */
-	private Map<String,SlotDescriptor>  _slot_descriptor_map  = new HashMap<String,SlotDescriptor>();
-	private List<SlotDescriptor>  		_slot_descriptor_list = new ArrayList<SlotDescriptor>();
-	private Map<String,Object>   		_slot_instance_map    = new HashMap<String,Object>();
+/* slot stuff */
 	protected void defineSlots()
 	{
 		//do nothing by default//
