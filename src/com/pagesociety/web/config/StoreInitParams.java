@@ -3,6 +3,7 @@ package com.pagesociety.web.config;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -25,7 +26,7 @@ public class StoreInitParams
 			Element storeEl = (Element) stores.item(i);
 			String name = storeEl.getAttribute(NAME_KEY);
 			String storeClassName = storeEl.getAttribute(CLASS_KEY);
-			HashMap<Object, Object> storeConfig = new HashMap<Object, Object>();
+			HashMap<String, Object> storeConfig = new HashMap<String, Object>();
 			NodeList configParams = storeEl.getChildNodes();
 			for (int j = 0; j < configParams.getLength(); j++)
 			{
@@ -62,9 +63,9 @@ public class StoreInitParams
 	{
 		private String name;
 		private String className;
-		private HashMap<Object, Object> config;
+		private Map<String, Object> config;
 
-		public StoreInfo(String name, String className, HashMap<Object, Object> cfg)
+		public StoreInfo(String name, String className, Map<String, Object> cfg)
 		{
 			this.name = name;
 			this.className = className;
@@ -81,7 +82,7 @@ public class StoreInitParams
 			return className;
 		}
 
-		public HashMap<Object, Object> getConfig()
+		public Map<String, Object> getConfig()
 		{
 			return config;
 		}

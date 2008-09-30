@@ -42,7 +42,7 @@ public class WebApplicationInitParams
 		try
 		{
 			application_doc = XML.read(new File(config_dir, "application.xml"));
-			stores_doc = XML.read(new File(config_dir, "stores.xml"));
+			//stores_doc = XML.read(new File(config_dir, "stores.xml"));
 			module_doc = XML.read(new File(config_dir, "modules.xml"));
 			url_map_doc = XML.read(new File(config_dir, "url-mappings.xml"));
 		}
@@ -52,11 +52,11 @@ public class WebApplicationInitParams
 		}
 		//
 		applicationClassName = application_doc.getDocumentElement().getAttribute("class");
-		name = application_doc.getDocumentElement().getAttribute("name");
+		name 	   = application_doc.getDocumentElement().getAttribute("name");
 		webRootDir = getParameterValue(WEB_ROOT_DIR_KEY, application_doc.getDocumentElement());
 		webRootUrl = getParameterValue(WEB_ROOT_URL_KEY, application_doc.getDocumentElement());
 		//
-		stores = new StoreInitParams(stores_doc);
+		//stores = new StoreInitParams(stores_doc);
 		modules = new ModuleInitParams(module_doc);
 		urlMap = new UrlMapInitParams(url_map_doc);
 	}
