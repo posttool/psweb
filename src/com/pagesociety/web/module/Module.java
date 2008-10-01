@@ -74,10 +74,16 @@ public abstract class Module
 	
 	protected void defineSlot(String slot_name,Class<?> slot_type,boolean required)
 	{
+		defineSlot(slot_name, slot_type, required, null);
+	}
+	
+	protected void defineSlot(String slot_name,Class<?> slot_type,boolean required,Class<?> default_implementation)
+	{
 		SlotDescriptor d = new SlotDescriptor();
 		d.slot_name = slot_name;
 		d.slot_type = slot_type;
 		d.required  = required;
+		d.default_slot_class = default_implementation;
 		_slot_descriptor_map.put(slot_name,d);
 		_slot_descriptor_list.add(d);
 	}
@@ -121,5 +127,6 @@ public abstract class Module
 		public String 	slot_name;
 		public Class<?> slot_type;
 		public boolean 	required;
+		public Class<?> default_slot_class;/* if not required can have a default */
 	}
 }

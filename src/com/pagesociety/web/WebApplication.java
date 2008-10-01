@@ -227,15 +227,45 @@ public abstract class WebApplication
 				Module.SlotDescriptor d = all_slots.get(j);
 				String slot_name   		= d.slot_name;
 				String slot_module_name = module_info_slots.get(slot_name);
+				Object slot_instance;
+				
 				if(slot_module_name == null)
+				{
 					if(d.required)
 						throw new InitializationException("MODULE "+module_instance.getName()+"HAS A SLOT NAMED "+d.slot_name+" OF TYPE "+d.slot_type.getName()+" WHICH UNFORTUNATELY IS REQUIRED.");
 					else
-						continue;
-
-				Object slot_instance = _module_instances.get(slot_module_name);
-				if(slot_instance == null)
-					throw new InitializationException("SLOT "+slot_name+" OF MODULE "+module_instance.getName()+" REFERS TO A MODULE NAMED "+slot_module_name+" WHICH IS UNDEFINED");
+					{
+						if(d.default_slot_class != null)
+						{
+							try{
+								slot_instance = d.default_slot_class.newInstance();
+							}catch(Exception e)
+							{
+								throw new InitializationException("MODULE "+module_instance.getName()+"FAILED SETTING UP DEFAULT FOR "+d.slot_name+" OF TYPE "+d.default_slot_class.getName()+" WHICH UNFORTUNATELY BOMBS THE INIT.");
+							}
+						}
+						else
+							continue;
+					}
+				}
+				else
+				{
+					if(slot_module_name.endsWith(".class"))
+					{
+						try{
+							slot_instance = Class.forName(slot_module_name).newInstance();
+						}catch(Exception e)
+						{
+							throw new InitializationException("MODULE "+module_instance.getName()+" FAILED SETTING "+d.slot_name+" TO AN INSTANCE OF TYPE "+d.default_slot_class.getName()+" WHICH UNFORTUNATELY BOMBS THE INIT.");
+						}
+					}
+					else
+					{
+						slot_instance = _module_instances.get(slot_module_name);
+						if(slot_instance == null)
+							throw new InitializationException("SLOT "+slot_name+" OF MODULE "+module_instance.getName()+" REFERS TO A MODULE NAMED "+slot_module_name+" WHICH IS UNDEFINED");
+					}
+				}
 				
 				try{
 					logger.info("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
