@@ -222,19 +222,24 @@ public abstract class WebApplication
 			Module module_instance  			  = _module_instances.get(module_name);
 			List<Module.SlotDescriptor> all_slots = module_instance.getSlotDescriptors();
 			
+			/* iterate through all slots so we can see if required ones are 'filled'*/
 			for(int j = 0;j < all_slots.size();j++)
 			{
 				Module.SlotDescriptor d = all_slots.get(j);
 				String slot_name   		= d.slot_name;
+				/*this is the reference to another module by name in application.xml*/
 				String slot_module_name = module_info_slots.get(slot_name);
 				Object slot_instance;
 				
 				if(slot_module_name == null)
 				{
-					if(d.required)
+					if(d.required)/* this means the user needs to supply a value in that slot via applicatin.xml*/
 						throw new InitializationException("MODULE "+module_instance.getName()+"HAS A SLOT NAMED "+d.slot_name+" OF TYPE "+d.slot_type.getName()+" WHICH UNFORTUNATELY IS REQUIRED.");
 					else
 					{
+						/*otherwise the slot definition could have a default slot class */
+						/* this default slot class shouldnt really have any slots since they cannot */
+						/* be linked */
 						if(d.default_slot_class != null)
 						{
 							try{
@@ -250,6 +255,10 @@ public abstract class WebApplication
 				}
 				else
 				{
+					/* this works fine for something that doesn't take any parameters
+					 * or is all default values 
+					 * but is generally a bad idea and mostly useless.
+					 */
 					if(slot_module_name.endsWith(".class"))
 					{
 						try{
