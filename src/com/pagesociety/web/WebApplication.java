@@ -234,7 +234,7 @@ public abstract class WebApplication
 				if(slot_module_name == null)
 				{
 					if(d.required)/* this means the user needs to supply a value in that slot via applicatin.xml*/
-						throw new InitializationException("MODULE "+module_instance.getName()+"HAS A SLOT NAMED "+d.slot_name+" OF TYPE "+d.slot_type.getName()+" WHICH UNFORTUNATELY IS REQUIRED.");
+						throw new InitializationException("MODULE "+module_instance.getName()+" HAS A SLOT NAMED "+d.slot_name+" OF TYPE "+d.slot_type.getName()+" WHICH UNFORTUNATELY IS REQUIRED.");
 					else
 					{
 						/*otherwise the slot definition could have a default slot class */
