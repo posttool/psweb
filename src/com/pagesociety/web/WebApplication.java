@@ -17,6 +17,7 @@ import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.config.StoreInitParams.StoreInfo;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.module.Module;
+import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
 import com.pagesociety.web.module.Module.SlotDescriptor;
@@ -82,6 +83,11 @@ public abstract class WebApplication
 	public List<Module> getModules()
 	{
 		return _module_list;
+	}
+	
+	public List<ModuleDefinition> getModuleDefinitions()
+	{
+		return ModuleRegistry.getModules();
 	}
 
 	public Map<String, Module> getModuleMap()

@@ -10,14 +10,21 @@ import com.pagesociety.web.InitializationException;
 
 public class ModuleDefinition
 {
+	private String name;
 	private Class<? extends Module> module;
 	private Map<String, ModuleMethod> exported_method_map;
 	private List<ModuleMethod> exported_methods;
 
-	public ModuleDefinition(Map<String, Object> config)
+	public ModuleDefinition(String name, Map<String, Object> config)
 	{
+		this.name = name;
 		this.exported_method_map = new HashMap<String, ModuleMethod>();
 		this.exported_methods = new ArrayList<ModuleMethod>();
+	}
+	
+	public String getName()
+	{
+		return name;
 	}
 
 	public void reflect(Class<? extends Module> module) throws InitializationException

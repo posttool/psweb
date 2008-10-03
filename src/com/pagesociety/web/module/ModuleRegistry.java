@@ -32,7 +32,7 @@ import com.pagesociety.web.upload.MultipartForm;
 public class ModuleRegistry
 {
 	private static final Logger   logger = Logger.getLogger(ModuleRegistry.class);
-	private static WebApplication _app_config;
+//	private static WebApplication _app_config;
 	// private static PersistentStore _store;
 	//
 	private static Map<String, ModuleDefinition> MODULES = new HashMap<String, ModuleDefinition>();
@@ -40,7 +40,7 @@ public class ModuleRegistry
 
 	public static void init(WebApplication app_context)
 	{
-		_app_config = app_context;
+//		_app_config = app_context;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -49,7 +49,7 @@ public class ModuleRegistry
 	{
 		if (moduleClassName == null || moduleName == null)
 			throw new InitializationException("IMPROPER MODULE REGISTRATION:  A module name attribute and module-class tag are required!");
-		ModuleDefinition module_def = new ModuleDefinition(config);
+		ModuleDefinition module_def = new ModuleDefinition(moduleName,config);
 		Class<? extends Module> moduleClass;
 		try
 		{

@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,9 +26,6 @@ public class FreemarkerGateway
 	public static final String REQUEST_URL_KEY = "request_url";
 	public static final String REQUEST_PARAMS_KEY = "params";
 	public static final String WEB_URL_KEY = "web_url";
-	public static final String WEB_URL_STATIC_KEY = "static_web_url";
-	public static final String RESOURCE_URL_KEY = "resource_url";
-	public static final String MODULE_URL_KEY = "module_url";
 	public static final String NOW_KEY = "now";
 	public static final String MODULE_DATA_KEY = "data";
 	public static final String EXCEPTION_KEY = "exception";
