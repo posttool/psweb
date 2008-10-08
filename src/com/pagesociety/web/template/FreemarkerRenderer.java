@@ -20,35 +20,18 @@ public class FreemarkerRenderer
 	 */
 	private static final Logger logger = Logger.getLogger(FreemarkerRenderer.class);
 
-	private static String TEMPLATE_ROOT;
-	private static Configuration _cfg;
+	private  String _template_root;
+	private  Configuration _cfg;
 
-	public static String render(String templateName, Map<String, Object> pagedata)
-	 throws IOException, TemplateException 
+	public FreemarkerRenderer(String template_root)
 	{
-		// long t = System.currentTimeMillis();
-		StringWriter out = new StringWriter();
-		render(templateName, pagedata, out);
-		// System.out.println("FreemarkerRenderer " +
-		// (System.currentTimeMillis() - t));
-		return out.toString();
+		init(template_root);
 	}
 
-	public static String render(String templateName, Map<String, Object> pagedata,
-			Writer out) throws IOException, TemplateException 
-	{
-		if (templateName.startsWith("/"))
-			templateName = templateName.substring(1);
-		Template temp = _cfg.getTemplate(templateName);
-		temp.process(pagedata, out);
-		out.flush();
-		return out.toString();
-	}
-
-	public static void init(String template_root)
+	public void init(String template_root)
 	{
 		logger.debug("FreemarkerRenderer - initialized with " + template_root);
-		TEMPLATE_ROOT = template_root;
+		_template_root = template_root;
 		_cfg = new Configuration();
 		try
 		{
@@ -63,9 +46,31 @@ public class FreemarkerRenderer
 		}
 		_cfg.setObjectWrapper(new DefaultObjectWrapper());
 	}
-
-	public static String getTemplateRoot()
+	
+	public  String render(String templateName, Map<String, Object> pagedata)
+	 throws IOException, TemplateException 
 	{
-		return TEMPLATE_ROOT;
+		// long t = System.currentTimeMillis();
+		StringWriter out = new StringWriter();
+		render(templateName, pagedata, out);
+		// System.out.println("FreemarkerRenderer " +
+		// (System.currentTimeMillis() - t));
+		return out.toString();
+	}
+
+	public String render(String templateName, Map<String, Object> pagedata,
+			Writer out) throws IOException, TemplateException 
+	{
+		if (templateName.startsWith("/"))
+			templateName = templateName.substring(1);
+		Template temp = _cfg.getTemplate(templateName);
+		temp.process(pagedata, out);
+		out.flush();
+		return out.toString();
+	}
+
+	public String getTemplateRoot()
+	{
+		return _template_root;
 	}
 }
