@@ -26,13 +26,14 @@ import com.pagesociety.web.template.FreemarkerRenderer;
 public abstract class WebApplication
 {
 	private static final Logger logger = Logger.getLogger(WebApplication.class);
-	private static WebApplication _instance;
+	private static WebApplication 		 _instance;
 	private Map<String, PersistentStore> _stores;
-	private WebApplicationInitParams _config;
-	private Map<String, Module> _module_instances;
-	private List<Module> _module_list;
-	private SessionNameSpaceManager _sess_name_space_mgr;
+	private WebApplicationInitParams 	 _config;
+	private Map<String, Module> 		 _module_instances;
+	private List<Module> 				 _module_list;
+	private SessionNameSpaceManager 	 _sess_name_space_mgr;
 
+	
 	public WebApplication() throws InitializationException
 	{
 		if (_instance != null)
@@ -49,7 +50,6 @@ public abstract class WebApplication
 		_config = config;
 		//
 		Beans.initDefault();
-		FreemarkerRenderer.init(_config.getWebRootDir());
 		ModuleRegistry.init(this);
 		//
 		registerStores();
