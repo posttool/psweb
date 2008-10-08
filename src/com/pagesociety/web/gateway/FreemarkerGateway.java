@@ -32,10 +32,12 @@ public class FreemarkerGateway
 	public static final String EXCEPTION_STRING_KEY = "exceptionString";
 	//
 	private WebApplication _web_application;
-
+	private FreemarkerRenderer _fm_renderer;
+	
 	public FreemarkerGateway(WebApplication web_app)
 	{
 		_web_application = web_app;
+		_fm_renderer = new FreemarkerRenderer(web_app.getConfig().getWebRootDir());
 	}
 
 	public void doService(UserApplicationContext user_context, String requestPath,
@@ -49,7 +51,7 @@ public class FreemarkerGateway
 		{
 			mime_type = getMimeType(requestPath);
 			templateData = setup_template_context_object(user_context, requestPath, request.getParameterMap());
-			text_response = FreemarkerRenderer.render(requestPath, templateData);
+			text_response = _fm_renderer.render(requestPath, templateData);
 		}
 		catch (Exception e)
 		{
@@ -102,7 +104,7 @@ public class FreemarkerGateway
 			templateData.put(EXCEPTION_STRING_KEY, sw.toString());
 			try
 			{
-				String template = FreemarkerRenderer.render(url_mapped_request, templateData);
+				String template = _fm_renderer.render(url_mapped_request, templateData);
 				out.write(template);
 				out.close();
 			}
