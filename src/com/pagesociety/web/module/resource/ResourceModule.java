@@ -190,7 +190,7 @@ public class ResourceModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity resource = GET(RESOURCE_ENTITY,resource_id);
-		GUARD(guard.canGetResource(user,resource));
+		GUARD(guard.canGetResourceURL(user,resource));
 		return getResourceUrlWithDim( resource, w, h);
 	
 	}
@@ -216,7 +216,7 @@ public class ResourceModule extends WebStoreModule
 		for (int i=0; i<s; i++)
 		{
 			Entity resource = resources.get(i);
-			GUARD(guard.canGetResource(user, resource));
+			GUARD(guard.canGetResourceURL(user, resource));
 			urls.add( getResourceUrlWithDim(resource, w, h));
 		}
 		return urls;
@@ -225,6 +225,7 @@ public class ResourceModule extends WebStoreModule
 	@Export
 	public List<UploadProgressInfo> GetUploadProgress(UserApplicationContext uctx,String channel_name) throws PersistenceException,WebApplicationException
 	{
+		System.out.println("GET PROGRESS SESSION ID IS "+uctx.getId());
 		check_exceptions(uctx);
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canGetUploadProgress(user,channel_name));
@@ -239,8 +240,10 @@ public class ResourceModule extends WebStoreModule
 		
 		List<UploadProgressInfo> ret = channel_upload.getUploadProgress();
 		if(channel_upload.isComplete())
+		{
+			System.out.println("UPLOAD IS COMPLETE FOR SESSION"+uctx.getId());
 			channel_upload_map.remove(channel_name);
-	
+		}
 		return ret;
 	}
 	
@@ -289,7 +292,7 @@ public class ResourceModule extends WebStoreModule
 	///////////////////////////////////END MODULE FUNCTIONS *//
 	private boolean do_upload(UserApplicationContext uctx,MultipartForm upload,boolean update,Entity update_resource) throws WebApplicationException,PersistenceException
 	{
-
+		System.out.println("INITIATING UPLOAD FOR SESSION"+uctx.getId());
 		Entity user = (Entity)uctx.getUser();		
 		String channel_name = upload.getParameter(FORM_ELEMENT_CHANNEL);
 		if(channel_name == null)
