@@ -8,10 +8,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.pagesociety.util.XML;
-import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.config.StoreInitParams.StoreInfo;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
+import com.pagesociety.web.exception.InitializationException;
 
 public class WebApplicationInitParams
 {
