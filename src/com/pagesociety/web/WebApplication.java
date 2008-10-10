@@ -50,6 +50,7 @@ public abstract class WebApplication
 
 	public void init(WebApplicationInitParams config) throws InitializationException
 	{
+
 		_config = config;
 		//
 		Beans.initDefault();
