@@ -20,7 +20,7 @@ public abstract class Module
 	private Map<String,SlotDescriptor>  _slot_descriptor_map  = new HashMap<String,SlotDescriptor>();
 	private List<SlotDescriptor>  		_slot_descriptor_list = new ArrayList<SlotDescriptor>();
 	private Map<String,Object>   		_slot_instance_map    = new HashMap<String,Object>();
-	
+	private List<IEventListener>		_event_listeners	  = new ArrayList<IEventListener>();
 	public void init(WebApplication web_app, Map<String, Object> config) throws InitializationException
 	{
 		_application = web_app;
@@ -129,4 +129,26 @@ public abstract class Module
 		public boolean 	required;
 		public Class<?> default_slot_class;/* if not required can have a default */
 	}
+
+
+	public void addEventListener(IEventListener listener)
+	{
+		_event_listeners.add(listener);
+	}
+	
+	public void removeEventListener(IEventListener listener)
+	{
+		_event_listeners.remove(listener);
+	}
+	
+	public void dispatchEvent(int event,Object arg)
+	{
+		int s = _event_listeners.size();
+		for(int i = 0;i < s;i++)
+		{
+			IEventListener l = _event_listeners.get(i);
+			l.onEvent(this, event,arg);
+		}
+	}
+
 }
