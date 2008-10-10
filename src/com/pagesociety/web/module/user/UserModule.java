@@ -39,7 +39,14 @@ public class UserModule extends WebStoreModule
 	public static final int LOCK_CODE_DEFAULT						= 0x01;
 	
 	private static final String SLOT_USER_GUARD = "user-guard"; 
+	
+	private static final int USER_REGISTERED = 0x1001;
+	private static final int USER_LOGGED_IN  = 0x1002;
+	private static final int USER_LOGGED_OUT = 0x1004;
+	
 	private IUserGuard guard;
+
+	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
@@ -52,8 +59,10 @@ public class UserModule extends WebStoreModule
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP USER MODULE.COULDNT CREATE ADMIN USER",e);
 		}
+
 	}
 
+	
 	protected void defineSlots()
 	{
 		super.defineSlots();
