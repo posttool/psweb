@@ -1,6 +1,7 @@
 package com.pagesociety.web.module.persistence;
 
 
+import java.io.File;
 import java.util.Map;
 
 import com.pagesociety.bdb.BDBStore;
@@ -23,6 +24,9 @@ public class BDBPersistenceModule extends Module implements IPersistenceProvider
 		if(root_dir == null)
 			throw new InitializationException("BDBPersistenceModule requires paramter "+PARAM_STORE_ROOT_DIRECTORY);
 		
+		File f = new File(root_dir);
+		if(!f.exists())
+			f.mkdirs();
 		bdb_store = new BDBStore();
 		try{
 			bdb_store.init(config);	
