@@ -3,7 +3,6 @@ package com.pagesociety.web.module.registration;
 
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,16 +11,11 @@ import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
-import com.pagesociety.persistence.Types;
 import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.SyncException;
-import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
-import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.email.IEmailModule;
-import com.pagesociety.web.module.user.UserModule;
+
 
 
 
