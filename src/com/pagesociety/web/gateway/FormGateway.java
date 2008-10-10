@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.ModuleRequest;
 import com.pagesociety.web.upload.MultipartForm;
 

@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletResponse;
 import com.pagesociety.web.ErrorMessage;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
 import com.pagesociety.web.amf.AmfConstants;
 import com.pagesociety.web.amf.AmfIn;
 import com.pagesociety.web.amf.AmfOut;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.ModuleRequest;
 
 public class AmfGateway

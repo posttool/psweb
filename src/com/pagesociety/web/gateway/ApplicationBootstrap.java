@@ -9,9 +9,9 @@ import javax.servlet.http.HttpServlet;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
-import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.config.WebApplicationInitParams;
+import com.pagesociety.web.exception.InitializationException;
 
 public class ApplicationBootstrap extends HttpServlet
 {

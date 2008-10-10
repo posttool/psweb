@@ -2,7 +2,7 @@ package com.pagesociety.web.gateway;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
 
