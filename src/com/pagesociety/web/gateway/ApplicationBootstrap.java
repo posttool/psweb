@@ -47,7 +47,15 @@ public class ApplicationBootstrap extends HttpServlet
 			//
 			WebApplication app;
 			app = (WebApplication) Class.forName(config.getApplicationClassName()).newInstance();
-			app.init(config);
+			try{
+				app.init(config);
+			}catch(InitializationException ie)
+			{
+				ie.printStackTrace();
+				System.err.println("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIGURATION:\n\t "+ie.getMessage());
+				System.exit(0);
+				return;	
+			}
 		}
 		catch (Exception e)
 		{
