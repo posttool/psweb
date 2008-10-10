@@ -37,7 +37,9 @@ public class ApplicationBootstrap extends HttpServlet
 			}catch(InitializationException ie)
 			{
 				ie.printStackTrace();
-				throw new ServletException("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIG",ie);
+				System.err.println("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIGURATION:\n\t "+ie.getMessage());
+				System.exit(0);
+				return;
 			}
 			//
 			logger.info("Loaded config:");
