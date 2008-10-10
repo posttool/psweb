@@ -52,7 +52,6 @@ public abstract class WebApplication
 		Beans.initDefault();
 		ModuleRegistry.init(this);
 		//
-		registerStores();
 		registerAndLinkModules();
 		registerUrls();
 	}
@@ -162,40 +161,6 @@ public abstract class WebApplication
 		return ModuleRegistry.isValid(request);
 	}
 
-
-	@SuppressWarnings("unchecked")
-	public void registerStores() throws InitializationException
-	{
-		/*
-		Class<? extends PersistentStore> storeClass = null;
-		PersistentStore store = null;
-		for (int i = 0; i < _config.getStoreInfo().size(); i++)
-		{
-			StoreInfo s = _config.getStoreInfo().get(i);
-			try
-			{
-				storeClass = (Class<? extends PersistentStore>) Class.forName(s.getClassName());
-				store = storeClass.newInstance();
-			}
-			catch (Exception e)
-			{
-				logger.error("registerStores", e);
-				continue;
-			}
-			try
-			{
-				store.init(s.getConfig());
-			}
-			catch (PersistenceException e)
-			{
-				logger.error("registerStores", e);
-				continue;
-			}
-			_stores.put(s.getName(), store);
-			logger.info("Registered PersistentStore " + s.getName() + " " + s.getClassName());
-		}
-		*/
-	}
 
 	@SuppressWarnings("unchecked")
 	protected void registerAndLinkModules() throws InitializationException
