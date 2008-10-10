@@ -47,6 +47,11 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		smtp_server 	     = GET_REQUIRED_CONFIG_PARAM(PARAM_SMTP_SERVER, config);
 		email_template_dir   = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_DIR, config);
 		email_return_address = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_RETURN_ADDRESS, config);
+		
+		File f = new File(email_template_dir);
+		if(!f.exists())
+			f.mkdirs();
+		
 		fm_renderer 		 = new FreemarkerRenderer(email_template_dir);
 		guard = (IEmailGuard)getSlot(SLOT_EMAIL_GUARD);
 		
