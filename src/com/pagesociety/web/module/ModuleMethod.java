@@ -12,9 +12,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import com.pagesociety.persistence.Entity;
-import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.UserApplicationContext;
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.WebApplicationException;
 
 public class ModuleMethod
 {

@@ -7,10 +7,10 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.upload.MultipartForm;
 
 /**

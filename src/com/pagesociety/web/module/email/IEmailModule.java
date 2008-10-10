@@ -2,7 +2,7 @@ package com.pagesociety.web.module.email;
 
 import java.util.Map;
 
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.WebApplicationException;
 
 
 public interface IEmailModule 

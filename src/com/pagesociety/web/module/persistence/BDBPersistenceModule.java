@@ -6,8 +6,8 @@ import java.util.Map;
 import com.pagesociety.bdb.BDBStore;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.PersistentStore;
-import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.module.Module;
 
 public class BDBPersistenceModule extends Module implements IPersistenceProvider

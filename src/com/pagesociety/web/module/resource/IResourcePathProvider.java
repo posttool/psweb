@@ -1,7 +1,8 @@
 package com.pagesociety.web.module.resource;
 
 import java.io.File;
-import com.pagesociety.web.WebApplicationException;
+
+import com.pagesociety.web.exception.WebApplicationException;
 
 public interface IResourcePathProvider 
 {

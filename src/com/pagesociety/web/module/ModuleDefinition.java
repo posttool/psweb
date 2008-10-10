@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.pagesociety.web.InitializationException;
+import com.pagesociety.web.exception.InitializationException;
 
 public class ModuleDefinition
 {

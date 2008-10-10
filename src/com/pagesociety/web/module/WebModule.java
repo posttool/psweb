@@ -4,12 +4,12 @@ package com.pagesociety.web.module;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
-import com.pagesociety.web.AuthenticationException;
-import com.pagesociety.web.InitializationException;
-import com.pagesociety.web.PermissionsException;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.AuthenticationException;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.PermissionsException;
+import com.pagesociety.web.exception.WebApplicationException;
 
 
 public abstract class WebModule extends Module

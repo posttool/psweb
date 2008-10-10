@@ -8,9 +8,9 @@ import java.util.Map;
 import com.pagesociety.transcode.ImageMagick;
 import com.pagesociety.util.FileInfo;
 import com.pagesociety.util.RandomGUID;
-import com.pagesociety.web.InitializationException;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
 
 public class FileSystemPathProvider extends WebModule implements IResourcePathProvider

@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.pagesociety.web.InitializationException;
-import com.pagesociety.web.SlotException;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.SlotException;
 
 
 public abstract class Module

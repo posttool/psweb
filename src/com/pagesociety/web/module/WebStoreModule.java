@@ -14,10 +14,10 @@ import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
-import com.pagesociety.web.InitializationException;
-import com.pagesociety.web.SyncException;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.WebApplicationException;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.SyncException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
 public abstract class WebStoreModule extends WebModule
