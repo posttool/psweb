@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.pagesociety.web.exception.InitializationException;
 
 public class ModuleInitParams
 {
@@ -23,9 +26,11 @@ public class ModuleInitParams
 	public static final String MODULE_PARAMS 			= "module-params";
 	
 	private List<ModuleInfo> _modules;
-
-	public ModuleInitParams(Document module_doc)
+	private Properties		 _deployment_properties;
+	
+	public ModuleInitParams(Properties deployment_props,Document module_doc) throws InitializationException
 	{
+		_deployment_properties = deployment_props;
 		_modules = new ArrayList<ModuleInfo>();
 		NodeList modules = module_doc.getElementsByTagName(MODULE);
 		for (int i = 0; i < modules.getLength(); i++)
@@ -85,7 +90,7 @@ public class ModuleInitParams
 		return slots;
 	}
 
-	private Map<String, Object> getProps(String s, Element d)
+	private Map<String, Object> getProps(String s, Element d) throws InitializationException
 	{
 		Map<String, Object> props = new HashMap<String, Object>();
 		NodeList l = d.getElementsByTagName(s);
@@ -100,7 +105,15 @@ public class ModuleInitParams
 				Node n = nl.item(ii);
 				if (n.getNodeType() == Node.ELEMENT_NODE && n.getChildNodes().getLength() != 0)
 				{
-					props.put(n.getNodeName(), n.getFirstChild().getTextContent().trim());
+					String prop =  n.getFirstChild().getTextContent().trim();
+					if(prop.startsWith("$"))
+					{
+						String deployment_prop = _deployment_properties.getProperty(prop.substring(1));
+						if(deployment_prop == null)
+							throw new InitializationException("UNBOUND VARIABLE "+prop+" IN modules.xml");
+						prop = deployment_prop;
+					}
+					props.put(n.getNodeName(), prop);
 				}
 			}
 		}

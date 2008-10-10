@@ -1,7 +1,10 @@
 package com.pagesociety.web.config;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,6 +20,7 @@ public class WebApplicationInitParams
 {
 	public static final String WEB_ROOT_DIR_KEY = "web-root-directory";
 	public static final String WEB_ROOT_URL_KEY = "web-root-url";
+	private static final String DEPLOYMENT_PROPERTIES_FILE_NAME = "deployment.properties";
 
 	//
 	private File configDir;
@@ -35,12 +39,13 @@ public class WebApplicationInitParams
 	private StoreInitParams stores;
 	private ModuleInitParams modules;
 	private UrlMapInitParams urlMap;
-
+	private Properties		 deploymentProps;
 	public WebApplicationInitParams(File config_dir) throws InitializationException
 	{
 		configDir = config_dir;
 		try
 		{
+			
 			application_doc = XML.read(new File(config_dir, "application.xml"));
 			//stores_doc = XML.read(new File(config_dir, "stores.xml"));
 			module_doc = XML.read(new File(config_dir, "modules.xml"));
@@ -55,9 +60,19 @@ public class WebApplicationInitParams
 		name 	   = application_doc.getDocumentElement().getAttribute("name");
 		webRootDir = getParameterValue(WEB_ROOT_DIR_KEY, application_doc.getDocumentElement());
 		webRootUrl = getParameterValue(WEB_ROOT_URL_KEY, application_doc.getDocumentElement());
-		//
-		//stores = new StoreInitParams(stores_doc);
-		modules = new ModuleInitParams(module_doc);
+
+		deploymentProps = new Properties();
+		File deployments_file = new File(configDir,DEPLOYMENT_PROPERTIES_FILE_NAME);
+		if(deployments_file.exists())
+		{
+		
+			try {
+		        deploymentProps.load(new FileInputStream(deployments_file));
+			} catch (IOException e) {
+				throw new InitializationException("FAILED READING "+DEPLOYMENT_PROPERTIES_FILE_NAME);
+			}
+		}
+		modules = new ModuleInitParams(deploymentProps,module_doc);
 		urlMap = new UrlMapInitParams(url_map_doc);
 	}
 
