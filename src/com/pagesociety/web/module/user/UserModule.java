@@ -40,9 +40,9 @@ public class UserModule extends WebStoreModule
 	
 	private static final String SLOT_USER_GUARD = "user-guard"; 
 	
-	private static final int USER_REGISTERED = 0x1001;
-	private static final int USER_LOGGED_IN  = 0x1002;
-	private static final int USER_LOGGED_OUT = 0x1004;
+
+	private static final int USER_LOGGED_IN  = 0x1001;
+	private static final int USER_LOGGED_OUT = 0x1002;
 	
 	private IUserGuard guard;
 
@@ -269,6 +269,7 @@ public class UserModule extends WebStoreModule
 				throw new AccountLockedException(message);
 			}
 			uctx.setUser(user);
+			dispatchEvent(USER_LOGGED_IN, user);
 			return UPDATE(user,
 					  FIELD_LAST_LOGIN, new Date());
 		}
@@ -281,7 +282,7 @@ public class UserModule extends WebStoreModule
 	{
 		Entity user = getUser(uctx);
 		uctx.setUser(null);
-		
+		dispatchEvent(USER_LOGGED_OUT, user);
 		return UPDATE(user,
 				  FIELD_LAST_LOGOUT, new Date());
 	}
