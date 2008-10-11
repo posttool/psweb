@@ -3,7 +3,6 @@ package com.pagesociety.web.module.registration;
 
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,16 +11,11 @@ import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
-import com.pagesociety.persistence.Types;
-import com.pagesociety.web.UserApplicationContext;
+
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
-import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.email.IEmailModule;
-import com.pagesociety.web.module.user.UserModule;
 
 
 
@@ -40,8 +34,8 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
-		forgot_password_prune_period 		  = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_PRUNE_PERIOD, config));
-		forgot_password_expiration_threshold  = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_EXPIRATION_THRESHOLD, config));
+		forgot_password_prune_period 		  = (int)Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_PRUNE_PERIOD, config));
+		forgot_password_expiration_threshold  = (int)Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_EXPIRATION_THRESHOLD, config));
 		start_cleaner();
 	}
 	
