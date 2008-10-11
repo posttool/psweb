@@ -41,8 +41,10 @@ public class UserModule extends WebStoreModule
 	private static final String SLOT_USER_GUARD = "user-guard"; 
 	
 
-	private static final int USER_LOGGED_IN  = 0x1001;
-	private static final int USER_LOGGED_OUT = 0x1002;
+	private static final int USER_CREATED	 = 0x1001;
+	private static final int USER_LOGGED_IN  = 0x1002;
+	private static final int USER_LOGGED_OUT = 0x1004;
+	private static final int USER_DELETED 	=  0x1008;
 	
 	private IUserGuard guard;
 
@@ -87,13 +89,16 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS.");
 		
-		return NEW(USER_ENTITY,
-				creator,
-				FIELD_USERNAME,username,
-				FIELD_EMAIL,email,
-				FIELD_PASSWORD,password,
-				FIELD_USERNAME,
-				FIELD_ROLES,roles);					
+		Entity user =  NEW(USER_ENTITY,
+					creator,
+					FIELD_USERNAME,username,
+					FIELD_EMAIL,email,
+					FIELD_PASSWORD,password,
+					FIELD_USERNAME,
+					FIELD_ROLES,roles);					
+		
+		dispatchEvent(USER_CREATED, user);
+		return user;
 	}
 	
 	@Export  
@@ -110,12 +115,15 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS");
 
-		return NEW(USER_ENTITY,
-				creator,
-				FIELD_USERNAME,username,
-				FIELD_EMAIL,email,
-				FIELD_PASSWORD,password,
-				FIELD_USERNAME);				
+		Entity user =  NEW(USER_ENTITY,
+						   creator,
+						   FIELD_USERNAME,username,
+						   FIELD_EMAIL,email,
+						   FIELD_PASSWORD,password,
+						   FIELD_USERNAME);				
+		
+		dispatchEvent(USER_CREATED, user);
+		return user;
 	}
 
 	@Export
@@ -287,6 +295,26 @@ public class UserModule extends WebStoreModule
 				  FIELD_LAST_LOGOUT, new Date());
 	}
 
+	@Export 
+	public Entity DeleteUser(UserApplicationContext uctx,long user_id)throws WebApplicationException,PersistenceException
+	{
+		Entity editor     = getUser(uctx);
+		Entity target     = GET(USER_ENTITY,user_id);
+
+		GUARD(guard.canDeleteUser(editor,target));
+		return deleteUser(target);
+	}
+	
+	public Entity deleteUser(Entity user)throws PersistenceException
+	{
+		long id = user.getId();
+		DELETE(user);
+		user.setId(id);
+		dispatchEvent(USER_DELETED, user);
+		user.setId(Entity.UNDEFINED);
+		return user;
+	}
+	
 	@Export
 	public PagingQueryResult GetUsersByRole(UserApplicationContext uctx,int role,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{

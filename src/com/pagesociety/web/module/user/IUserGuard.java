@@ -16,6 +16,7 @@ public interface IUserGuard
 	public boolean canRemoveRole(Entity user,Entity target,int role);
 	public boolean canGetLockedUsers(Entity user);
 	public boolean canGetUsersByRole(Entity user);
+	public boolean canDeleteUser(Entity editor, Entity target);
 
 
 }
