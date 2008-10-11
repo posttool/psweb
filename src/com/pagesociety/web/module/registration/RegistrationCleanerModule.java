@@ -40,11 +40,9 @@ public class RegistrationCleanerModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
-		registration_prune_period 		  = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_PRUNE_PERIOD, config));
-		registration_expiration_threshold = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_EXPIRATION_THRESHOLD, config));;
 	
-		registration_prune_period 			= 1000 * 60 * 60 * registration_prune_period;
-		registration_expiration_threshold 	= 1000 * 60 * 60 * registration_expiration_threshold;
+		registration_prune_period 			= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_PRUNE_PERIOD, config)));
+		registration_expiration_threshold 	= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_EXPIRATION_THRESHOLD, config)));
 		user_module  = (UserModule)getSlot(SLOT_USER_MODULE);
 		start_cleaner();
 	}

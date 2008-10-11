@@ -34,8 +34,8 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
-		forgot_password_prune_period 		  = (int)Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_PRUNE_PERIOD, config));
-		forgot_password_expiration_threshold  = (int)Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_EXPIRATION_THRESHOLD, config));
+		forgot_password_prune_period 			= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_PRUNE_PERIOD, config)));
+		forgot_password_expiration_threshold 	= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_EXPIRATION_THRESHOLD, config)));
 		start_cleaner();
 	}
 	
@@ -63,6 +63,7 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 						Thread.sleep(forgot_password_prune_period);//in hours
 					}catch(InterruptedException ie)
 					{
+						
 						ie.printStackTrace();
 					}
 				}
