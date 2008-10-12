@@ -30,7 +30,7 @@ public abstract class WebApplication
 {
 	private static final Logger logger = Logger.getLogger(WebApplication.class);
 	private static WebApplication 		 _instance;
-	private Map<String, PersistentStore> _stores;
+//	private Map<String, PersistentStore> _stores;
 	private WebApplicationInitParams 	 _config;
 	private Map<String, Module> 		 _module_instances;
 	private List<Module> 				 _module_list;
@@ -41,7 +41,7 @@ public abstract class WebApplication
 	{
 		if (_instance != null)
 			throw new InitializationException("The WebApplication has already been initialized [" + getClass().getName() + "]");
-		_stores 				= new HashMap<String, PersistentStore>();
+//		_stores 				= new HashMap<String, PersistentStore>();
 		_module_instances 		= new HashMap<String, Module>();
 		_module_list 			= new ArrayList<Module>();
 		_sess_name_space_mgr 	= new SessionNameSpaceManager();
@@ -318,16 +318,16 @@ public abstract class WebApplication
 
 	public void destroy()
 	{
-		for (String key : _stores.keySet())
-			try
-			{
-				if (_stores.get(key) != null)
-					_stores.get(key).close();
-			}
-			catch (PersistenceException e)
-			{
-				logger.error("destroy", e);
-			}
+//		for (String key : _stores.keySet())
+//			try
+//			{
+//				if (_stores.get(key) != null)
+//					_stores.get(key).close();
+//			}
+//			catch (PersistenceException e)
+//			{
+//				logger.error("destroy", e);
+//			}
 		logger.debug("ApplicationConfig destroy complete");
 	}
 
@@ -336,15 +336,15 @@ public abstract class WebApplication
 		return _config;
 	}
 
-	public PersistentStore getStore(String name)
-	{
-		return _stores.get(name);
-	}
-
-	public Map<String, PersistentStore> getStores()
-	{
-		return _stores;
-	}
+//	public PersistentStore getStore(String name)
+//	{
+//		return _stores.get(name);
+//	}
+//
+//	public Map<String, PersistentStore> getStores()
+//	{
+//		return _stores;
+//	}
 
 	public File getTempDir()
 	{

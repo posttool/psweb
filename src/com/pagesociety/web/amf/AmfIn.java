@@ -103,10 +103,6 @@ public class AmfIn
 		return_value = readObject();
 	}
 
-	
-
-	
-
 	public List<Object> getArguments()
 	{
 		return args;
@@ -244,17 +240,8 @@ public class AmfIn
 					Bean bean = BeanRegistry.getBeanByName(alias);
 					if (bean == null)
 					{
-//						try
-//						{
-//							Class<?> cfn = Class.forName(alias);
-//							BeanRegistry.register(cfn);
-//							bean = BeanRegistry.getBeanByName(alias);
-//						}
-//						catch (ClassNotFoundException e)
-//						{
-							String message = "No ClassMapping registered for alias " + alias;
-							throw new AmfException(message);
-//						}
+						String message = "No ClassMapping registered for alias " + alias;
+						throw new AmfException(message);
 					}
 					String[] propertyNames = new String[propertyCount];
 					for (int i = 0; i < propertyCount; i++)
@@ -277,14 +264,25 @@ public class AmfIn
 			}
 			// first create the reference
 			result = class_in.createObject();
-			// add it to the reference pool before deserializing
-			addObjectReference(result);
-			// then populate it
-			class_in.readObject(this, result);
-			// the recursive nature of read object
-			// will cause the children to be read.
-			// adding the reference before children
-			// ensures correct index.
+			if (result instanceof AmfLong)
+			{
+				AmfLong l = (AmfLong) result;
+				class_in.readObject(this, l);
+				result = l.longValue();
+				addObjectReference(result);
+			}
+			else
+			{
+				// add it to the reference pool before deserializing
+				addObjectReference(result);
+				// then populate it
+				class_in.readObject(this, result);
+				// the recursive nature of read object
+				// will cause the children to be read.
+				// adding the reference before children
+				// ensures correct index.
+			}
+			
 			return result;
 		}
 	}

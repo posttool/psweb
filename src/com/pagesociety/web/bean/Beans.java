@@ -5,6 +5,7 @@ import com.pagesociety.persistence.EntityDefinition;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.web.ErrorMessage;
+import com.pagesociety.web.amf.AmfLong;
 import com.pagesociety.web.upload.MultipartForm;
 import com.pagesociety.web.upload.UploadProgressInfo;
 
@@ -23,6 +24,7 @@ public class Beans
 		BeanRegistry.register(MultipartForm.class, new String[] { "fileNames", "parameterNames", "parameterMap", "observerMap" });
 		BeanRegistry.register(UploadProgressInfo.class);
 		//
+		BeanRegistry.register(AmfLong.class);
 		
 	}
 }

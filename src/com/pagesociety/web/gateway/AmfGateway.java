@@ -52,19 +52,12 @@ public class AmfGateway
 			}
 			amf_out = new AmfOut(amf_in.version, amf_in.client_id, amf_routing, return_value);
 			int responseLength = amf_out.buffer.remaining();
-			// System.out.println("-------AMFGateway-----------------------------------");
-			// for (int i = 0; i < responseLength; i++)
-			// {
-			// System.out.print((char) amf_out.buffer.array()[i]);
-			// }
-			// System.out.println("\n----------------------------------------------------");
 			response.setContentType(AmfConstants.AMF_MIME_TYPE);
 			response.setContentLength(responseLength);
 			response.getOutputStream().write(amf_out.buffer.array(), amf_out.buffer.position(), responseLength);
 		}
 		catch (WebApplicationException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally

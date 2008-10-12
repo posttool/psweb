@@ -81,6 +81,10 @@ public class AmfOut
 		{
 			buffer.put((Boolean) value ? AmfType.TRUE : AmfType.FALSE);
 		}
+		else if (value instanceof Long)
+		{
+			writeAMFObject(new AmfLong((Long)value));
+		}
 		else if (value instanceof Number)
 		{
 			writeAMFIntOrNumber((Number) value);
@@ -112,6 +116,7 @@ public class AmfOut
 		}
 	}
 
+	
 	protected void writeAMFIntOrNumber(Number value)
 	{
 		if (value instanceof Double || value instanceof Float)
