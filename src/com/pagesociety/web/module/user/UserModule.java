@@ -406,7 +406,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	// THIS IS ONLY HERE BECAUSE WebModule.CURRENT_AUTHENTICATED_USER calls it ...
-	@Export
+
 	public Entity getAuthenticatedUser(UserApplicationContext uctx) throws AuthenticationException
 	{
 		Entity user =  getUser(uctx);
