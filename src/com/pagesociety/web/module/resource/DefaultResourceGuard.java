@@ -10,5 +10,6 @@ public class DefaultResourceGuard extends PermissionsModule implements IResource
 	public boolean canGetResourceURL(Entity user, Entity resource){return false;}
 	public boolean canGetUploadProgress(Entity user, String channel_name) {return false;}
 	public boolean canUpdateResource(Entity user, Entity update_resource) {return false;}
+	public boolean canDeleteResource(Entity user, Entity resource) {return false;}
 
 }

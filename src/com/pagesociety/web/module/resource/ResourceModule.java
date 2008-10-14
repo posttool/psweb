@@ -148,6 +148,27 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	@Export
+	public Entity DeleteResource(UserApplicationContext uctx,long resource_id) throws WebApplicationException,PersistenceException
+	{	
+		//check to make sure it exists//
+		Entity user = (Entity)uctx.getUser();
+		Entity resource = GET(RESOURCE_ENTITY,resource_id);
+		GUARD(guard.canDeleteResource(user,resource));
+		return deleteResource(resource);
+	}
+	
+	
+	public Entity deleteResource(Entity resource) throws WebApplicationException,PersistenceException
+	{
+		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
+		if(path_token == null)
+			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
+		
+		path_provider.delete(path_token);
+		return DELETE(resource);
+	}
+	
+	@Export
 	public String GetResourceURL(UserApplicationContext uctx,long resource_id) throws WebApplicationException,PersistenceException
 	{	
 		//check to make sure it exists//

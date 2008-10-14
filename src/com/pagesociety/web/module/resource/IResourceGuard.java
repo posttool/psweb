@@ -10,6 +10,7 @@ public interface IResourceGuard
 	boolean canGetResource(Entity user, Entity resource);
 	boolean canGetUploadProgress(Entity user, String channel_name);
 	boolean canGetResourceURL(Entity user, Entity resource);
+	boolean canDeleteResource(Entity user, Entity resource);
 	
 
 
