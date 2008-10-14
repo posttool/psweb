@@ -33,6 +33,7 @@ public abstract class WebStoreModule extends WebModule
 		try{
 			defineEntities(config);
 			defineIndexes(config);
+			defineRelationships(config);
 		}catch(Exception e)
 		{
 			ERROR(e);
@@ -52,6 +53,11 @@ public abstract class WebStoreModule extends WebModule
 	}
 	
 	protected void defineIndexes(Map<String,Object> config)throws PersistenceException,SyncException
+	{
+		/*do nothing by default */
+	}
+	
+	protected void defineRelationships(Map<String,Object> config)throws PersistenceException,SyncException
 	{
 		/*do nothing by default */
 	}
@@ -149,6 +155,7 @@ public abstract class WebStoreModule extends WebModule
 		}
 		//the index didnt exist..create it
 		store.addEntityIndex(entity_name, field_names, index_type, index_name, null);	
+		store.getEntityRelationships();
 	}
 
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Object ...attribute_name_values) throws PersistenceException
