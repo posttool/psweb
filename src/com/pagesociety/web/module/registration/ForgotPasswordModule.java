@@ -89,7 +89,7 @@ public class ForgotPasswordModule extends WebStoreModule
 
 	
 	@Export
-	public Entity loginWithForgotPasswordToken(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
+	public Entity LoginWithForgotPasswordToken(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
 	{
 		Query q = new Query(OUTSTANDING_FORGOT_PASSWORD_ENTITY);
 		q.idx(INDEX_BY_ACTIVATION_TOKEN);

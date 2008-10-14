@@ -107,7 +107,7 @@ public class RegistrationModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity activateUserAccount(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
+	public Entity ActivateUserAccount(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
 	{
 		Query q = new Query(OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY);
 		q.idx(INDEX_BY_ACTIVATION_TOKEN);
