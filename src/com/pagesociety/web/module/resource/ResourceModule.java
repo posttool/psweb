@@ -295,6 +295,7 @@ public class ResourceModule extends WebStoreModule
 		System.out.println("INITIATING UPLOAD FOR SESSION"+uctx.getId());
 		Entity user = (Entity)uctx.getUser();		
 		String channel_name = upload.getParameter(FORM_ELEMENT_CHANNEL);
+		
 		if(channel_name == null)
 		{
 			Exception e = new WebApplicationException("UPLOAD MUST SPECIFY CHANNEL NAME AS A PARAMETER NAMED 'channel' IN THE QUERY STRING OF THE POST URL.");
@@ -367,7 +368,7 @@ public class ResourceModule extends WebStoreModule
 				List<Entity> resources;
 				//zip insert will set filename and title
 				try{
-					resources = add_resources_from_zip(user,uploaded_file);
+					resources = add_resources_from_zip(upload,user,uploaded_file);
 				}catch(Exception e)
 				{
 					e.printStackTrace();
@@ -398,12 +399,12 @@ public class ResourceModule extends WebStoreModule
 				try{
 					if(update)
 					{
-						do_update_resource(update_resource, content_type, simple_type, file_name, ext, file_size, path_token);
+						do_update_resource(upload,update_resource, content_type, simple_type, file_name, ext, file_size, path_token);
 						file_info.setCompletionObject(update_resource);
 					}
 					else
 					{
-						resource = do_add_resource(user,content_type,simple_type,file_name,ext,file_size,path_token);					  
+						resource = do_add_resource(upload,user,content_type,simple_type,file_name,ext,file_size,path_token);					  
 						file_info.setCompletionObject(resource);
 					}
 				}catch(PersistenceException pe)
@@ -428,7 +429,7 @@ public class ResourceModule extends WebStoreModule
 		return true;	
 	}
 	
-	private List<Entity> add_resources_from_zip(Entity creator,File zip) throws WebApplicationException,PersistenceException
+	private List<Entity> add_resources_from_zip(MultipartForm upload,Entity creator,File zip) throws WebApplicationException,PersistenceException
 	{
 		ZipFile zipFile = null;
 		try {
@@ -461,7 +462,7 @@ public class ResourceModule extends WebStoreModule
 	        String simple_type = FileInfo.getSimpleTypeAsString(uncompressed_entry);
 	        long file_size 		= uncompressed_entry.length();
 	        String path_token 	= path_provider.save(uncompressed_entry);
-	        Entity resource 	= do_add_resource(creator, content_type,simple_type, filename, ext, file_size, path_token);
+	        Entity resource 	= do_add_resource(upload,creator, content_type,simple_type, filename, ext, file_size, path_token);
 	        resources.add(resource);
 	      }
 
@@ -494,8 +495,10 @@ public class ResourceModule extends WebStoreModule
 		}	
 	}
 
-	private Entity do_add_resource(Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws PersistenceException
+	private Entity do_add_resource(MultipartForm upload,Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
+
+		Object[] annotations = annotate(upload,creator,content_type,simple_type,filename,ext,file_size);
 		Entity resource = NEW(RESOURCE_ENTITY,
 				creator,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
@@ -503,25 +506,39 @@ public class ResourceModule extends WebStoreModule
 				RESOURCE_FIELD_FILENAME,filename,
 				RESOURCE_FIELD_EXTENSION,ext,
 				RESOURCE_FIELD_FILE_SIZE,file_size,
-				RESOURCE_FIELD_PATH_TOKEN,path_token);
+				RESOURCE_FIELD_PATH_TOKEN,path_token,
+				annotations);
+
 			
 		return resource;
 	}
 	
-	private Entity do_update_resource(Entity resource,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
+	private Entity do_update_resource(MultipartForm upload,Entity resource,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
 		path_provider.delete((String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN));
+		Object[] annotations = annotate(upload, (Entity)resource.getAttribute(FIELD_CREATOR), content_type, simple_type, filename, ext, file_size);
 		Entity r = UPDATE(resource,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
 				RESOURCE_FIELD_SIMPLE_TYPE,simple_type,
 				RESOURCE_FIELD_FILENAME,filename,
 				RESOURCE_FIELD_EXTENSION,ext,
 				RESOURCE_FIELD_FILE_SIZE,file_size,
-				RESOURCE_FIELD_PATH_TOKEN,path_token);
+				RESOURCE_FIELD_PATH_TOKEN,path_token,
+				annotations);
 			
 		return r;
 	}
 	
+
+	private static final Object[] EMPTY_ANNOTATIONS = new Object[0];
+	protected Object[] annotate(MultipartForm upload,
+		    Entity creator, String content_type, String simple_type,
+		    String filename, String ext, long file_size) throws WebApplicationException
+	{
+		return EMPTY_ANNOTATIONS;
+	}
+
+
 	private static final void copy_input_stream(InputStream in, OutputStream out) throws IOException
 	{
 	    byte[] buffer = new byte[1024];
