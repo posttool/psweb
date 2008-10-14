@@ -30,14 +30,14 @@ public class ModuleDefinition
 	public void reflect(Class<? extends Module> module) throws InitializationException
 	{
 		this.module = module;
-		Method declared_methods[] = module.getDeclaredMethods();
-		for (int i = 0; i < declared_methods.length; i++)
+		Method methods[] = module.getMethods();
+		for (int i = 0; i < methods.length; i++)
 		{
-			Export export = declared_methods[i].getAnnotation(Export.class);
+			Export export = methods[i].getAnnotation(Export.class);
 			if (export != null)
 			{
 				ModuleMethod module_method = new ModuleMethod();
-				module_method.reflect(declared_methods[i]);
+				module_method.reflect(methods[i]);
 				exported_method_map.put(module_method.getName(), module_method);
 				exported_methods.add(module_method);
 			}
