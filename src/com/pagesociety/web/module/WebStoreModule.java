@@ -162,15 +162,35 @@ public abstract class WebStoreModule extends WebModule
 	{
 		
 		Entity e = store.getEntityDefinition(entity_type).createInstance();
-		for(int i = 0;i < attribute_name_values.length;i+=2)
-			e.setAttribute((String)attribute_name_values[i], attribute_name_values[i+1]);
-		
+		set_attributes(e, attribute_name_values);
+		//for(int i = 0;i < attribute_name_values.length;i+=2)
+		//{
+		//	e.setAttribute((String)attribute_name_values[i], attribute_name_values[i+1]);
+		//}
 		Date now = new Date();
 		e.setAttribute(FIELD_CREATOR,creator);
 		e.setAttribute(FIELD_DATE_CREATED,now);
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
 		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
 		return store.saveEntity(e);
+	}
+	
+	public static void set_attributes(Entity e,Object[] attribute_name_values)
+	{
+		for(int i = 0;i < attribute_name_values.length;)
+		{
+			Object obj = attribute_name_values[i];			
+			if(obj.getClass() == Object[].class)
+			{
+				set_attributes(e,(Object[])obj);
+				i++;
+			}
+			else
+			{
+				e.setAttribute((String)attribute_name_values[i], attribute_name_values[i+1]);
+				i+=2;
+			}
+		}
 	}
 	
 	/*SAVE NEW*/
@@ -272,8 +292,9 @@ public abstract class WebStoreModule extends WebModule
 		if(instance == null)
 			throw new PersistenceException("BAD UPDATE.CANNOT UPDATE A NULL ENTITY");
 		
-		for(int i = 0;i < name_value_pairs.length;i+=2)
-			instance.setAttribute((String)name_value_pairs[i],name_value_pairs[i+1]);
+		set_attributes(instance, name_value_pairs);
+		//for(int i = 0;i < name_value_pairs.length;i+=2)
+		//	instance.setAttribute((String)name_value_pairs[i],name_value_pairs[i+1]);
 
 		Date now = new Date();
 		instance.setAttribute(FIELD_LAST_MODIFIED,now);		
