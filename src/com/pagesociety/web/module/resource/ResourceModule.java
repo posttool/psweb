@@ -550,7 +550,8 @@ public class ResourceModule extends WebStoreModule
 		return r;
 	}
 	
-
+	/* this gives a subclass a chance to add some extra fields to the resource...this
+	 * is sort of a special case */
 	private static final Object[] EMPTY_ANNOTATIONS = new Object[0];
 	protected Object[] annotate(MultipartForm upload,
 		    Entity creator, String content_type, String simple_type,
@@ -609,14 +610,5 @@ public class ResourceModule extends WebStoreModule
 					  RESOURCE_FIELD_FILE_SIZE,		Types.TYPE_LONG,null,
 					  RESOURCE_FIELD_PATH_TOKEN,	Types.TYPE_STRING,null);
 	}
-
-	public static String INDEX_BY_EMAIL				 	= 	"byEmail";
-	public static String INDEX_BY_LOCK					=   "byLock";
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
-	{
-		 //DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_EMAIL, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_EMAIL);
-		 //DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_LOCK, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_LOCK);
-	}
-
 
 }
