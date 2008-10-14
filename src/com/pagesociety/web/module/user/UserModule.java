@@ -44,7 +44,7 @@ public class UserModule extends WebStoreModule
 	private static final int USER_CREATED	 = 0x1001;
 	private static final int USER_LOGGED_IN  = 0x1002;
 	private static final int USER_LOGGED_OUT = 0x1004;
-	private static final int USER_DELETED 	=  0x1008;
+	private static final int USER_DELETED 	 = 0x1008;
 	
 	private IUserGuard guard;
 
