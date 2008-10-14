@@ -28,6 +28,11 @@ public class PermissionsModule extends WebModule
 		return user_module.isAdmin(user);
 	}
 	
+	protected boolean IS_LOGGED_IN(Entity user)
+	{
+		return user != null;
+	}
+	
 	protected boolean IS_CREATOR(Entity user,Entity record)
 	{
 		return user != null && user_module.isCreator(user, record);
