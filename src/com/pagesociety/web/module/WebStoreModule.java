@@ -113,10 +113,23 @@ public abstract class WebStoreModule extends WebModule
 		else
 		{
 			/* check it to make sure the version passed in matches the one in the store */
-			if(!existing_def.equals(proposed_def))
-				throw new SyncException("FAILED DEFINING ENTITY: EXISTING DEF -\n "+existing_def+"\n"+
-										"DOES NOT MATCH PROPOSED DEF -\n"+proposed_def+"\n");
-		
+			
+			if(existing_def.equals(proposed_def))
+				return proposed_def;
+			else
+			{
+				List<FieldDefinition> pfd = proposed_def.getFields();
+				for(i = 0;i < pfd.size();i++)
+				{
+					FieldDefinition proposed_field = pfd.get(i);
+					FieldDefinition existing_field = existing_def.getField(proposed_field.getName());
+					if(existing_field == null || !existing_field.equals(proposed_field))
+						throw new SyncException("FAILED DEFINING ENTITY: EXISTING DEF -\n "+existing_def+"\n"+
+												"DOES NOT CONTAIN ALL FIELDS OF PROPOSED DEF -\n"+proposed_def+"\n");
+				}
+
+			}
+			
 			/* add any additional default system fields...deletes of system fields 
 			 * have to be done with an alter for now... */
 			for(i = 0;i < FIELDS.length;i++)
@@ -129,6 +142,37 @@ public abstract class WebStoreModule extends WebModule
 		return proposed_def;
 	}
 
+	public static EntityDefinition ADD_FIELDS(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,SyncException
+	{
+		EntityDefinition existing_def = store.getEntityDefinition(entity_name);
+		if(existing_def == null)
+			throw new SyncException("TRYING TO ADD FIELDS TO ENTITY "+entity_name+" BUT "+entity_name+" DOES NOT EXIST IN STORE");
+		int i = 0;
+		for(;;)
+		{
+			String fieldname 	= (String)fields[i++]; 
+			int type 		 	= (Integer)fields[i++];
+			FieldDefinition f ;
+			if ((type & ~Types.TYPE_ARRAY) != Types.TYPE_REFERENCE)
+				f = new FieldDefinition(fieldname,type);
+			else
+				f = new FieldDefinition(fieldname,type,(String)fields[i++]);
+			f.setDefaultValue(fields[i++]);
+			
+			FieldDefinition existing_field = existing_def.getField(fieldname);
+			if(existing_field == null)
+				store.addEntityField(entity_name, f);
+			else
+			{
+				if(!existing_field.equals(f))
+					throw new SyncException("FIELD "+f+" ALREADY EXISTS IN ENTITY "+entity_name+" BUT IS DIFFERENT "+existing_field);
+			}
+			if(i>fields.length - 1)
+				break;
+		}
+		return store.getEntityDefinition(entity_name);
+	}
+	
 	public static void DEFINE_ENTITY_INDEX(PersistentStore store,String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,SyncException
 	{
 		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
@@ -607,6 +651,11 @@ public abstract class WebStoreModule extends WebModule
 	public  void DEFINE_ENTITY_INDEX(String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,SyncException
 	{
 		DEFINE_ENTITY_INDEX(store,entity_name, index_name, index_type,field_names);	
+	}
+	
+	public EntityDefinition ADD_FIELDS(String entity_name,Object...args) throws PersistenceException,SyncException
+	{
+		return ADD_FIELDS(store,entity_name,args);
 	}
 	
 	
