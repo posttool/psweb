@@ -18,5 +18,4 @@ public class DefaultTreeGuard extends PermissionsModule implements ITreeGuard
 	public boolean canGetTree(Entity user, Entity tree) {return false;}
 	public boolean canFillNode(Entity user, Entity node,int subtree_fill_depth,int data_fill_depth){ return false;}
 	
-
 }
