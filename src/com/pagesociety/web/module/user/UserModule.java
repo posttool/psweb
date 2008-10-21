@@ -264,7 +264,7 @@ public class UserModule extends WebStoreModule
 		if(user == null)
 			throw new LoginFailedException("LOGIN FAILED");
 
-		if(user.getAttribute(FIELD_PASSWORD).equals(Util.stringToHexEncodedMD5(password)))
+		if(user.getAttribute(FIELD_PASSWORD).equals(password))
 		{
 			if(user.getAttribute(FIELD_LOCK).equals(LOCK_LOCKED))
 			{
