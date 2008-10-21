@@ -182,7 +182,7 @@ public class TreeModule extends WebStoreModule
 
 
 	@Export
-	public Entity DeleteTreeNode(UserApplicationContext uctx,long entity_node_id) throws WebApplicationException,PersistenceException
+	public List<Entity> DeleteTreeNode(UserApplicationContext uctx,long entity_node_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
@@ -191,13 +191,13 @@ public class TreeModule extends WebStoreModule
 	}
 
 	//deletes children nodes as well//
-	public Entity deleteTreeNode(Entity tree_node) throws PersistenceException
+	public List<Entity> deleteTreeNode(Entity tree_node) throws PersistenceException
 	{
 		return deleteTree(tree_node);
 	}
 	
 	@Export
-	public Entity DeleteTree(UserApplicationContext uctx,long tree_id) throws WebApplicationException,PersistenceException
+	public List<Entity> DeleteTree(UserApplicationContext uctx,long tree_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
@@ -205,34 +205,17 @@ public class TreeModule extends WebStoreModule
 		return deleteTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE));
 	}
 	//TODO: return list of deleted entities//
-	public Entity deleteTree(Entity node) throws PersistenceException
+	public List<Entity> deleteTree(Entity node) throws PersistenceException
 	{
-		TreeFunctor f = new TreeFunctor()
-		{
-			public void apply(Entity entity_node) throws Exception
-			{
-				DELETE(entity_node);
-			}
-
-
-			public int getIterationStyle() {
-				return ITERATE_STYLE_PREORDER;
-			}
-
-			@Override
-			public Object getReturnObject() {
-				return null;
-			}
-		};
-		
+		delete_functor df = new delete_functor();
 		try{
-			applyTreeFunctor(node, f);
+			applyTreeFunctor(node, df);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
 			throw new PersistenceException("PROBLEM DELETEING ENTITY "+e.getMessage(),e);
 		}
-		return node;
+		return (List<Entity>)df.getReturnObject();
 	}
 	
 	@Export
@@ -368,7 +351,7 @@ public class TreeModule extends WebStoreModule
 	//public static final int ITERATE_STYLE_LEVELORDER = 0x03;//unimplemented BREADTH FIRST
 	public void applyTreeFunctor(Entity entity_node,TreeFunctor f) throws Exception
 	{
-		applyTreeFunctor(entity_node, f, ITERATE_STYLE_POSTORDER);
+		applyTreeFunctor(entity_node, f, f.getIterationStyle());
 	}
 	
 	//make this non recursive! //
@@ -447,6 +430,28 @@ public class TreeModule extends WebStoreModule
 			return cloned_tree;
 		}
 	}
+	
+	public class delete_functor implements TreeFunctor
+	{
+		private List<Entity> deleted_nodes;
+		public delete_functor()
+		{
+			deleted_nodes = new ArrayList<Entity>();
+		}
+		
+		public void apply(Entity entity_node) throws Exception
+		{
+			deleted_nodes.add(DELETE(entity_node));
+		}
+
+		public int getIterationStyle() {
+			return ITERATE_STYLE_PREORDER;
+		}
+
+		public Object getReturnObject() {
+			return deleted_nodes;
+		}
+	};
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
