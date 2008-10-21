@@ -42,7 +42,7 @@ public class AmfLong
 
 	public static void main(String[] args)
 	{
-		AmfLong a = new AmfLong(361873681799100999L);
+		AmfLong a = new AmfLong(-361873681799100999L);
 		System.out.println(a.longValue());
 		System.out.println(a.getLow() + " " + a.getHigh());
 	}
