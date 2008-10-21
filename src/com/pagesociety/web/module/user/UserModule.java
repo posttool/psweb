@@ -286,7 +286,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity Logout(UserApplicationContext uctx,String email,String password) throws PersistenceException
+	public Entity Logout(UserApplicationContext uctx) throws PersistenceException
 	{
 		Entity user = getUser(uctx);
 		uctx.setUser(null);
