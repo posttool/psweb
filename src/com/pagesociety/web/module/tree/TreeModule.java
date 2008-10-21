@@ -147,7 +147,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity ReparentTreeNode(UserApplicationContext uctx,long tree_id,long entity_node_id,long old_parent_id,long new_parent_id,int new_parent_child_index) throws WebApplicationException,PersistenceException
+	public Entity ReparentTreeNode(UserApplicationContext uctx,long entity_node_id,long old_parent_id,long new_parent_id,int new_parent_child_index) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
