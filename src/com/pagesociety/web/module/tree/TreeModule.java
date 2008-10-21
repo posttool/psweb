@@ -48,7 +48,7 @@ public class TreeModule extends WebStoreModule
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_GUARD,IResourceGuard.class,false,DefaultResourceGuard.class);
+		DEFINE_SLOT(SLOT_GUARD,ITreeGuard.class,false,DefaultTreeGuard.class);
 	}	
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
