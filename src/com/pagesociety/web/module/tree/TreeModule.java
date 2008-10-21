@@ -204,7 +204,7 @@ public class TreeModule extends WebStoreModule
 		GUARD(guard.canDeleteTree(user,tree));
 		return deleteTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE));
 	}
-	
+	//TODO: return list of deleted entities//
 	public Entity deleteTree(Entity node) throws PersistenceException
 	{
 		TreeFunctor f = new TreeFunctor()
