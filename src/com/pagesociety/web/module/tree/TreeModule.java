@@ -182,7 +182,7 @@ public class TreeModule extends WebStoreModule
 
 
 	@Export
-	public Entity DeleteTreeNode(UserApplicationContext uctx,long taxonomy_id,long entity_node_id) throws WebApplicationException,PersistenceException
+	public Entity DeleteTreeNode(UserApplicationContext uctx,long entity_node_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
