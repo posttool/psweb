@@ -91,7 +91,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity CreateTreeNode(UserApplicationContext uctx,long tree_id,long parent_node_id,Entity data) throws WebApplicationException,PersistenceException
+	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
