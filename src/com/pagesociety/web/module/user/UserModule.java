@@ -119,8 +119,7 @@ public class UserModule extends WebStoreModule
 						   creator,
 						   FIELD_USERNAME,username,
 						   FIELD_EMAIL,email,
-						   FIELD_PASSWORD,password,
-						   FIELD_USERNAME);				
+						   FIELD_PASSWORD,password);				
 		
 		dispatchEvent(EVENT_USER_CREATED, user);
 		return user;
