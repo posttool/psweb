@@ -57,7 +57,7 @@ public class EmailModule extends WebModule implements IEmailModule
 	@Export
 	public void SendEmail(UserApplicationContext uctx,String from, List<String> to, String subject,
 			String template_name, Map<String, Object> template_data)
-			throws WebApplicationException {
+			throws WebApplicationException { 
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canSendEmail(user));
 		String[] s_to = new String[to.size()];
