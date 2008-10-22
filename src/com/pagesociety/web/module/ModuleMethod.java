@@ -288,30 +288,25 @@ public class ModuleMethod
 	
 	public static boolean isValidParamType(Class c) 
 	{
-		if(c == UserApplicationContext.class)
-			return true;
-		else if(c == String.class)
-			return true;
-		else if(c == Entity.class)
-			return true;
-		else if (c == Long.class) 
-			return true;
-		else if(c == Integer.class)
-			return true;
-		else if(c == Float.class)
-			return true;
-		else if(c == Double.class)
-			return true;
-		else if(c == ArrayList.class)
-			return true;
-		else if(c == HashMap.class)
-			return true;
-		else if(c == Date.class)
-			return true;
-		else if(c == Boolean.class)
-			return true;
-		else if(c == Byte.class && c.isArray())
-			return true;
+
+		if((c == UserApplicationContext.class)||
+			(c == String.class)		||
+			(c == Entity.class) 	||
+			(c == Long.class)   	|| 
+			(c == long.class)   	|| 
+			(c == Integer.class) 	||
+			(c == int.class)	 	||
+			(c == Float.class) 		||
+			(c == float.class) 		||
+			(c == Double.class)		||
+			(c == double.class)		||
+			(c == ArrayList.class)	||
+			(c == HashMap.class)	||
+			(c == Date.class)		||
+			(c == Boolean.class)	||
+			(c == boolean.class)	||
+			(c == byte.class && c.isArray()))
+				return true;
 		
 		return false;
 	}
