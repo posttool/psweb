@@ -36,8 +36,6 @@ public class TreeModule extends WebStoreModule
 	private static final String ROOT_NODE_CLASS 	 = "root_node_class";
 	private static final String ROOT_NODE_ID		 = "root_node_id";
 	
-	private static final String NODE_UNDEFINED_ID    = "undefined";
-	private static final String NODE_UNDEFINED_CLASS = "undefined";
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -91,23 +89,15 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,Entity data) throws WebApplicationException,PersistenceException
+	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
-		GUARD(guard.canCreateTreeNode(user,parent_node,data));
-
-		String node_id 	  = NODE_UNDEFINED_ID;
-		String node_class = NODE_UNDEFINED_CLASS;
-		if(data != null)
-		{
-			node_id    = data.getType()+":"+data.getId();
-			node_class = data.getType();
-		}
-		return createTreeNode(user,parent_node,node_id,node_class,data);
+		GUARD(guard.canCreateTreeNode(user,parent_node,node_class,node_id,data));
+		return createTreeNode(user,parent_node,node_class,node_id,data);
 	}
 	
-	public Entity createTreeNode(Entity creator, Entity parent_node,String node_id,String node_class,Entity data) throws PersistenceException 
+	public Entity createTreeNode(Entity creator, Entity parent_node,String node_class,String node_id,Entity data) throws PersistenceException 
 	{
 		Entity new_node = NEW(TREE_NODE_ENTITY,
 								creator,
@@ -122,23 +112,16 @@ public class TreeModule extends WebStoreModule
 	}
 
 	@Export
-	public Entity UpdateTreeNode(UserApplicationContext uctx,long tree_node_id,Entity data) throws WebApplicationException,PersistenceException
+	public Entity UpdateTreeNode(UserApplicationContext uctx,long tree_node_id,String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,tree_node_id);
 	
-		GUARD(guard.canUpdateTreeNodeData(user,tree_node,data));
-		String node_id 	  = NODE_UNDEFINED_ID;
-		String node_class = NODE_UNDEFINED_CLASS;
-		if(data != null)
-		{
-			node_id    = data.getType()+":"+data.getId();
-			node_class = data.getType();
-		}
-		return updateTreeNode(tree_node,node_id,node_class,data);
+		GUARD(guard.canUpdateTreeNode(user,tree_node,node_class,node_id,data));
+		return updateTreeNode(tree_node,node_class,node_id,data);
 	}
 
-	public Entity updateTreeNode(Entity node,String node_id,String node_class,Entity data) throws PersistenceException
+	public Entity updateTreeNode(Entity node,String node_class,String node_id,Entity data) throws PersistenceException
 	{
 		return UPDATE(node,
 					  TREE_NODE_FIELD_ID,node_id,
@@ -281,6 +264,47 @@ public class TreeModule extends WebStoreModule
 	
 	
 	@Export
+	public List<Entity> GetTreeNodesByClass(UserApplicationContext uctx, long tree_id,String node_classname) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity tree = GET(TREE_ENTITY,tree_id);
+		GUARD(guard.canGetTreeNodesByClass(user,node_classname));
+		return getTreeNodesByClass(tree,node_classname);
+		
+	}
+	
+	public List<Entity> getTreeNodesByClass(Entity tree,String node_classname) throws PersistenceException
+	{
+		Query q = new Query(TREE_ENTITY);
+		q.idx(IDX_BY_TREE_BY_NODE_CLASS);
+		q.eq(q.list(tree,node_classname));
+		QueryResult result = QUERY(q);			
+		return result.getEntities();	
+	}
+	
+	@Export
+	public Entity GetTreeNodeById(UserApplicationContext uctx, long tree_id,String node_id) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity tree = GET(TREE_ENTITY,tree_id);
+		GUARD(guard.canGetTreeNodeById(user,node_id));
+		return getTreeNodeById(tree,node_id);
+		
+	}
+	
+	public Entity getTreeNodeById(Entity tree,String node_id) throws PersistenceException
+	{
+		Query q = new Query(TREE_ENTITY);
+		q.idx(IDX_BY_TREE_BY_NODE_ID);
+		q.eq(q.list(tree,node_id));
+		QueryResult result = QUERY(q);			
+		if(result.size() == 0)
+			return null;
+		return result.getEntities().get(0);
+	}
+	
+	
+	@Export
 	public Entity FillNode(UserApplicationContext uctx,long node_id,int subtree_fill_depth,int data_ref_fill_depth) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -342,7 +366,10 @@ public class TreeModule extends WebStoreModule
 			}
 		}
 	}
-		
+	
+	
+	
+	
 	///////////////////////////////////
 	//http://en.wikipedia.org/wiki/Tree_traversal
 	////////////////
@@ -484,10 +511,14 @@ public class TreeModule extends WebStoreModule
 				TREE_NODE_FIELD_METADATA,Types.TYPE_STRING,"");
 	}
 
-	public static final String IDX_BY_USER_BY_TREE_NAME = "byUserbyTreeName";
+	public static final String IDX_BY_USER_BY_TREE_NAME 					= "byUserbyTreeName";
+	public static final String IDX_BY_TREE_BY_NODE_CLASS		    		= "byTreeByNodeClass";
+	public static final String IDX_BY_TREE_BY_NODE_ID		    			= "byTreeByNodeId";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
 	{
 		DEFINE_ENTITY_INDEX(TREE_ENTITY,IDX_BY_USER_BY_TREE_NAME , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,TREE_FIELD_NAME);
+		DEFINE_ENTITY_INDEX(TREE_NODE_ENTITY,IDX_BY_TREE_BY_NODE_CLASS , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,TREE_NODE_FIELD_TREE,TREE_NODE_FIELD_CLASS);
+		DEFINE_ENTITY_INDEX(TREE_NODE_ENTITY,IDX_BY_TREE_BY_NODE_ID , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, TREE_NODE_FIELD_TREE,TREE_NODE_FIELD_ID);
 	}
 	
 	protected void defineRelationships(Map<String,Object> config) throws PersistenceException,SyncException
