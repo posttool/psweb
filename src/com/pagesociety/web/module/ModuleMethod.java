@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,6 +17,8 @@ import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.gateway.Form;
+import com.pagesociety.web.upload.MultipartForm;
 
 public class ModuleMethod
 {
@@ -45,7 +48,7 @@ public class ModuleMethod
 			Class p_type = ptypes[i];
 			if(isValidParamType(p_type))
 				continue;
-			throw new InitializationException("UNSUPPORTED PARAMTER TYPE: "+p_type.getName()+" FOR METHOD "+getName());
+			throw new InitializationException("UNSUPPORTED PARAMETER TYPE: "+p_type.getName()+" FOR METHOD "+getName());
 		}
 	}
 	
@@ -300,11 +303,15 @@ public class ModuleMethod
 			(c == float.class) 		||
 			(c == Double.class)		||
 			(c == double.class)		||
+			(c == List.class)  		||
 			(c == ArrayList.class)	||
+			(c == Map.class)		||
 			(c == HashMap.class)	||
 			(c == Date.class)		||
 			(c == Boolean.class)	||
 			(c == boolean.class)	||
+			(c == MultipartForm.class)  ||
+			(c == Form.class) 			||
 			(c == byte.class && c.isArray()))
 				return true;
 		
