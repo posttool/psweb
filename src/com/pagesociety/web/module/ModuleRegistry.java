@@ -100,67 +100,30 @@ public class ModuleRegistry
 		ModuleDefinition module_def = MODULES.get(module.getName());
 		if (module_def == null)
 			throw new WebApplicationException("ModuleRegistry NO MODULE " + module.getName());
-		ModuleMethod m = module_def.getMethod(method_name);
-		if (m == null)
+		
+		List<ModuleMethod> potential_matches = module_def.getMethodsForMethodName(method_name);
+		if (potential_matches == null)
 			throw new WebApplicationException("ModuleRegistry NO METHOD " + method_name);
-		return m.invoke(module, user_context, args);
-	}
-
-	public static Object[] coerceArgs(String module_name, String method_name,
-			Object[] args)
-	{
-		ModuleDefinition module_def = MODULES.get(module_name);
-		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO MODULE " + module_name);
-		ModuleMethod m = module_def.getMethod(method_name);
-		if (m == null)
-			throw new RuntimeException("ModuleRegistry NO METHOD " + method_name);
-		try
+		int s = potential_matches.size();
+		
+		Object[] args_with_user = new Object[args.length + 1];
+		System.arraycopy(args, 0, args_with_user, 1, args.length);
+		args_with_user[0] = user_context;
+		
+		ModuleMethod resolved_method = null;
+		for(int i = 0;i < s;i++)
 		{
-			return m.coerceArgs(args);
+			ModuleMethod m = potential_matches.get(i);
+			if(m.isValidForArgs(args_with_user))
+			{
+				if(resolved_method != null)
+					throw new WebApplicationException("AMBIGUOUS MODULE METHOD INVOCATION FOR MODULE "+module.getName()+" METHODS "+m+" AND "+resolved_method+" CAN BOTH BE CALLED FOR ARGS "+args);
+				resolved_method = m;
+			}
 		}
-		catch (Exception e)
-		{
-			System.out.println("CANT COERCE ARGS " + module_name + "/" + method_name + " args=" + args);
-			return args;
-		}
+		return resolved_method.invoke(module,args_with_user);
 	}
 
-	public static boolean requestReturnsVoid(ModuleRequest request)
-	{
-		ModuleDefinition module_def = MODULES.get(request.getModuleName());
-		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO MODULE " + request.getModuleName());
-		ModuleMethod m = module_def.getMethod(request.getMethodName());
-		if (m == null)
-			throw new RuntimeException("ModuleRegistry NO METHOD " + request.getMethodName());
-		return m.returnsVoid();
-	}
 
-	public static boolean isValid(ModuleRequest request)
-	{
-		ModuleDefinition module_def = MODULES.get(request.getModuleName());
-		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO MODULE " + request.getModuleName());
-		ModuleMethod m = module_def.getMethod(request.getMethodName());
-		if (m == null)
-			throw new RuntimeException("ModuleRegistry NO METHOD " + request.getMethodName());
-		return m.isValid(request.getArguments());
-	}
 
-	public static boolean doesModuleMethodUseMultipart(String module_name,
-			String method_name)
-	{
-		ModuleDefinition module_def = MODULES.get(module_name);
-		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO MODULE " + module_name);
-		ModuleMethod m = module_def.getMethod(method_name);
-		if (m == null)
-			throw new RuntimeException("ModuleRegistry NO METHOD " + method_name);
-		if (m.getParameterTypes().length != 1)
-			return false;
-		if (m.getParameterTypes()[0] != MultipartForm.class)
-			return false;
-		return true;
-	}
 }

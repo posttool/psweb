@@ -6,6 +6,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -23,16 +24,32 @@ public class ModuleMethod
 	private Class<?>[] exceptionTypes;
 	private Class<?> returnType;
 
-	public void reflect(Method method) throws InitializationException
+	
+
+	public void init(Method method) throws InitializationException
 	{
 		this.method = method;
 		this.ptypes = method.getParameterTypes();
 		this.exceptionTypes = method.getExceptionTypes();
 		this.returnType = method.getReturnType();
+		validate_parameter_types();
+	}
+	
+
+	private void validate_parameter_types() throws InitializationException
+	{
 		if (this.ptypes[0] != UserApplicationContext.class)
 			throw new InitializationException("The first argument of every module method must be UserApplicationContext");
+		for(int i = 1;i < ptypes.length;i++)
+		{
+			Class p_type = ptypes[i];
+			if(isValidParamType(p_type))
+				continue;
+			throw new InitializationException("UNSUPPORTED PARAMTER TYPE: "+p_type.getName()+" FOR METHOD "+getName());
+		}
 	}
-
+	
+	
 	public String getName()
 	{
 		return method.getName();
@@ -58,15 +75,12 @@ public class ModuleMethod
 		return returnType;
 	}
 
-	public Object invoke(Module module, UserApplicationContext user_context, Object[] args)
+	public Object invoke(Module module, Object[] args)
 			throws Exception
 	{
-		Object[] args_with_user = new Object[args.length + 1];
-		System.arraycopy(args, 0, args_with_user, 1, args.length);
-		args_with_user[0] = user_context;
 		try
 		{
-			return method.invoke(module, args_with_user);
+			return method.invoke(module, args);
 		}
 		catch (InvocationTargetException e)
 		{
@@ -114,11 +128,19 @@ public class ModuleMethod
 		return (method.getReturnType() == Void.class);
 	}
 
-	public boolean isValid(Object[] arguments)
+	public boolean isValidForArgs(Object[] arguments)
 	{
 		if (ptypes.length != arguments.length)
 			return false;
-		// TODO compare argument types w/ parameterTypes
+		
+		for(int i = 0;i < arguments.length ;i++)
+		{
+			Object arg = arguments[i];
+			if(arg == null)
+				continue;
+			if(arg.getClass() != ptypes[i])
+				return false;
+		}
 		return true;
 	}
 
@@ -259,5 +281,38 @@ public class ModuleMethod
 		// }
 		// }
 		return b.toString();
+	}
+
+	
+
+	
+	public static boolean isValidParamType(Class c) 
+	{
+		if(c == UserApplicationContext.class)
+			return true;
+		else if(c == String.class)
+			return true;
+		else if(c == Entity.class)
+			return true;
+		else if (c == Long.class) 
+			return true;
+		else if(c == Integer.class)
+			return true;
+		else if(c == Float.class)
+			return true;
+		else if(c == Double.class)
+			return true;
+		else if(c == ArrayList.class)
+			return true;
+		else if(c == HashMap.class)
+			return true;
+		else if(c == Date.class)
+			return true;
+		else if(c == Boolean.class)
+			return true;
+		else if(c == Byte.class && c.isArray())
+			return true;
+		
+		return false;
 	}
 }

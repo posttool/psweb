@@ -12,13 +12,13 @@ public class ModuleDefinition
 {
 	private String name;
 	private Class<? extends Module> module;
-	private Map<String, ModuleMethod> exported_method_map;
+	private Map<String, List<ModuleMethod>> exported_method_map;
 	private List<ModuleMethod> exported_methods;
 
 	public ModuleDefinition(String name, Map<String, Object> config)
 	{
 		this.name = name;
-		this.exported_method_map = new HashMap<String, ModuleMethod>();
+		this.exported_method_map = new HashMap<String, List<ModuleMethod>>();
 		this.exported_methods = new ArrayList<ModuleMethod>();
 	}
 	
@@ -31,14 +31,24 @@ public class ModuleDefinition
 	{
 		this.module = module;
 		Method methods[] = module.getMethods();
+		
 		for (int i = 0; i < methods.length; i++)
 		{
+
 			Export export = methods[i].getAnnotation(Export.class);
 			if (export != null)
 			{
 				ModuleMethod module_method = new ModuleMethod();
-				module_method.reflect(methods[i]);
-				exported_method_map.put(module_method.getName(), module_method);
+				module_method.init(methods[i]);
+				
+				System.out.println("!!!!!!!!!!EXAMINING EXPORTED METHOD "+module_method);
+				List<ModuleMethod> overloaded_methods = exported_method_map.get(module_method.getName());
+				if(overloaded_methods == null)
+				{
+					overloaded_methods = new ArrayList<ModuleMethod>(4);
+					exported_method_map.put(module_method.getName(), overloaded_methods);
+				}
+				overloaded_methods.add(module_method);
 				exported_methods.add(module_method);
 			}
 		}
@@ -76,7 +86,7 @@ public class ModuleDefinition
 		return null;
 	}
 
-	public ModuleMethod getMethod(String method_name)
+	public List<ModuleMethod> getMethodsForMethodName(String method_name)
 	{
 		return exported_method_map.get(method_name);
 	}
