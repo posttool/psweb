@@ -653,84 +653,6 @@ public abstract class WebStoreModule extends WebModule
 		return INT_IDS_TO_ENTITIES(store,entity_type, ids);
 	}
 	
-	/* be careful with this if you have 1 to many relationships*/
-	public static Entity CLONE_SHALLOW(PersistentStore store,Entity e) throws PersistenceException
-	{
-		return store.saveEntity(e.cloneShallow());
-	}
-	
-	public Entity CLONE_SHALLOW(Entity e) throws PersistenceException
-	{
-		return CLONE_SHALLOW(store,e);
-	}
-	
-	public Entity CLONE_DEEP(Entity e) throws PersistenceException
-	{
-		CLONE_DEEP(store,e);
-		return e;
-	}
-	
-	private static final int CLONE_REFERENCE  	= 0x01;
-	private static final int LINK_REFERENCE 	= 0x02;
-	private static final int NULLIFY_REFERENCE	= 0x03;
-	private static final int USE_AS_REFERENCE 	= 0x04;
-	
-	private static final int ALL_ENTITIES 		= 0x200;
-	private static final int ALL_FIELDS 		= 0x201;
-	
-	public static Entity CLONE_DEEP(PersistentStore store,Entity e,Object...clone_rules) throws PersistenceException
-	{
-
-		Map<String,Integer> context = new HashMap<String,Integer>();
-		for(int i = 0;i < clone_rules.length;)
-		{
-			String entity_name    = (String)clone_rules[i];
-			String ref_field_name = (String)clone_rules[++i];
-			int clone_rule		  = (Integer)clone_rules[++i];
-			
-			String clone_key = entity_name+":"+ref_field_name;
-			
-			//Map<String,Integer> field_rule = context.get(entity_name); 
-			//if(field_rule == null)
-			//	field_rule = new HashMap<String,Integer>();
-		}
-		
-		if(e == null)
-			return null;
-		
-		Entity clone = e.cloneShallow();
-		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
-		for(int i = 0;i < ref_fields.size();i++)
-		{
-			FieldDefinition f 	 = ref_fields.get(i);
-			String ref_fieldname = f.getName();
-			if(f.isArray())
-			{
-				List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
-				if(vals == null)
-					continue;
-				
-				int s = vals.size();
-				List<Entity> clone_vals = new ArrayList<Entity>(s);
-				for(int j = 0;j <s;j++)
-				{
-					Entity val = vals.get(i);
-					//if(f.expand_reference(entity instance,string fieldname,current_value))
-					clone_vals.add(CLONE_DEEP(store,val));
-				}
-				clone.setAttribute(ref_fieldname, clone_vals);
-			}
-			else
-			{
-				Entity val = GET_REF(store,e,ref_fieldname);
-				//if(f.expand_reference(entity instance,string fieldname,current_value))
-					clone.setAttribute(ref_fieldname,CLONE_DEEP(store,val));
-			}	
-		}
-
-		return SAVE_ENTITY(store,clone);
-	}
-	
 
 	//DDL helpers for WebStoreModule //
 	
@@ -755,4 +677,182 @@ public abstract class WebStoreModule extends WebModule
 		DEFINE_ENTITY_RELATIONSHIP(store,from_entity_name,from_entity_field,relationship_type,to_entity_name,to_entity_field);
 	}
 
+
+	/* be careful with this if you have 1 to many relationships*/
+	public static Entity CLONE_SHALLOW(PersistentStore store,Entity e) throws PersistenceException
+	{
+		return store.saveEntity(e.cloneShallow());
+	}
+	
+	public Entity CLONE_SHALLOW(Entity e) throws PersistenceException
+	{
+		return CLONE_SHALLOW(store,e);
+	}
+	
+	
+	//clone subsystem/////////
+	
+	public Entity CLONE_DEEP(Entity e) throws PersistenceException
+	{
+		return CLONE_DEEP(e,new clone_policy());
+		
+	}
+	
+	public Entity CLONE_DEEP(Entity e,clone_policy p) throws PersistenceException
+	{
+		Entity clone = CLONE_DEEP(store,e,p);
+		return clone;
+	}
+	
+
+	public  static final int CLONE_REFERENCE  	= 0x01;
+	public  static final int LINK_REFERENCE 	= 0x02;
+	public  static final int NULLIFY_REFERENCE	= 0x03;
+	public  static final int USE_AS_REFERENCE 	= 0x04;
+
+	public class clone_policy
+	{		
+		public int exec(Entity e,String fieldname,Entity reference_val)
+		{
+			if(fieldname.equals(FIELD_CREATOR))
+				return LINK_REFERENCE;
+			else
+				return CLONE_REFERENCE;			
+		}
+	}
+
+	public static Entity CLONE_DEEP(PersistentStore store,Entity e,clone_policy f) throws PersistenceException
+	{
+		if(e == null)
+			return null;
+		
+
+		Entity clone = e.cloneShallow();
+		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
+		for(int i = 0;i < ref_fields.size();i++)
+		{
+			FieldDefinition ref_field 	 = ref_fields.get(i);
+			String ref_fieldname 		 = ref_field.getName();
+			if(ref_field.isArray())
+			{
+				List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
+				if(vals == null)
+					continue;
+				
+				int s = vals.size();
+				List<Entity> clone_vals = new ArrayList<Entity>(s);
+				for(int j = 0;j <s;j++)
+				{
+					Entity val = vals.get(i);
+					int clone_behavior = f.exec(e, ref_fieldname, val);
+					switch(clone_behavior)
+					{
+						case CLONE_REFERENCE:
+							clone_vals.add(CLONE_DEEP(store,val,f));
+							break;
+						case LINK_REFERENCE:
+							clone_vals.add(val);
+							break;
+						case NULLIFY_REFERENCE:
+							clone_vals.add(null);
+							break;
+					}
+				}
+				clone.setAttribute(ref_fieldname, clone_vals);
+			}
+			else
+			{
+				
+				Entity val = GET_REF(store,e,ref_fieldname);
+				int clone_behavior = f.exec(e, ref_fieldname, val);
+				switch(clone_behavior)
+				{
+					case CLONE_REFERENCE:
+						clone.setAttribute(ref_fieldname,CLONE_DEEP(store,val,f));
+						break;
+					case LINK_REFERENCE:
+						clone.setAttribute(ref_fieldname,val);
+						break;
+					case NULLIFY_REFERENCE:
+						clone.setAttribute(ref_fieldname,null);
+						break;
+				}
+			}	
+		}
+
+		return SAVE_ENTITY(store,clone);
+	}
+	
+	
+	//DELETE DEEP SUBSYSTEM...be careful with circular references!!!//
+	public Entity DELETE_DEEP(Entity e) throws PersistenceException
+	{
+		return DELETE_DEEP(e, new delete_policy());
+	}
+	
+	public  Entity DELETE_DEEP(Entity e,delete_policy f) throws PersistenceException
+	{
+		return DELETE_DEEP(store,e, f);
+	}
+	
+	public  static final int DELETE_REFERENCE  		= 0x01;
+	public  static final int DONT_DELETE_REFERENCE 	= 0x02;
+
+	public class delete_policy
+	{		
+		public int exec(Entity e,String fieldname,Entity reference_val)
+		{
+			if(fieldname.equals(FIELD_CREATOR))
+				return DONT_DELETE_REFERENCE;
+			return DELETE_REFERENCE;
+
+		}
+	}
+
+	public static Entity DELETE_DEEP(PersistentStore store,Entity e,delete_policy f) throws PersistenceException
+	{
+		if(e == null)
+			return null;
+
+		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
+		for(int i = 0;i < ref_fields.size();i++)
+		{
+			FieldDefinition ref_field 	 = ref_fields.get(i);
+			String ref_fieldname 		 = ref_field.getName();
+			if(ref_field.isArray())
+			{
+				List<Entity> vals = (List<Entity>)e.getAttribute(ref_fieldname);
+				if(vals == null)
+					continue;
+				int s = vals.size();
+				for(int j = 0;j <s;j++)
+				{
+					Entity val = vals.get(i);
+					int delete_behavior = f.exec(e, ref_fieldname, val);
+					switch(delete_behavior)
+					{
+						case DELETE_REFERENCE:
+							DELETE_DEEP(store,val,f);
+						case DONT_DELETE_REFERENCE:
+							break;
+					}
+				}
+			}
+			else
+			{				
+				Entity val = (Entity)e.getAttribute(ref_fieldname);
+				int delete_behavior = f.exec(e, ref_fieldname, val);
+				switch(delete_behavior)
+				{
+					case DELETE_REFERENCE:
+						DELETE_DEEP(store,val,f);
+					case DONT_DELETE_REFERENCE:
+						break;
+				}
+			}	
+		}
+
+		return DELETE(store,e);
+	}
+	
 }
