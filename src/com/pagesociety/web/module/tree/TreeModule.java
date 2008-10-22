@@ -51,26 +51,33 @@ public class TreeModule extends WebStoreModule
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
+	//TODO: make sure tree named 'name' doesnt exist //
 	@Export
-	public Entity CreateTree(UserApplicationContext uctx,String name) throws WebApplicationException,PersistenceException
+	public Entity CreateTree(UserApplicationContext uctx,String name,String root_class,String root_id,Entity root_data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
+		Entity t = getTreeForUserByName(user,name);
+		if(t != null)
+			throw new WebApplicationException("TREE NAMED "+name+" ALREADY EXISTS FOR USER "+user.getId());
 		GUARD(guard.canCreateTree(user));
-		return createTree(user,name);
+		return createTree(user,name,root_class,root_id,root_data);
 	}
 	
-	public Entity createTree(Entity user,String tree_name) throws PersistenceException
+	public Entity createTree(Entity user,String tree_name,String root_class,String root_id,Entity root_data) throws PersistenceException
 	{
-		Entity root_node = createTreeNode(user, null,ROOT_NODE_ID,ROOT_NODE_CLASS,null);
+		Entity root_node = createTreeNode(user, null,root_class,root_id,root_data);
 		Entity tree =  NEW(TREE_ENTITY,
 						user,
 						TREE_FIELD_NAME,tree_name,
 						TREE_FIELD_ROOT_NODE,root_node);
+	
 		UPDATE(root_node,
 				TREE_NODE_FIELD_TREE,tree);
 		
 		return tree;
 	}
+	
+	
 	
 	@Export 
 	public Entity UpdateTree(UserApplicationContext uctx,long tree_id,String name,Entity root_node) throws WebApplicationException,PersistenceException
