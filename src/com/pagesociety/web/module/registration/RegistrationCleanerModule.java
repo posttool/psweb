@@ -105,7 +105,7 @@ public class RegistrationCleanerModule extends WebStoreModule
 			try {
 				user = GET(UserModule.USER_ENTITY, (Long)old_record.getAttribute(RegistrationModule.FIELD_ACTIVATION_UID));
 				user_module.deleteUser(user);
-			} catch (WebApplicationException e) {
+			} catch (PersistenceException e) {
 				e.printStackTrace();
 			}
 			DELETE(old_record);

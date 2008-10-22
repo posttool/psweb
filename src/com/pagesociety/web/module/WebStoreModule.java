@@ -520,7 +520,7 @@ public abstract class WebStoreModule extends WebModule
 	}
 	
 
-	public Entity GET( String entity_type,long entity_id) throws PersistenceException,WebApplicationException
+	public Entity GET( String entity_type,long entity_id) throws PersistenceException
 	{
 		return GET(store,entity_type,entity_id);
 	}

@@ -156,8 +156,8 @@ public class TreeModule extends WebStoreModule
 		
 		if(new_parent_idx < 0)
 			new_parent_idx = 0;
-		if(new_parent_idx > children.size() - 1)
-			new_parent_idx = children.size() - 1;
+		if(new_parent_idx > children.size())
+			new_parent_idx = children.size();
 		
 		children.add(new_parent_idx, tree_node);
 		//TODO:even though the reference is changed here we still need to set the attribute so that

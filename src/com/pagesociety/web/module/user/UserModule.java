@@ -396,7 +396,14 @@ public class UserModule extends WebStoreModule
 	
 	public boolean isCreator(Entity user,Entity record) 
 	{
-		return (user != null) && (user.getAttribute(FIELD_CREATOR).equals(record.getAttribute(FIELD_CREATOR)));
+		try{
+			record = GET(record.getType(),record.getId());
+		}catch(PersistenceException pe)
+		{
+			pe.printStackTrace();
+			return false;
+		}
+		return (user != null) && (user.equals(record.getAttribute(FIELD_CREATOR)));
 	}
 	
 	public Entity getUser(UserApplicationContext uctx) 
