@@ -1,6 +1,7 @@
 package com.pagesociety.web.module.email;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -54,12 +55,14 @@ public class EmailModule extends WebModule implements IEmailModule
 	}
 
 	@Export
-	public void SendEmail(UserApplicationContext uctx,String from, String[] to, String subject,
+	public void SendEmail(UserApplicationContext uctx,String from, List<String> to, String subject,
 			String template_name, Map<String, Object> template_data)
 			throws WebApplicationException {
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canSendEmail(user));
-		sendEmail(from, to, subject, template_name, template_data);
+		String[] s_to = new String[to.size()];
+		s_to = to.toArray(s_to);
+		sendEmail(from, s_to, subject, template_name, template_data);
 	}
 
 
