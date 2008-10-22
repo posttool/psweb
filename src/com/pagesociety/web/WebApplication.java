@@ -160,10 +160,6 @@ public abstract class WebApplication
 		return execute(user_context,moduleAndMethod, obj_args);
 	}
 
-	public boolean isValid(ModuleRequest request)
-	{
-		return ModuleRegistry.isValid(request);
-	}
 
 
 	@SuppressWarnings("unchecked")
