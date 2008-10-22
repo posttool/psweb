@@ -50,7 +50,7 @@ public class ResourceModule extends WebStoreModule
 	private File				 	upload_temp_dir;
 	private long				 	upload_max_file_size;
 	private IResourcePathProvider 	path_provider;
-	private IResourceGuard		 	guard;
+	protected IResourceGuard		 	guard;
 
 	private static final List<UploadProgressInfo> EMPTY_UPLOAD_PROGRESS_LIST = new ArrayList<UploadProgressInfo>(0);
 
