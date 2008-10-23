@@ -141,10 +141,23 @@ public class ModuleMethod
 			Object arg = arguments[i];
 			if(arg == null)
 				continue;
-			if(arg.getClass() != ptypes[i])
+			if (!compatible_classes(arg.getClass(),ptypes[i]) || !compatible_classes(ptypes[i], arg.getClass()))
 				return false;
 		}
 		return true;
+	}
+	
+	private static boolean compatible_classes(Class c1,Class c2)
+	{
+		if((c1 == c2) ||
+				(c1 == Long.class 	 && c2 	== long.class) 	  ||
+				(c1 == Integer.class && c2 	== int.class) 	  ||
+				(c1 == Float.class   && c2 	== float.class)   ||
+				(c1 == Integer.class && c2 	== long.class)    ||
+				(c1 == Float.class && c2 	== double.class))
+			return true;
+		
+		return false;		
 	}
 
 	public Object[] coerceArgs(Object[] args) throws WebApplicationException
