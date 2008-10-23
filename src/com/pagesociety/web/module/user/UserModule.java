@@ -46,6 +46,8 @@ public class UserModule extends WebStoreModule
 	public static final int EVENT_USER_LOGGED_OUT 	 = 0x1004;
 	public static final int EVENT_USER_DELETED 	 	 = 0x1008;
 	
+	public static final int USER_ROLE_WHEEL 				 = 0x1000;
+	
 	private IUserGuard guard;
 
 	
@@ -75,7 +77,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity CreatePrivilegedUser(UserApplicationContext uctx,String email,String password,String username,int role) throws PersistenceException,WebApplicationException
 	{
-		Entity user = getAuthenticatedUser(uctx);
+		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canCreatePrivilegedUser(user, role));
 		
 		List<Integer> roles = new ArrayList<Integer>();
@@ -104,7 +106,7 @@ public class UserModule extends WebStoreModule
 	@Export  
 	public Entity CreatePublicUser(UserApplicationContext ctx,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
-		Entity user = getUser(ctx);
+		Entity user = (Entity)ctx.getUser();
 		GUARD(guard.canCreatePublicUser(user));
 		return createPublicUser(user, email, password, username);
 	}
@@ -128,7 +130,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity UpdateEmail(UserApplicationContext ctx,long user_entity_id,String email) throws WebApplicationException,PersistenceException
 	{
-		Entity editor    = getAuthenticatedUser(ctx);
+		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canUpdateField(editor,target,FIELD_EMAIL,email));					
 		return updateEmail(target, email);
@@ -147,7 +149,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity UpdateUserName(UserApplicationContext ctx,long user_entity_id,String username) throws PersistenceException,WebApplicationException
 	{
-		Entity editor    = getUser(ctx);
+		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canUpdateField(editor,target,FIELD_USERNAME,username));
 		return updateUserName(target, username);
@@ -162,7 +164,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity UpdatePassword(UserApplicationContext ctx,long user_entity_id,String old_password,String new_password/*,boolean do_md5_on_server*/) throws PersistenceException,WebApplicationException
 	{
-		Entity editor    = getUser(ctx);
+		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 	
 		GUARD(guard.canUpdateField(editor,target,FIELD_PASSWORD,new_password));
@@ -182,7 +184,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity AddRole(UserApplicationContext ctx,long user_entity_id,int role) throws PersistenceException,WebApplicationException
 	{
-		Entity editor    = getUser(ctx);
+		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canAddRole(editor,target,role));
 		return addRole(target, role);
@@ -199,7 +201,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity RemoveRole(UserApplicationContext ctx,long user_entity_id,int role) throws PersistenceException,WebApplicationException
 	{
-		Entity editor    = getUser(ctx);
+		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canRemoveRole(editor,target,role));
 		return removeRole(target, role);
@@ -216,7 +218,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity LockUser(UserApplicationContext ctx,long user_entity_id,int lock_code,String notes) throws WebApplicationException,PersistenceException
 	{
-		Entity editor    = getUser(ctx);
+		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		int lock = (Integer)target.getAttribute(FIELD_LOCK);
 		if(lock == LOCK_LOCKED)
@@ -237,7 +239,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity UnlockUser(UserApplicationContext ctx,long user_entity_id) throws WebApplicationException,PersistenceException
 	{
-		Entity editor     = getUser(ctx);
+		Entity editor     = (Entity)ctx.getUser();
 		Entity target     = GET(USER_ENTITY,user_entity_id);
 		
 		int lock = (Integer)target.getAttribute(FIELD_LOCK);
@@ -287,7 +289,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity Logout(UserApplicationContext uctx) throws PersistenceException
 	{
-		Entity user = getUser(uctx);
+		Entity user = (Entity)uctx.getUser();
 		uctx.setUser(null);
 		dispatchEvent(EVENT_USER_LOGGED_OUT, user);
 		return UPDATE(user,
@@ -297,7 +299,7 @@ public class UserModule extends WebStoreModule
 	@Export 
 	public Entity DeleteUser(UserApplicationContext uctx,long user_id)throws WebApplicationException,PersistenceException
 	{
-		Entity editor     = getUser(uctx);
+		Entity editor     = (Entity)uctx.getUser();
 		Entity target     = GET(USER_ENTITY,user_id);
 
 		GUARD(guard.canDeleteUser(editor,target));
@@ -317,7 +319,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public PagingQueryResult GetUsersByRole(UserApplicationContext uctx,int role,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
-		Entity user = getUser(uctx);
+		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canGetUsersByRole(user));
 		return getUsersByRole(role, offset, page_size);
 	}
@@ -337,7 +339,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public PagingQueryResult GetLockedUsers(UserApplicationContext uctx,int role,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
-		Entity user = getUser(uctx);
+		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canGetLockedUsers(user));
 		return getLockedUsers(offset,page_size);
 		
@@ -355,7 +357,7 @@ public class UserModule extends WebStoreModule
 	@Export
 	public PagingQueryResult GetLockedUsersByLockCode(UserApplicationContext uctx,int lock_code,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
-		Entity user = getUser(uctx);
+		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canGetLockedUsers(user));
 		return getLockedUsersByLockCode(lock_code,offset,page_size);
 	}
@@ -377,51 +379,7 @@ public class UserModule extends WebStoreModule
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 	
-	//BEGIN UTIL FUNCTIONS//
-	
-	public boolean isRole(Entity user,int role)
-	{
-		if(user == null)
-			return false;
-		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
-		if(roles.contains(role))
-			return true;
-		return false;
-	}
 
-	public boolean isAdmin(Entity user) 
-	{	
-		return (user != null) && (user.getId() == 1);
-	}
-	
-	public boolean isCreator(Entity user,Entity record) throws PersistenceException
-	{
-		if(record == null)
-			return false;
-		
-		record = EXPAND(record);
-		return (user != null) && (user.equals(record.getAttribute(FIELD_CREATOR)));
-	}
-	
-	public Entity getUser(UserApplicationContext uctx) 
-	{
-		return (Entity)uctx.getUser();
-	}
-	
-
-
-	public Entity getAuthenticatedUser(UserApplicationContext uctx) throws AuthenticationException
-	{
-		Entity user =  getUser(uctx);
-		if(user == null)
-			throw new AuthenticationException("USER IS NOT AUTHENTICATED");
-		return user;
-	}
-	
-	public boolean isAuthenticated(UserApplicationContext uctx)
-	{
-		return (getUser(uctx) != null);
-	}
 
 	public Entity getUserByEmail(String email) throws PersistenceException,WebApplicationException
 	{
