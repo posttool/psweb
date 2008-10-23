@@ -114,6 +114,7 @@ public class ResourceModule extends WebStoreModule
 			GUARD(guard.canCreateResource(user));
 		}catch(Exception e)
 		{
+			e.printStackTrace();
 			uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, e);
 			return false;
 		}
@@ -141,6 +142,7 @@ public class ResourceModule extends WebStoreModule
 			GUARD(guard.canUpdateResource(user,update_resource));
 		}catch(Exception e)
 		{
+			e.printStackTrace();
 			uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, e);
 			return false;
 		}
