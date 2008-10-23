@@ -263,7 +263,7 @@ public abstract class WebStoreModule extends WebModule
 	
 	public static Entity EXPAND(PersistentStore store, Entity e) throws PersistenceException
 	{
-		if(e.isLightReference())
+		if(!e.isLightReference())
 			return e;
 		return GET(store,e.getType(),e.getId());
 	}
