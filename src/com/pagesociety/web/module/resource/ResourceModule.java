@@ -269,7 +269,7 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	@Export
-	public List<UploadProgressInfo> CancelUpload(UserApplicationContext ctx,String channel_name)throws WebApplicationException
+	public List<UploadProgressInfo> CancelUpload(UserApplicationContext ctx,String channel_name)throws PersistenceException,WebApplicationException
 	{
 		check_exceptions(ctx);
 		Entity user = (Entity)ctx.getUser();

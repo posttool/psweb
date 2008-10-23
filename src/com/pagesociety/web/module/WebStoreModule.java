@@ -261,6 +261,12 @@ public abstract class WebStoreModule extends WebModule
 		return store.saveEntity(e);
 	}
 	
+	public static Entity EXPAND(PersistentStore store, Entity e) throws PersistenceException
+	{
+		if(e.isLightReference())
+			return e;
+		return GET(store,e.getType(),e.getId());
+	}
 
 	public static Entity GET(PersistentStore store, String entity_type,long entity_id) throws PersistenceException
 	{
@@ -519,7 +525,11 @@ public abstract class WebStoreModule extends WebModule
 		return CREATE_ENTITY(store,creator,instance);
 	}
 	
-
+	public Entity EXPAND(Entity e) throws PersistenceException
+	{
+		return EXPAND(store,e);
+	}
+	
 	public Entity GET( String entity_type,long entity_id) throws PersistenceException
 	{
 		return GET(store,entity_type,entity_id);

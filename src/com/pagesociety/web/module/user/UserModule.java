@@ -394,15 +394,12 @@ public class UserModule extends WebStoreModule
 		return (user != null) && (user.getId() == 1);
 	}
 	
-	public boolean isCreator(Entity user,Entity record) 
+	public boolean isCreator(Entity user,Entity record) throws PersistenceException
 	{
-		try{
-			record = GET(record.getType(),record.getId());
-		}catch(PersistenceException pe)
-		{
-			pe.printStackTrace();
+		if(record == null)
 			return false;
-		}
+		
+		record = EXPAND(record);
 		return (user != null) && (user.equals(record.getAttribute(FIELD_CREATOR)));
 	}
 	
@@ -411,7 +408,7 @@ public class UserModule extends WebStoreModule
 		return (Entity)uctx.getUser();
 	}
 	
-	// THIS IS ONLY HERE BECAUSE WebModule.CURRENT_AUTHENTICATED_USER calls it ...
+
 
 	public Entity getAuthenticatedUser(UserApplicationContext uctx) throws AuthenticationException
 	{

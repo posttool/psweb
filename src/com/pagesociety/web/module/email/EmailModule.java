@@ -13,6 +13,7 @@ import javax.mail.internet.MimeMessage;
 
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
@@ -56,8 +57,8 @@ public class EmailModule extends WebModule implements IEmailModule
 
 	@Export
 	public void SendEmail(UserApplicationContext uctx,String from, List<String> to, String subject,
-			String template_name, Map<String, Object> template_data)
-			throws WebApplicationException { 
+			String template_name, Map<String, Object> template_data) throws PersistenceException,WebApplicationException 
+	{ 
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canSendEmail(user));
 		String[] s_to = new String[to.size()];

@@ -3,6 +3,7 @@ package com.pagesociety.web.module;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.module.user.UserModule;
@@ -33,7 +34,7 @@ public class PermissionsModule extends WebModule
 		return user != null;
 	}
 	
-	protected boolean IS_CREATOR(Entity user,Entity record)
+	protected boolean IS_CREATOR(Entity user,Entity record) throws PersistenceException
 	{
 		return user != null && user_module.isCreator(user, record);
 	}
