@@ -122,7 +122,7 @@ public class ModuleRegistry
 			}
 		}
 		if(resolved_method == null)
-			throw new WebApplicationException("NO METHOD NAMED "+method_name+" EXISTS IN "+module.getName()+" WHICH CAN BOTH BE CALLED FOR ARGS "+args);
+			throw new WebApplicationException("NO METHOD NAMED "+method_name+" EXISTS IN "+module.getName()+" WHICH CAN BE CALLED FOR ARGS "+args);
 		return resolved_method.invoke(module,args_with_user);
 	}
 

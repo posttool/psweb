@@ -141,7 +141,7 @@ public class ModuleMethod
 			Object arg = arguments[i];
 			if(arg == null)
 				continue;
-			if (!compatible_classes(arg.getClass(),ptypes[i]) || !compatible_classes(ptypes[i], arg.getClass()))
+			if (!compatible_classes(arg.getClass(),ptypes[i]) && !compatible_classes(ptypes[i], arg.getClass()))
 				return false;
 		}
 		return true;
@@ -152,6 +152,7 @@ public class ModuleMethod
 		if((c1 == c2) ||
 				(c1 == Long.class 	 && c2 	== long.class) 	  ||
 				(c1 == Integer.class && c2 	== int.class) 	  ||
+				(c1 == ArrayList.class 	 && c2 	== List.class)||
 				(c1 == Float.class   && c2 	== float.class)   ||
 				(c1 == Integer.class && c2 	== long.class)    ||
 				(c1 == Float.class && c2 	== double.class))

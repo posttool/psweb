@@ -188,17 +188,17 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	@Export
-	public List<String> GetResourceURLs(UserApplicationContext uctx,List<Integer> resource_ids) throws WebApplicationException,PersistenceException
+	public List<String> GetResourceURLs(UserApplicationContext uctx,List<Long> resource_ids) throws WebApplicationException,PersistenceException
 	{	
 		//check to make sure it exists//
 		Entity user = (Entity)uctx.getUser();
-		List<Entity> resources = INT_IDS_TO_ENTITIES(RESOURCE_ENTITY,resource_ids);
+		List<Entity> resources = IDS_TO_ENTITIES(RESOURCE_ENTITY,resource_ids);
 		int s = resources.size();
 		List<String> urls = new ArrayList<String>(s);
 		//move the file to the right place
 		for (int i=0; i<s; i++)
 		{
-			Entity resource = resources.get(i);
+			Entity resource = GET(RESOURCE_ENTITY,resources.get(i).getId());
 			GUARD(guard.canGetResourceURL(user,resource));
 			urls.add( getResourceURL(resource));
 		}
@@ -226,17 +226,17 @@ public class ResourceModule extends WebStoreModule
 
 
 	@Export
-	public List<String> GetResourceURLsWithDim(UserApplicationContext uctx,List<Integer> resource_ids,int w, int h) throws WebApplicationException,PersistenceException
+	public List<String> GetResourceURLsWithDim(UserApplicationContext uctx,List<Long> resource_ids,int w, int h) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		//check to make sure it exists//
-		List<Entity> resources = INT_IDS_TO_ENTITIES(RESOURCE_ENTITY,resource_ids);
+		List<Entity> resources = IDS_TO_ENTITIES(RESOURCE_ENTITY,resource_ids);
 		int s = resources.size();
 		List<String> urls = new ArrayList<String>(s);
 		//move the file to the right place
 		for (int i=0; i<s; i++)
 		{
-			Entity resource = resources.get(i);
+			Entity resource = GET(RESOURCE_ENTITY,resources.get(i).getId());
 			GUARD(guard.canGetResourceURL(user, resource));
 			urls.add( getResourceUrlWithDim(resource, w, h));
 		}
