@@ -271,6 +271,10 @@ public class TreeModule extends WebStoreModule
 			return result.getEntities().get(0);
 	}
 	
+	public Entity getTreeById(long tree_id) throws PersistenceException
+	{
+		return GET(TREE_ENTITY,tree_id);
+	}
 	
 	@Export
 	public List<Entity> GetTreeNodesByClass(UserApplicationContext uctx, long tree_id,String node_classname) throws WebApplicationException,PersistenceException
