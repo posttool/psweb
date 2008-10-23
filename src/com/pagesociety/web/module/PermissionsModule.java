@@ -1,5 +1,6 @@
 package com.pagesociety.web.module;
 
+import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
@@ -8,25 +9,20 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.module.user.UserModule;
 
-public class PermissionsModule extends WebModule
+public class PermissionsModule extends WebStoreModule
 {
-	UserModule user_module;
-	private static final String SLOT_USER_MODULE = "user-module"; 
-	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
+	
+	private boolean is_user(Entity user)
 	{
-		super.init(app,config);	
-		user_module = (UserModule)getSlot(SLOT_USER_MODULE);
+		return(user != null && user.getType().equals(UserModule.USER_ENTITY)); 	
 	}
 	
-	protected void defineSlots()
-	{
-		super.defineSlots();
-		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true);
-	}
-		
 	protected boolean IS_ADMIN(Entity user)
 	{
-		return user_module.isAdmin(user);
+		return  is_user(user)
+				&& 
+			    (user.getId()==1 || IS_ROLE(user,UserModule.USER_ROLE_WHEEL));
+
 	}
 	
 	protected boolean IS_LOGGED_IN(Entity user)
@@ -35,13 +31,23 @@ public class PermissionsModule extends WebModule
 	}
 	
 	protected boolean IS_CREATOR(Entity user,Entity record) throws PersistenceException
-	{
-		return user != null && user_module.isCreator(user, record);
+	{		
+		if(record == null)
+			return false;
+		record = EXPAND(record);
+		
+		return (is_user(user) 
+				&&
+				record.getAttribute(FIELD_CREATOR).equals(user));
+	
 	}
 	
 	protected boolean IS_ROLE(Entity user,int role)
 	{
-		return user != null && user_module.isRole(user, role);
+		return is_user(user)
+				&&
+				((List<Integer>)user.getAttribute(UserModule.FIELD_ROLES)).contains(role);
 	}
-
+	
+	
 }
