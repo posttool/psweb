@@ -164,14 +164,13 @@ public class TreeModule extends WebStoreModule
 		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE).equals(new_parent))
 		{
 			int original_idx = children.indexOf(tree_node);
-			if(original_idx == new_parent_idx)
-				return tree_node;
+
 			
 			children.add(new_parent_idx,tree_node);
 			if(new_parent_idx < original_idx)
-				children.remove(original_idx);
-			else
 				children.remove(original_idx+1);
+			else
+				children.remove(original_idx);
 		}
 		else
 			children.add(new_parent_idx, tree_node);
