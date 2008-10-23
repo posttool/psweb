@@ -143,6 +143,8 @@ public class TreeModule extends WebStoreModule
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
 		Entity parent_node = GET(TREE_NODE_ENTITY,new_parent_id);
 		//!test indexout of bounds here
+		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
+			throw new WebApplicationException("CANT REPARENT A ROOT TREE NODE");
 		GUARD(guard.canReparentTreeNode(user,tree_node,parent_node));
 		return reparentTreeNode(tree_node,parent_node,new_parent_child_index);
 	}
