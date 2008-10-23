@@ -161,7 +161,20 @@ public class TreeModule extends WebStoreModule
 		if(new_parent_idx > children.size())
 			new_parent_idx = children.size();
 		
-		children.add(new_parent_idx, tree_node);
+		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE).equals(new_parent))
+		{
+			int original_idx = children.indexOf(tree_node);
+			if(original_idx == new_parent_idx)
+				return tree_node;
+			
+			children.add(new_parent_idx,tree_node);
+			if(new_parent_idx < original_idx)
+				children.remove(original_idx);
+			else
+				children.remove(original_idx+1);
+		}
+		else
+			children.add(new_parent_idx, tree_node);
 		//TODO:even though the reference is changed here we still need to set the attribute so that
 		// it is dirty. could ovveride list at some point and have it automagically mark it
 		//dirty but not now fer sure !
