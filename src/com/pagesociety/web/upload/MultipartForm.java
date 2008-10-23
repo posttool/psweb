@@ -104,7 +104,6 @@ public class MultipartForm
 		HttpServletRequest l_request = request.get();
 		if (l_request == null)
 			throw new MultipartFormException("UPLOAD " + name + " WAS NOT CONSTRUCTED WITH A REQUEST OR REQUEST HAS BEEN GARBAGE COLLECTED");
-		state = PARSING;
 		long contentLength = Long.parseLong(l_request.getHeader(MultipartFormConstants.CONTENT_LENTH));
 		try
 		{
@@ -113,6 +112,7 @@ public class MultipartForm
 			if(max_upload_item_size != 0)
 				upload.setFileSizeMax(max_upload_item_size);
 			
+			state = PARSING; // TODO this state change does not ensure the existence of ProgressInfo objects
 			List<?> fileItems = upload.parseRequest(l_request);
 			for (int i = 0; i < fileItems.size(); i++)
 			{
@@ -146,6 +146,7 @@ public class MultipartForm
 			this.request = null;
 			if (listener != null)
 				listener.onUploadComplete(this);
+			state = COMPLETE;
 		}
 		catch (Exception ne)
 		{
@@ -301,14 +302,20 @@ public class MultipartForm
 
 	public boolean isComplete()
 	{/* this upload is complete when all of the files have been parsed */
+//	THIS IS UGLY
+// TODO help!
+		boolean pis_are_complete = true;
 		int s = progress_list.size();
 		for(int i = 0;i <s;i++)
 		{
 			UploadProgressInfo p = progress_list.get(i);
 			if(!p.isComplete())
-				return false;
+			{
+				pis_are_complete = false;
+				break;
+			}
 		}
-		return true;
+		return state == COMPLETE && pis_are_complete;
 	}
 
 	public boolean isError()
