@@ -150,11 +150,12 @@ public class ModuleMethod
 	private static boolean compatible_classes(Class c1,Class c2)
 	{
 		if((c1 == c2) ||
-				(c1 == Long.class 	 && c2 	== long.class) 	  ||
-				(c1 == Integer.class && c2 	== int.class) 	  ||
-				(c1 == ArrayList.class 	 && c2 	== List.class)||
-				(c1 == Float.class   && c2 	== float.class)   ||
-				(c1 == Integer.class && c2 	== long.class)    ||
+				(c1 == Long.class 	 && c2 	== long.class) 	   ||
+				(c1 == Integer.class && c2 	== int.class) 	   ||
+				(c1 == ArrayList.class 	 && c2 	== List.class) ||
+				(c1 == Boolean.class && c2 	== boolean.class)  ||
+				(c1 == Float.class   && c2 	== float.class)    ||
+				(c1 == Integer.class && c2 	== long.class)     ||
 				(c1 == Float.class && c2 	== double.class))
 			return true;
 		
