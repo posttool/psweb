@@ -52,6 +52,12 @@ public class ResourceModule extends WebStoreModule
 	private IResourcePathProvider 	path_provider;
 	protected IResourceGuard		 	guard;
 
+	/* look at the useage of this. this is a trempory work around to let
+	 * other modules subclass this and not have to rewrite the multipart methods
+	 * and still provide their own entity.see PosteraSystemsMoudle. heritence in
+	 * store would probably clean this up a lot!!! */
+	private String resource_entity_name;
+	
 	private static final List<UploadProgressInfo> EMPTY_UPLOAD_PROGRESS_LIST = new ArrayList<UploadProgressInfo>(0);
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -59,6 +65,7 @@ public class ResourceModule extends WebStoreModule
 		super.init(app,config);	
 		path_provider = (IResourcePathProvider)getSlot(SLOT_PATH_PROVIDER);
 		guard		  = (IResourceGuard)getSlot(SLOT_GUARD);
+		resource_entity_name = RESOURCE_ENTITY;
 		set_parameters(config);
 	}
 
@@ -68,6 +75,11 @@ public class ResourceModule extends WebStoreModule
 		DEFINE_SLOT(SLOT_PATH_PROVIDER,IResourcePathProvider.class,true);
 		DEFINE_SLOT(SLOT_GUARD,IResourceGuard.class,false,DefaultResourceGuard.class);
 	}	
+	
+	protected void setResourceEntityName(String name)
+	{
+		resource_entity_name = name;
+	}
 	
 	private void set_parameters(Map<String,Object> config) throws InitializationException
 	{
@@ -136,7 +148,7 @@ public class ResourceModule extends WebStoreModule
 			uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, e);
 			return false;	
 		}
-		update_resource = GET(RESOURCE_ENTITY,resource_id);
+		update_resource = GET(resource_entity_name,resource_id);
 		
 		try{
 			GUARD(guard.canUpdateResource(user,update_resource));
@@ -154,7 +166,7 @@ public class ResourceModule extends WebStoreModule
 	{	
 		//check to make sure it exists//
 		Entity user = (Entity)uctx.getUser();
-		Entity resource = GET(RESOURCE_ENTITY,resource_id);
+		Entity resource = GET(resource_entity_name,resource_id);
 		GUARD(guard.canDeleteResource(user,resource));
 		return deleteResource(resource);
 	}
@@ -175,7 +187,7 @@ public class ResourceModule extends WebStoreModule
 	{	
 		//check to make sure it exists//
 		Entity user = (Entity)uctx.getUser();
-		Entity resource = GET(RESOURCE_ENTITY,resource_id);
+		Entity resource = GET(resource_entity_name,resource_id);
 		GUARD(guard.canGetResourceURL(user,resource));
 		return getResourceURL(resource);
 	}
@@ -194,13 +206,13 @@ public class ResourceModule extends WebStoreModule
 	{	
 		//check to make sure it exists//
 		Entity user = (Entity)uctx.getUser();
-		List<Entity> resources = IDS_TO_ENTITIES(RESOURCE_ENTITY,resource_ids);
+		List<Entity> resources = IDS_TO_ENTITIES(resource_entity_name,resource_ids);
 		int s = resources.size();
 		List<String> urls = new ArrayList<String>(s);
 		//move the file to the right place
 		for (int i=0; i<s; i++)
 		{
-			Entity resource = GET(RESOURCE_ENTITY,resources.get(i).getId());
+			Entity resource = GET(resource_entity_name,resources.get(i).getId());
 			GUARD(guard.canGetResourceURL(user,resource));
 			urls.add( getResourceURL(resource));
 		}
@@ -212,7 +224,7 @@ public class ResourceModule extends WebStoreModule
 	public String GetResourceURLWithDim(UserApplicationContext uctx,long resource_id,int w, int h) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity resource = GET(RESOURCE_ENTITY,resource_id);
+		Entity resource = GET(resource_entity_name,resource_id);
 		GUARD(guard.canGetResourceURL(user,resource));
 		return getResourceUrlWithDim( resource, w, h);
 	
@@ -232,13 +244,13 @@ public class ResourceModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		//check to make sure it exists//
-		List<Entity> resources = IDS_TO_ENTITIES(RESOURCE_ENTITY,resource_ids);
+		List<Entity> resources = IDS_TO_ENTITIES(resource_entity_name,resource_ids);
 		int s = resources.size();
 		List<String> urls = new ArrayList<String>(s);
 		//move the file to the right place
 		for (int i=0; i<s; i++)
 		{
-			Entity resource = GET(RESOURCE_ENTITY,resources.get(i).getId());
+			Entity resource = GET(resource_entity_name,resources.get(i).getId());
 			GUARD(guard.canGetResourceURL(user, resource));
 			urls.add( getResourceUrlWithDim(resource, w, h));
 		}
@@ -302,14 +314,14 @@ public class ResourceModule extends WebStoreModule
 	public Entity GetResource(UserApplicationContext uctx,long resource_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity resource = GET(RESOURCE_ENTITY,resource_id);	 
+		Entity resource = GET(resource_entity_name,resource_id);	 
 		GUARD(guard.canGetResource(user,resource));
 		return resource;
 	}
 	
 	public Entity getResource(long resource_id) throws WebApplicationException,PersistenceException
 	{
-		return GET(RESOURCE_ENTITY,resource_id);	 
+		return GET(resource_entity_name,resource_id);	 
 	}
 	
 	///////////////////////////////////END MODULE FUNCTIONS *//
@@ -522,7 +534,7 @@ public class ResourceModule extends WebStoreModule
 	{
 
 		Object[] annotations = annotate(upload,creator,content_type,simple_type,filename,ext,file_size);
-		Entity resource = NEW(RESOURCE_ENTITY,
+		Entity resource = NEW(resource_entity_name,
 				creator,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
 				RESOURCE_FIELD_SIMPLE_TYPE,simple_type,
