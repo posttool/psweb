@@ -418,7 +418,7 @@ public class ResourceModule extends WebStoreModule
 				Entity resource = null;
 				String path_token;
 				try{
-					path_token = path_provider.save(uploaded_file);
+					path_token = path_provider.save(user,uploaded_file);
 					/* we don't delete the file. it is up to the path provider to 
 					 * make this descion as it may just want to rename it
 					 */
@@ -496,7 +496,7 @@ public class ResourceModule extends WebStoreModule
 	        String content_type = "????";
 	        String simple_type = FileInfo.getSimpleTypeAsString(uncompressed_entry);
 	        long file_size 		= uncompressed_entry.length();
-	        String path_token 	= path_provider.save(uncompressed_entry);
+	        String path_token 	= path_provider.save(creator,uncompressed_entry);
 	        Entity resource 	= do_add_resource(upload,creator, content_type,simple_type, filename, ext, file_size, path_token);
 	        resources.add(resource);
 	      }

@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.Map;
 
 
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.transcode.ImageMagick;
 import com.pagesociety.util.FileInfo;
 import com.pagesociety.util.RandomGUID;
@@ -57,7 +58,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 
 	}
 	
-	public String/*path token*/ save(File f) throws WebApplicationException
+	public String/*path token*/ save(Entity user,File f) throws WebApplicationException
 	{
 		
 		String relative_path = get_save_directory(f);
