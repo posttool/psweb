@@ -74,7 +74,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return relative_path+save_filename;
 	}
 	
-	private String get_save_directory(File f) 
+	protected String get_save_directory(File f) 
 	{
 		String guid = RandomGUID.getGUID();
 		StringBuilder path = new StringBuilder();
@@ -88,7 +88,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	}
 	
 	
-	private String get_save_filename(File f) 
+	protected String get_save_filename(File f) 
 	{
 		StringBuilder buf = new StringBuilder();
 		buf.append(RandomGUID.getGUID().substring(16));

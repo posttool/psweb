@@ -235,6 +235,10 @@ public class ResourceModule extends WebStoreModule
 		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
+
+		if(!resource.getAttribute(RESOURCE_FIELD_SIMPLE_TYPE).equals(FileInfo.SIMPLE_TYPE_IMAGE))
+			throw new WebApplicationException("RESOURCE "+resource+" IS NOT OF SIMPLE TYPE IMAGE. CAN'T RESIZE.");
+		
 		return path_provider.getPreviewUrl(path_token,w,h);		
 	}
 
