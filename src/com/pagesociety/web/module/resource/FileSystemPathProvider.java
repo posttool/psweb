@@ -20,15 +20,15 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	private static final String PARAM_RESOURCE_BASE_URL   		  = "path-provider-base-url";
 	private static final String PARAM_IMAGE_MAGICK_PATH   		  = "path-provider-image-magick-path";
 	
-	private String base_dir;
-	private String base_url;
-	private String image_magick_path;
-	private String image_magick_convert_path;
-	private int    depth = 8;//myst be <=32
+	protected String base_dir;
+	protected String base_url;
+	protected String image_magick_path;
+	protected String image_magick_convert_path;
+	protected int    depth = 8;//myst be <=32
 
 	
-	private static final String SLASH = "/";
-	private static final char	C_SLASH = '/';
+	protected static final String SLASH = "/";
+	protected static final char	C_SLASH = '/';
 	
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
@@ -61,12 +61,12 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	public String/*path token*/ save(Entity user,File f) throws WebApplicationException
 	{
 		
-		String relative_path = get_save_directory(f);
+		String relative_path = get_save_directory(user,f);
 		
 		File dest_dir = new File(base_dir,relative_path);
 		dest_dir.mkdirs();
 
-		String save_filename = get_save_filename(f);
+		String save_filename = get_save_filename(user,f);
 		File dest_file = new File(dest_dir,save_filename);
 		
 		f.renameTo(dest_file);
@@ -74,7 +74,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return relative_path+save_filename;
 	}
 	
-	protected String get_save_directory(File f) 
+	/* returns relative/path/to/dir/ */
+	protected String get_save_directory(Entity user,File f) 
 	{
 		String guid = RandomGUID.getGUID();
 		StringBuilder path = new StringBuilder();
@@ -88,7 +89,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	}
 	
 	
-	protected String get_save_filename(File f) 
+	protected String get_save_filename(Entity user,File f) 
 	{
 		StringBuilder buf = new StringBuilder();
 		buf.append(RandomGUID.getGUID().substring(16));
