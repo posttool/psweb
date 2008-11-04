@@ -44,8 +44,8 @@ public class ResourceModule extends WebStoreModule
 	private static final String FORM_ELEMENT_CHANNEL     = "channel";
 	private static final String FORM_ELEMENT_RESOURCE_ID = "resource_id";
 
-	private String SLOT_PATH_PROVIDER = "resource-path-provider";
-	private String SLOT_GUARD		  = "resource-guard";
+	protected String SLOT_PATH_PROVIDER = "resource-path-provider";
+	protected String SLOT_GUARD		  = "resource-guard";
 	
 	private File				 	upload_temp_dir;
 	private long				 	upload_max_file_size;
@@ -534,7 +534,7 @@ public class ResourceModule extends WebStoreModule
 		}	
 	}
 
-	private Entity do_add_resource(MultipartForm upload,Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
+	protected Entity do_add_resource(MultipartForm upload,Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
 
 		Object[] annotations = annotate(upload,creator,content_type,simple_type,filename,ext,file_size);
@@ -619,7 +619,6 @@ public class ResourceModule extends WebStoreModule
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
 	{
-
 		DEFINE_ENTITY(RESOURCE_ENTITY,
 					  RESOURCE_FIELD_CONTENT_TYPE,	Types.TYPE_STRING,null, 
 					  RESOURCE_FIELD_SIMPLE_TYPE,	Types.TYPE_STRING,null, 
