@@ -704,7 +704,8 @@ public abstract class WebStoreModule extends WebModule
 	
 	public Entity CLONE_DEEP(Entity e) throws PersistenceException
 	{
-		return CLONE_DEEP(e,new clone_policy());
+		clone_policy default_clone_policy = new clone_policy();
+		return CLONE_DEEP(e,default_clone_policy);
 		
 	}
 	
@@ -797,7 +798,8 @@ public abstract class WebStoreModule extends WebModule
 	//DELETE DEEP SUBSYSTEM...be careful with circular references!!!//
 	public Entity DELETE_DEEP(Entity e) throws PersistenceException
 	{
-		return DELETE_DEEP(e, new delete_policy());
+		delete_policy default_delete_policy = new delete_policy();
+		return DELETE_DEEP(e, default_delete_policy);
 	}
 	
 	public  Entity DELETE_DEEP(Entity e,delete_policy f) throws PersistenceException
