@@ -22,6 +22,8 @@ public class DefaultTreeGuard extends PermissionsModule implements ITreeGuard
 	{return false;}
 	public boolean canDeleteTree(Entity user, Entity tree)throws PersistenceException
 	{return false;}
+	public boolean canCloneTree(Entity user, Entity tree)throws PersistenceException 
+	{return false;}
 	public boolean canGetTreesForUser(Entity user, Entity user2)throws PersistenceException
 	{return false;}//user 1 wants to get user 2's trees
 	public boolean canGetTree(Entity user, Entity tree) throws PersistenceException
@@ -32,5 +34,6 @@ public class DefaultTreeGuard extends PermissionsModule implements ITreeGuard
 	{return false;}
 	public boolean canGetTreeNodeById(Entity user, String node_id)throws PersistenceException
 	{return false;}
+
 	
 }

@@ -191,13 +191,7 @@ public class TreeModule extends WebStoreModule
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
 		GUARD(guard.canDeleteTreeNode(user,tree_node));
-		return deleteTreeNode(tree_node);
-	}
-
-	//deletes children nodes as well//
-	public List<Entity> deleteTreeNode(Entity tree_node) throws PersistenceException
-	{
-		return deleteTree(tree_node);
+		return deleteSubTree(tree_node);
 	}
 	
 	@Export
@@ -206,12 +200,24 @@ public class TreeModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
 		GUARD(guard.canDeleteTree(user,tree));
+		
 		return deleteTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE));
 	}
-	//TODO: return list of deleted entities//
-	public List<Entity> deleteTree(Entity node) throws PersistenceException
+	
+	public List<Entity> deleteTree(Entity tree) throws PersistenceException
+	{
+		return deleteSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE));	
+	}
+	
+	public List<Entity> deleteSubTree(Entity node) throws PersistenceException
 	{
 		delete_functor df = new delete_functor();
+		Entity tree = null;
+		if(node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
+		{
+			tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
+		}
+		
 		try{
 			applyTreeFunctor(node, df);
 		}catch(Exception e)
@@ -219,7 +225,37 @@ public class TreeModule extends WebStoreModule
 			e.printStackTrace();
 			throw new PersistenceException("PROBLEM DELETEING ENTITY "+e.getMessage(),e);
 		}
-		return (List<Entity>)df.getReturnObject();
+		List<Entity> deletees = (List<Entity>)df.getReturnObject();
+		if(tree != null)
+			DELETE(tree);
+		return deletees;
+	}
+	
+	@Export
+	public Entity CloneTree(UserApplicationContext uctx,long tree_id,String new_tree_name) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity tree = GET(TREE_ENTITY,tree_id);
+		GUARD(guard.canCloneTree(user,tree));
+		return cloneTree(tree,new_tree_name);
+	}
+	
+	public Entity cloneTree(Entity tree,String new_tree_name) throws PersistenceException
+	{
+		return cloneSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),new_tree_name);	
+	}
+	
+	public Entity cloneSubTree(Entity node,String new_tree_name) throws PersistenceException
+	{
+		clone_functor cf = new clone_functor(node,new_tree_name);
+		try{
+			applyTreeFunctor(node, cf);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			throw new PersistenceException("PROBLEM CLONING TREE "+e.getMessage(),e);
+		}
+		return (Entity)cf.getReturnObject();
 	}
 	
 	@Export
@@ -437,9 +473,11 @@ public class TreeModule extends WebStoreModule
 		ArrayDeque<Entity> parent_stack;
 		Map<Long,Entity> parent_map;
 		
-		public clone_functor(Entity tree) throws PersistenceException
+		public clone_functor(Entity node,String new_tree_name) throws PersistenceException
 		{
+			Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
 			cloned_tree = CLONE_SHALLOW(tree);
+			cloned_tree.setAttribute(TREE_FIELD_NAME, new_tree_name);
 			parent_map = new HashMap<Long, Entity>();
 		}
 		
