@@ -41,7 +41,7 @@ public class ModuleDefinition
 				ModuleMethod module_method = new ModuleMethod();
 				module_method.init(methods[i]);
 				
-				System.out.println("!!!!!!!!!!EXAMINING EXPORTED METHOD "+module_method);
+
 				List<ModuleMethod> overloaded_methods = exported_method_map.get(module_method.getName());
 				if(overloaded_methods == null)
 				{
