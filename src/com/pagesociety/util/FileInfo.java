@@ -43,6 +43,12 @@ public class FileInfo
 	public static final int SIMPLE_TYPE_VIDEO    = 102;
 	public static final int SIMPLE_TYPE_DOCUMENT = 103;
 	public static final int SIMPLE_TYPE_SWF 	 = 104;
+	
+	public static final String SIMPLE_TYPE_IMAGE_STRING     = "IMAGE";
+	public static final String SIMPLE_TYPE_AUDIO_STRING     = "AUDIO";
+	public static final String SIMPLE_TYPE_VIDEO_STRING     = "VIDEO";
+	public static final String SIMPLE_TYPE_DOCUMENT_STRING  = "DOCUMENT";
+	public static final String SIMPLE_TYPE_SWF_STRING 	 	= "SWF";
 
 	
 	public static int getType(File file)
@@ -101,22 +107,22 @@ public class FileInfo
 			case JPG:
 			case GIF:
 			case PNG:
-				return "IMAGE";
+				return SIMPLE_TYPE_IMAGE_STRING;
 			case AIF:
 			case MP3:
 			case WAV:
 			case VOG:
-				return "AUDIO";
+				return SIMPLE_TYPE_AUDIO_STRING;
 			case AVI:
 			case MOV:
 			case DIVX:
 			case MPG:
-				return "VIDEO";
+				return SIMPLE_TYPE_VIDEO_STRING;
 			case PDF:
 			case DOC:
-				return "DOCUMENT";	
+				return SIMPLE_TYPE_DOCUMENT_STRING;	
 			case SWF:
-				return "SWF";		
+				return SIMPLE_TYPE_SWF_STRING;		
 		}
 		return "????";
 	}
