@@ -30,8 +30,10 @@ public class EncryptionModule extends WebModule
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());  
 		byte[] key_bytes = secret_key.getBytes();
 		System.out.println("KEY BYTES LENGTH IS "+key_bytes.length);
-		
-		key 		 = new SecretKeySpec(key_bytes,0,32,"AES");
+		//TODO: have david install unlimited strength encryption policy files
+		//and change back to 32....or make it a configurable parameter or module
+		//along with pass phrase startup stuff..
+		key 		 = new SecretKeySpec(key_bytes,0,16,"AES");
 		try{
 		cipher		 = Cipher.getInstance("AES/ECB/PKCS7Padding", "BC");
 
