@@ -16,9 +16,11 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebModule;
 
+//SECRET KEY AES ENCRYPTION//
 //SEE:
 //http://www.java2s.com/Code/Java/Security/EncryptionanddecryptionwithAESECBPKCS7Padding.htm
 //
+//TODO: add methods for encrypting/decrypting a whole file//
 public class EncryptionModule extends WebModule
 {	
 	String secret_key = "everyone has had a broken heart.";
