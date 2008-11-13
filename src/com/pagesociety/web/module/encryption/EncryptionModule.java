@@ -64,6 +64,10 @@ public class EncryptionModule extends WebModule
 		
 		try{
 			BufferedReader reader = new BufferedReader(new FileReader(key_test_file));
+			int v_encryption_strength = Integer.parseInt(reader.readLine());
+			if(v_encryption_strength != encryption_strength)
+				throw new WebApplicationException("ENCRYPTION STRENGTHS DONET MATCH IN MOSULDE SPECIFICATION AND WHAT IS ON DISK. ON DISK: "+v_encryption_strength+" IN MODULE: "+encryption_strength);
+
 			String v_question = reader.readLine();
 			String ev_answer  = reader.readLine();
 		while(true)
@@ -93,7 +97,7 @@ public class EncryptionModule extends WebModule
 		}	
 		}catch(Exception e)
 		{
-			throw new WebApplicationException(getName()+": PROBLEM READING KEY VERIFICATION FILE.");
+			throw new WebApplicationException(getName()+": PROBLEM READING KEY VERIFICATION FILE. "+e.getMessage());
 		}
 	}
 	
@@ -123,6 +127,7 @@ public class EncryptionModule extends WebModule
 		key_test_file = CREATE_MODULE_DATA_FILE(app, VERIFY_KEY_DATA_FILENAME);
 		try{
 			FileWriter fw = new FileWriter(key_test_file);
+			fw.write(encryption_strength+"\n");
 			fw.write(v_question+"\n");
 			fw.write(encryptString(v_data)+"\n");
 			fw.close();
@@ -140,8 +145,6 @@ public class EncryptionModule extends WebModule
 		key 		 = new SecretKeySpec(secret_key.getBytes(),0,encryption_strength,"AES");
 	}
 		
-
-
 
 	@Export
 	public String EncryptString(UserApplicationContext uctx,String s) throws PersistenceException,WebApplicationException 
