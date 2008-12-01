@@ -3,7 +3,6 @@ package com.pagesociety.web.module.encryption;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -145,7 +144,7 @@ public class EncryptionModule extends WebModule
 		key 		 = new SecretKeySpec(secret_key.getBytes(),0,encryption_strength,"AES");
 	}
 		
-
+//////////////MODULE FUNCTIONS/////////////////////////////////////////////////
 	@Export
 	public String EncryptString(UserApplicationContext uctx,String s) throws PersistenceException,WebApplicationException 
 	{ 
