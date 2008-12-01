@@ -77,8 +77,6 @@ public class TreeModule extends WebStoreModule
 		return tree;
 	}
 	
-	
-	
 	@Export 
 	public Entity UpdateTree(UserApplicationContext uctx,long tree_id,String name,Entity root_node) throws WebApplicationException,PersistenceException
 	{
