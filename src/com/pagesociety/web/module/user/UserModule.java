@@ -47,7 +47,7 @@ public class UserModule extends WebStoreModule
 	public static final int EVENT_USER_DELETED 	 	 = 0x1008;
 	
 	public static final int USER_ROLE_WHEEL 				 = 0x1000;
-	
+	public static final int USER_ROLE_USER	 				 = 0x0001;
 	private IUserGuard guard;
 
 	
@@ -408,10 +408,15 @@ public class UserModule extends WebStoreModule
 			String admin_email 	  = GET_REQUIRED_CONFIG_PARAM(PARAM_ADMIN_EMAIL, config);
 			String admin_password = GET_REQUIRED_CONFIG_PARAM(PARAM_ADMIN_PASSWORD, config);
 			LOG("CREATING ADMIN USER - "+admin_email);
+			
+			List<Integer> admin_roles = new ArrayList<Integer>();
+			admin_roles.add(USER_ROLE_WHEEL,USER_ROLE_USER);
+			
 			NEW(USER_ENTITY,
 				null,
 				UserModule.FIELD_EMAIL,admin_email,
 				UserModule.FIELD_PASSWORD,Util.stringToHexEncodedMD5(admin_password),
+				UserModule.FIELD_ROLES,admin_roles,
 				UserModule.FIELD_LOCK,LOCK_UNLOCKED,
 				UserModule.FIELD_LOCK_CODE,LOCK_CODE_DEFAULT);			
 		}
