@@ -27,7 +27,7 @@ import com.pagesociety.web.module.WebModule;
 //http://www.java2s.com/Code/Java/Security/EncryptionanddecryptionwithAESECBPKCS7Padding.htm
 //
 //TODO: add methods for encrypting/decrypting a whole file//
-public class EncryptionModule extends WebModule
+public class EncryptionModule extends WebModule implements IEncryptionModule
 {	
 	
 	private static final String PARAM_ENCRYPTION_STRENGTH = "encryption-strength";//num of chars used in phrase 32 is 256 bit//
