@@ -16,7 +16,6 @@ import com.pagesociety.persistence.Types;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.AccountLockedException;
-import com.pagesociety.web.exception.AuthenticationException;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.LoginFailedException;
 import com.pagesociety.web.exception.PermissionsException;
@@ -337,7 +336,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	@Export
-	public PagingQueryResult GetLockedUsers(UserApplicationContext uctx,int role,int offset,int page_size) throws PersistenceException,WebApplicationException
+	public PagingQueryResult GetLockedUsers(UserApplicationContext uctx,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canGetLockedUsers(user));
