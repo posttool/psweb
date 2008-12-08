@@ -116,11 +116,15 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS");
 
+		List<Integer> roles = new ArrayList<Integer>();
+		roles.add(USER_ROLE_USER);
+		
 		Entity user =  NEW(USER_ENTITY,
 						   creator,
 						   FIELD_USERNAME,username,
 						   FIELD_EMAIL,email,
-						   FIELD_PASSWORD,password);				
+						   FIELD_PASSWORD,password,
+						   FIELD_ROLES,roles);				
 		
 		dispatchEvent(EVENT_USER_CREATED, user);
 		return user;
@@ -450,6 +454,7 @@ public class UserModule extends WebStoreModule
 	private List<Integer>DEFAULT_ROLES = new ArrayList<Integer>(); 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
 	{
+
 		DEFINE_ENTITY(USER_ENTITY,
 					  FIELD_EMAIL, Types.TYPE_STRING,null, 
 					  FIELD_PASSWORD, Types.TYPE_STRING,null,
