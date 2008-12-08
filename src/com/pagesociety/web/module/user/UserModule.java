@@ -409,7 +409,8 @@ public class UserModule extends WebStoreModule
 			LOG("CREATING ADMIN USER - "+admin_email);
 			
 			List<Integer> admin_roles = new ArrayList<Integer>();
-			admin_roles.add(USER_ROLE_WHEEL,USER_ROLE_USER);
+			admin_roles.add(USER_ROLE_WHEEL);
+			admin_roles.add(USER_ROLE_USER);
 			
 			NEW(USER_ENTITY,
 				null,
