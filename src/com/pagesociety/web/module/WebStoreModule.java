@@ -671,7 +671,7 @@ public abstract class WebStoreModule extends WebModule
 			Entity instance = instances[i];
 			if(instance == null)
 				continue;
-			if(instance.getType() != type)
+			if(instance.getType().equals(type))
 				throw new WebApplicationException("ENTITY ARGUMENT FAILED VALIDATION. EXPECTED TYPE "+type+" BUT ENTITY WAS OF TYPE "+instance.getType());
 		}
 	}
