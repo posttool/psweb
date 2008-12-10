@@ -23,8 +23,6 @@ import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.resource.DefaultResourceGuard;
-import com.pagesociety.web.module.resource.IResourceGuard;
 import com.pagesociety.web.module.user.UserModule;
 
 
