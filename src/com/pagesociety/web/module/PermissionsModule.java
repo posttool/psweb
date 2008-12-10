@@ -31,6 +31,7 @@ public class PermissionsModule extends WebStoreModule
 		return user != null;
 	}
 	
+
 	public static boolean IS_CREATOR(PersistentStore store,Entity user,Entity record) throws PersistenceException
 	{		
 		if(record == null)
@@ -62,5 +63,9 @@ public class PermissionsModule extends WebStoreModule
 				((List<Integer>)user.getAttribute(UserModule.FIELD_ROLES)).contains(role);
 	}
 	
+	public static boolean IS_SAME(Entity user1,Entity user2)
+	{
+		return user1 != null && user1.equals(user2);
+	}
 	
 }
