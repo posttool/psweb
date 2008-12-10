@@ -1,19 +1,14 @@
 package com.pagesociety.web.module.ecommerce.recurring;
 
-import java.io.File;
+
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
-import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
-import com.pagesociety.persistence.Query;
-import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
-import com.pagesociety.util.FileInfo;
-import com.pagesociety.util.Files;
+
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
@@ -21,12 +16,9 @@ import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
-import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.ecommerce.BillingModule;
-import com.pagesociety.web.module.resource.IResourcePathProvider;
 import com.pagesociety.web.module.resource.ResourceModule;
-import com.pagesociety.web.module.tree.TreeModule;
 import com.pagesociety.web.module.user.UserModule;
 
 
@@ -35,9 +27,10 @@ public class RecurringOrderModule extends ResourceModule
 	
 	private static final String SLOT_BILLING_MODULE = "billing-module";
 	
-	public static final int ORDER_STATUS_INIT 		= 0x0000;
-	public static final int ORDER_STATUS_OPEN 		= 0x0001;
-	public static final int ORDER_STATUS_CLOSED  	= 0x0002;
+	public static final int ORDER_STATUS_INIT 				= 0x0000;
+	public static final int ORDER_STATUS_OPEN 				= 0x0001;
+	public static final int ORDER_STATUS_CLOSED  			= 0x0002;
+	public static final int ORDER_STATUS_LAST_BILL_FAILED 	= 0x0003;
 
 	private BillingModule billing_module;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -189,8 +182,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
-		//TODO: guard //
-	
+		//TODO: guard //	
 		return deleteRecurringSKU(recurring_sku);
 		
 	}
@@ -223,27 +215,42 @@ public class RecurringOrderModule extends ResourceModule
 	//TODO: do initial billing. set prev and next bill dates,deal with promotions //
 	public Entity createRecurringOrder(Entity creator,Entity user,Entity sku) throws PersistenceException
 	{
-
 		Entity recurring_order =  NEW(RECURRING_ORDER_ENTITY,
 									  creator,
 									  RECURRING_ORDER_FIELD_SKU,sku,
 									  RECURRING_ORDER_FIELD_USER,user,
-									  RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_INIT,
+									  RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_OPEN,
 									  RECURRING_ORDER_FIELD_LAST_BILL_DATE,null,
 									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,null,
 									  RECURRING_ORDER_FIELD_PROMOTIONS,new ArrayList<Entity>());
 		
 		sku = EXPAND(sku);
-		//TODO: bill here //
+		//TODO: bill setup fee here //
 		return recurring_order;
 	}
 	
+	@Export
+	public Entity CloseRecurringOrder(UserApplicationContext uctx,long recurring_order_id) throws WebApplicationException,PersistenceException
+	{
+		Entity user 	   = (Entity)uctx.getUser();
+		Entity recurring_order = GET(RECURRING_ORDER_ENTITY,recurring_order_id);
+		
+		if(!PermissionsModule.IS_ADMIN(user) || !PermissionsModule.IS_CREATOR(store,user, recurring_order))
+			throw new PermissionsException("NO PERMISSION");
 	
-
+		return closeRecurringOrder(recurring_order);
+	}
 	
+	public Entity closeRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
+	{
+		return updateRecurringOrderStatus(recurring_order, ORDER_STATUS_CLOSED);
+	}
 	
-	
-	
+	public Entity updateRecurringOrderStatus(Entity recurring_order,int status) throws WebApplicationException,PersistenceException
+	{
+		return UPDATE(recurring_order,
+					RECURRING_ORDER_FIELD_STATUS,status);
+	}
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
