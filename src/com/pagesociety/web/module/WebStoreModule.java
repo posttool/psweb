@@ -664,6 +664,17 @@ public abstract class WebStoreModule extends WebModule
 	}
 	
 
+	public void VALIDATE_TYPE(String type,Entity... instances) throws WebApplicationException
+	{
+		for(int i = 0;i < instances.length;i++)
+		{
+			Entity instance = instances[i];
+			if(instance == null)
+				continue;
+			if(instance.getType() != type)
+				throw new WebApplicationException("ENTITY ARGUMENT FAILED VALIDATION. EXPECTED TYPE "+type+" BUT ENTITY WAS OF TYPE "+instance.getType());
+		}
+	}
 	//DDL helpers for WebStoreModule //
 	
 	
