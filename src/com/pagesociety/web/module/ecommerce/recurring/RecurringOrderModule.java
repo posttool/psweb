@@ -16,6 +16,7 @@ import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
+import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.ecommerce.BillingModule;
 import com.pagesociety.web.module.resource.ResourceModule;
@@ -250,6 +251,22 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		return UPDATE(recurring_order,
 					RECURRING_ORDER_FIELD_STATUS,status);
+	}
+	
+	@Export
+	public PagingQueryResult GetRecurringOrdersByStatus(UserApplicationContext uctx,int status) throws WebApplicationException,PersistenceException
+	{
+		return null;
+	}
+	
+	public PagingQueryResult getRecurringOrdersByStatus(UserApplicationContext uctx,int status) throws WebApplicationException,PersistenceException
+	{
+		return null;
+	}
+	
+	public PagingQueryResult GetRecurringOrdersByUser(UserApplicationContext uctx,long user_id) throws WebApplicationException,PersistenceException
+	{
+		return null;
 	}
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
