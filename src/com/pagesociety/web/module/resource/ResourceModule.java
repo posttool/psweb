@@ -174,6 +174,8 @@ public class ResourceModule extends WebStoreModule
 	
 	public Entity deleteResource(Entity resource) throws WebApplicationException,PersistenceException
 	{
+		if(resource == null)
+			return null;
 		resource = EXPAND(resource);
 		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
 		if(path_token == null)
