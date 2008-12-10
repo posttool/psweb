@@ -206,12 +206,17 @@ public class BillingModule extends WebStoreModule
 					  BILLINGRECORD_FIELD_PREFERRED,true);
 	}
 	
+	public IBillingGateway getBillingGateway()
+	{
+		return billing_gateway;
+	}
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
 	public static String BILLINGRECORD_ENTITY = "BillingRecord";
 	public static String BILLINGRECORD_FIELD_FIRST_NAME = "first_name";
 	public static String BILLINGRECORD_FIELD_MIDDLE_INITIAL = "middle_initial";
 	public static String BILLINGRECORD_FIELD_LAST_NAME = "last_name";
+	public static String BILLINGRECORD_FIELD_COMPANY   = "company";
 	public static String BILLINGRECORD_FIELD_ADDRESS_LINE_1 = "address_line_1";
 	public static String BILLINGRECORD_FIELD_ADDRESS_LINE_2 = "address_line_2";
 	public static String BILLINGRECORD_FIELD_CITY = "city";
@@ -231,6 +236,7 @@ public class BillingModule extends WebStoreModule
 			BILLINGRECORD_FIELD_FIRST_NAME,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_MIDDLE_INITIAL,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_LAST_NAME,Types.TYPE_STRING,null,
+			BILLINGRECORD_FIELD_COMPANY,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_ADDRESS_LINE_1,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_ADDRESS_LINE_2,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_CITY,Types.TYPE_STRING,null,
