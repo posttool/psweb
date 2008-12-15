@@ -19,7 +19,8 @@ public class ApplicationBootstrap extends HttpServlet
 	private static final Logger logger = Logger.getLogger(ApplicationBootstrap.class);
 	public  static final String APPLICATION_ATTRIBUTE_NAME = "application";
 	private WebApplication application;
-
+	WebApplicationInitParams config;
+	
 	public void init(ServletConfig cfg) throws ServletException
 	{
 		String config_path = cfg.getServletContext().getRealPath("/") + "WEB-INF" + File.separator + "config";
@@ -31,7 +32,7 @@ public class ApplicationBootstrap extends HttpServlet
 			logger.info("-----------------------------------------------");
 			//
 			File cfg_dir = new File(config_path);
-			WebApplicationInitParams config;
+			
 			try{
 				config = new WebApplicationInitParams(cfg_dir);
 			}catch(InitializationException ie)
@@ -39,7 +40,7 @@ public class ApplicationBootstrap extends HttpServlet
 				ie.printStackTrace();
 				System.err.println("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIGURATION:\n\t "+ie.getMessage());
 				//System.exit(0);
-				return;
+				throw ie;
 			}
 			//
 			logger.info("Loaded config:");
@@ -53,16 +54,15 @@ public class ApplicationBootstrap extends HttpServlet
 			{
 				ie.printStackTrace();
 				System.err.println("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIGURATION:\n\t "+ie.getMessage());
-				//System.exit(0);
-				return;	
+				throw ie;
 			}
 		}
 		catch (Exception e)
 		{
 			logger.error("Can't initialize application.", e);
 			logger.info("Can't initialize application: " + e.getMessage());
-			throw new ServletException("UNABLE TO START APPLICATION.SEE LOGS");
-			//return;
+			throw new ServletException("UNABLE TO START APPLICATION "+ config.getApplicationClassName()+"SEE LOGS");
+
 		}
 		cfg.getServletContext().setAttribute(APPLICATION_ATTRIBUTE_NAME, application);
 		logger.info("Initialized servlet gateway with " + application);
