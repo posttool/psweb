@@ -40,7 +40,6 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		if(!new File(image_magick_path).exists())
 			throw new InitializationException("CANT FIND IMAGE MAGICK INSTALL AT "+image_magick_path);
 		image_magick_convert_path = image_magick_path+File.separator+"convert";
-		System.out.println("OS NAME is "+System.getProperty("os.name"));
 		if(System.getProperty("os.name").startsWith("Windows"))
 		{
 			image_magick_convert_path = image_magick_convert_path+".exe";
