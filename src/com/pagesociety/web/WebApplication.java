@@ -9,12 +9,10 @@ import java.util.regex.Matcher;
 
 import org.apache.log4j.Logger;
 
-import com.pagesociety.persistence.PersistenceException;
-import com.pagesociety.persistence.PersistentStore;
+
 import com.pagesociety.web.bean.Beans;
 import com.pagesociety.web.config.WebApplicationInitParams;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
-import com.pagesociety.web.config.StoreInitParams.StoreInfo;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SlotException;
@@ -23,14 +21,11 @@ import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
-import com.pagesociety.web.module.Module.SlotDescriptor;
-import com.pagesociety.web.template.FreemarkerRenderer;
+
 
 public abstract class WebApplication
 {
 	private static final Logger logger = Logger.getLogger(WebApplication.class);
-	private static WebApplication 		 _instance;
-//	private Map<String, PersistentStore> _stores;
 	private WebApplicationInitParams 	 _config;
 	private Map<String, Module> 		 _module_instances;
 	private List<Module> 				 _module_list;
@@ -39,13 +34,11 @@ public abstract class WebApplication
 	
 	public WebApplication() throws InitializationException
 	{
-		if (_instance != null)
-			throw new InitializationException("The WebApplication has already been initialized [" + getClass().getName() + "]");
-//		_stores 				= new HashMap<String, PersistentStore>();
+
 		_module_instances 		= new HashMap<String, Module>();
 		_module_list 			= new ArrayList<Module>();
 		_sess_name_space_mgr 	= new SessionNameSpaceManager();
-		_instance 				= this;
+
 	}
 
 	public void init(WebApplicationInitParams config) throws InitializationException
@@ -58,11 +51,6 @@ public abstract class WebApplication
 		//
 		registerAndLinkModules();
 		registerUrls();
-	}
-
-	public static WebApplication getInstance()
-	{
-		return _instance;
 	}
 
 	public UserApplicationContext getUserContext(String name_space, String sess_id)
@@ -166,7 +154,7 @@ public abstract class WebApplication
 	protected void registerAndLinkModules() throws InitializationException
 	{
 		/*instantiate modules*/
-		logger.info("INSTANTIATING MODULES");
+		LOG("INSTANTIATING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
@@ -181,13 +169,13 @@ public abstract class WebApplication
 			_module_list.add(module);
 		}
 		
-		logger.info("LINKING MODULES");
+		LOG("LINKING MODULES");
 		/*link modules */
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m_info 	    			  = _config.getModuleInfo().get(i);
 			String module_name 					  = m_info.getName();
-			logger.info("\tLINKING "+module_name);
+			LOG("\tLINKING "+module_name);
 			
 			Map<String,String> module_info_slots  = m_info.getSlots();
 			Module module_instance  			  = _module_instances.get(module_name);
@@ -248,7 +236,7 @@ public abstract class WebApplication
 				}
 				
 				try{
-					logger.info("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
+					LOG("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
 					module_instance.setSlot(slot_name, slot_instance);
 				}catch(SlotException se)
 				{
@@ -259,12 +247,12 @@ public abstract class WebApplication
 		
 		
 		/*init modules*/
-		logger.info("INITIALIZING MODULES");
+		LOG("INITIALIZING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			String module_name			= m.getName();
-			logger.info("\tINITIALIZING "+module_name);
+			LOG("\tINITIALIZING "+module_name);
 			_module_instances.get(m.getName()).init(this,m.getProps());
 		}
 	}
@@ -278,7 +266,7 @@ public abstract class WebApplication
 		for (int i = 0; i < _config.getUrlMapInfoItems().size(); i++)
 		{
 			UrlMapInfo u = _config.getUrlMapInfoItems().get(i);
-			logger.info("URL " + u.getUrl());
+			LOG("URL " + u.getUrl());
 		}
 	}
 
@@ -324,7 +312,7 @@ public abstract class WebApplication
 //			{
 //				logger.error("destroy", e);
 //			}
-		logger.debug("ApplicationConfig destroy complete");
+		LOG("ApplicationConfig destroy complete");
 	}
 
 	public WebApplicationInitParams getConfig()
@@ -369,5 +357,27 @@ public abstract class WebApplication
 	public SessionManager getSessionManager(String name_space)
 	{
 		return _sess_name_space_mgr.get(name_space);
+	}
+	
+	
+	public void LOG(String message)
+	{
+		System.out.println(message);
+	}
+	
+	public void ERROR(String message)
+	{
+		System.err.println(message);
+	}
+
+	public void ERROR(Exception e)
+	{
+		e.printStackTrace();
+	}
+	
+	public void ERROR(String message,Exception e)
+	{
+		System.err.println(message);
+		e.printStackTrace();
 	}
 }
