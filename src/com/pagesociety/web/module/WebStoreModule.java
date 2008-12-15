@@ -469,19 +469,22 @@ public abstract class WebStoreModule extends WebModule
 
 	public static List<Entity> IDS_TO_ENTITIES(PersistentStore store,String entity_type,List<Long> ids) throws WebApplicationException,PersistenceException
 	{
-		List<Entity> entities = null;		
-		int s = ids.size();
-		if(s > 0)
-			entities = new ArrayList<Entity>();
-		else
+
+		if(ids == null)
 			return null;
 
+		List<Entity> entities = new ArrayList<Entity>();
+		int s = ids.size();
 		Entity entity;
 		for(int i = 0;i < s;i++)
 		{
 			long id = ids.get(i);
 			//this will throw a persistence exception if id doesnt exist
-			entity = GET(store,entity_type,id);
+			if(id == 0)
+				entity = null;
+			else
+				entity = GET(store,entity_type,id);
+			
 			if(entities.contains(entity))
 				continue;
 			entities.add(entity);
@@ -492,19 +495,22 @@ public abstract class WebStoreModule extends WebModule
 	
 	public static List<Entity> INT_IDS_TO_ENTITIES(PersistentStore store,String entity_type,List<Integer> ids) throws WebApplicationException,PersistenceException
 	{
-		List<Entity> entities = null;		
-		int s = ids.size(); 
-		if(s > 0)
-			entities = new ArrayList<Entity>();
-		else
+		
+		if(ids == null)
 			return null;
-
+		
+		List<Entity> entities = new ArrayList<Entity>();
+		int s = ids.size();
 		Entity entity;
 		for(int i = 0;i < s;i++)
 		{
 			long id = ids.get(i);
 			//this will throw a persistence exception if id doesnt exist
-			entity = GET(store,entity_type,id);
+			if(id == 0)
+				entity = null;
+			else
+				entity = GET(store,entity_type,id);
+
 			if(entities.contains(entity))
 				continue;
 			entities.add(entity);
@@ -657,6 +663,18 @@ public abstract class WebStoreModule extends WebModule
 		return IDS_TO_ENTITIES(store,entity_type, ids);
 	}
 	
+	public List<Long> ENTITIES_TO_IDS(List<Entity> entities) throws WebApplicationException,PersistenceException
+	{
+		if(entities == null)
+			return null;
+		
+		int s = entities.size();
+		List<Long> ids = new ArrayList<Long>(s);
+		for(int i = 0;i < s;i++)
+			ids.add(entities.get(i).getId());
+		return ids;
+	}
+	
 
 	public List<Entity> INT_IDS_TO_ENTITIES(String entity_type,List<Integer> ids) throws WebApplicationException,PersistenceException
 	{
@@ -674,6 +692,18 @@ public abstract class WebStoreModule extends WebModule
 			if(!instance.getType().equals(type))
 				throw new WebApplicationException("ENTITY ARGUMENT FAILED VALIDATION. EXPECTED TYPE "+type+" BUT ENTITY WAS OF TYPE "+instance.getType());
 		}
+	}
+	
+	//validate all in list are of type type
+	public void VALIDATE_TYPE_LIST(String type,List<Entity> entities) throws WebApplicationException
+	{
+		if(entities == null)
+			return;
+		
+		int s = entities.size();
+		for(int i = 0;i < s;i++)
+			VALIDATE_TYPE(type, entities.get(i));
+
 	}
 	//DDL helpers for WebStoreModule //
 	

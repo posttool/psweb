@@ -3,17 +3,14 @@ package com.pagesociety.web.module;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
 
-import com.pagesociety.persistence.Entity;
-import com.pagesociety.web.UserApplicationContext;
+
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.exception.AuthenticationException;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
@@ -46,26 +43,26 @@ public abstract class WebModule extends Module
 	}
 	
 	
-	protected static void LOG(String message)
+	protected void LOG(String message)
 	{
-		System.out.println(message);
+		_application.LOG(getName()+": "+message);
 	}
 	
-	protected static void ERROR(String message)
+	protected void ERROR(String message)
 	{
-		System.err.println(message);
+		_application.ERROR(getName()+": "+message);
 	}
 
-	protected static void ERROR(Exception e)
+	protected void ERROR(Exception e)
 	{
-		e.printStackTrace();
+		_application.ERROR(e);
 	}
 	
-	protected static void ERROR(String message,Exception e)
+	protected void ERROR(String message,Exception e)
 	{
-		System.err.println(message);
-		e.printStackTrace();
+		_application.ERROR(getName()+": "+message,e);
 	}
+	
 
 	protected static void GUARD(boolean b) throws PermissionsException
 	{
@@ -86,7 +83,7 @@ public abstract class WebModule extends Module
 		File f =  new File(app.getConfig().getWebRootDir()+File.separator+".."+File.separator+"ModuleData"+File.separator+getName()+"Data");
 		if(!f.exists())
 		{
-			System.out.println("CREATING DATA DIRECTORY FOR MODULE: "+getName()+"\n\t"+f.getAbsolutePath());
+			LOG("CREATING DATA DIRECTORY FOR MODULE: "+getName()+"\n\t"+f.getAbsolutePath());
 			f.mkdirs();
 		}
 		return f;
@@ -140,9 +137,8 @@ public abstract class WebModule extends Module
 			data_file.createNewFile();
 		}catch(IOException ioe)
 		{
-			throw new WebApplicationException("FAILED CREATING MODULE DATA FILE "+data_file.getAbsolutePath());
+			throw new WebApplicationException("FAILED CREATING MODULE FILE "+data_file.getAbsolutePath());
 		}
-		
 		return data_file;
 	}
 	
