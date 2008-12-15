@@ -17,7 +17,7 @@ public class ApplicationBootstrap extends HttpServlet
 {
 	private static final long serialVersionUID = -5524927480184007418L;
 	private static final Logger logger = Logger.getLogger(ApplicationBootstrap.class);
-	private static final String APPLICATION_ATTRIBUTE_NAME = "application";
+	public  static final String APPLICATION_ATTRIBUTE_NAME = "application";
 	private WebApplication application;
 
 	public void init(ServletConfig cfg) throws ServletException
@@ -38,7 +38,7 @@ public class ApplicationBootstrap extends HttpServlet
 			{
 				ie.printStackTrace();
 				System.err.println("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIGURATION:\n\t "+ie.getMessage());
-				System.exit(0);
+				//System.exit(0);
 				return;
 			}
 			//
@@ -53,7 +53,7 @@ public class ApplicationBootstrap extends HttpServlet
 			{
 				ie.printStackTrace();
 				System.err.println("UNABLE TO BOOTSTRAP APPLICATION.PROBLEM WITH APPLICATION CONFIGURATION:\n\t "+ie.getMessage());
-				System.exit(0);
+				//System.exit(0);
 				return;	
 			}
 		}
@@ -61,7 +61,8 @@ public class ApplicationBootstrap extends HttpServlet
 		{
 			logger.error("Can't initialize application.", e);
 			logger.info("Can't initialize application: " + e.getMessage());
-			return;
+			throw new ServletException("UNABLE TO START APPLICATION.SEE LOGS");
+			//return;
 		}
 		cfg.getServletContext().setAttribute(APPLICATION_ATTRIBUTE_NAME, application);
 		logger.info("Initialized servlet gateway with " + application);
