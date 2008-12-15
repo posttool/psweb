@@ -5,77 +5,119 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
 import com.pagesociety.util.XML;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
-import com.pagesociety.web.config.StoreInitParams.StoreInfo;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.exception.InitializationException;
 
 public class WebApplicationInitParams
 {
-	public static final String WEB_ROOT_DIR_KEY = "web-root-directory";
-	public static final String WEB_ROOT_URL_KEY = "web-root-url";
+	public static final String WEB_ROOT_DIR_KEY 				= "web-root-directory";
+	public static final String WEB_ROOT_URL_KEY 				= "web-root-url";
+	
 	private static final String DEPLOYMENT_PROPERTIES_FILE_NAME = "deployment.properties";
+	private static final String APPLICATION_SPEC_FILE_NAME 		= "application.xml";
+	private static final String APPLICATION_URL_MAPPINGS 		= "url-mappings.xml";
 
+	private static final String NODE_TYPE_APPLICATION   = "application";
+	private static final String ATTR_APP_CLASS 			= "class";
+	private static final String ATTR_APP_NAME  			= "name";
+	private static final String ATTR_APP_WEB_ROOT_DIR  	= "web-root-directory";
+	private static final String ATTR_APP_WEB_ROOT_URL  	= "web-root-url";
+	private static final String ATTR_APP_VERSION  		= "version";
+	
 	//
 	private File configDir;
 	//
-	Document application_doc;
-	Document stores_doc;
-	Document module_doc;
-	Document url_map_doc;
+	private Document application_doc;
+	private Document url_map_doc;
+	private Element application_element;
+	
 	//
 	private String applicationClassName;
 	private String name;
 	private String webRootDir;
 	private String webRootUrl;
-
+	private String version;
 	//
-	private StoreInitParams stores;
 	private ModuleInitParams modules;
 	private UrlMapInitParams urlMap;
-	private Properties		 deploymentProps;
+	private Properties		 deployment_properties;
+
 	public WebApplicationInitParams(File config_dir) throws InitializationException
 	{
-		configDir = config_dir;
-		try
-		{
-			
-			application_doc = XML.read(new File(config_dir, "application.xml"));
-			//stores_doc = XML.read(new File(config_dir, "stores.xml"));
-			module_doc = XML.read(new File(config_dir, "modules.xml"));
-			url_map_doc = XML.read(new File(config_dir, "url-mappings.xml"));
-		}
-		catch (Exception e)
-		{
-			throw new RuntimeException("WebAppConfig can't read xml from " + config_dir);
-		}
-		//
-		applicationClassName = application_doc.getDocumentElement().getAttribute("class");
-		name 	   = application_doc.getDocumentElement().getAttribute("name");
-		webRootDir = getParameterValue(WEB_ROOT_DIR_KEY, application_doc.getDocumentElement());
-		webRootUrl = getParameterValue(WEB_ROOT_URL_KEY, application_doc.getDocumentElement());
-
-		deploymentProps = new Properties();
-		File deployments_file = new File(configDir,DEPLOYMENT_PROPERTIES_FILE_NAME);
+		configDir 				= config_dir;
+		deployment_properties 		= new Properties();
+		File deployments_file 	= new File(configDir,DEPLOYMENT_PROPERTIES_FILE_NAME);
 		if(deployments_file.exists())
 		{
-		
 			try {
-		        deploymentProps.load(new FileInputStream(deployments_file));
+		        deployment_properties.load(new FileInputStream(deployments_file));
 			} catch (IOException e) {
 				throw new InitializationException("FAILED READING "+DEPLOYMENT_PROPERTIES_FILE_NAME);
 			}
 		}
-		modules = new ModuleInitParams(deploymentProps,module_doc);
-		urlMap = new UrlMapInitParams(url_map_doc);
+		
+		try
+		{
+			application_doc = XML.read(new File(config_dir, APPLICATION_SPEC_FILE_NAME));
+			url_map_doc 	= XML.read(new File(config_dir, APPLICATION_URL_MAPPINGS));
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			throw new InitializationException("WebAppConfig can't read xml from " + config_dir);
+		}
+		
+		setup_application_params();
+		modules = new ModuleInitParams(deployment_properties,application_doc);
+		urlMap  = new UrlMapInitParams(url_map_doc);
 	}
 
+
+
+	private void setup_application_params() throws InitializationException
+	{
+		NodeList app_es 	= application_doc.getElementsByTagName(NODE_TYPE_APPLICATION);
+		if(app_es.getLength() == 0)
+			throw new InitializationException("application.xml: missing required node:<"+NODE_TYPE_APPLICATION+">");
+
+		application_element 	= (Element)app_es.item(0);
+		name 					= expand_property(application_element.getAttribute(ATTR_APP_NAME));
+		if(name == null)
+			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_NAME);
+		applicationClassName 	= expand_property(application_element.getAttribute(ATTR_APP_CLASS));
+		if(applicationClassName == null)
+			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_CLASS);
+		webRootDir 				= expand_property(application_element.getAttribute(ATTR_APP_WEB_ROOT_DIR));
+		if(webRootDir == null)
+			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_WEB_ROOT_DIR);	
+		webRootUrl 				= expand_property(application_element.getAttribute(ATTR_APP_WEB_ROOT_URL));
+		if(webRootUrl == null)
+			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_WEB_ROOT_URL);
+		version = expand_property(application_element.getAttribute(ATTR_APP_VERSION));
+		if(version == null)
+			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_VERSION);
+
+	}
+	
+	private String expand_property(String value) throws InitializationException
+	{
+		if(value == null)
+			return null;
+		if(value.startsWith("$"))
+		{
+			String deployment_prop = deployment_properties.getProperty(value.substring(1));
+			if(deployment_prop == null)
+				throw new InitializationException("UNBOUND VARIABLE "+value+" IN application.xml");
+			return deployment_prop;
+		}
+		return value;
+	}
+	
 	public String getApplicationClassName()
 	{
 		return applicationClassName;
@@ -101,10 +143,9 @@ public class WebApplicationInitParams
 		return webRootUrl;
 	}
 
-	
-	public List<StoreInfo> getStoreInfo()
+	public String getVersion()
 	{
-		return stores.getInfo();
+		return version;
 	}
 
 	public List<ModuleInfo> getModuleInfo()
@@ -117,7 +158,6 @@ public class WebApplicationInitParams
 		return urlMap;
 	}
 
-	
 	public List<UrlMapInfo> getUrlMapInfoItems()
 	{
 		return urlMap.getInfo();
@@ -125,7 +165,7 @@ public class WebApplicationInitParams
 
 	public String getParameterValue(String key)
 	{
-		return getParameterValue(key, application_doc.getDocumentElement());
+		return getParameterValue(key, application_element);
 	}
 
 	private String getParameterValue(String s, Element d)
@@ -143,7 +183,6 @@ public class WebApplicationInitParams
 	{
 		StringBuffer b = new StringBuffer();
 		b.append("WebApplicationConfig: " + name + " " + applicationClassName + "\n");
-		b.append(stores.toString());
 		b.append(modules.toString());
 		b.append(urlMap.toString());
 		return b.toString();
