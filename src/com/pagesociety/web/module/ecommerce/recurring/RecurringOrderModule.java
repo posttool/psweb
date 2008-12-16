@@ -62,6 +62,7 @@ public class RecurringOrderModule extends ResourceModule
 		billing_gateway = billing_module.getBillingGateway(); 
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
 	
+		start_billing_thread();
 	}
 
 	public void defineSlots()
@@ -78,7 +79,7 @@ public class RecurringOrderModule extends ResourceModule
 		Calendar now = Calendar.getInstance();
 		
 		String year  = String.valueOf(now.get(Calendar.YEAR));
-		String month = String.valueOf(now.get(Calendar.MONTH+1));
+		String month = String.valueOf(now.get(Calendar.MONTH)+1);
 		String day   = String.valueOf(now.get(Calendar.DATE));
 
 		String current_log_filename = year+month+day+".recurring_order.log";
@@ -90,7 +91,7 @@ public class RecurringOrderModule extends ResourceModule
 				try{
 					if(current_log_writer != null)
 						current_log_writer.close();
-					current_log_writer = new BufferedWriter(new FileWriter(current_log_file));
+					current_log_writer = new BufferedWriter(new FileWriter(current_log_file,true));
 				}catch(IOException ioe)
 				{
 					ERROR("BIG TIME BARF ON LOG FILE SWITCHING.",ioe);
@@ -105,8 +106,18 @@ public class RecurringOrderModule extends ResourceModule
 	
 	protected void MODULE_LOG(String message)
 	{
+		MODULE_LOG(0, message);
+    }
+
+	protected void MODULE_LOG(int indent,String message)
+	{
 		Writer output = get_current_log_file_writer(); 
+		Date now = new Date();
+		
 		try {
+			output.write(now+": ");
+			for(int i = 0;i < indent;i++)
+				output.write('\t');
 			output.write(message+"\n");
 			output.flush();
 		}catch(IOException ioe)
@@ -114,7 +125,7 @@ public class RecurringOrderModule extends ResourceModule
 			ERROR("BARF ON MODULE_LOG() FUNCTION.MESSAGE WAS "+message,ioe);
 		}
     }
-	
+
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
@@ -326,6 +337,7 @@ public class RecurringOrderModule extends ResourceModule
 	//TODO: do initial billing. set prev and next bill dates,deal with promotions //
 	public Entity createRecurringOrder(Entity creator,Entity user,Entity sku,float initial_fee,List<Entity> promotions) throws PersistenceException
 	{
+
 		Entity recurring_order =  NEW(RECURRING_ORDER_ENTITY,
 									  creator,
 									  RECURRING_ORDER_FIELD_SKU,sku,
@@ -336,6 +348,7 @@ public class RecurringOrderModule extends ResourceModule
 									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,new Date(),
 									  RECURRING_ORDER_FIELD_PROMOTIONS,new ArrayList<Entity>());//TODO: deal with promotions
 
+		MODULE_LOG(0,"\nCREATED RECURRING ORDER "+recurring_order.getId()+" OK\n");
 		return recurring_order;
 	}
 	
@@ -360,22 +373,25 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public Entity openRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
+		
 		recurring_order = EXPAND(recurring_order);
-	
+		MODULE_LOG(0,"\nOPENING RECURRING ORDER "+recurring_order.getId()+"\n");
 		int status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
+		Entity order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
+		Entity billing_record = billing_module.getPreferredBillingRecord(order_user);
 		switch(status)
 		{
 			case ORDER_STATUS_INIT:
 			case ORDER_STATUS_INITIAL_BILL_FAILED:
-				Entity order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
-				Entity billing_record = billing_module.getPreferredBillingRecord(order_user);
-				
+
 				try{
 					do_initial_fee_billing(recurring_order,billing_record);
 				}catch(BillingGatewayException bge)
 				{
 					//TODO: insert failed transaction record here
+					
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_INITIAL_BILL_FAILED);	
+					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" INITIAL BILLING FAILED\n");
 					return recurring_order;
 				}
 				//TODO: insert successful initial billing transaction record here
@@ -386,14 +402,30 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					//TODO: insert failed trans action record here
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED\n");
 					return recurring_order;
 				}
 				//TODO: insert successful trans action record here
 				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_OPEN);
+				MODULE_LOG(0,"OPENED RECURRING ORDER "+recurring_order.getId()+" OK\n");
 				break;
 				
-			case ORDER_STATUS_LAST_MONTHLY_BILL_FAILED:
-				;
+			case ORDER_STATUS_LAST_MONTHLY_BILL_FAILED://just reopen it. probaby need to see how much time elapsed.
+				try{
+					do_monthly_billing(recurring_order,billing_record);
+				}catch(BillingGatewayException bge2)
+				{
+					//TODO: insert failed trans action record here
+					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED\n");
+					return recurring_order;
+				}
+				//TODO: insert successful trans action record here
+				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_OPEN);
+				MODULE_LOG(0,"OPENED RECURRING ORDER "+recurring_order.getId()+" OK\n");
+				break;
+				
+				
 		}
 		
 		return recurring_order; 
@@ -408,11 +440,13 @@ public class RecurringOrderModule extends ResourceModule
 		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_CREATOR(store,user, recurring_order))
 			throw new PermissionsException("NO PERMISSION");
 	
+
 		return closeRecurringOrder(recurring_order);
 	}
 	
 	public Entity closeRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
+		MODULE_LOG(0,"CLOSING RECURRING ORDER "+recurring_order.getId()+" OK\n");
 		return updateRecurringOrderStatus(recurring_order, ORDER_STATUS_CLOSED);
 	}
 	
@@ -468,6 +502,7 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			//cant bill a date before the next bill date
 			//TODO: JUST LOG IN THE BILLING LOG FOR THE DAY billing_gateway.getLog()//
+			MODULE_LOG(0,"WARNING: SKIPPING BILLING RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER: "+recurring_order.getId());
 			return;
 		}
 		
@@ -492,7 +527,8 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Calendar c1 = Calendar.getInstance(); 
 		c1.setTime(now);
-		c1.add(Calendar.DATE,(Integer)sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD));
+		//c1.add(Calendar.DATE,(Integer)sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD));
+		c1.add(Calendar.SECOND,(Integer)sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD));
 		return c1.getTime();
 	}
 	
@@ -504,9 +540,11 @@ public class RecurringOrderModule extends ResourceModule
 			{
 				while(true)
 				{
+					MODULE_LOG(0,"STARTING BILLING CYCLE.");
 					billing_thread_run();
+					MODULE_LOG(0,"BILLING CYCLE COMPLETE.\n");
 					try{
-						Thread.sleep(billing_thread_interval);
+						Thread.sleep(billing_thread_interval*1000);//TODO: right now this is in seconds
 					}catch(InterruptedException ie)
 					{
 						ie.printStackTrace();
@@ -533,8 +571,10 @@ public class RecurringOrderModule extends ResourceModule
 			q.idx(IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE);
 			q.lte(now);
 			result = QUERY(q);
+			MODULE_LOG( 0,result.size()+" records to bill.");
 		}catch(PersistenceException pe1)
 		{
+			MODULE_LOG( 0,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
 		}
@@ -548,22 +588,26 @@ public class RecurringOrderModule extends ResourceModule
 				billing_record = billing_module.getPreferredBillingRecord(order_user);
 				try{
 					do_monthly_billing(recurring_order, billing_record);
+
 				}catch(BillingGatewayException bge)
 				{
-					//TODO: log failed transaction here //
+					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
 					continue;
 				}
-				
-				//TODO: log successful transaction here
+
+				MODULE_LOG( 1,"MONTHLY BILL OK FOR RECURRING ORDER "+recurring_order.getId());
 				
 			}catch(PersistenceException pe)
 			{
+				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
 				break;
 			}
 			catch(WebApplicationException wae)
 			{
+				MODULE_LOG( 0,"SKIPPING BILLING CYCLE ON ORDER DUE TO WEBAPPLICATION EXCEPTION ON ORDER "+recurring_order);
+				MODULE_LOG( 0,"PROBABLY DUE TO THE ABSCENE OF A PREFERRED BILLING RECORD!!!\n");
 				ERROR("SKIPPING BILLING CYCLE ON ORDER DUE TO WEBAPPLICATION EXCEPTION ON ORDER "+recurring_order,wae);
 				continue;
 			}
