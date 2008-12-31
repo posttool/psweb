@@ -2,11 +2,16 @@ package com.pagesociety.web.module;
 
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Writer;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 
@@ -164,4 +169,76 @@ public abstract class WebModule extends Module
 	       
 	   return input;
 	}
+	
+	//EXPERIMENTAL currently used by recurring order module//
+
+	File   current_log_file;
+	Writer current_log_writer;
+	private static final String LOG_EXTENSION = "log";
+	private Writer get_current_log_file_writer()
+	{
+		Calendar now = Calendar.getInstance();
+		
+		String year  = String.valueOf(now.get(Calendar.YEAR));
+		String month = String.valueOf(now.get(Calendar.MONTH)+1);
+		String day   = String.valueOf(now.get(Calendar.DATE));
+		
+		StringBuilder buf = new StringBuilder();
+		buf.append(year);
+		buf.append(month);
+		buf.append(day);
+		buf.append('.');
+		buf.append(getName());
+		buf.append('.');
+		buf.append(LOG_EXTENSION);
+		String current_log_filename = buf.toString();
+		
+		try{
+			current_log_file = GET_MODULE_DATA_FILE(getApplication(), current_log_filename, false);
+			if(current_log_file == null || current_log_writer == null)
+			{
+				current_log_file = GET_MODULE_DATA_FILE(getApplication(), current_log_filename, true);
+				try{
+					if(current_log_writer != null)
+						current_log_writer.close();
+					current_log_writer = new BufferedWriter(new FileWriter(current_log_file,true));
+				}catch(IOException ioe)
+				{
+					ERROR("BIG TIME BARF ON LOG FILE SWITCHING.",ioe);
+				}
+			}
+		}catch(WebApplicationException wae)
+		{
+			ERROR("PROBLEM GETTING CURRENT LOG FILE "+current_log_filename);
+		}
+		return current_log_writer;
+	}
+	
+	protected void MODULE_LOG(String message)
+	{
+		MODULE_LOG(0, message);
+    }
+
+	protected void MODULE_LOG(int indent,String message)
+	{
+		Writer output = get_current_log_file_writer(); 
+		Date now = new Date();
+		
+		try {
+			if(message.startsWith("\n"))
+			{
+				output.write('\n');
+				message = message.substring(1);
+			}
+			output.write(now+": ");
+			for(int i = 0;i < indent;i++)
+				output.write('\t');
+			output.write(message+"\n");
+			output.flush();
+		}catch(IOException ioe)
+		{
+			ERROR("BARF ON MODULE_LOG() FUNCTION.MESSAGE WAS "+message,ioe);
+		}
+    }
+
 }
