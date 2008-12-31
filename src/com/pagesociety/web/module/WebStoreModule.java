@@ -706,7 +706,17 @@ public abstract class WebStoreModule extends WebModule
 
 	}
 	//DDL helpers for WebStoreModule //
+	public void VALIDATE_NEW_INSTANCE(Entity e) throws WebApplicationException
+	{
+		if(e.getId() != Entity.UNDEFINED)
+			throw new WebApplicationException("TRYING TO CREATE AN ALREADY INITIALIZED ENTITY. "+e.getType()+" ALREADY HAS ID OF "+e.getId());
+	}
 	
+	public void VALIDATE_EXISTING_INSTANCE(Entity e) throws WebApplicationException
+	{
+		if(e.getId() == Entity.UNDEFINED)
+			throw new WebApplicationException("TRYING TO UPDATE AN UNITINIALIZED ENTITY. "+e.getType()+" HAS ID OF "+e.getId());
+	}
 	
 	public EntityDefinition DEFINE_ENTITY(String entity_name,Object...args) throws PersistenceException,SyncException
 	{
