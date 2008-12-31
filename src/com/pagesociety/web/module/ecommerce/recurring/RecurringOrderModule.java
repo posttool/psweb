@@ -72,75 +72,6 @@ public class RecurringOrderModule extends ResourceModule
 	}
 	
 
-	File   current_log_file;
-	Writer current_log_writer;
-	private static final String LOG_EXTENSION = "log";
-	private Writer get_current_log_file_writer()
-	{
-		Calendar now = Calendar.getInstance();
-		
-		String year  = String.valueOf(now.get(Calendar.YEAR));
-		String month = String.valueOf(now.get(Calendar.MONTH)+1);
-		String day   = String.valueOf(now.get(Calendar.DATE));
-		
-		StringBuilder buf = new StringBuilder();
-		buf.append(year);
-		buf.append(month);
-		buf.append(day);
-		buf.append('.');
-		buf.append(getName());
-		buf.append('.');
-		buf.append(LOG_EXTENSION);
-		String current_log_filename = buf.toString();
-		
-		try{
-			current_log_file = GET_MODULE_DATA_FILE(getApplication(), current_log_filename, false);
-			if(current_log_file == null || current_log_writer == null)
-			{
-				current_log_file = GET_MODULE_DATA_FILE(getApplication(), current_log_filename, true);
-				try{
-					if(current_log_writer != null)
-						current_log_writer.close();
-					current_log_writer = new BufferedWriter(new FileWriter(current_log_file,true));
-				}catch(IOException ioe)
-				{
-					ERROR("BIG TIME BARF ON LOG FILE SWITCHING.",ioe);
-				}
-			}
-		}catch(WebApplicationException wae)
-		{
-			ERROR("PROBLEM GETTING CURRENT LOG FILE "+current_log_filename);
-		}
-		return current_log_writer;
-	}
-	
-	protected void MODULE_LOG(String message)
-	{
-		MODULE_LOG(0, message);
-    }
-
-	protected void MODULE_LOG(int indent,String message)
-	{
-		Writer output = get_current_log_file_writer(); 
-		Date now = new Date();
-		
-		try {
-			if(message.startsWith("\n"))
-			{
-				output.write('\n');
-				message = message.substring(1);
-			}
-			output.write(now+": ");
-			for(int i = 0;i < indent;i++)
-				output.write('\t');
-			output.write(message+"\n");
-			output.flush();
-		}catch(IOException ioe)
-		{
-			ERROR("BARF ON MODULE_LOG() FUNCTION.MESSAGE WAS "+message,ioe);
-		}
-    }
-
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
@@ -149,7 +80,7 @@ public class RecurringOrderModule extends ResourceModule
 	@Export
 	public PagingQueryResult GetActiveRecurringSKUs(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
-		//TODO: potential guard //
+		//Potential guard here...but active ones shoud be public or at least have the person logged in so no big deal//
 		return getRecurringSKUs(offset, page_size,RECURRING_SKU_CATALOG_STATE_ACTIVE,null);
 	}
 	
@@ -220,7 +151,7 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user 	   	= (Entity)uctx.getUser();
 		
 		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+			throw new PermissionsException("NO PERMISSION");
 		
 		Entity user_data 	= null;
 		if(user_data_type  != null)
@@ -293,7 +224,7 @@ public class RecurringOrderModule extends ResourceModule
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
 
 		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+			throw new PermissionsException("NO PERMISSION");
 		
 		Entity user_data 	= null;
 		if(user_data_type  != null)
@@ -330,7 +261,7 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
 		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+			throw new PermissionsException("NO PERMISSION");
 
 		return deleteRecurringSKU(recurring_sku);		
 	}
@@ -420,12 +351,14 @@ public class RecurringOrderModule extends ResourceModule
 		Entity billing_record = billing_module.getPreferredBillingRecord(order_user);
 		//TODO: deal with preferred billing record not being set. 
 		//this relates to free acounts potentially!!//
+		
 		//how do we keep track of users with free accounts.
 		//do they have to check out and enter a billing record//
 		//or do we just make accounts for them//
 		switch(status)
 		{
 			case ORDER_STATUS_INIT:
+				//TODO: insert new order transaction here
 			case ORDER_STATUS_INITIAL_BILL_FAILED:
 
 				try{
@@ -500,26 +433,46 @@ public class RecurringOrderModule extends ResourceModule
 					RECURRING_ORDER_FIELD_STATUS,status);
 	}
 	
-
-	
-
-	
 	
 	@Export
-	public PagingQueryResult GetRecurringOrdersByStatus(UserApplicationContext uctx,int status) throws WebApplicationException,PersistenceException
+	public PagingQueryResult GetRecurringOrdersByStatus(UserApplicationContext uctx,int status,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
-		return null;
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_ADMIN(user))
+			throw new PermissionsException("NO PERMISSION");
+	
+		return getRecurringOrdersByStatus(status, page_size, offset);
 	}
 	
-	public PagingQueryResult getRecurringOrdersByStatus(UserApplicationContext uctx,int status) throws WebApplicationException,PersistenceException
+	public PagingQueryResult getRecurringOrdersByStatus(int status,int page_size,int offset) throws WebApplicationException,PersistenceException
 	{
-		return null;
+		Query q = new Query(IDX_RECURRING_ORDER_BY_STATUS);
+		q.eq(status);
+		q.offset(offset);
+		q.pageSize(page_size);
+		return PAGING_QUERY(q);
 	}
 	
 	@Export
-	public PagingQueryResult GetRecurringOrdersByUser(UserApplicationContext uctx,long user_id) throws WebApplicationException,PersistenceException
+	public PagingQueryResult GetRecurringOrdersByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
-		return null;
+		Entity user = (Entity)uctx.getUser();
+		Entity target_user = GET(UserModule.USER_ENTITY,user_id);
+		
+		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
+			throw new PermissionsException("NO PERMISSION");
+			
+		return getRecurringOrdersByUser(target_user,offset,page_size);
+	}
+	
+	
+	public PagingQueryResult getRecurringOrdersByUser(Entity user,int offset,int page_size) throws WebApplicationException,PersistenceException
+	{
+		Query q = new Query(IDX_RECURRING_ORDER_BY_USER);
+		q.eq(user);
+		q.offset(offset);
+		q.pageSize(page_size);
+		return PAGING_QUERY(q);
 	}
 	
 	
@@ -566,6 +519,7 @@ public class RecurringOrderModule extends ResourceModule
 		SAVE_ENTITY(recurring_order);
 
 	}
+
 
 	private Date calculate_next_bill_date(Entity sku, Date now)
 	{
@@ -730,6 +684,8 @@ public class RecurringOrderModule extends ResourceModule
 	}
 
 	public static final String IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE = "byNextBillDate";
+	public static final String IDX_RECURRING_ORDER_BY_USER			 = "byUser";
+	public static final String IDX_RECURRING_ORDER_BY_STATUS		 = "byStatus";
 	
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_STATE 			 = "byCatalogState";
 	public static final String IDX_SITE_BY_USER 	  = "byCreator";	
@@ -737,7 +693,12 @@ public class RecurringOrderModule extends ResourceModule
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
 	{
 		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
-		DEFINE_ENTITY_INDEX(RECURRING_SKU_ENTITY, IDX_RECURRING_SKU_BY_CATALOG_STATE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_SKU_FIELD_CATALOG_STATE);
+		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_USER);
+		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_STATUS);
+		
+		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
+		
+		
 	//	DEFINE_ENTITY_INDEX(SYSTEM_ENTITY, IDX_SYSTEM_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_CREATOR);
 	//	DEFINE_ENTITY_INDEX(SYSTEM_INSTANCE_ENTITY, IDX_SYSTEM_INSTANCE_BY_USER_BY_CURRENT_FLAG, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,SYSTEM_INSTANCE_FIELD_CURRENT_FLAG);
 	//	DEFINE_ENTITY_INDEX(SYSTEM_INSTANCE_ENTITY, IDX_SYSTEM_INSTANCE_BY_USER_BY_SYSTEM, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,SYSTEM_INSTANCE_FIELD_SYSTEM);
