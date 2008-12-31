@@ -57,9 +57,25 @@ public class BillingModule extends WebStoreModule
 	@Export
 	public Entity CreateBillingRecord(UserApplicationContext uctx,Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canCreateBillingRecord(user,user));
-		return createBillingRecord(user, billing_record, false);
+
+		VALIDATE_TYPE(BILLINGRECORD_ENTITY, billing_record);
+		VALIDATE_NEW_INSTANCE(billing_record);
+
+		return CreateBillingRecord(uctx,
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE),
+								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO),
+								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH),
+								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR));
+	
 	}
 	
 
@@ -72,6 +88,7 @@ public class BillingModule extends WebStoreModule
 									  String add_1,
 									  String add_2,
 									  String city,
+									  String state,									  
 									  String country,
 									  String postal_code,
 									  int cc_type,
@@ -82,69 +99,119 @@ public class BillingModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canCreateBillingRecord(user,user));
 		
-		Entity billing_record = Entity.createInstance();
-		billing_record.setType(BILLINGRECORD_ENTITY);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_FIRST_NAME,first_name);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_LAST_NAME,last_name);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_CITY,city);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_COUNTRY,country);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_POSTAL_CODE,postal_code);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_CC_TYPE,cc_type);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO,cc_no);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_EXP_MONTH,exp_month);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
-
-
-		return createBillingRecord(user,billing_record,false);
+		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,false);
 	}
 	
-	public Entity createBillingRecord(Entity creator,
-			 						  Entity billing_record,/* see above for how filled it must be!*/
-			 						  boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
-				
+	
+	public Entity createBillingRecord(Entity creator,String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		
-		if(billing_record.getId() != Entity.UNDEFINED)
-			throw new WebApplicationException("TRYING TO CREATE AN ALREADY INITIALIZED ENTITY. ALREADY HAS ID OF "+billing_record.getId());
-		if(!billing_record.getType().equals(BILLINGRECORD_ENTITY))
-			throw new WebApplicationException("TRYING TO SAVE AN ENTITY OF BILLING RECORD BUT IT IS NOT A BILLING RECORD. IT IS A "+billing_record.getType());
-		
-		billing_gateway.doValidate(billing_record);	
-		String cc_no         = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO);
+		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits);		
-		billing_record.setAttribute(BILLINGRECORD_FIELD_PREFERRED,preferred);				
-		billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no));
+		Entity billing_record =  NEW(BILLINGRECORD_ENTITY,
+				   					creator,
+				   					BILLINGRECORD_FIELD_FIRST_NAME,first_name,
+				   					BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
+				   					BILLINGRECORD_FIELD_LAST_NAME,last_name,
+				   					BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
+				   					BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
+				   					BILLINGRECORD_FIELD_CITY,city,
+				   					BILLINGRECORD_FIELD_STATE,state,
+				   					BILLINGRECORD_FIELD_COUNTRY,country,
+				   					BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
+				   					BILLINGRECORD_FIELD_CC_TYPE,cc_type,
+				   					BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no),
+				   					BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
+				   					BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
+				   					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
+		if(preferred)
+			setPreferredBillingRecord(creator,billing_record);
 		
-		return CREATE_ENTITY(creator,billing_record);
-
+		return billing_record;
 	}
+			  
 	
 	@Export
 	public Entity UpdateBillingRecord(UserApplicationContext uctx,Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canUpdateBillingRecord(user,user));
-		return updateBillingRecord(uctx,billing_record);
+		VALIDATE_TYPE(BILLINGRECORD_ENTITY, billing_record);
+		VALIDATE_EXISTING_INSTANCE(billing_record);
+		return UpdateBillingRecord(uctx,
+									billing_record.getId(),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE),
+								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE),
+								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO),
+								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH),
+								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR));
+
 	}
 	
-	public Entity updateBillingRecord(UserApplicationContext uctx,Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
+	@Export
+	public Entity UpdateBillingRecord(UserApplicationContext uctx,
+									  long billing_record_id,
+									  String first_name,
+									  String middle_initial,
+									  String last_name,
+									  String add_1,
+									  String add_2,
+									  String city,
+									  String state,									  
+									  String country,
+									  String postal_code,
+									  int cc_type,
+									  String cc_no,
+									  int exp_month,
+									  int exp_year)throws WebApplicationException,PersistenceException,BillingGatewayException
+	  {
+		
+		Entity user = (Entity)uctx.getUser();
+		GUARD(guard.canUpdateBillingRecord(user,user));
+		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
+		return updateBillingRecord(billing_record,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);
+	  }
+	
+	
+	public Entity updateBillingRecord(Entity billing_record,
+			  						  String first_name,
+			  						  String middle_initial,
+			  						  String last_name,
+			  						  String add_1,
+			  						  String add_2,
+			  						  String city,
+			  						  String state,									  
+			  						  String country,
+			  						  String postal_code,
+			  						  int cc_type,
+			  						  String cc_no,
+			  						  int exp_month,
+			  						  int exp_year) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		if(billing_record.getId() == Entity.UNDEFINED)
-			throw new WebApplicationException("TRYING TO UPDATE AN UNINITIALIZED ENTITY.MAYBE YOU MEANT TO CREATE IT INSTEAD. ID IS "+billing_record.getId());
-		if(!billing_record.getType().equals(BILLINGRECORD_ENTITY))
-			throw new WebApplicationException("TRYING TO SAVE AN ENTITY OF BILLING RECORD BUT IT IS NOT A BILLING RECORD. IT IS A "+billing_record.getType());
 		
-		billing_gateway.doValidate(billing_record);	
-		
-		String cc_no         = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO);
+		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits);		
-		billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no));
-		return SAVE_ENTITY(billing_record);
+		return UPDATE(billing_record,
+					  BILLINGRECORD_FIELD_FIRST_NAME,first_name,
+					  BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
+					  BILLINGRECORD_FIELD_LAST_NAME,last_name,
+					  BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
+					  BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
+					  BILLINGRECORD_FIELD_CITY,city,
+					  BILLINGRECORD_FIELD_STATE,state,
+					  BILLINGRECORD_FIELD_COUNTRY,country,
+					  BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
+					  BILLINGRECORD_FIELD_CC_TYPE,cc_type,
+					  BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no),
+					  BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
+					  BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
+					  BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
+
 	}
 	
 	
@@ -169,7 +236,7 @@ public class BillingModule extends WebStoreModule
 		return getPreferredBillingRecord(user);
 	}
 	
-	public Entity getPreferredBillingRecord(Entity user)throws WebApplicationException,PersistenceException
+	public Entity getPreferredBillingRecord(Entity user)throws PersistenceException
 	{
 		Query q = new Query(BILLINGRECORD_ENTITY);
 		q.idx(IDX_BY_USER_BY_PREFERRED);
@@ -180,9 +247,9 @@ public class BillingModule extends WebStoreModule
 		if(n == 0)
 			return null;
 		else if(n > 1)
-			throw new WebApplicationException("DATA INTEGRETY ISSUE. MORE THAN ONE PREFERRED BILLING RECORD.");
-		else
-			return result.getEntities().get(0);		
+			ERROR("DATA INTEGRETY ISSUE. MORE THAN ONE PREFERRED BILLING RECORD FOR USER "+user);
+		
+		return result.getEntities().get(0);		
 	}
 	
 	@Export
@@ -220,6 +287,7 @@ public class BillingModule extends WebStoreModule
 	public static String BILLINGRECORD_FIELD_ADDRESS_LINE_1 = "address_line_1";
 	public static String BILLINGRECORD_FIELD_ADDRESS_LINE_2 = "address_line_2";
 	public static String BILLINGRECORD_FIELD_CITY = "city";
+	public static String BILLINGRECORD_FIELD_STATE = "state";
 	public static String BILLINGRECORD_FIELD_COUNTRY = "country";
 	public static String BILLINGRECORD_FIELD_POSTAL_CODE = "postal_code";
 	public static String BILLINGRECORD_FIELD_CC_TYPE = "cc_type";
@@ -230,6 +298,7 @@ public class BillingModule extends WebStoreModule
 	public static String BILLINGRECORD_FIELD_PREFERRED = "preferred";
 
 	
+
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
 	{
 		DEFINE_ENTITY(BILLINGRECORD_ENTITY,
@@ -240,6 +309,7 @@ public class BillingModule extends WebStoreModule
 			BILLINGRECORD_FIELD_ADDRESS_LINE_1,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_ADDRESS_LINE_2,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_CITY,Types.TYPE_STRING,null,
+			BILLINGRECORD_FIELD_STATE,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_COUNTRY,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_POSTAL_CODE,Types.TYPE_STRING,null,
 			BILLINGRECORD_FIELD_CC_TYPE,Types.TYPE_INT,null,

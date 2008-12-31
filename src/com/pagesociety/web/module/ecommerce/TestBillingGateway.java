@@ -7,11 +7,10 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 {
 	
 	/* Check if card is valid */
-	public BillingGatewayResponse doValidate(Entity billing_record) throws BillingGatewayException
+	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year) throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING VALIDATION OF BILLING RECORD:");
-		System.out.println(billing_record.toString());
+		System.out.println("DOING VALIDATION OF BILLING RECORD: "+first_name);
 		return response;
 		
 	}
@@ -20,8 +19,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	public BillingGatewayResponse doSale(Entity billing_record,float amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING SALE FOR BILLING RECORD IN THE AMOUNT OF: "+amount);
-		System.out.println(billing_record.toString());
+		System.out.println("DOING SALE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		return response;
 	}
 	/* Transaction authorizations are authorized immediately but are not flagged for settlement.
@@ -30,8 +28,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	public BillingGatewayResponse doAuth(Entity billing_record,float amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING AUTH FOR BILLING RECORD IN THE AMOUNT OF: "+amount);
-		System.out.println(billing_record.toString());
+		System.out.println("DOING AUTH FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		return response;
 	}
 	
@@ -42,8 +39,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	public BillingGatewayResponse doCapture(Entity billing_record,float amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING CAPTURE FOR BILLING RECORD IN THE AMOUNT OF: "+amount);
-		System.out.println(billing_record.toString());
+		System.out.println("DOING CAPTURE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		return response;
 	}
 	
@@ -55,8 +51,8 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	public BillingGatewayResponse doVoid(Entity billing_record) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING VOID FOR BILLING RECORD.");
-		System.out.println(billing_record.toString());
+		System.out.println("DOING VOID FOR BILLING RECORD."+" "+billing_record);
+		//System.out.println(billing_record.toString());
 		return response;
 	}
 	
@@ -65,8 +61,8 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	public BillingGatewayResponse doRefund(Entity billing_record,float amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING REFUND FOR BILLING RECORD IN THE AMOUNT OF: "+amount);
-		System.out.println(billing_record.toString());
+		System.out.println("DOING REFUND FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
+		//System.out.println(billing_record.toString());
 		return response;
 	}
 	
@@ -76,8 +72,8 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	public BillingGatewayResponse doCredit(Entity billing_record,float amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING CREDIT FOR BILLING RECORD IN THE AMOUNT OF: "+amount);
-		System.out.println(billing_record.toString());
+		System.out.println("DOING CREDIT FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
+		//System.out.println(billing_record.toString());
 		return response;
 	}
 	

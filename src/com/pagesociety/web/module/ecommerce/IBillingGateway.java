@@ -6,7 +6,7 @@ public interface IBillingGateway
 {
 	
 	/* Check if card is valid */
-	public BillingGatewayResponse doValidate(Entity billing_record) 	throws BillingGatewayException;
+	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year) 	throws BillingGatewayException;
 	
 	/* Transaction sales are submitted and immediately flagged for settlement.*/
 	public BillingGatewayResponse doSale(Entity billing_record,float amount) 	throws BillingGatewayException;
