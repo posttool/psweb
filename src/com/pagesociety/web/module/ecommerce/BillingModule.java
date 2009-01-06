@@ -35,6 +35,9 @@ public class BillingModule extends WebStoreModule
 	public static final int CC_TYPE_AMEX 	   = 0x03;
 	public static final int CC_TYPE_DISCOVER   = 0x04;
 	
+	public static final int EVENT_BILLING_RECORD_CREATED = 0x1001;
+	public static final int EVENT_BILLING_RECORD_UPDATED = 0x1002;
+	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
@@ -100,6 +103,7 @@ public class BillingModule extends WebStoreModule
 		GUARD(guard.canCreateBillingRecord(user,user));
 		
 		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,false);
+	
 	}
 	
 	
@@ -125,7 +129,8 @@ public class BillingModule extends WebStoreModule
 				   					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 		if(preferred)
 			setPreferredBillingRecord(creator,billing_record);
-		
+	
+		dispatchEvent(EVENT_BILLING_RECORD_CREATED, billing_record);
 		return billing_record;
 	}
 			  
@@ -196,22 +201,25 @@ public class BillingModule extends WebStoreModule
 		
 		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
-		return UPDATE(billing_record,
-					  BILLINGRECORD_FIELD_FIRST_NAME,first_name,
-					  BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
-					  BILLINGRECORD_FIELD_LAST_NAME,last_name,
-					  BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
-					  BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
-					  BILLINGRECORD_FIELD_CITY,city,
-					  BILLINGRECORD_FIELD_STATE,state,
-					  BILLINGRECORD_FIELD_COUNTRY,country,
-					  BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
-					  BILLINGRECORD_FIELD_CC_TYPE,cc_type,
-					  BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no),
-					  BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
-					  BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
-					  BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
-
+		
+		billing_record = UPDATE(billing_record,
+				BILLINGRECORD_FIELD_FIRST_NAME,first_name,
+				BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
+				BILLINGRECORD_FIELD_LAST_NAME,last_name,
+				BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
+				BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
+				BILLINGRECORD_FIELD_CITY,city,
+				BILLINGRECORD_FIELD_STATE,state,
+				BILLINGRECORD_FIELD_COUNTRY,country,
+				BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
+				BILLINGRECORD_FIELD_CC_TYPE,cc_type,
+				BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no),
+				BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
+				BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
+				BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
+	
+		dispatchEvent(EVENT_BILLING_RECORD_UPDATED, billing_record);
+		return billing_record;
 	}
 	
 	
