@@ -49,7 +49,7 @@ public class TreeModule extends WebStoreModule
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
-	//TODO: make sure tree named 'name' doesnt exist //
+
 	@Export
 	public Entity CreateTree(UserApplicationContext uctx,String name,String root_class,String root_id,Entity root_data) throws WebApplicationException,PersistenceException
 	{
