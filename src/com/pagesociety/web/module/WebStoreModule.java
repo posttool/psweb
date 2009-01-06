@@ -49,7 +49,7 @@ public abstract class WebStoreModule extends WebModule
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
 	}	
 
-	protected void defineEntities(Map<String,Object> config)throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config)throws PersistenceException,SyncException,InitializationException
 	{
 		/* do nothing by default*/
 	}
