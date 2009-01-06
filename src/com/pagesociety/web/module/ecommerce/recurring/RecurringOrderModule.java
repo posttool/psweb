@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.ecommerce.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.BillingModule;
 import com.pagesociety.web.module.ecommerce.IBillingGateway;
+import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.resource.ResourceModule;
 import com.pagesociety.web.module.user.UserModule;
 
@@ -39,17 +41,20 @@ import com.pagesociety.web.module.user.UserModule;
 public class RecurringOrderModule extends ResourceModule 
 {
 	
-	private static final String SLOT_BILLING_MODULE = "billing-module";
+	private static final String SLOT_BILLING_MODULE 		  = "billing-module";
+	private static final String SLOT_EMAIL_MODULE 		  	  = "email-module";
 	private static final String PARAM_BILLING_THREAD_INTERVAL = "billing-thread-interval";
 	
-	public static final int ORDER_STATUS_INIT 						= 0x0000;
-	public static final int ORDER_STATUS_OPEN 						= 0x0001;
-	public static final int ORDER_STATUS_CLOSED  					= 0x0002;
-	public static final int ORDER_STATUS_INITIAL_BILL_FAILED 		= 0x0004;
-	public static final int ORDER_STATUS_LAST_MONTHLY_BILL_FAILED 	= 0x0008;
+	public static final int ORDER_STATUS_INIT 							= 0x0000;
+	public static final int ORDER_STATUS_OPEN 							= 0x0001;
+	public static final int ORDER_STATUS_CLOSED  						= 0x0002;
+	public static final int ORDER_STATUS_INITIAL_BILL_FAILED 			= 0x0004;
+	public static final int ORDER_STATUS_LAST_MONTHLY_BILL_FAILED 		= 0x0008;
+	public static final int ORDER_STATUS_NO_PREFERRED_BILLING_RECORD 	= 0x0010;
 
 	protected BillingModule billing_module;
 	protected IBillingGateway billing_gateway;
+	protected IEmailModule email_module;
 	
 	private long billing_thread_interval;
 	
@@ -61,7 +66,7 @@ public class RecurringOrderModule extends ResourceModule
 		billing_module  = (BillingModule)getSlot(SLOT_BILLING_MODULE);
 		billing_gateway = billing_module.getBillingGateway(); 
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
-	
+		email_module = (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
 		start_billing_thread();
 	}
 
@@ -69,6 +74,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.BillingModule.class, true);
+		DEFINE_SLOT(SLOT_EMAIL_MODULE, com.pagesociety.web.module.email.IEmailModule.class, true);
 	}
 	
 
@@ -345,22 +351,23 @@ public class RecurringOrderModule extends ResourceModule
 		
 		recurring_order = EXPAND(recurring_order);
 		MODULE_LOG(0,"OPENING RECURRING ORDER "+recurring_order.getId());
-		int status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
+		int status 		= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
 		
 		Entity order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 		Entity billing_record = billing_module.getPreferredBillingRecord(order_user);
-		//TODO: deal with preferred billing record not being set. 
-		//this relates to free acounts potentially!!//
-		
-		//how do we keep track of users with free accounts.
-		//do they have to check out and enter a billing record//
-		//or do we just make accounts for them//
+		if(billing_record == null)
+		{
+			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
+			MODULE_LOG("NO PREFERRED BILLING RECORD FOR USER:"+order_user+" WHEN TRYING TO OPEN RECURRING ORDER "+recurring_order.getId());
+			send_billing_failed_email(recurring_order, "NO PREFERRED BILLING RECORD. PLEASE LOGIN AND UPDATE BILLING INFORMATION.");
+			return recurring_order;
+		}
+
 		switch(status)
 		{
 			case ORDER_STATUS_INIT:
 				//TODO: insert new order transaction here
 			case ORDER_STATUS_INITIAL_BILL_FAILED:
-
 				try{
 					do_initial_fee_billing(recurring_order,billing_record);
 				}catch(BillingGatewayException bge)
@@ -379,6 +386,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					//TODO: insert failed trans action record here
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					send_billing_failed_email(recurring_order, "");
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED.");
 					return recurring_order;
 				}
@@ -394,6 +402,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					//TODO: insert failed trans action record here
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					send_billing_failed_email(recurring_order, "");
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED");
 					return recurring_order;
 				}
@@ -424,6 +433,7 @@ public class RecurringOrderModule extends ResourceModule
 	public Entity closeRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
 		MODULE_LOG(0,"CLOSING RECURRING ORDER "+recurring_order.getId()+" OK");
+		//TODO: log transaction
 		return updateRecurringOrderStatus(recurring_order, ORDER_STATUS_CLOSED);
 	}
 	
@@ -507,13 +517,17 @@ public class RecurringOrderModule extends ResourceModule
 		float amount = (Float)sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
 		//\\TODO: apply promotions //\\
 		
-		if(amount == 0)
+		if(amount != 0)
+		{
+			billing_gateway.doSale(billing_record, amount);
+			//TODO: insert transaction for sale
+		}
+		else
 		{
 			//TODO: maybe insert our own transaction record for 0 billing
-			return;
 		}
 
-		billing_gateway.doSale(billing_record, amount);
+
 		recurring_order.setAttribute(RECURRING_ORDER_FIELD_LAST_BILL_DATE, now);
 		recurring_order.setAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE, calculate_next_bill_date(sku,now));
 		SAVE_ENTITY(recurring_order);
@@ -565,12 +579,13 @@ public class RecurringOrderModule extends ResourceModule
 		Entity billing_record 	= null;
 		Query q 				= null;
 		QueryResult result 		= null;
-		
+
 		try{
 			Date now = new Date();
 			q = new Query(RECURRING_ORDER_ENTITY);
-			q.idx(IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE);
-			q.lte(now);
+			q.idx(IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE);
+			q.betweenDesc(q.list(ORDER_STATUS_OPEN,now), q.list(ORDER_STATUS_OPEN,Query.VAL_MIN));
+			//q.lte(now);
 			result = QUERY(q);
 			MODULE_LOG( 1,result.size()+" records to bill.");
 		}catch(PersistenceException pe1)
@@ -589,8 +604,11 @@ public class RecurringOrderModule extends ResourceModule
 				billing_record = billing_module.getPreferredBillingRecord(order_user);
 				if(billing_record == null)
 				{
-					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId());
+					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 					MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
+					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
+					//TODO: INSERT USER NOTIFICATION //
+					send_billing_failed_email(recurring_order, "ERROR: NO PREFERRED BILLING RECORD. PLEASE LOGIN AND SPECIFY PREFERRED BILLING RECORD.");
 					continue;
 				}
 				try{
@@ -598,8 +616,11 @@ public class RecurringOrderModule extends ResourceModule
 
 				}catch(BillingGatewayException bge)
 				{
-					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId());
+					ERROR(bge);
+					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					//TODO: INSERT USER NOTIFICATION //
+					send_billing_failed_email(recurring_order, null);
 					continue;
 				}
 
@@ -613,11 +634,30 @@ public class RecurringOrderModule extends ResourceModule
 			}
 
 		}
-			
-
-
-	
 	}
+	
+	private void send_billing_failed_email(Entity recurring_order,String additional_info)
+	{
+		
+		Entity user = null;
+		String user_email = null;
+		try{
+			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			Map<String,Object> template_data = new HashMap<String, Object>();
+			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+			if(additional_info == null)
+				template_data.put("additional_information","");
+			else
+				template_data.put("additional_information",additional_info);
+			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			email_module.sendEmail(null, new String[]{user_email}, "Your monthly billing failed.", "billing-failed.fm", template_data);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			MODULE_LOG("EMAIL MODULE FAILED SENDING BILLING FAILED EMAIL TO USER "+user.getId()+" "+user_email);
+		}
+	}
+	
 	
 	///BEGIN DDL STUFF
 	public static String RECURRING_SKU_ENTITY 			  		= "RecurringSKU";
@@ -683,20 +723,20 @@ public class RecurringOrderModule extends ResourceModule
 
 	}
 
-	public static final String IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE = "byNextBillDate";
-	public static final String IDX_RECURRING_ORDER_BY_USER			 = "byUser";
-	public static final String IDX_RECURRING_ORDER_BY_STATUS		 = "byStatus";
+	public static final String IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE 		   = "byNextBillDate";
+	public static final String IDX_RECURRING_ORDER_BY_USER			 		   = "byUser";
+	public static final String IDX_RECURRING_ORDER_BY_STATUS		 		   = "byStatus";
+	public static final String IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE = "byStatusByNextBillDate";
+	
 	
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_STATE 			 = "byCatalogState";
-	public static final String IDX_SITE_BY_USER 	  = "byCreator";	
+	public static final String IDX_SITE_BY_USER 	  						 = "byCreator";	
 	
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
 	{
-		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
+		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,RECURRING_ORDER_FIELD_STATUS,RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
 		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_USER);
 		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_STATUS);
-		
-		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_NEXT_BILL_DATE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
 		
 		
 	//	DEFINE_ENTITY_INDEX(SYSTEM_ENTITY, IDX_SYSTEM_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_CREATOR);
