@@ -34,6 +34,7 @@ import com.pagesociety.web.module.ecommerce.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.BillingModule;
 import com.pagesociety.web.module.ecommerce.IBillingGateway;
 import com.pagesociety.web.module.email.IEmailModule;
+import com.pagesociety.web.module.logger.LoggerModule;
 import com.pagesociety.web.module.resource.ResourceModule;
 import com.pagesociety.web.module.user.UserModule;
 
@@ -43,6 +44,7 @@ public class RecurringOrderModule extends ResourceModule
 	
 	private static final String SLOT_BILLING_MODULE 		  = "billing-module";
 	private static final String SLOT_EMAIL_MODULE 		  	  = "email-module";
+	private static final String SLOT_LOGGER_MODULE 		  	  = "logger-module";
 	private static final String PARAM_BILLING_THREAD_INTERVAL = "billing-thread-interval";
 	
 	public static final int ORDER_STATUS_INIT 							= 0x0000;
@@ -55,7 +57,7 @@ public class RecurringOrderModule extends ResourceModule
 	protected BillingModule billing_module;
 	protected IBillingGateway billing_gateway;
 	protected IEmailModule email_module;
-	
+	protected LoggerModule logger_module;
 	private long billing_thread_interval;
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -66,7 +68,8 @@ public class RecurringOrderModule extends ResourceModule
 		billing_module  = (BillingModule)getSlot(SLOT_BILLING_MODULE);
 		billing_gateway = billing_module.getBillingGateway(); 
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
-		email_module = (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
+		email_module 	= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
+		logger_module 	= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
 		start_billing_thread();
 	}
 
@@ -75,6 +78,7 @@ public class RecurringOrderModule extends ResourceModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.BillingModule.class, true);
 		DEFINE_SLOT(SLOT_EMAIL_MODULE, com.pagesociety.web.module.email.IEmailModule.class, true);
+		DEFINE_SLOT(SLOT_LOGGER_MODULE, com.pagesociety.web.module.logger.LoggerModule.class, true);
 	}
 	
 
@@ -366,48 +370,51 @@ public class RecurringOrderModule extends ResourceModule
 		switch(status)
 		{
 			case ORDER_STATUS_INIT:
-				//TODO: insert new order transaction here
+				//TODO: log order created??
 			case ORDER_STATUS_INITIAL_BILL_FAILED:
+				float amount = 0;
 				try{
-					do_initial_fee_billing(recurring_order,billing_record);
+					amount = do_initial_fee_billing(recurring_order,billing_record);
+					if(amount != 0)
+						log_order_init_bill_ok(recurring_order, amount);
 				}catch(BillingGatewayException bge)
 				{
-					//TODO: insert failed transaction record here
-					
+					log_order_init_bill_failed(recurring_order, amount);
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_INITIAL_BILL_FAILED);	
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" INITIAL BILLING FAILED.");
 					return recurring_order;
 				}
-				//TODO: insert successful initial billing transaction record here
-				
+				amount = 0;
 				try{
-					do_monthly_billing(recurring_order,billing_record);
+					amount = do_monthly_billing(recurring_order,billing_record);				
 				}catch(BillingGatewayException bge2)
 				{
-					//TODO: insert failed trans action record here
+					log_order_monthly_bill_failed(recurring_order, bge2.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
 					send_billing_failed_email(recurring_order, "");
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED.");
 					return recurring_order;
 				}
-				//TODO: insert successful trans action record here
 				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_OPEN);
+				log_order_monthly_bill_ok(recurring_order, amount);
 				MODULE_LOG(0,"OPENED RECURRING ORDER "+recurring_order.getId()+" OK");
 				break;
 				
 			case ORDER_STATUS_LAST_MONTHLY_BILL_FAILED://just reopen it. probaby need to see how much time elapsed.
+				amount = 0;
 				try{
-					do_monthly_billing(recurring_order,billing_record);
+					amount = do_monthly_billing(recurring_order,billing_record);
+				
 				}catch(BillingGatewayException bge2)
 				{
-					//TODO: insert failed trans action record here
+					log_order_monthly_bill_failed(recurring_order, bge2.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
 					send_billing_failed_email(recurring_order, "");
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED");
 					return recurring_order;
 				}
-				//TODO: insert successful trans action record here
 				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_OPEN);
+				log_order_monthly_bill_ok(recurring_order, amount);
 				MODULE_LOG(0,"OPENED RECURRING ORDER "+recurring_order.getId()+" OK");
 				break;
 				
@@ -439,8 +446,15 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public Entity updateRecurringOrderStatus(Entity recurring_order,int status) throws PersistenceException
 	{
-		return UPDATE(recurring_order,
-					RECURRING_ORDER_FIELD_STATUS,status);
+		int old_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
+		recurring_order =  UPDATE(recurring_order,
+						RECURRING_ORDER_FIELD_STATUS,status);
+		
+		if(status != ORDER_STATUS_OPEN)
+			log_order_suspended(recurring_order, old_status);
+		else
+			log_order_opened(recurring_order);
+		return recurring_order;	
 	}
 	
 	
@@ -485,23 +499,47 @@ public class RecurringOrderModule extends ResourceModule
 		return PAGING_QUERY(q);
 	}
 	
+	@Export
+	public PagingQueryResult GetTransactionHistoryByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity target_user = GET(UserModule.USER_ENTITY,user_id);
+		
+		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
+			throw new PermissionsException("NO PERMISSION");
+			
+		return getTransactionHistoryByUser(target_user,offset,page_size);
+	}
+	
+	
+	public PagingQueryResult getTransactionHistoryByUser(Entity user,int offset,int page_size) throws WebApplicationException,PersistenceException
+	{
+		Query q = logger_module.getLogMessagesByUserQ(user);
+		q.offset(offset);
+		q.pageSize(page_size);
+		q.orderBy(FIELD_LAST_MODIFIED, Query.DESC);
+		return PAGING_QUERY(q);
+	}
+	
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-		
-	private void do_initial_fee_billing(Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException
+	
+	private float do_initial_fee_billing(Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException
 	{
 		float initial_fee = (Float)recurring_order.getAttribute(RECURRING_ORDER_FIELD_INITIAL_FEE);
 		if(initial_fee == 0)
-			return;
+			return initial_fee;
 
 		//TODO: look for any promotion that waves initial fee.//
 		//TODO: maybe insert our own transaction record for 0 billing if initial fee was waived
 		//due to promotion
 
 		billing_gateway.doSale(billing_record, initial_fee);	
+		return initial_fee;
+		
 	}
 	
-	private void do_monthly_billing(Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException
+	private float do_monthly_billing(Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException
 	{
 		Date next_bill_date = (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
 		Date now     = new Date();
@@ -510,7 +548,7 @@ public class RecurringOrderModule extends ResourceModule
 			//cant bill a date before the next bill date
 			//TODO: JUST LOG IN THE BILLING LOG FOR THE DAY billing_gateway.getLog()//
 			MODULE_LOG(0,"WARNING: SKIPPING BILLING RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER: "+recurring_order.getId());
-			return;
+			return 0;
 		}
 		
 		Entity sku 	 = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKU));
@@ -520,18 +558,17 @@ public class RecurringOrderModule extends ResourceModule
 		if(amount != 0)
 		{
 			billing_gateway.doSale(billing_record, amount);
-			//TODO: insert transaction for sale
 		}
 		else
 		{
-			//TODO: maybe insert our own transaction record for 0 billing
+
 		}
 
 
 		recurring_order.setAttribute(RECURRING_ORDER_FIELD_LAST_BILL_DATE, now);
 		recurring_order.setAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE, calculate_next_bill_date(sku,now));
 		SAVE_ENTITY(recurring_order);
-
+		return amount;
 	}
 
 
@@ -607,19 +644,19 @@ public class RecurringOrderModule extends ResourceModule
 					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 					MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
-					//TODO: INSERT USER NOTIFICATION //
 					send_billing_failed_email(recurring_order, "ERROR: NO PREFERRED BILLING RECORD. PLEASE LOGIN AND SPECIFY PREFERRED BILLING RECORD.");
 					continue;
 				}
+				float amount = 0;
 				try{
-					do_monthly_billing(recurring_order, billing_record);
-
+					amount = do_monthly_billing(recurring_order, billing_record);
+					log_order_monthly_bill_ok(recurring_order, amount);
 				}catch(BillingGatewayException bge)
 				{
 					ERROR(bge);
 					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
+					log_order_monthly_bill_failed(recurring_order, bge.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
-					//TODO: INSERT USER NOTIFICATION //
 					send_billing_failed_email(recurring_order, null);
 					continue;
 				}
@@ -658,6 +695,52 @@ public class RecurringOrderModule extends ResourceModule
 		}
 	}
 	
+	///TRANSACTION LOGGING STUFF
+	private static final int LOG_ORDER_OPENED 	      		= 0x10;	
+	private static final int LOG_ORDER_SUSPENDED 	      	= 0x20;	
+	private static final int LOG_ORDER_CLOSED 	      		= 0x30;	
+	private static final int LOG_INIT_BILLING_OK 	      	= 0x40;	
+	private static final int LOG_INIT_BILLING_FAILED    	= 0x50;	
+	private static final int LOG_MONTHLY_BILLING_OK 	  	= 0x60;	
+	private static final int LOG_MONTHLY_BILLING_FAILED 	= 0x70;	
+
+	private void log_order_opened(Entity recurring_order) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_OPENED, "Order "+recurring_order.getId()+" opened OK.", recurring_order);
+	}
+	
+	private void log_order_suspended(Entity recurring_order,int old_status) throws PersistenceException
+	{
+		int current_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_SUSPENDED, "Order "+recurring_order.getId()+" has been suspended. Order status was "+old_status+" and is now "+current_status+".", recurring_order);
+	}
+	
+	private void log_order_closed(Entity recurring_order) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_CLOSED, "Order "+recurring_order.getId()+" has been closed.", recurring_order);
+	}
+
+	private void log_order_init_bill_ok(Entity recurring_order,float amount) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_INIT_BILLING_OK, "Order "+recurring_order.getId()+" was billed for initial fee of "+amount+".", recurring_order);
+	}
+	
+	private void log_order_init_bill_failed(Entity recurring_order,float amount) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_INIT_BILLING_FAILED, "Order "+recurring_order.getId()+" failed initial billing for the amount of "+amount+".", recurring_order);
+	}
+	
+	private void log_order_monthly_bill_failed(Entity recurring_order,float amount) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for monthly fee of "+amount+".", recurring_order);
+	}
+	
+	private void log_order_monthly_bill_ok(Entity recurring_order,float amount) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_FAILED, "Order "+recurring_order.getId()+" failed monthly billing for the amount of "+amount+".", recurring_order);
+	}
+
+
 	
 	///BEGIN DDL STUFF
 	public static String RECURRING_SKU_ENTITY 			  		= "RecurringSKU";
