@@ -29,7 +29,6 @@ public class SystemNotificationModule extends WebStoreModule
 	public static final int NOTIFICATION_LEVEL_INFO  		= 0x02;
 	
 	
-	protected UserModule user_module;
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -194,7 +193,8 @@ public class SystemNotificationModule extends WebStoreModule
 	}
 
 	//// END MODULE STUFF ///
-	//ENTITY NAME IS ALWAYS USER DEFINED...see defineEntities//
+
+	//DDL STUFF
 	public static String SYSTEM_NOTIFICATION_ENTITY			= "SystemNotification";
 	public static String SYSTEM_NOTIFICATION_FIELD_TYPE		= "notification_type";
 	public static String SYSTEM_NOTIFICATION_FIELD_USER		= "notification_user";
