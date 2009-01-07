@@ -53,10 +53,9 @@ public class LoggerModule extends WebStoreModule
 	}
 	
 	
-	public Entity deleteLogMessage(long log_message_id) throws PersistenceException 
+	public Entity deleteLogMessage(Entity log_message) throws PersistenceException 
 	{
-		Entity message = GET(log_entity_name,log_message_id);
-		return DELETE(message);
+		return DELETE(log_message);
 	}
 	
 	
