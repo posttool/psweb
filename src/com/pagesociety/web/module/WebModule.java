@@ -179,13 +179,19 @@ public abstract class WebModule extends Module
 	{
 		Calendar now = Calendar.getInstance();
 		
+		int n_month = now.get(Calendar.MONTH)+1; 
+		int n_day   = now.get(Calendar.DATE); 
 		String year  = String.valueOf(now.get(Calendar.YEAR));
-		String month = String.valueOf(now.get(Calendar.MONTH)+1);
-		String day   = String.valueOf(now.get(Calendar.DATE));
+		String month = String.valueOf(n_month);
+		String day   = String.valueOf(now.get(n_day));
 		
 		StringBuilder buf = new StringBuilder();
 		buf.append(year);
+		if(n_month < 10)
+			buf.append('0');
 		buf.append(month);
+		if(n_day < 10)
+			buf.append('0');
 		buf.append(day);
 		buf.append('.');
 		buf.append(getName());
