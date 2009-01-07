@@ -195,18 +195,18 @@ public class SystemNotificationModule extends WebStoreModule
 	//// END MODULE STUFF ///
 
 	//DDL STUFF
-	public static String SYSTEM_NOTIFICATION_ENTITY			= "SystemNotification";
-	public static String SYSTEM_NOTIFICATION_FIELD_TYPE		= "notification_type";
-	public static String SYSTEM_NOTIFICATION_FIELD_USER		= "notification_user";
-	public static String SYSTEM_NOTIFICATION_FIELD_LEVEL	= "notification_level";
-	public static String SYSTEM_NOTIFICATION_FIELD_TEXT		= "notification_text";
+	public static final String SYSTEM_NOTIFICATION_ENTITY			= "SystemNotification";
+	public static final String SYSTEM_NOTIFICATION_FIELD_TYPE		= "notification_type";
+	public static final String SYSTEM_NOTIFICATION_FIELD_USER		= "notification_user";
+	public static final String SYSTEM_NOTIFICATION_FIELD_LEVEL		= "notification_level";
+	public static final String SYSTEM_NOTIFICATION_FIELD_TEXT		= "notification_text";
 
 	
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException,InitializationException
 	{
 		DEFINE_ENTITY(SYSTEM_NOTIFICATION_ENTITY,
 					  SYSTEM_NOTIFICATION_FIELD_TYPE, Types.TYPE_INT,NOTIFICATION_TYPE_UNDEFINED, 
-					  SYSTEM_NOTIFICATION_FIELD_USER, Types.TYPE_REFERENCE,UserModule.USER_ENTITY,
+					  SYSTEM_NOTIFICATION_FIELD_USER, Types.TYPE_REFERENCE,UserModule.USER_ENTITY,null,
 					  SYSTEM_NOTIFICATION_FIELD_LEVEL, Types.TYPE_INT,NOTIFICATION_LEVEL_INFO,
 					  SYSTEM_NOTIFICATION_FIELD_TEXT, Types.TYPE_STRING,null);
 	}
