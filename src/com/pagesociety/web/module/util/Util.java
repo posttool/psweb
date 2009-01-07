@@ -26,7 +26,8 @@ public class Util
 		}
 		catch (NoSuchAlgorithmException nsae)
 		{
-			return "--- MD5 ALGORITHM AVAILABLE";
+			nsae.printStackTrace();
+			return "--- NO MD5 ALGORITHM AVAILABLE";
 		}
 	}
 }
