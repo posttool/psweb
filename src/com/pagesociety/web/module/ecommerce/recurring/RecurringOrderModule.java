@@ -30,6 +30,7 @@ import com.pagesociety.web.module.ecommerce.BillingModule;
 import com.pagesociety.web.module.ecommerce.IBillingGateway;
 import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.logger.LoggerModule;
+import com.pagesociety.web.module.notification.SystemNotificationModule;
 import com.pagesociety.web.module.resource.ResourceModule;
 import com.pagesociety.web.module.user.UserModule;
 
@@ -40,6 +41,7 @@ public class RecurringOrderModule extends ResourceModule
 	private static final String SLOT_BILLING_MODULE 		  = "billing-module";
 	private static final String SLOT_EMAIL_MODULE 		  	  = "email-module";
 	private static final String SLOT_LOGGER_MODULE 		  	  = "logger-module";
+	private static final String SLOT_NOTIFICATION_MODULE 	  = "notification-module";
 	private static final String PARAM_BILLING_THREAD_INTERVAL = "billing-thread-interval";
 	
 	public static final int ORDER_STATUS_INIT 							= 0x0000;
@@ -53,6 +55,7 @@ public class RecurringOrderModule extends ResourceModule
 	protected IBillingGateway billing_gateway;
 	protected IEmailModule email_module;
 	protected LoggerModule logger_module;
+	protected SystemNotificationModule notification_module;
 	private long billing_thread_interval;
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -60,11 +63,12 @@ public class RecurringOrderModule extends ResourceModule
 		super.init(app,config);
 		/* see notes in super class...this is cheap inheritence */
 		super.setResourceEntityName(RECURRING_SKU_RESOURCE_ENTITY);
-		billing_module  = (BillingModule)getSlot(SLOT_BILLING_MODULE);
-		billing_gateway = billing_module.getBillingGateway(); 
+		billing_module  		= (BillingModule)getSlot(SLOT_BILLING_MODULE);
+		billing_gateway 		= billing_module.getBillingGateway(); 
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
-		email_module 	= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
-		logger_module 	= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
+		email_module 		= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
+		logger_module 		= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
+		notification_module = (SystemNotificationModule)getSlot(SLOT_NOTIFICATION_MODULE);
 		start_billing_thread();
 	}
 
@@ -77,7 +81,6 @@ public class RecurringOrderModule extends ResourceModule
 	}
 	
 
-	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
 	
@@ -344,6 +347,10 @@ public class RecurringOrderModule extends ResourceModule
 		return DELETE(recurring_order);
 	}
 
+	private void send_system_alert_notification(Entity user,String notification_text) throws PersistenceException
+	{
+		notification_module.createAlertNotificationForUser(null, user, notification_text);
+	}
 	
 	public Entity openRecurringOrder(Entity recurring_order) throws PersistenceException
 	{
@@ -358,6 +365,7 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
 			MODULE_LOG("NO PREFERRED BILLING RECORD FOR USER:"+order_user+" WHEN TRYING TO OPEN RECURRING ORDER "+recurring_order.getId());
+			send_system_alert_notification(order_user,"There was a problem with your order. Please make sure you have a valid billing record. We don't seem to have one on file for you.");
 			send_billing_failed_email(recurring_order, "NO PREFERRED BILLING RECORD. PLEASE LOGIN AND UPDATE BILLING INFORMATION.");
 			return recurring_order;
 		}
@@ -374,6 +382,8 @@ public class RecurringOrderModule extends ResourceModule
 					log_order_init_bill_failed(recurring_order, bge.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_INITIAL_BILL_FAILED);	
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" INITIAL BILLING FAILED.");
+					send_system_alert_notification(order_user,"There was a problem with your order. Please make sure you have a valid billing record.");
+					send_billing_failed_email(recurring_order, null);
 					return recurring_order;
 				}
 				try{
@@ -382,7 +392,8 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					log_order_monthly_bill_failed(recurring_order, bge2.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
-					send_billing_failed_email(recurring_order, "");
+					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
+					send_billing_failed_email(recurring_order, null);
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED.");
 					return recurring_order;
 				}
@@ -398,6 +409,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					log_order_monthly_bill_failed(recurring_order, bge2.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
 					send_billing_failed_email(recurring_order, "");
 					MODULE_LOG(0,"ERROR: RECURRING ORDER "+recurring_order.getId()+" FIRST MONTHLY BILLING FAILED");
 					return recurring_order;
@@ -646,6 +658,7 @@ public class RecurringOrderModule extends ResourceModule
 					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 					MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
+					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
 					send_billing_failed_email(recurring_order, "ERROR: NO PREFERRED BILLING RECORD. PLEASE LOGIN AND SPECIFY PREFERRED BILLING RECORD.");
 					continue;
 				}
@@ -658,6 +671,7 @@ public class RecurringOrderModule extends ResourceModule
 					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 					log_order_monthly_bill_failed(recurring_order, bge.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_LAST_MONTHLY_BILL_FAILED);	
+					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
 					send_billing_failed_email(recurring_order, null);
 					continue;
 				}
