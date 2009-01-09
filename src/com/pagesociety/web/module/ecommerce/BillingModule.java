@@ -24,7 +24,7 @@ public class BillingModule extends WebStoreModule
 
 	private static final String SLOT_ENCRYPTION_MODULE  	 = "encryption-module"; 
 	private static final String SLOT_BILLING_GATEWAY_MODULE  = "billing-gateway"; 
-	private static final String SLOT_BILLING_GUARD  		 = "billing-guard"; 
+	private static final String SLOT_BILLING_GUARD_MODULE  		 = "billing-guard"; 
 
 	IBillingGateway 	billing_gateway;
 	IBillingGuard   	guard;
@@ -42,7 +42,7 @@ public class BillingModule extends WebStoreModule
 	{
 		super.init(app,config);
 		billing_gateway 	= (IBillingGateway)getSlot(SLOT_BILLING_GATEWAY_MODULE);
-		guard				= (IBillingGuard)getSlot(SLOT_BILLING_GUARD);
+		guard				= (IBillingGuard)getSlot(SLOT_BILLING_GUARD_MODULE);
 		encryption_module 	= (IEncryptionModule)getSlot(SLOT_ENCRYPTION_MODULE);
 	}
 
@@ -51,7 +51,7 @@ public class BillingModule extends WebStoreModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_BILLING_GATEWAY_MODULE,IBillingGateway.class,true);
 		DEFINE_SLOT(SLOT_ENCRYPTION_MODULE,IEncryptionModule.class,true);
-		DEFINE_SLOT(SLOT_BILLING_GATEWAY_MODULE,IBillingGateway.class,false,DefaultBillingGuard.class);
+		DEFINE_SLOT(SLOT_BILLING_GUARD_MODULE,IBillingGuard.class,false,DefaultBillingGuard.class);
 	
 	}
 	
