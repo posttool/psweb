@@ -78,6 +78,7 @@ public class RecurringOrderModule extends ResourceModule
 		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.BillingModule.class, true);
 		DEFINE_SLOT(SLOT_EMAIL_MODULE, com.pagesociety.web.module.email.IEmailModule.class, true);
 		DEFINE_SLOT(SLOT_LOGGER_MODULE, com.pagesociety.web.module.logger.LoggerModule.class, true);
+		DEFINE_SLOT(SLOT_NOTIFICATION_MODULE, com.pagesociety.web.module.notification.SystemNotificationModule.class, true);
 	}
 	
 
