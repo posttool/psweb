@@ -793,7 +793,6 @@ public class PromotionModule extends WebStoreModule
 	
 	
 	////////////////////////////////////////
-	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
 	public static String PROMOTION_ENTITY 							= "Promotion";
