@@ -1,8 +1,9 @@
 package com.pagesociety.web.module.ecommerce.promo;
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.web.module.PermissionsModule;
 
-public class DefaultPromotionGuard 
+public class DefaultPromotionGuard extends PermissionsModule implements IPromotionGuard
 {
 	public boolean canCreatePromotion(Entity user){return false;}
 
