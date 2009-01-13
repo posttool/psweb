@@ -1,4 +1,4 @@
-package com.pagesociety.web.module.ecommerce;
+package com.pagesociety.web.module.ecommerce.gateway;
 
 @SuppressWarnings("serial")
 public class BillingGatewayException extends Exception 
