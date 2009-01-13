@@ -28,6 +28,7 @@ import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.ecommerce.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.BillingModule;
 import com.pagesociety.web.module.ecommerce.IBillingGateway;
+import com.pagesociety.web.module.ecommerce.promo.PromotionModule;
 import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.logger.LoggerModule;
 import com.pagesociety.web.module.notification.SystemNotificationModule;
@@ -42,6 +43,7 @@ public class RecurringOrderModule extends ResourceModule
 	private static final String SLOT_EMAIL_MODULE 		  	  = "email-module";
 	private static final String SLOT_LOGGER_MODULE 		  	  = "logger-module";
 	private static final String SLOT_NOTIFICATION_MODULE 	  = "notification-module";
+	private static final String SLOT_PROMOTION_MODULE 	  	  = "promotion-module";
 	private static final String PARAM_BILLING_THREAD_INTERVAL = "billing-thread-interval";
 	
 	public static final int ORDER_STATUS_INIT 							= 0x0000;
@@ -56,6 +58,7 @@ public class RecurringOrderModule extends ResourceModule
 	protected IEmailModule email_module;
 	protected LoggerModule logger_module;
 	protected SystemNotificationModule notification_module;
+	protected PromotionModule promotion_module;
 	private long billing_thread_interval;
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -79,6 +82,7 @@ public class RecurringOrderModule extends ResourceModule
 		DEFINE_SLOT(SLOT_EMAIL_MODULE, com.pagesociety.web.module.email.IEmailModule.class, true);
 		DEFINE_SLOT(SLOT_LOGGER_MODULE, com.pagesociety.web.module.logger.LoggerModule.class, true);
 		DEFINE_SLOT(SLOT_NOTIFICATION_MODULE, com.pagesociety.web.module.notification.SystemNotificationModule.class, true);
+		DEFINE_SLOT(SLOT_PROMOTION_MODULE, com.pagesociety.web.module.ecommerce.promo.PromotionModule.class, true);
 	}
 	
 
@@ -127,7 +131,6 @@ public class RecurringOrderModule extends ResourceModule
 		String product_description = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_DESCRIPTION);
 		float  initial_fee         = (Float)recurring_sku.getAttribute(RECURRING_SKU_FIELD_INITIAL_FEE);
 		float  product_price       = (Float)recurring_sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
-		int	   billing_period	   = (Integer)recurring_sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD);
 		String  catalog_no		   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_NUMBER);
 		Integer catalog_state	   = (Integer)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_STATE);
 		Entity user_data		   = (Entity)recurring_sku.getAttribute(RECURRING_SKU_FIELD_USER_DATA);
@@ -151,12 +154,12 @@ public class RecurringOrderModule extends ResourceModule
 		if(catalog_state == null)
 			catalog_state = RECURRING_SKU_CATALOG_STATE_ACTIVE;
 		
-		return CreateRecurringSKU(uctx,product_name, product_description,initial_fee,product_price,billing_period,catalog_no,recurring_sku_resource_id,user_data_type,user_data_id,catalog_state);
+		return CreateRecurringSKU(uctx,product_name, product_description,initial_fee,product_price,catalog_no,recurring_sku_resource_id,user_data_type,user_data_id,catalog_state);
 
 	}
 	
 	@Export 
-	public Entity CreateRecurringSKU(UserApplicationContext uctx,String product_name,String product_description,float initial_fee,float product_price,int billing_period,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
+	public Entity CreateRecurringSKU(UserApplicationContext uctx,String product_name,String product_description,float initial_fee,float product_price,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
 		
@@ -171,11 +174,11 @@ public class RecurringOrderModule extends ResourceModule
 		if(recurring_sku_resource_id != 0)//0 for a ref pointer means null//
 			recurring_sku_resource = GET(RECURRING_SKU_ENTITY,recurring_sku_resource_id);
 			
-		return createRecurringSKU(user,product_name, product_description,initial_fee,product_price,billing_period,catalog_no,recurring_sku_resource,user_data,catalog_state);
+		return createRecurringSKU(user,product_name, product_description,initial_fee,product_price,catalog_no,recurring_sku_resource,user_data,catalog_state);
 	}
 	
 	
-	public Entity createRecurringSKU(Entity creator,String product_name,String product_description,float initial_fee,float product_price,int billing_period,String catalog_no,Entity recurring_sku_resource,Entity user_data,int catalog_state) throws PersistenceException
+	public Entity createRecurringSKU(Entity creator,String product_name,String product_description,float initial_fee,float product_price,String catalog_no,Entity recurring_sku_resource,Entity user_data,int catalog_state) throws PersistenceException
 	{
 		return NEW(RECURRING_SKU_ENTITY,
 				creator,
@@ -183,7 +186,6 @@ public class RecurringOrderModule extends ResourceModule
 				RECURRING_SKU_FIELD_DESCRIPTION,product_description,
 				RECURRING_SKU_FIELD_INITIAL_FEE,initial_fee,
 				RECURRING_SKU_FIELD_RECURRING_PRICE,product_price,
-				RECURRING_SKU_FIELD_BILLING_PERIOD,billing_period,
 				RECURRING_SKU_FIELD_CATALOG_NUMBER,catalog_no,
 				RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
 				RECURRING_SKU_FIELD_USER_DATA,user_data,
@@ -200,7 +202,6 @@ public class RecurringOrderModule extends ResourceModule
 		String product_name 	   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_TITLE);
 		String product_description = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_DESCRIPTION);
 		float  product_price       = (Float)recurring_sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
-		int	   billing_period	   = (Integer)recurring_sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD);
 		String catalog_no		   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_NUMBER);
 		Entity user_data		   = (Entity)recurring_sku.getAttribute(RECURRING_SKU_FIELD_USER_DATA);
 		Integer catalog_state	   = (Integer)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_STATE);
@@ -224,12 +225,12 @@ public class RecurringOrderModule extends ResourceModule
 		if(catalog_state == null)
 			catalog_state = RECURRING_SKU_CATALOG_STATE_ACTIVE;
 		
-		return UpdateRecurringSKU(uctx,recurring_sku.getId(), product_name, product_description, product_price, billing_period, catalog_no,recurring_sku_resource_id, user_data_type,user_data_id,catalog_state);
+		return UpdateRecurringSKU(uctx,recurring_sku.getId(), product_name, product_description, product_price,catalog_no,recurring_sku_resource_id, user_data_type,user_data_id,catalog_state);
 	}
 	
 	
 	@Export
-	public Entity UpdateRecurringSKU(UserApplicationContext uctx,long recurring_sku_id,String product_name,String product_description,float product_price,int billing_period,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
+	public Entity UpdateRecurringSKU(UserApplicationContext uctx,long recurring_sku_id,String product_name,String product_description,float product_price,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
@@ -245,11 +246,11 @@ public class RecurringOrderModule extends ResourceModule
 		if(recurring_sku_resource_id != 0)//0 for a ref pointer means null//
 			recurring_sku_resource = GET(RECURRING_SKU_ENTITY,recurring_sku_resource_id);
 		
-		return updateRecurringSKU(recurring_sku,product_name, product_description, product_price, billing_period, catalog_no, recurring_sku_resource,user_data,catalog_state);
+		return updateRecurringSKU(recurring_sku,product_name, product_description, product_price,catalog_no, recurring_sku_resource,user_data,catalog_state);
 	}
 	
 	
-	public Entity updateRecurringSKU(Entity recurring_sku,String product_name,String product_description,float product_price,int billing_period,String catalog_no,Entity recurring_sku_resource,Entity user_data,int catalog_state) throws WebApplicationException,PersistenceException
+	public Entity updateRecurringSKU(Entity recurring_sku,String product_name,String product_description,float product_price,String catalog_no,Entity recurring_sku_resource,Entity user_data,int catalog_state) throws WebApplicationException,PersistenceException
 	{
 		Entity old_resource = (Entity)GET(RECURRING_SKU_ENTITY,recurring_sku.getId()).getAttribute(RECURRING_SKU_FIELD_RESOURCE);
 		if(old_resource != null && !old_resource.equals(recurring_sku_resource))
@@ -259,7 +260,6 @@ public class RecurringOrderModule extends ResourceModule
 				RECURRING_SKU_FIELD_TITLE,product_name,
 				RECURRING_SKU_FIELD_DESCRIPTION,product_description,
 				RECURRING_SKU_FIELD_RECURRING_PRICE,product_price,
-				RECURRING_SKU_FIELD_BILLING_PERIOD,billing_period,
 				RECURRING_SKU_FIELD_CATALOG_NUMBER,catalog_no,
 				RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
 				RECURRING_SKU_FIELD_USER_DATA,user_data,
@@ -288,17 +288,17 @@ public class RecurringOrderModule extends ResourceModule
 	///////RECURRING ORDER///////////	
 	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
-		Entity recurring_sku 	= (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKU);
+		List<Entity> recurring_skus 	= (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKUS);
 		List<Entity> promotions = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
 		
-		VALIDATE_TYPE(RECURRING_SKU_ENTITY, recurring_sku);
+		VALIDATE_TYPE_LIST(RECURRING_SKU_ENTITY, recurring_skus);
 		VALIDATE_TYPE_LIST(PROMOTION_ENTITY, promotions);
-		
-		return CreateRecurringOrder(uctx,target_user_id,recurring_sku.getId(),ENTITIES_TO_IDS(promotions));
+		int billing_period = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_PERIOD);
+		return CreateRecurringOrder(uctx,target_user_id,billing_period,ENTITIES_TO_IDS(recurring_skus),ENTITIES_TO_IDS(promotions));
 	}
 	
 	@Export 
-	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,long recurring_sku_id,List<Long> promotion_ids) throws WebApplicationException,PersistenceException
+	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,int billing_period,List<Long> recurring_sku_ids,List<Long> promotion_ids) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   = (Entity)uctx.getUser();
 		Entity target_user = GET(UserModule.USER_ENTITY,target_user_id);
@@ -306,26 +306,26 @@ public class RecurringOrderModule extends ResourceModule
 		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
 			throw new PermissionsException("NO PERMISSION");
 
-		Entity sku 				= GET(RECURRING_SKU_ENTITY,recurring_sku_id);
+		List <Entity>skus 		= IDS_TO_ENTITIES(RECURRING_SKU_ENTITY,recurring_sku_ids);
 		List<Entity> promotions = IDS_TO_ENTITIES(PROMOTION_ENTITY, promotion_ids);
 		
-		//TODO: pass through initial fee
-		return createRecurringOrder(user,target_user,sku,promotions);
+	
+		return createRecurringOrder(user,target_user,billing_period,skus,promotions);
 
 	}
 	
-	//TODO: do initial billing. set prev and next bill dates,deal with promotions //
-	public Entity createRecurringOrder(Entity creator,Entity user,Entity sku,List<Entity> promotions) throws PersistenceException
+	public Entity createRecurringOrder(Entity creator,Entity user,int billing_period,List<Entity> skus,List<Entity> promotions) throws PersistenceException
 	{
 
 		Entity recurring_order =  NEW(RECURRING_ORDER_ENTITY,
 									  creator,
-									  RECURRING_ORDER_FIELD_SKU,sku,
+									  RECURRING_ORDER_FIELD_SKUS,skus,
 									  RECURRING_ORDER_FIELD_USER,user,
 									  RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_INIT,
 									  RECURRING_ORDER_FIELD_LAST_BILL_DATE,null,
 									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,new Date(),
-									  RECURRING_ORDER_FIELD_PROMOTIONS,new ArrayList<Entity>());//TODO: deal with promotions
+									  RECURRING_ORDER_FIELD_PROMOTIONS,new ArrayList<Entity>(),
+									  RECURRING_ORDER_FIELD_BILLING_PERIOD,billing_period);
 
 		MODULE_LOG(0,"CREATED RECURRING ORDER "+recurring_order.getId()+" OK");
 		return recurring_order;
@@ -363,6 +363,7 @@ public class RecurringOrderModule extends ResourceModule
 		
 		Entity order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 		Entity billing_record = billing_module.getPreferredBillingRecord(order_user);
+		
 		if(billing_record == null)
 		{
 			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
@@ -371,7 +372,14 @@ public class RecurringOrderModule extends ResourceModule
 			send_billing_failed_email(recurring_order, "NO PREFERRED BILLING RECORD. PLEASE LOGIN AND UPDATE BILLING INFORMATION.");
 			return recurring_order;
 		}
-		//TODO: applyPromotions//
+		
+		try{
+			promotion_module.applyPromotions(recurring_order);
+		}catch(Exception e)
+		{
+			ERROR(e);
+			MODULE_LOG("FAILED TO APPLY PROMOTION FOR MONTHLY BILLING FOR ORDER "+recurring_order);
+		}
 		switch(status)
 		{
 			case ORDER_STATUS_INIT:
@@ -540,13 +548,15 @@ public class RecurringOrderModule extends ResourceModule
 	
 	private void do_initial_fee_billing(Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException
 	{
-		Entity sku 	 = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKU));
-		float initial_fee = (Float)sku.getAttribute(RECURRING_SKU_FIELD_INITIAL_FEE);
+		List<Entity> skus 	 = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKUS);
+		float initial_fee = 0f;
+		for(int i = 0;i < skus.size();i++)
+		{
+			Entity sku = EXPAND(skus.get(i));
+			initial_fee+= (Float)sku.getAttribute(RECURRING_SKU_FIELD_INITIAL_FEE);
+		}
 		if(initial_fee == 0)
 			return;
-
-		//TODO: look for any promotion that waves initial fee.//
-
 
 		billing_gateway.doSale(billing_record, initial_fee);
 		if(initial_fee != 0)
@@ -565,9 +575,13 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 		
-		Entity sku 	 = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKU));
-		float amount = (Float)sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
-		//\\TODO: apply promotions //\\
+		List<Entity> skus 	 = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKUS);
+		float amount = 0f;
+		for(int i = 0;i < skus.size();i++)
+		{
+			Entity sku = EXPAND(skus.get(i));
+			amount    += (Float)sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
+		}
 		
 		if(amount > 0)
 		{
@@ -581,18 +595,18 @@ public class RecurringOrderModule extends ResourceModule
 
 		
 		recurring_order.setAttribute(RECURRING_ORDER_FIELD_LAST_BILL_DATE, now);
-		recurring_order.setAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE, calculate_next_bill_date(sku,now));
+		recurring_order.setAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE, calculate_next_bill_date(recurring_order,now));
 		SAVE_ENTITY(recurring_order);
 	}
 
 
-	private Date calculate_next_bill_date(Entity sku, Date now)
+	private Date calculate_next_bill_date(Entity recurring_order, Date now)
 	{
 		Calendar c1 = Calendar.getInstance(); 
 		c1.setTime(now);
 		//TODO: remove this...
 		//c1.add(Calendar.DATE,(Integer)sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD));
-		c1.add(Calendar.SECOND,(Integer)sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD));
+		c1.add(Calendar.SECOND,(Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_PERIOD));
 		return c1.getTime();
 	}
 	
@@ -663,7 +677,15 @@ public class RecurringOrderModule extends ResourceModule
 					send_billing_failed_email(recurring_order, "ERROR: NO PREFERRED BILLING RECORD. PLEASE LOGIN AND SPECIFY PREFERRED BILLING RECORD.");
 					continue;
 				}
-
+				
+				try{
+					promotion_module.applyPromotions(recurring_order);
+				}catch(Exception e)
+				{
+					ERROR(e);
+					MODULE_LOG("FAILED TO APPLY PROMOTION FOR MONTHLY BILLING FOR ORDER "+recurring_order);
+				}
+				
 				try{
 					do_monthly_billing(recurring_order, billing_record);
 				}catch(BillingGatewayException bge)
@@ -767,7 +789,6 @@ public class RecurringOrderModule extends ResourceModule
 	public static String RECURRING_SKU_FIELD_RECURRING_PRICE 	= "price";
 	public static String RECURRING_SKU_FIELD_CATALOG_NUMBER 	= "catalog_number";/*application provides(optional)*/
 	public static String RECURRING_SKU_FIELD_USER_DATA 	  	  	= "data";	/*application provides(optional)*/
-	public static String RECURRING_SKU_FIELD_BILLING_PERIOD 	= "billing_period";//in days//
 	public static String RECURRING_SKU_FIELD_CATALOG_STATE 		= "catalog_state";/*application provides(optional)*/
 	
 	public static String RECURRING_SKU_RESOURCE_ENTITY 				= "RecurringSKUResource";
@@ -780,12 +801,12 @@ public class RecurringOrderModule extends ResourceModule
 
 	public static String RECURRING_ORDER_ENTITY 				= "RecurringOrder";
 	public static String RECURRING_ORDER_FIELD_USER 	    	= "user";
-	public static String RECURRING_ORDER_FIELD_SKU	 			= "sku";
-
+	public static String RECURRING_ORDER_FIELD_SKUS	 			= "sku";
 	public static String RECURRING_ORDER_FIELD_STATUS 			= "order_status";
 	public static String RECURRING_ORDER_FIELD_LAST_BILL_DATE 	= "last_bill_date";
 	public static String RECURRING_ORDER_FIELD_NEXT_BILL_DATE 	= "next_bill_date";
 	public static String RECURRING_ORDER_FIELD_PROMOTIONS		= "promotions";
+	public static String RECURRING_ORDER_FIELD_BILLING_PERIOD 	= "billing_period";//in days//
 
 	
 	public static final String PROMOTION_ENTITY = "Promotion";
@@ -802,7 +823,6 @@ public class RecurringOrderModule extends ResourceModule
 					  RECURRING_SKU_FIELD_RECURRING_PRICE,Types.TYPE_FLOAT,0.0f,
 					  RECURRING_SKU_FIELD_CATALOG_NUMBER,Types.TYPE_STRING,null,
 					  RECURRING_SKU_FIELD_USER_DATA,Types.TYPE_REFERENCE,FieldDefinition.REF_TYPE_UNTYPED_ENTITY,null,
-					  RECURRING_SKU_FIELD_BILLING_PERIOD,Types.TYPE_INT,0,
 					  RECURRING_SKU_FIELD_CATALOG_STATE,Types.TYPE_INT,RECURRING_SKU_CATALOG_STATE_INACTIVE);
 				
 		DEFINE_ENTITY(RECURRING_SKU_RESOURCE_ENTITY,
@@ -815,11 +835,12 @@ public class RecurringOrderModule extends ResourceModule
 		
 		DEFINE_ENTITY(RECURRING_ORDER_ENTITY,
 					  RECURRING_ORDER_FIELD_USER,Types.TYPE_REFERENCE, UserModule.USER_ENTITY,null,
-					  RECURRING_ORDER_FIELD_SKU,Types.TYPE_REFERENCE,RECURRING_SKU_ENTITY,null,
+					  RECURRING_ORDER_FIELD_SKUS,Types.TYPE_ARRAY | Types.TYPE_REFERENCE,RECURRING_SKU_ENTITY,null,
 					  RECURRING_ORDER_FIELD_STATUS,Types.TYPE_INT,ORDER_STATUS_INIT,
 					  RECURRING_ORDER_FIELD_LAST_BILL_DATE,Types.TYPE_DATE,null,
 					  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,Types.TYPE_DATE,null,					  
-					  RECURRING_ORDER_FIELD_PROMOTIONS,Types.TYPE_REFERENCE|Types.TYPE_ARRAY, PROMOTION_ENTITY,new ArrayList<Entity>());
+					  RECURRING_ORDER_FIELD_PROMOTIONS,Types.TYPE_REFERENCE|Types.TYPE_ARRAY, PROMOTION_ENTITY,new ArrayList<Entity>(),
+					  RECURRING_ORDER_FIELD_BILLING_PERIOD,Types.TYPE_INT,Integer.MAX_VALUE);
 
 	}
 
