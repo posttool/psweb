@@ -546,12 +546,11 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 
 		//TODO: look for any promotion that waves initial fee.//
-		//TODO: maybe insert our own transaction record for 0 billing if initial fee was waived
-		//due to promotion
+
 
 		billing_gateway.doSale(billing_record, initial_fee);
 		if(initial_fee != 0)
-		log_order_init_bill_ok(recurring_order, initial_fee);
+			log_order_init_bill_ok(recurring_order, initial_fee);
 		
 	}
 	
@@ -562,7 +561,6 @@ public class RecurringOrderModule extends ResourceModule
 		if(now.getTime() < next_bill_date.getTime())
 		{
 			//cant bill a date before the next bill date
-			//TODO:this presents a problem because we will insert a transaction record for monthly billing 
 			MODULE_LOG(0,"WARNING: SKIPPING BILLING RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER: "+recurring_order.getId());
 			return;
 		}
@@ -571,7 +569,7 @@ public class RecurringOrderModule extends ResourceModule
 		float amount = (Float)sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
 		//\\TODO: apply promotions //\\
 		
-		if(amount != 0)
+		if(amount > 0)
 		{
 			billing_gateway.doSale(billing_record, amount);
 			log_order_monthly_bill_ok(recurring_order, amount);
