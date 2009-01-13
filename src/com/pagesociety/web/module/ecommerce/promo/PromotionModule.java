@@ -81,8 +81,36 @@ public class PromotionModule extends WebStoreModule
 		super.init(app,config);
 		guard				= (IPromotionGuard)getSlot(SLOT_PROMOTION_GUARD);
 
+		init_free_for_life_promotion();
+
 	}
 
+	private static final String FREE_FOR_LIFE_PROGRAM =
+		"if(order.getType() == 'recurring_order')\n"+
+		"{\n"+
+		"\t var recurring_sku = EXPAND(order.getAttribute('sku'));\n"+
+		"\t sku.setAttribute('initial_fee',0.0);\n"+
+		"\t sku.setAttribute('price',0.0);\n"+
+		"\t return true;\n"+
+		"}\n";
+
+	
+	private void init_free_for_life_promotion() throws InitializationException
+	{
+		try{
+		Entity free_for_life_promotion = store.getEntityById(PROMOTION_ENTITY, 1);
+		if(free_for_life_promotion == null)
+		{
+			free_for_life_promotion = createPromotion(null, "Free For Life","This promotion always makes everything free.",FREE_FOR_LIFE_PROGRAM);
+		}
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new InitializationException("FAILED SETTING UP FREE FOR LIFE PROMOTION.");
+		}
+	}
+	
+	
 	protected void defineSlots()
 	{
 		super.defineSlots();
@@ -91,6 +119,13 @@ public class PromotionModule extends WebStoreModule
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
+	
+	public boolean isFreeForLifePromotion(Entity promotion_instance) throws PersistenceException
+	{
+		Entity promotion = EXPAND((Entity)promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_PROMOTION));
+		return (promotion.getId()== 1);
+	}
+	
 	///THE PROMOTION
 	@Export
 	public Entity CreatePromotion(UserApplicationContext uctx,Entity promotion) throws WebApplicationException,PersistenceException,BillingGatewayException
