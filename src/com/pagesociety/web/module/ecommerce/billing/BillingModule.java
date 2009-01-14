@@ -1,4 +1,4 @@
-package com.pagesociety.web.module.ecommerce;
+package com.pagesociety.web.module.ecommerce.billing;
 
 import java.util.Map;
 

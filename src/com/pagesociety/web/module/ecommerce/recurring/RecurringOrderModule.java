@@ -25,7 +25,7 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.PermissionsModule;
-import com.pagesociety.web.module.ecommerce.BillingModule;
+import com.pagesociety.web.module.ecommerce.billing.BillingModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
 import com.pagesociety.web.module.ecommerce.promo.PromotionModule;
@@ -78,7 +78,7 @@ public class RecurringOrderModule extends ResourceModule
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.BillingModule.class, true);
+		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.billing.BillingModule.class, true);
 		DEFINE_SLOT(SLOT_EMAIL_MODULE, com.pagesociety.web.module.email.IEmailModule.class, true);
 		DEFINE_SLOT(SLOT_LOGGER_MODULE, com.pagesociety.web.module.logger.LoggerModule.class, true);
 		DEFINE_SLOT(SLOT_NOTIFICATION_MODULE, com.pagesociety.web.module.notification.SystemNotificationModule.class, true);

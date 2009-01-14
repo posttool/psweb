@@ -1,4 +1,4 @@
-package com.pagesociety.web.module.ecommerce;
+package com.pagesociety.web.module.ecommerce.billing;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
