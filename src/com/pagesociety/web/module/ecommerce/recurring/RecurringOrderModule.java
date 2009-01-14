@@ -72,6 +72,7 @@ public class RecurringOrderModule extends ResourceModule
 		email_module 		= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
 		logger_module 		= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
 		notification_module = (SystemNotificationModule)getSlot(SLOT_NOTIFICATION_MODULE);
+		promotion_module = (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
 		start_billing_thread();
 	}
 
@@ -293,12 +294,14 @@ public class RecurringOrderModule extends ResourceModule
 		
 		VALIDATE_TYPE_LIST(RECURRING_SKU_ENTITY, recurring_skus);
 		VALIDATE_TYPE_LIST(PROMOTION_ENTITY, promotions);
-		int billing_period = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_PERIOD);
-		return CreateRecurringOrder(uctx,target_user_id,billing_period,ENTITIES_TO_IDS(recurring_skus),ENTITIES_TO_IDS(promotions));
+		int recurring_unit   = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_UNIT);
+		int recurring_period = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_PERIOD);
+		
+		return CreateRecurringOrder(uctx,target_user_id,recurring_unit,recurring_period,ENTITIES_TO_IDS(recurring_skus),ENTITIES_TO_IDS(promotions));
 	}
 	
 	@Export 
-	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,int billing_period,List<Long> recurring_sku_ids,List<Long> promotion_ids) throws WebApplicationException,PersistenceException
+	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,int recurring_unit,int recurring_period,List<Long> recurring_sku_ids,List<Long> promotion_ids) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   = (Entity)uctx.getUser();
 		Entity target_user = GET(UserModule.USER_ENTITY,target_user_id);
@@ -310,11 +313,11 @@ public class RecurringOrderModule extends ResourceModule
 		List<Entity> promotions = IDS_TO_ENTITIES(PROMOTION_ENTITY, promotion_ids);
 		
 	
-		return createRecurringOrder(user,target_user,billing_period,skus,promotions);
+		return createRecurringOrder(user,target_user,recurring_unit,recurring_period,skus,promotions);
 
 	}
 	
-	public Entity createRecurringOrder(Entity creator,Entity user,int billing_period,List<Entity> skus,List<Entity> promotions) throws PersistenceException
+	public Entity createRecurringOrder(Entity creator,Entity user,int recurring_unit,int recurring_period,List<Entity> skus,List<Entity> promotions) throws PersistenceException
 	{
 
 		Entity recurring_order =  NEW(RECURRING_ORDER_ENTITY,
@@ -325,7 +328,8 @@ public class RecurringOrderModule extends ResourceModule
 									  RECURRING_ORDER_FIELD_LAST_BILL_DATE,null,
 									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,new Date(),
 									  RECURRING_ORDER_FIELD_PROMOTIONS,new ArrayList<Entity>(),
-									  RECURRING_ORDER_FIELD_BILLING_PERIOD,billing_period);
+									  RECURRING_ORDER_FIELD_RECURRING_UNIT,recurring_unit,
+									  RECURRING_ORDER_FIELD_RECURRING_PERIOD,recurring_period);
 
 		MODULE_LOG(0,"CREATED RECURRING ORDER "+recurring_order.getId()+" OK");
 		return recurring_order;
@@ -604,9 +608,9 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Calendar c1 = Calendar.getInstance(); 
 		c1.setTime(now);
-		//TODO: remove this...
-		//c1.add(Calendar.DATE,(Integer)sku.getAttribute(RECURRING_SKU_FIELD_BILLING_PERIOD));
-		c1.add(Calendar.SECOND,(Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_PERIOD));
+		int recurring_unit 		= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_UNIT);
+		int recurring_period 	= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_PERIOD);
+		c1.add(recurring_unit,recurring_period);
 		return c1.getTime();
 	}
 	
@@ -806,7 +810,9 @@ public class RecurringOrderModule extends ResourceModule
 	public static String RECURRING_ORDER_FIELD_LAST_BILL_DATE 	= "last_bill_date";
 	public static String RECURRING_ORDER_FIELD_NEXT_BILL_DATE 	= "next_bill_date";
 	public static String RECURRING_ORDER_FIELD_PROMOTIONS		= "promotions";
-	public static String RECURRING_ORDER_FIELD_BILLING_PERIOD 	= "billing_period";//in days//
+	public static String RECURRING_ORDER_FIELD_RECURRING_UNIT 	= "recurring_unit";//in days//
+	public static String RECURRING_ORDER_FIELD_RECURRING_PERIOD = "recurring_period";//in unit//
+	
 
 	
 	public static final String PROMOTION_ENTITY = "Promotion";
@@ -840,7 +846,9 @@ public class RecurringOrderModule extends ResourceModule
 					  RECURRING_ORDER_FIELD_LAST_BILL_DATE,Types.TYPE_DATE,null,
 					  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,Types.TYPE_DATE,null,					  
 					  RECURRING_ORDER_FIELD_PROMOTIONS,Types.TYPE_REFERENCE|Types.TYPE_ARRAY, PROMOTION_ENTITY,new ArrayList<Entity>(),
-					  RECURRING_ORDER_FIELD_BILLING_PERIOD,Types.TYPE_INT,Integer.MAX_VALUE);
+					  RECURRING_ORDER_FIELD_RECURRING_UNIT,Types.TYPE_INT,Calendar.DATE,
+					  RECURRING_ORDER_FIELD_RECURRING_PERIOD,Types.TYPE_INT,Integer.MAX_VALUE
+					  );
 
 	}
 
