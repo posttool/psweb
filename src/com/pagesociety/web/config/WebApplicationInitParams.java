@@ -103,20 +103,81 @@ public class WebApplicationInitParams
 			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_VERSION);
 
 	}
-	
+	/*
 	private String expand_property(String value) throws InitializationException
 	{
 		if(value == null)
 			return null;
 		if(value.startsWith("$"))
 		{
-			String deployment_prop = deployment_properties.getProperty(value.substring(1));
-			if(deployment_prop == null)
-				throw new InitializationException("UNBOUND VARIABLE "+value+" IN application.xml");
+			String raw_deployment_prop = deployment_properties.getProperty(value.substring(1));
+			char[] cc = raw_deployment_prop.toCharArray();
+			int last_part_of_key = 1;
+			for(int i = 0;i < cc.length;i++)
+			{
+				char c = cc[i];
+				if(Character.isJavaLetterOrDigit(c) || c == '_' || c == '-')
+				{
+					last_part_of_key++;
+					
+				}
+			}
+			
+			String deployment_prop = 
+				if(deployment_prop == null)
+					throw new InitializationException("UNBOUND VARIABLE "+value+" IN application.xml");
 			return deployment_prop;
 		}
 		return value;
 	}
+	*/
+	private String expand_property(String value) throws InitializationException
+	{
+		
+		char[] cc 		  = value.toCharArray();
+		StringBuilder buf = new StringBuilder();
+		for(int i = 0;i < cc.length;i++)
+		{
+			char c = cc[i];
+			if(c == '$')
+			{
+			
+				StringBuilder key = new StringBuilder();
+				while(true)
+				{
+					i++;
+					if(i > cc.length-1) 
+						break;
+					c = cc[i];
+					if(Character.isJavaIdentifierPart(c))
+						key.append(c);
+					else
+					{
+						i--;
+						break;
+					}
+				}
+				
+				String prop_key = key.toString();
+				String deployment_prop = deployment_properties.getProperty(prop_key);
+				if(deployment_prop == null)
+					throw new InitializationException("UNBOUND VARIABLE "+prop_key+" IN application.xml");
+				System.out.println("APPENDING :"+deployment_prop+":");
+				buf.append(deployment_prop.trim());
+					
+				
+			}
+			else
+			{
+				buf.append(c);
+			}
+			
+		}
+		
+		return buf.toString();
+	}
+	
+	
 	
 	public String getApplicationClassName()
 	{

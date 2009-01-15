@@ -106,19 +106,61 @@ public class ModuleInitParams
 				if (n.getNodeType() == Node.ELEMENT_NODE && n.getChildNodes().getLength() != 0)
 				{
 					String prop =  n.getFirstChild().getTextContent().trim();
-					if(prop.startsWith("$"))
-					{
-						String deployment_prop = _deployment_properties.getProperty(prop.substring(1));
-						if(deployment_prop == null)
-							throw new InitializationException("UNBOUND VARIABLE "+prop+" IN modules.xml");
-						prop = deployment_prop;
-					}
+					prop = expand_property(prop);
+					System.out.println("SETTING "+n.getNodeName()+" TO "+prop);
 					props.put(n.getNodeName(), prop);
 				}
 			}
 		}
 		return props;
 	}
+	
+	private String expand_property(String value) throws InitializationException
+	{
+		
+		char[] cc 		  = value.toCharArray();
+		StringBuilder buf = new StringBuilder();
+		for(int i = 0;i < cc.length;i++)
+		{
+			char c = cc[i];
+			if(c == '$')
+			{
+			
+				StringBuilder key = new StringBuilder();
+				while(true)
+				{
+					i++;
+					if(i > cc.length-1) 
+						break;
+					c = cc[i];
+					if(Character.isJavaIdentifierPart(c))
+						key.append(c);
+					else
+					{
+						i--;
+						break;
+					}
+				}
+				
+				String prop_key = key.toString();
+				String deployment_prop = _deployment_properties.getProperty(prop_key);
+				if(deployment_prop == null)
+					throw new InitializationException("UNBOUND VARIABLE "+prop_key+" IN application.xml");
+				buf.append(deployment_prop.trim());
+					
+				
+			}
+			else
+			{
+				buf.append(c);
+			}
+			
+		}
+		
+		return buf.toString();
+	}
+	
+
 
 	public class ModuleInfo
 	{

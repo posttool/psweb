@@ -30,6 +30,7 @@ public class RegistrationModule extends WebStoreModule
 	private static final String PARAM_EMAIL_CONFIRM  	  		 = "do-email-confirmation";
 	private static final String PARAM_EMAIL_TEMPLATE_NAME  	  	 = "registration-email-template";
 	private static final String PARAM_EMAIL_SUBJECT		  	  	 = "registration-email-subject";
+	private static final String PARAM_ACTIVATE_ACCOUNT_URL		 = "activate-account-url";
 
 	
 	private static final String SLOT_USER_MODULE  = "user-module"; 
@@ -38,6 +39,7 @@ public class RegistrationModule extends WebStoreModule
 	private boolean				do_email_confirmation;
 	private String				email_template_name;
 	private String				email_subject;
+	private String				activate_account_url;
 	private UserModule 			user_module;
 	private IEmailModule 		email_module;
 	
@@ -58,8 +60,9 @@ public class RegistrationModule extends WebStoreModule
 			if(email_module == null)
 				throw new InitializationException("EMAIL CONFIRMATION FEATURE REQUIRES THAT YOU PROVIDE AN IEmailModule instance IN SLOT "+SLOT_EMAIL_MODULE);
 			
-			email_template_name = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_NAME, config);
-			email_subject	    = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_SUBJECT, config);
+			email_template_name  = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_NAME, config);
+			email_subject	     = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_SUBJECT, config);
+			activate_account_url = GET_REQUIRED_CONFIG_PARAM(PARAM_ACTIVATE_ACCOUNT_URL, config);
 			user_module.registerLockMessage(LOCKED_PENDING_REGISTRATION, LOCK_MESSAGE);
 
 		}
@@ -99,7 +102,8 @@ public class RegistrationModule extends WebStoreModule
 			template_data.put("user", user);
 			template_data.put("username", username);
 			template_data.put("email", email);
-			template_data.put("account_activation_token", activation_token);
+			template_data.put("activation_token", activation_token);
+			template_data.put("activate_account_url", activate_account_url);
 			email_module.sendEmail(null, new String[]{email}, email_subject, email_template_name, template_data);
 		}
 		

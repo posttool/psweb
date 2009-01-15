@@ -33,9 +33,11 @@ public class ForgotPasswordModule extends WebStoreModule
 
 	private static final String PARAM_EMAIL_TEMPLATE_NAME  	  	 = "forgot-password-email-template";
 	private static final String PARAM_EMAIL_SUBJECT		  	  	 = "forgot-password-email-subject";
+	private static final String PARAM_RESTORE_PASSWORD_URL	  	 = "restore-password-url";
 
 	private String				email_template_name;
 	private String				email_subject;
+	private String				restore_password_url;
 	private UserModule 			user_module;
 	private IEmailModule 		email_module;
 
@@ -49,7 +51,7 @@ public class ForgotPasswordModule extends WebStoreModule
 		
 		email_template_name = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_NAME, config);
 		email_subject	    = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_SUBJECT, config);
-	
+		restore_password_url= GET_REQUIRED_CONFIG_PARAM(PARAM_RESTORE_PASSWORD_URL, config);
 	}
 
 	
@@ -81,6 +83,7 @@ public class ForgotPasswordModule extends WebStoreModule
 		template_data.put("username", user.getAttribute(UserModule.FIELD_USERNAME));
 		template_data.put("email", email);
 		template_data.put("forgot_password_token", forgot_password_token);
+		template_data.put("restore_password_url", restore_password_url);
 		
 		email_module.sendEmail(null, new String[]{email}, email_subject, email_template_name, template_data);
 		return true;
