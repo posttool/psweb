@@ -408,8 +408,26 @@ public class UserModule extends WebStoreModule
 		QueryResult r = QUERY(q);
 		if(r.size()==0)
 		{
-			String admin_email 	  = GET_REQUIRED_CONFIG_PARAM(PARAM_ADMIN_EMAIL, config);
-			String admin_password = GET_REQUIRED_CONFIG_PARAM(PARAM_ADMIN_PASSWORD, config);
+			
+			String admin_email 		= null;
+			String admin_password 	= null;
+			String answer = "N";
+			System.out.println("Please set up the admin user for the application.");
+			while(true)
+			{
+				try{
+					admin_email 	   = GET_CONSOLE_INPUT("admin email:");
+					admin_password 	   = GET_CONSOLE_INPUT("password:");
+					answer 			   = GET_CONSOLE_INPUT("CREATE ADMIN USER "+admin_email+" WITH PASSWORD "+admin_password+"?[Y/N]");
+				}catch(Exception e)
+				{
+					e.printStackTrace();
+					continue;
+				}
+				if(answer != null && (answer.startsWith("y") || answer.startsWith("Y")))
+					break;
+			}
+			
 			LOG("CREATING ADMIN USER - "+admin_email);
 			
 			List<Integer> admin_roles = new ArrayList<Integer>();
