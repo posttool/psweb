@@ -39,8 +39,7 @@ public class HttpRequestRouter extends HttpServlet
 	{
 		_servlet_config = cfg;
 		_web_application = (WebApplication)cfg.getServletContext().getAttribute(ApplicationBootstrap.APPLICATION_ATTRIBUTE_NAME);
-		
-		System.out.println("!!!!!!!!! _web_application = "+_web_application);
+
 		if (_web_application == null)
 			throw new ServletException("WebApplication was not initialized. Make sure ApplicationBootstrap has been loaded.");
 		
