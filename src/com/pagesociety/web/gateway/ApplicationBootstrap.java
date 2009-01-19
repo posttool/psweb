@@ -46,10 +46,9 @@ public class ApplicationBootstrap extends HttpServlet
 			logger.info("Loaded config:");
 			logger.info(config.getApplicationClassName());
 			//
-			WebApplication app;
-			app = (WebApplication) Class.forName(config.getApplicationClassName()).newInstance();
+			application = (WebApplication) Class.forName(config.getApplicationClassName()).newInstance();
 			try{
-				app.init(config);
+				application.init(config);
 			}catch(InitializationException ie)
 			{
 				ie.printStackTrace();
