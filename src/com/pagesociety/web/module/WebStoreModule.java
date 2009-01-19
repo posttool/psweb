@@ -95,6 +95,7 @@ public abstract class WebStoreModule extends WebModule
 		int i = 0;
 		for(;;)
 		{
+		
 			String fieldname 	= (String)fields[i++]; 
 			int type 		 	= (Integer)fields[i++];
 			FieldDefinition f ;
