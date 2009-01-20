@@ -27,6 +27,7 @@ public abstract class WebStoreModule extends WebModule
 	private static final String CONFIG_KEY_STORE_NAME = "store-name";
 	private static final String SLOT_STORE = "store";
 	protected PersistentStore store;
+	protected List<EntityDefinition> associated_entity_definitions;
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
@@ -41,6 +42,7 @@ public abstract class WebStoreModule extends WebModule
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
 		}		
+		associated_entity_definitions = new ArrayList<EntityDefinition>();
 	}
 	
 	protected void defineSlots()
@@ -64,7 +66,10 @@ public abstract class WebStoreModule extends WebModule
 		/*do nothing by default */
 	}
 	
-
+	public List<EntityDefinition> getAssociatedEntityDefinitions()
+	{
+		return associated_entity_definitions;
+	}
 	
 	/* system level fields...at some point we will have the app potentially set these up 
 	 * when it starts ADD_SYSTEM_LEVEL_FIELD,RENAME_SYSTEM_LEVEL_FIELD etc
@@ -142,6 +147,7 @@ public abstract class WebStoreModule extends WebModule
 					store.addEntityField(entity_name,f);
 			}
 		}
+
 		return proposed_def;
 	}
 
@@ -721,12 +727,16 @@ public abstract class WebStoreModule extends WebModule
 	
 	public EntityDefinition DEFINE_ENTITY(String entity_name,Object...args) throws PersistenceException,SyncException
 	{
-		return DEFINE_ENTITY(store,entity_name,args);
+		EntityDefinition d = DEFINE_ENTITY(store,entity_name,args);
+		associated_entity_definitions.add(d);
+		return d;
 	}
 	
 	public EntityDefinition ADD_FIELDS(String entity_name,Object...args) throws PersistenceException,SyncException
 	{
-		return ADD_FIELDS(store,entity_name,args);
+		EntityDefinition d = ADD_FIELDS(store,entity_name,args); 
+		associated_entity_definitions.add(d);
+		return d;
 	}
 	
 	public  void DEFINE_ENTITY_INDEX(String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,SyncException
