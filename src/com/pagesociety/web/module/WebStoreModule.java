@@ -873,11 +873,20 @@ public abstract class WebStoreModule extends WebModule
 	public  static final int DONT_DELETE_REFERENCE 	= 0x02;
 
 	public class delete_policy
-	{		
+	{	
+		String[] protect_fields = new String[0];
+		public delete_policy(String... protect_fields)
+		{
+			this.protect_fields = protect_fields;
+		}
+		
 		public int exec(Entity e,String fieldname,Entity reference_val)
 		{
 			if(fieldname.equals(FIELD_CREATOR))
 				return DONT_DELETE_REFERENCE;
+			for(int i = 0; i< protect_fields.length;i++)
+				if(protect_fields[i].equals(fieldname))
+					return DONT_DELETE_REFERENCE;
 			return DELETE_REFERENCE;
 
 		}
