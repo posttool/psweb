@@ -24,17 +24,20 @@ public class ModuleMethod
 {
 	private Method method;
 	private Class<?>[] ptypes;
+	private String[] pnames;
 	private Class<?>[] exceptionTypes;
 	private Class<?> returnType;
 
 	
 
-	public void init(Method method) throws InitializationException
+	public void init(Method method, Export export) throws InitializationException
 	{
 		this.method = method;
 		this.ptypes = method.getParameterTypes();
+		this.pnames = export.ParameterNames();
 		this.exceptionTypes = method.getExceptionTypes();
 		this.returnType = method.getReturnType();
+		
 		validate_parameter_types();
 	}
 	
@@ -68,6 +71,11 @@ public class ModuleMethod
 		return ptypes;
 	}
 
+	public String[] getParameterNames()
+	{
+		return pnames;
+	}
+	
 	public Class<?>[] getExceptionTypes()
 	{
 		return exceptionTypes;

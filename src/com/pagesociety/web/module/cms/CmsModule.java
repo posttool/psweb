@@ -51,7 +51,7 @@ public class CmsModule extends WebStoreModule
 		return store.getEntityDefinitions();
 	}
 	
-	@Export
+	@Export(ParameterNames={"entity_type","order_by_attribute","asc","offset","page_size"})
 	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,String entity_type,String order_by_attribute,boolean asc,int offset, int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)ctx.getUser();
@@ -74,7 +74,7 @@ public class CmsModule extends WebStoreModule
 	}
 	
 	
-	@Export
+	@Export(ParameterNames={"e"})
 	public Entity CreateEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
 	{
 		Entity creator = (Entity)uctx.getUser();
@@ -89,7 +89,7 @@ public class CmsModule extends WebStoreModule
 	}
 	
 	
-	@Export
+	@Export(ParameterNames={"e"})
 	public Entity UpdateEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
 	{
 		Entity editor = (Entity)uctx.getUser();
@@ -103,7 +103,7 @@ public class CmsModule extends WebStoreModule
 		return SAVE_ENTITY(e);
 	}
 	
-	@Export
+	@Export(ParameterNames={"e"})
 	public Entity DeleteEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
 	{
 		Entity deleter = (Entity)uctx.getUser();
@@ -117,7 +117,7 @@ public class CmsModule extends WebStoreModule
 		return DELETE(e);
 	}
 		
-	@Export
+	@Export(ParameterNames={"entity_type","entity_id"})
 	public Entity GetEntityById(UserApplicationContext uctx,String entity_type,long entity_id) throws WebApplicationException, PersistenceException
 	{
 		Entity getter = (Entity)uctx.getUser();

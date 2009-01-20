@@ -79,7 +79,7 @@ public class RegistrationModule extends WebStoreModule
 	}
 	
 	/// B E G I N      M O D U L E      F U N C T I O N S //////////
-	@Export
+	@Export(ParameterNames={"email", "username", "password"})
 	public Entity Register(UserApplicationContext uctx,String email,String username,String password) throws WebApplicationException,PersistenceException
 	{
 		Entity user = user_module.createPublicUser(null, email, password, username); 
@@ -110,7 +110,7 @@ public class RegistrationModule extends WebStoreModule
 		return user;
 	}
 	
-	@Export
+	@Export(ParameterNames={"token"})
 	public Entity ActivateUserAccount(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
 	{
 		Query q = new Query(OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY);

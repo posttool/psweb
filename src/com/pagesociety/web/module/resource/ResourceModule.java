@@ -118,7 +118,7 @@ public class ResourceModule extends WebStoreModule
 
 
 	
-	@Export
+	@Export(ParameterNames={"upload"})
 	public boolean CreateResource(UserApplicationContext uctx,MultipartForm upload) throws WebApplicationException,PersistenceException
 	{	
 		Entity user = (Entity)uctx.getUser();
@@ -134,7 +134,7 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 
-	@Export
+	@Export(ParameterNames={"upload"})
 	public boolean UpdateResource(UserApplicationContext uctx,MultipartForm upload) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -161,7 +161,7 @@ public class ResourceModule extends WebStoreModule
 		return do_upload(uctx, upload, true, update_resource);
 	}
 	
-	@Export
+	@Export(ParameterNames={"resource_id"})
 	public Entity DeleteResource(UserApplicationContext uctx,long resource_id) throws WebApplicationException,PersistenceException
 	{	
 		//check to make sure it exists//
@@ -185,7 +185,7 @@ public class ResourceModule extends WebStoreModule
 		return DELETE(resource);
 	}
 	
-	@Export
+	@Export(ParameterNames={"resource_id"})
 	public String GetResourceURL(UserApplicationContext uctx,long resource_id) throws WebApplicationException,PersistenceException
 	{	
 		//check to make sure it exists//
@@ -204,7 +204,7 @@ public class ResourceModule extends WebStoreModule
 		return path_provider.getUrl(path_token);		
 	}
 	
-	@Export
+	@Export(ParameterNames={"resource_ids"})
 	public List<String> GetResourceURLs(UserApplicationContext uctx,List<Long> resource_ids) throws WebApplicationException,PersistenceException
 	{	
 		//check to make sure it exists//
@@ -223,7 +223,7 @@ public class ResourceModule extends WebStoreModule
 	}
 
 	
-	@Export
+	@Export(ParameterNames={"resource_id", "w", "h"})
 	public String GetResourceURLWithDim(UserApplicationContext uctx,long resource_id,int w, int h) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -246,7 +246,7 @@ public class ResourceModule extends WebStoreModule
 	}
 
 
-	@Export
+	@Export(ParameterNames={"resource_ids", "w", "h"})
 	public List<String> GetResourceURLsWithDim(UserApplicationContext uctx,List<Long> resource_ids,int w, int h) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -264,7 +264,7 @@ public class ResourceModule extends WebStoreModule
 		return urls;
 	}
 	
-	@Export
+	@Export(ParameterNames={"channel_name"})
 	public List<UploadProgressInfo> GetUploadProgress(UserApplicationContext uctx,String channel_name) throws PersistenceException,WebApplicationException
 	{
 		System.out.println("GET PROGRESS SESSION ID IS "+uctx.getId());
@@ -289,7 +289,7 @@ public class ResourceModule extends WebStoreModule
 		return ret;
 	}
 	
-	@Export
+	@Export(ParameterNames={"channel_name"})
 	public List<UploadProgressInfo> CancelUpload(UserApplicationContext ctx,String channel_name)throws PersistenceException,WebApplicationException
 	{
 		check_exceptions(ctx);
@@ -317,7 +317,7 @@ public class ResourceModule extends WebStoreModule
 	
 	
 	
-	@Export
+	@Export(ParameterNames={"resource_id"})
 	public Entity GetResource(UserApplicationContext uctx,long resource_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();

@@ -50,7 +50,7 @@ public class TreeModule extends WebStoreModule
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
 
-	@Export
+	@Export(ParameterNames={"name","root_class","root_id","root_data"})
 	public Entity CreateTree(UserApplicationContext uctx,String name,String root_class,String root_id,Entity root_data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -75,7 +75,7 @@ public class TreeModule extends WebStoreModule
 		return tree;
 	}
 	
-	@Export 
+	@Export(ParameterNames={"tree_id","root_node"})
 	public Entity UpdateTree(UserApplicationContext uctx,long tree_id,String name,Entity root_node) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -91,7 +91,7 @@ public class TreeModule extends WebStoreModule
 						TREE_FIELD_ROOT_NODE,root_node);
 	}
 	
-	@Export
+	@Export(ParameterNames={"parent_node_id","node_class","node_id","data"})
 	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -114,7 +114,7 @@ public class TreeModule extends WebStoreModule
 		return new_node;
 	}
 
-	@Export
+	@Export(ParameterNames={"tree_node_id","node_class","node_id","data"})
 	public Entity UpdateTreeNode(UserApplicationContext uctx,long tree_node_id,String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -132,7 +132,7 @@ public class TreeModule extends WebStoreModule
 					  TREE_NODE_FIELD_DATA, data);
 	}
 	
-	@Export
+	@Export(ParameterNames={"entity_node_id","new_parent_id","new_parent_child_index"})
 	public Entity ReparentTreeNode(UserApplicationContext uctx,long entity_node_id,long new_parent_id,int new_parent_child_index) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -181,7 +181,7 @@ public class TreeModule extends WebStoreModule
 	}
 
 
-	@Export
+	@Export(ParameterNames={"entity_node_id"})
 	public List<Entity> DeleteTreeNode(UserApplicationContext uctx,long entity_node_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	 = (Entity)uctx.getUser();
@@ -190,7 +190,7 @@ public class TreeModule extends WebStoreModule
 		return deleteSubTree(tree_node);
 	}
 	
-	@Export
+	@Export(ParameterNames={"tree_id"})
 	public List<Entity> DeleteTree(UserApplicationContext uctx,long tree_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -227,7 +227,7 @@ public class TreeModule extends WebStoreModule
 		return deletees;
 	}
 	
-	@Export
+	@Export(ParameterNames={"tree_id","new_tree_name"})
 	public Entity CloneTree(UserApplicationContext uctx,long tree_id,String new_tree_name) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -262,7 +262,7 @@ public class TreeModule extends WebStoreModule
 		return getTrees(user);
 	}
 	
-	@Export
+	@Export(ParameterNames={"user_id"})
 	public List<Entity> GetTreesForUser(UserApplicationContext uctx,long user_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user   = (Entity)uctx.getUser();
@@ -279,7 +279,7 @@ public class TreeModule extends WebStoreModule
 		return QUERY(q).getEntities();
 	}
 	
-	@Export
+	@Export(ParameterNames={"user_id","name"})
 	public Entity GetTreeForUserByName(UserApplicationContext uctx,long user_id,String name) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -291,7 +291,7 @@ public class TreeModule extends WebStoreModule
 		return tree;
 	}
 	
-	@Export
+	@Export(ParameterNames={"name"})
 	public Entity GetTreeByName(UserApplicationContext uctx,String name) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -320,7 +320,7 @@ public class TreeModule extends WebStoreModule
 		return GET(TREE_ENTITY,tree_id);
 	}
 	
-	@Export
+	@Export(ParameterNames={"tree_id","node_classname"})
 	public List<Entity> GetTreeNodesByClass(UserApplicationContext uctx, long tree_id,String node_classname) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -339,7 +339,7 @@ public class TreeModule extends WebStoreModule
 		return result.getEntities();	
 	}
 	
-	@Export
+	@Export(ParameterNames={"tree_id","node_id"})
 	public Entity GetTreeNodeById(UserApplicationContext uctx, long tree_id,String node_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -361,7 +361,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	
-	@Export
+	@Export(ParameterNames={"node_id","subtree_fill_depth","data_ref_fill_depth"})
 	public Entity FillNode(UserApplicationContext uctx,long node_id,int subtree_fill_depth,int data_ref_fill_depth) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();

@@ -73,7 +73,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-	@Export
+	@Export(ParameterNames={"email","password","username","role"})
 	public Entity CreatePrivilegedUser(UserApplicationContext uctx,String email,String password,String username,int role) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -102,7 +102,7 @@ public class UserModule extends WebStoreModule
 		return user;
 	}
 	
-	@Export  
+	@Export(ParameterNames={"email","password", "username"})  
 	public Entity CreatePublicUser(UserApplicationContext ctx,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)ctx.getUser();
@@ -130,7 +130,7 @@ public class UserModule extends WebStoreModule
 		return user;
 	}
 
-	@Export
+	@Export(ParameterNames={"user_entity_id","email"})
 	public Entity UpdateEmail(UserApplicationContext ctx,long user_entity_id,String email) throws WebApplicationException,PersistenceException
 	{
 		Entity editor    = (Entity)ctx.getUser();
@@ -149,7 +149,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	
-	@Export
+	@Export(ParameterNames={"user_entity_id","username"})
 	public Entity UpdateUserName(UserApplicationContext ctx,long user_entity_id,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity editor    = (Entity)ctx.getUser();
@@ -164,7 +164,7 @@ public class UserModule extends WebStoreModule
 				  FIELD_USERNAME,username);		
 	}
 	
-	@Export
+	@Export(ParameterNames={"user_entity_id","old_password","new_password"})
 	public Entity UpdatePassword(UserApplicationContext ctx,long user_entity_id,String old_password,String new_password/*,boolean do_md5_on_server*/) throws PersistenceException,WebApplicationException
 	{
 		Entity editor    = (Entity)ctx.getUser();
@@ -184,7 +184,7 @@ public class UserModule extends WebStoreModule
 				  UserModule.FIELD_PASSWORD,password);				
 	}
 		
-	@Export
+	@Export(ParameterNames={"user_entity_id","role"})
 	public Entity AddRole(UserApplicationContext ctx,long user_entity_id,int role) throws PersistenceException,WebApplicationException
 	{
 		Entity editor    = (Entity)ctx.getUser();
@@ -201,7 +201,7 @@ public class UserModule extends WebStoreModule
 				  	  UserModule.FIELD_ROLES,roles);						
 	}
 	
-	@Export
+	@Export(ParameterNames={"user_entity_id","role"})
 	public Entity RemoveRole(UserApplicationContext ctx,long user_entity_id,int role) throws PersistenceException,WebApplicationException
 	{
 		Entity editor    = (Entity)ctx.getUser();
@@ -218,7 +218,7 @@ public class UserModule extends WebStoreModule
 			  UserModule.FIELD_ROLES,roles);			
 	}
 	
-	@Export
+	@Export(ParameterNames={"user_entity_id","lock_code","notes"})
 	public Entity LockUser(UserApplicationContext ctx,long user_entity_id,int lock_code,String notes) throws WebApplicationException,PersistenceException
 	{
 		Entity editor    = (Entity)ctx.getUser();
@@ -239,7 +239,7 @@ public class UserModule extends WebStoreModule
 				  UserModule.FIELD_LOCK_NOTES,notes);
 	}
 	
-	@Export
+	@Export(ParameterNames={"user_entity_id"})
 	public Entity UnlockUser(UserApplicationContext ctx,long user_entity_id) throws WebApplicationException,PersistenceException
 	{
 		Entity editor     = (Entity)ctx.getUser();
@@ -262,7 +262,7 @@ public class UserModule extends WebStoreModule
 	}
 
 		
-	@Export
+	@Export(ParameterNames={"email", "password"})
 	public Entity Login(UserApplicationContext uctx,String email,String password) throws WebApplicationException,PersistenceException
 	{
 		Entity user = getUserByEmail(email);
@@ -299,7 +299,7 @@ public class UserModule extends WebStoreModule
 				  FIELD_LAST_LOGOUT, new Date());
 	}
 
-	@Export 
+	@Export (ParameterNames={"user_id"})
 	public Entity DeleteUser(UserApplicationContext uctx,long user_id)throws WebApplicationException,PersistenceException
 	{
 		Entity editor     = (Entity)uctx.getUser();
@@ -319,7 +319,7 @@ public class UserModule extends WebStoreModule
 		return user;
 	}
 	
-	@Export
+	@Export(ParameterNames={"role", "offset", "page_size"})
 	public PagingQueryResult GetUsersByRole(UserApplicationContext uctx,int role,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -339,7 +339,7 @@ public class UserModule extends WebStoreModule
 		return PAGING_QUERY(q);			
 	}
 	
-	@Export
+	@Export(ParameterNames={"offset", "page_size"})
 	public PagingQueryResult GetLockedUsers(UserApplicationContext uctx,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -357,7 +357,7 @@ public class UserModule extends WebStoreModule
 		return PAGING_QUERY(q);	
 	}
 	
-	@Export
+	@Export(ParameterNames={"lock_code", "offset", "page_size"})
 	public PagingQueryResult GetLockedUsersByLockCode(UserApplicationContext uctx,int lock_code,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();

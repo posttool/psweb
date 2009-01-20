@@ -39,8 +39,7 @@ public class ModuleDefinition
 			if (export != null)
 			{
 				ModuleMethod module_method = new ModuleMethod();
-				module_method.init(methods[i]);
-				
+				module_method.init(methods[i],export);
 
 				List<ModuleMethod> overloaded_methods = exported_method_map.get(module_method.getName());
 				if(overloaded_methods == null)

@@ -33,6 +33,7 @@ public abstract class WebStoreModule extends WebModule
 	{
 		super.init(app, config);
 		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
+		associated_entity_definitions = new ArrayList<EntityDefinition>();
 		try{
 			defineEntities(config);
 			defineIndexes(config);
@@ -42,7 +43,6 @@ public abstract class WebStoreModule extends WebModule
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
 		}		
-		associated_entity_definitions = new ArrayList<EntityDefinition>();
 	}
 	
 	protected void defineSlots()
