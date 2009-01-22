@@ -96,6 +96,7 @@ public class ForgotPasswordModule extends WebStoreModule
 	{
 		Query q = new Query(OUTSTANDING_FORGOT_PASSWORD_ENTITY);
 		q.idx(INDEX_BY_ACTIVATION_TOKEN);
+		q.eq(token);
 		QueryResult result = QUERY(q);
 		if (result.size() == 0)
 			throw new WebApplicationException("BAD FORGOT PASSWORD TOKEN");
