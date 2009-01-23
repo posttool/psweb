@@ -245,6 +245,13 @@ public abstract class WebApplication
 			}
 		}
 		
+		/* pre init...this gives us a chance to make sure that our stores are always\
+		 * setup before init is called */
+		for (int i = 0; i < _config.getModuleInfo().size(); i++)
+		{
+			ModuleInfo m 				= _config.getModuleInfo().get(i);
+			_module_instances.get(m.getName()).pre_init(this,m.getProps());
+		}
 		
 		/*init modules*/
 		LOG("INITIALIZING MODULES");

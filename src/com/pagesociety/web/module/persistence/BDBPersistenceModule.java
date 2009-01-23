@@ -17,7 +17,7 @@ public class BDBPersistenceModule extends Module implements IPersistenceProvider
 	
 	private PersistentStore bdb_store;
 	
-	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
+	public void pre_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		String root_dir = (String)config.get(PARAM_STORE_ROOT_DIRECTORY);
 		

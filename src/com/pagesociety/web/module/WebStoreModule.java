@@ -29,7 +29,7 @@ public abstract class WebStoreModule extends WebModule
 	protected PersistentStore store;
 	protected List<EntityDefinition> associated_entity_definitions;
 	
-	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
+	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
 		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
@@ -42,7 +42,13 @@ public abstract class WebStoreModule extends WebModule
 		{
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
-		}		
+		}			
+
+	}
+	
+	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		super.init(app, config);
 	}
 	
 	protected void defineSlots()

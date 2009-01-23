@@ -21,6 +21,12 @@ public abstract class Module
 	private List<SlotDescriptor>  		_slot_descriptor_list = new ArrayList<SlotDescriptor>();
 	private Map<String,Object>   		_slot_instance_map    = new HashMap<String,Object>();
 	private List<IEventListener>		_event_listeners	  = new ArrayList<IEventListener>();
+
+	public void pre_init(WebApplication web_app, Map<String, Object> config) throws InitializationException
+	{
+		
+	}
+	
 	public void init(WebApplication web_app, Map<String, Object> config) throws InitializationException
 	{
 		_application = web_app;
