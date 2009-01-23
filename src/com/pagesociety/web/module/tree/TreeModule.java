@@ -332,7 +332,7 @@ public class TreeModule extends WebStoreModule
 	
 	public List<Entity> getTreeNodesByClass(Entity tree,String node_classname) throws PersistenceException
 	{
-		Query q = new Query(TREE_ENTITY);
+		Query q = new Query(TREE_NODE_ENTITY);
 		q.idx(IDX_BY_TREE_BY_NODE_CLASS);
 		q.eq(q.list(tree,node_classname));
 		QueryResult result = QUERY(q);			
@@ -351,7 +351,7 @@ public class TreeModule extends WebStoreModule
 	
 	public Entity getTreeNodeById(Entity tree,String node_id) throws PersistenceException
 	{
-		Query q = new Query(TREE_ENTITY);
+		Query q = new Query(TREE_NODE_ENTITY);
 		q.idx(IDX_BY_TREE_BY_NODE_ID);
 		q.eq(q.list(tree,node_id));
 		QueryResult result = QUERY(q);			
