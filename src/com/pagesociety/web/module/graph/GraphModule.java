@@ -522,8 +522,24 @@ public class GraphModule extends WebStoreModule
 		 return edges.get(0);
 	 }
 	 
-	 //Returns the set of all edges that connect this vertex with the specified vertex v.
-	 List<Entity> 	findEdgeSet(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
+	 //Returns the set ofall edges that connect this vertex with the specified vertex v.
+	 public List<Entity> findEdgeSet(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
+	 {
+		 Query q = findEdgeSetQ(v1, v2);
+		 return QUERY(q).getEntities();
+	 }
+	 
+	 public PagingQueryResult findEdgeSet(Entity v1,Entity v2,int offset,int page_size,String edge_order_by,int dir) throws PersistenceException,WebApplicationException
+	 {
+		 Query q = findEdgeSetQ(v1, v2);
+		 if(edge_order_by != null)
+			 q.orderBy(edge_order_by, dir);
+		 q.offset(offset);
+		 q.pageSize(page_size);
+		 return PAGING_QUERY(q);
+	 }
+	 
+	 public Query findEdgeSetQ(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
 		 Entity graph = GET_GRAPH(v1);
 		 Query q = null;
@@ -542,13 +558,28 @@ public class GraphModule extends WebStoreModule
 		 	default:
 		 		throw new WebApplicationException("UNKNOWN GRAPH TYPE "+GET_GRAPH_TYPE(graph),ERROR_BAD_GRAPH_TYPE);	 		
 		 }
-	 	return QUERY(q).getEntities();
-
+	 	return q;
 	 }
 	 //TODO: make sure v is EXPANDed,probably want to pass in graph so we re not looking it up all the time//
 	 //or denormalize type into graph vertex and edge//
 	 //Returns the set of incoming edges of this vertex.
-	 List<Entity> 	getInEdges(Entity v) throws PersistenceException,WebApplicationException
+	 public List<Entity> getInEdges(Entity v) throws PersistenceException,WebApplicationException
+	 {
+		 Query q = getInEdgesQ(v);
+		 return QUERY(q).getEntities();
+	 }
+	 
+	 public PagingQueryResult getInEdges(Entity v,int offset,int page_size,String edge_order_by,int dir) throws PersistenceException,WebApplicationException
+	 {
+		 Query q = getInEdgesQ(v);
+		 if(edge_order_by != null)
+			 q.orderBy(edge_order_by,dir);
+		 q.offset(offset);
+		 q.pageSize(page_size);
+		 return PAGING_QUERY(q);		 
+	 }
+	 
+	 public Query getInEdgesQ(Entity v) throws PersistenceException,WebApplicationException
 	 {
 		 Entity graph = GET_GRAPH(v);
 		 Query q = null;
@@ -568,11 +599,27 @@ public class GraphModule extends WebStoreModule
 		 		throw new WebApplicationException("UNKNOWN GRAPH TYPE "+GET_GRAPH_TYPE(graph),ERROR_BAD_GRAPH_TYPE);	 		
 		 }
 
-		 return QUERY(q).getEntities();
+		 
+		return q;
 	  }
 	 
 	 //Returns the set of outgoing edges of this vertex.
-	 List<Entity>   getOutEdges(Entity v) throws PersistenceException,WebApplicationException
+	 public List<Entity> getOutEdges(Entity v) throws PersistenceException,WebApplicationException
+	 {
+		 return QUERY(getOutEdgesQ(v)).getEntities();
+	 }
+	 
+	 public PagingQueryResult getOutEdges(Entity v,int offset,int page_size,String edge_order_by,int dir) throws PersistenceException,WebApplicationException
+	 {
+		 Query q = getOutEdgesQ(v);
+		 if(edge_order_by != null)
+			 q.orderBy(edge_order_by,dir);
+		 q.offset(offset);
+		 q.pageSize(page_size);
+		 return PAGING_QUERY(q);
+	 }
+	 
+	 public Query getOutEdgesQ(Entity v) throws PersistenceException,WebApplicationException
 	 {
 		 Entity graph = GET_GRAPH(v);
 		 Query q = null;
@@ -591,45 +638,80 @@ public class GraphModule extends WebStoreModule
 		 	default:
 		 		throw new WebApplicationException("UNKNOWN GRAPH TYPE "+GET_GRAPH_TYPE(graph),ERROR_BAD_GRAPH_TYPE);	 		
 		 }
-
-		 return QUERY(q).getEntities();
+		return q;
 	 }
 	 
 	 //	Returns the set of predecessors of this vertex.
-	 List<Entity> 	getPredecessors(Entity v) throws PersistenceException,WebApplicationException
+	 List<Entity> getPredecessors(Entity v) throws PersistenceException,WebApplicationException
 	 {
-		 List<Entity> edges 		= getInEdges(v);
-		 List<Entity> predecessors 	= new ArrayList<Entity>();
-		 int s = 0;
+		 List<Entity> edges 		 = getInEdges(v);
+		 List<Entity> pl 			 = new ArrayList<Entity>();
+
+		 int s = edges.size();
 		 for(int i = 0;i < s;i++)
 		 {
 			 Entity edge = edges.get(i);
 			 Entity p = null;
 			 if(is_directed_edge(edge))
-				 predecessors.add(getSource(edge));
+				 pl.add(getSource(edge));
 			 else 
-				 predecessors.add(getOpposite(v,edge));
+				 pl.add(getOpposite(v,edge));
 		 }
-		 return predecessors;
+		 return pl;
 	 }
 	 
-	 
-     //Returns the set of successors of this vertex.     
-	 List<Entity> 	getSuccessors(Entity v) throws PersistenceException,WebApplicationException
+	 public PagingQueryResult getPredecessors(Entity v,int offset,int page_size,String edge_order_by,int dir) throws PersistenceException,WebApplicationException
 	 {
-	 	 List<Entity> edges 		= getOutEdges(v);
-		 List<Entity> successors 	= new ArrayList<Entity>();
-		 int s = 0;
+		 PagingQueryResult edges_pqr = getInEdges(v,offset,page_size,edge_order_by,dir);
+		 List<Entity> pl 			 = new ArrayList<Entity>();
+
+		 List<Entity> edges = edges_pqr.getEntities();
+		 int s = edges.size();
 		 for(int i = 0;i < s;i++)
 		 {
 			 Entity edge = edges.get(i);
 			 Entity p = null;
+			 if(is_directed_edge(edge))
+				 pl.add(getSource(edge));
+			 else 
+				 pl.add(getOpposite(v,edge));
+		 }
+		 return new PagingQueryResult(pl,edges_pqr.size(),offset,page_size);
+	 }
+	 
+	 
+     //Returns the set of successors of this vertex.     
+	 public List<Entity> 	getSuccessors(Entity v) throws PersistenceException,WebApplicationException
+	 {
+	 	 List<Entity> edges = getOutEdges(v);
+		 List<Entity> successors 	= new ArrayList<Entity>();
+		 int s = edges.size();
+		 for(int i = 0;i < s;i++)
+		 {
+			 Entity edge = edges.get(i);
 			 if(is_directed_edge(edge))
 				 successors.add(getDestination(edge));
 			 else 
 				 successors.add(getOpposite(v,edge));
 		 }
 		 return successors;
+	 }
+	 
+	 public PagingQueryResult 	getSuccessors(Entity v,int offset,int page_size,String edge_order_by,int dir) throws PersistenceException,WebApplicationException
+	 {
+	 	 PagingQueryResult edges_pqr = getOutEdges(v,offset,page_size,edge_order_by,dir);
+		 List<Entity> successors 	= new ArrayList<Entity>();
+		 List<Entity> edges = edges_pqr.getEntities();
+		 int s = edges.size();
+		 for(int i = 0;i < s;i++)
+		 {
+			 Entity edge = edges.get(i);
+			 if(is_directed_edge(edge))
+				 successors.add(getDestination(edge));
+			 else 
+				 successors.add(getOpposite(v,edge));
+		 }
+		 return new PagingQueryResult(successors,edges_pqr.size(),offset,page_size);
 	 }
 	
 	 //Returns the number of incoming edges that are incident to this vertex.
@@ -645,7 +727,29 @@ public class GraphModule extends WebStoreModule
 
 	}
      //Returns true if this vertex is a predecessor of the specified vertex v, and false otherwise.
-	 boolean isPredecessorOf(Entity v1,Entity v2){return false;}
+	 boolean isPredecessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
+	 {
+		 Entity graph = GET_GRAPH(v1);
+		 Query q = null;
+		 switch(GET_GRAPH_TYPE(graph))
+		 {
+		 	case GRAPH_TYPE_DIRECTED:
+				 q = new Query(GRAPH_DIRECTED_EDGE_ENTITY);
+				 q.idx(IDX_GRAPH_DIRECTED_EDGE_BY_ORIGIN_BY_DESTINATION);
+				 q.eq(q.list(v1,v2));
+		 		 break;
+		 	case GRAPH_TYPE_UNDIRECTED:
+				 q = new Query(GRAPH_UNDIRECTED_EDGE_ENTITY);
+				 q.idx(IDX_GRAPH_UNDIRECTED_EDGE_BY_VERTICES);
+				 q.setContainsAll(q.list(v1,v2));
+		 		 break;
+		 	default:
+		 		throw new WebApplicationException("UNKNOWN GRAPH TYPE "+GET_GRAPH_TYPE(graph),ERROR_BAD_GRAPH_TYPE);	 		
+		 }
+
+		 return (QUERY(q).getEntities().size() != 0);
+		 
+	 }
      //Returns true if this vertex is a source of the specified edge e, and false otherwise.
 	 boolean isSource(Entity v,Entity edge)
 	 {	
@@ -660,7 +764,7 @@ public class GraphModule extends WebStoreModule
 		 {
 		 	case GRAPH_TYPE_DIRECTED:
 				 q = new Query(GRAPH_DIRECTED_EDGE_ENTITY);
-				 q.idx(IDX_GRAPH_DIRECTED_EDGE_BY_ORIGIN_BY_DESTINATION);
+				 q.idx(IDX_GRAPH_DIRECTED_EDGE_BY_DESTINATION_BY_ORIGIN);
 				 q.eq(q.list(v1,v2));
 		 		 break;
 		 	case GRAPH_TYPE_UNDIRECTED:
