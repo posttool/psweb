@@ -170,6 +170,29 @@ public abstract class WebModule extends Module
 	   return input;
 	}
 	
+	//string functions//
+	protected String REMOVE_WHITE_SPACE(String s)
+	{
+		StringBuilder buf = new StringBuilder();
+		byte[] bb = s.getBytes();
+		for(int i=0;i < bb.length;i++)
+		{
+			char c = (char)bb[i];
+			if(Character.isWhitespace(c))
+				continue;
+			else
+				buf.append(c);
+		}
+		return buf.toString();
+	}
+	
+	protected String[] GET_REQUIRED_LIST_PARAM(String name,Map<String,Object> config) throws InitializationException
+	{
+		String p = GET_REQUIRED_CONFIG_PARAM(name, config);
+		p = REMOVE_WHITE_SPACE(p);
+		return p.split(",");
+	}
+	
 	//EXPERIMENTAL currently used by recurring order module//
 
 	File   current_log_file;
