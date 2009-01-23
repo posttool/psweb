@@ -48,6 +48,19 @@ public class GraphModule extends WebStoreModule
 
 	protected int GET_GRAPH_TYPE(Entity graph)
 	{
+		//TODO TOPH! 
+		try
+		{
+			graph = GET(graph.getType(),graph.getId());
+		}
+		catch (PersistenceException e)
+		{
+			e.printStackTrace();
+		}
+		if (graph==null)
+		{
+			System.out.println("X");
+		}
 		return (Integer)graph.getAttribute(GRAPH_FIELD_TYPE);
 	}
 	
@@ -61,9 +74,9 @@ public class GraphModule extends WebStoreModule
 		return GET_GRAPH_TYPE(g) == GRAPH_TYPE_UNDIRECTED;
 	}
 	
-	protected Entity GET_GRAPH(Entity e)
+	protected Entity GET_GRAPH(/*GraphVertex*/Entity e)
 	{
-		return (Entity)e.getAttribute(GRAPH_EDGE_FIELD_GRAPH);
+		return (Entity)e.getAttribute(GRAPH_VERTEX_FIELD_GRAPH);
 	}
 
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
