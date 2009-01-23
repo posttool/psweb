@@ -514,7 +514,7 @@ public class GraphModule extends WebStoreModule
 	//////GRAPH FUNCTIONS////
 	
 	//Returns a directed outgoing edge from this vertex to v, or an undirected edge that connects this vertex to v.
-	 Entity findEdge(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
+	 public Entity findEdge(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
 		 List<Entity> edges = findEdgeSet(v1,v2);
 		 if(edges.size() == 0)
@@ -715,19 +715,19 @@ public class GraphModule extends WebStoreModule
 	 }
 	
 	 //Returns the number of incoming edges that are incident to this vertex.
-	 int inDegree(Entity v) throws PersistenceException,WebApplicationException
+	 public int inDegree(Entity v) throws PersistenceException,WebApplicationException
 	 {	
 		 return getInEdges(v).size();
 	 }
 	 
 	 //Returns true if this vertex is a destination of the specified edge e, and false otherwise.
-	 boolean isDest(Entity v, Entity edge)
+	 public boolean isDest(Entity v, Entity edge)
 	 {
 		 return(((Entity)edge.getAttribute(GRAPH_DIRECTED_EDGE_FIELD_DESTINATION)).equals(v));
 
 	}
      //Returns true if this vertex is a predecessor of the specified vertex v, and false otherwise.
-	 boolean isPredecessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
+	 public boolean isPredecessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
 		 Entity graph = GET_GRAPH(v1);
 		 Query q = null;
@@ -751,12 +751,12 @@ public class GraphModule extends WebStoreModule
 		 
 	 }
      //Returns true if this vertex is a source of the specified edge e, and false otherwise.
-	 boolean isSource(Entity v,Entity edge)
+	 public boolean isSource(Entity v,Entity edge)
 	 {	
 		 return(((Entity)edge.getAttribute(GRAPH_DIRECTED_EDGE_FIELD_ORIGIN)).equals(v));
 	 }
      //Returns true if this vertex is a successor of the specified vertex v, and false otherwise.
-	 boolean isSuccessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
+	 public boolean isSuccessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
 		 Entity graph = GET_GRAPH(v1);
 		 Query q = null;
@@ -781,18 +781,18 @@ public class GraphModule extends WebStoreModule
 	 }
 	 
      // Returns the number of predecessors of this vertex.
-	 int numPredecessors(Entity v) throws PersistenceException,WebApplicationException
+	 public int numPredecessors(Entity v) throws PersistenceException,WebApplicationException
 	 {
 		 return getPredecessors(v).size();
 	 }
      //Returns the number of successors of this vertex.
-	 int numSuccessors(Entity v) throws PersistenceException,WebApplicationException
+	 public int numSuccessors(Entity v) throws PersistenceException,WebApplicationException
 	 {
 		 return getSuccessors(v).size();
 	 }
 	 //Returns the number of outgoing edges that are incident to this vertex.
 	 
-	 int outDegree(Entity v) throws PersistenceException,WebApplicationException
+	 public int outDegree(Entity v) throws PersistenceException,WebApplicationException
 	 {
 		 return getOutEdges(v).size();
 	 } 
@@ -846,8 +846,8 @@ public class GraphModule extends WebStoreModule
 
 	public static final String GRAPH_VERTEX_ENTITY			= "GraphVertex";
 	public static final String GRAPH_VERTEX_FIELD_GRAPH		= "graph";
-	public static final String GRAPH_VERTEX_FIELD_ID		= "node_id";
-	public static final String GRAPH_VERTEX_FIELD_CLASS		= "node_class";
+	public static final String GRAPH_VERTEX_FIELD_ID		= "vertex_id";
+	public static final String GRAPH_VERTEX_FIELD_CLASS		= "vertex_class";
 	public static final String GRAPH_VERTEX_FIELD_DATA 		= "data";
 	public static final String GRAPH_VERTEX_FIELD_METADATA 	= "metadata";
 	
