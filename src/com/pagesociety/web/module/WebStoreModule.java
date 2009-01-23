@@ -24,7 +24,7 @@ import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
 public abstract class WebStoreModule extends WebModule
 {
-	private static final String CONFIG_KEY_STORE_NAME = "store-name";
+
 	private static final String SLOT_STORE = "store";
 	protected PersistentStore store;
 	protected List<EntityDefinition> associated_entity_definitions;
