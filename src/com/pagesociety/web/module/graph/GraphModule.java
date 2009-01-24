@@ -48,19 +48,6 @@ public class GraphModule extends WebStoreModule
 
 	protected int GET_GRAPH_TYPE(Entity graph)
 	{
-		//TODO TOPH! 
-		try
-		{
-			graph = GET(graph.getType(),graph.getId());
-		}
-		catch (PersistenceException e)
-		{
-			e.printStackTrace();
-		}
-		if (graph==null)
-		{
-			System.out.println("X");
-		}
 		return (Integer)graph.getAttribute(GRAPH_FIELD_TYPE);
 	}
 	
@@ -212,7 +199,7 @@ public class GraphModule extends WebStoreModule
 	public Entity createEdge(Entity creator, Entity graph,Entity vertice1,Entity vertice2,Entity data) throws PersistenceException,WebApplicationException 
 	{
 		Entity new_edge = null;
-		int type = GET_GRAPH_TYPE(graph);
+		int type = GET_GRAPH_TYPE(EXPAND(graph));
 		switch(type)
 		{
 		
@@ -552,7 +539,7 @@ public class GraphModule extends WebStoreModule
 	 
 	 public Query findEdgeSetQ(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
-		 Entity graph = GET_GRAPH(v1);
+		 Entity graph = EXPAND(GET_GRAPH(v1));
 		 Query q = null;
 		 switch(GET_GRAPH_TYPE(graph))
 		 {
@@ -592,7 +579,7 @@ public class GraphModule extends WebStoreModule
 	 
 	 public Query getInEdgesQ(Entity v) throws PersistenceException,WebApplicationException
 	 {
-		 Entity graph = GET_GRAPH(v);
+		 Entity graph = EXPAND(GET_GRAPH(v));
 		 Query q = null;
 		 switch(GET_GRAPH_TYPE(graph))
 		 {
@@ -632,7 +619,7 @@ public class GraphModule extends WebStoreModule
 	 
 	 public Query getOutEdgesQ(Entity v) throws PersistenceException,WebApplicationException
 	 {
-		 Entity graph = GET_GRAPH(v);
+		 Entity graph = EXPAND(GET_GRAPH(v));
 		 Query q = null;
 		 switch(GET_GRAPH_TYPE(graph))
 		 {
@@ -740,7 +727,7 @@ public class GraphModule extends WebStoreModule
      //Returns true if this vertex is a predecessor of the specified vertex v, and false otherwise.
 	 public boolean isPredecessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
-		 Entity graph = GET_GRAPH(v1);
+		 Entity graph = EXPAND(GET_GRAPH(v1));
 		 Query q = null;
 		 switch(GET_GRAPH_TYPE(graph))
 		 {
@@ -769,7 +756,7 @@ public class GraphModule extends WebStoreModule
      //Returns true if this vertex is a successor of the specified vertex v, and false otherwise.
 	 public boolean isSuccessorOf(Entity v1,Entity v2) throws PersistenceException,WebApplicationException
 	 {
-		 Entity graph = GET_GRAPH(v1);
+		 Entity graph = EXPAND(GET_GRAPH(v1));
 		 Query q = null;
 		 switch(GET_GRAPH_TYPE(graph))
 		 {
