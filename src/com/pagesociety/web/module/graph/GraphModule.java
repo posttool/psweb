@@ -627,7 +627,7 @@ public class GraphModule extends WebStoreModule
 			 q.orderBy(edge_order_by,dir);
 		 q.offset(offset);
 		 q.pageSize(page_size);
-		 return PAGING_QUERY(q);
+		 return PAGING_QUERY_FILL(q);
 	 }
 	 
 	 public Query getOutEdgesQ(Entity v) throws PersistenceException,WebApplicationException
