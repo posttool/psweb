@@ -26,14 +26,14 @@ public class RegistrationCleanerModule extends WebStoreModule
 {	
 	
 	/* TODO: NOTE: THESE ARE EXPRESSED IN HOURS FOR NOW */
-	private static final String PARAM_REGISTRATION_PRUNE_PERIOD  	  		= "registration-prune-period";
-	private static final String PARAM_REGISTRATION_EXPIRATION_THRESHOLD  	= "registration-expiration-threshold";
+	private static final String PARAM_REGISTRATION_PRUNE_PERIOD  	  		= "registration-prune-period";//in hours
+	private static final String PARAM_REGISTRATION_EXPIRATION_THRESHOLD  	= "registration-expiration-threshold";//in hours
 
 	private static final String SLOT_USER_MODULE						  	= "user-module";
 	protected UserModule 		user_module;
 	
 	private int					registration_prune_period;//hours
-	private int					registration_expiration_threshold;
+	private int					registration_expiration_threshold;//hours
 	
 	
 	
@@ -43,6 +43,9 @@ public class RegistrationCleanerModule extends WebStoreModule
 	
 		registration_prune_period 			= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_PRUNE_PERIOD, config)));
 		registration_expiration_threshold 	= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_EXPIRATION_THRESHOLD, config)));
+		System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!prune period "+registration_prune_period);
+		System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!exp threshold "+registration_expiration_threshold);
+		
 		user_module  = (UserModule)getSlot(SLOT_USER_MODULE);
 		start_cleaner();
 	}
@@ -97,18 +100,20 @@ public class RegistrationCleanerModule extends WebStoreModule
 		QueryResult result = QUERY(q);
 
 		List<Entity> old_records = result.getEntities();
-		//System.out.println("OLD ACTIVITY RECORDS IS "+old_records.size());
+		System.out.println("OLD ACTIVITY RECORDS IS "+old_records.size());
 		for(int i = 0;i < result.size();i++)
 		{
 			Entity old_record = old_records.get(i);
 			Entity user		  = null;
 			try {
 				user = GET(UserModule.USER_ENTITY, (Long)old_record.getAttribute(RegistrationModule.FIELD_ACTIVATION_UID));
+				System.out.println("ABOUT TO DELETE "+user);
 				user_module.deleteUser(user);
+				DELETE(old_record);
 			} catch (PersistenceException e) {
 				e.printStackTrace();
 			}
-			DELETE(old_record);
+
 		}
 
 	}
