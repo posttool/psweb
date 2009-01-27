@@ -197,12 +197,12 @@ public class TreeModule extends WebStoreModule
 		Entity tree = GET(TREE_ENTITY,tree_id);
 		GUARD(guard.canDeleteTree(user,tree));
 		
-		return deleteTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE));
+		return deleteTree(tree);
 	}
 	
 	public List<Entity> deleteTree(Entity tree) throws PersistenceException
 	{
-		return deleteSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE));	
+		return deleteSubTree(EXPAND((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE)));	
 	}
 	
 	public List<Entity> deleteSubTree(Entity node) throws PersistenceException
@@ -307,7 +307,7 @@ public class TreeModule extends WebStoreModule
 		Query q = new Query(TREE_ENTITY);
 		q.idx(IDX_BY_USER_BY_TREE_NAME);
 		q.eq(q.list(user,name));
-		QueryResult result = QUERY(q);			
+		QueryResult result = QUERY_FILL(q);			
 		
 		if(result.size() == 0)
 			return null;
