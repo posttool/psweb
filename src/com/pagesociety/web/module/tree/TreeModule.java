@@ -219,7 +219,7 @@ public class TreeModule extends WebStoreModule
 		}catch(Exception e)
 		{
 			e.printStackTrace();
-			throw new PersistenceException("PROBLEM DELETEING ENTITY "+e.getMessage(),e);
+			throw new PersistenceException("PROBLEM DELETEING ENTITY "+e.getMessage()+" NODE WAS "+node,e);
 		}
 		List<Entity> deletees = (List<Entity>)df.getReturnObject();
 		if(tree != null)
