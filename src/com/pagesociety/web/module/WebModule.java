@@ -25,7 +25,7 @@ public abstract class WebModule extends Module
 {
 	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		super.init(app, config);
+		super.pre_init(app, config);
 	}
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
