@@ -100,7 +100,21 @@ public class TreeModule extends WebStoreModule
 		return createTreeNode(user,parent_node,node_class,node_id,data);
 	}
 	
+	@Export(ParameterNames={"parent_node_id","parent_child_index","node_class","node_id","data"})
+	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,int parent_child_index, String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
+		GUARD(guard.canCreateTreeNode(user,parent_node,node_class,node_id,data));
+		return createTreeNode(user,parent_node,parent_child_index,node_class,node_id,data);
+	}
+	
 	public Entity createTreeNode(Entity creator, Entity parent_node,String node_class,String node_id,Entity data) throws PersistenceException 
+	{
+		return createTreeNode(creator, parent_node, Integer.MAX_VALUE, node_class, node_id, data);
+	}
+	
+	public Entity createTreeNode(Entity creator, Entity parent_node,int parent_child_index,String node_class,String node_id,Entity data) throws PersistenceException 
 	{
 		Entity new_node = NEW(TREE_NODE_ENTITY,
 								creator,
@@ -110,7 +124,10 @@ public class TreeModule extends WebStoreModule
 								TREE_NODE_FIELD_PARENT_NODE,parent_node,
 								TREE_NODE_FIELD_CHILDREN,new ArrayList<Entity>(),
 								TREE_NODE_FIELD_DATA,data);
-	
+		//by default tree nodes are appended to the parents list of children. 
+		//we use Integer.MAX_VALUE to mean create and place last.
+		if(parent_child_index != Integer.MAX_VALUE)
+			reparentTreeNode(new_node, parent_node, parent_child_index);
 		return new_node;
 	}
 
@@ -138,7 +155,7 @@ public class TreeModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
 		Entity parent_node = GET(TREE_NODE_ENTITY,new_parent_id);
-		//!test indexout of bounds here
+
 		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
 			throw new WebApplicationException("CANT REPARENT A ROOT TREE NODE");
 		GUARD(guard.canReparentTreeNode(user,tree_node,parent_node));
