@@ -210,7 +210,7 @@ public abstract class WebModule extends Module
 		int n_day   = now.get(Calendar.DATE); 
 		String year  = String.valueOf(now.get(Calendar.YEAR));
 		String month = String.valueOf(n_month);
-		String day   = String.valueOf(now.get(n_day));
+		String day   = String.valueOf(n_day);
 		
 		StringBuilder buf = new StringBuilder();
 		buf.append(year);

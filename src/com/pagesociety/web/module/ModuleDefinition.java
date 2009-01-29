@@ -13,13 +13,12 @@ public class ModuleDefinition
 	private String name;
 	private Class<? extends Module> module;
 	private Map<String, List<ModuleMethod>> exported_method_map;
-	private List<ModuleMethod> exported_methods;
+
 
 	public ModuleDefinition(String name, Map<String, Object> config)
 	{
 		this.name = name;
 		this.exported_method_map = new HashMap<String, List<ModuleMethod>>();
-		this.exported_methods = new ArrayList<ModuleMethod>();
 	}
 	
 	public String getName()
@@ -48,7 +47,7 @@ public class ModuleDefinition
 					exported_method_map.put(module_method.getName(), overloaded_methods);
 				}
 				overloaded_methods.add(module_method);
-				exported_methods.add(module_method);
+
 			}
 		}
 	}
@@ -59,12 +58,7 @@ public class ModuleDefinition
 		StringBuffer b = new StringBuffer();
 		b.append(module.getCanonicalName());
 		b.append(line_break);
-		for (int i = 0; i < exported_methods.size(); i++)
-		{
-			b.append("\t");
-			b.append(exported_methods.get(i).toString());
-			b.append(line_break);
-		}
+		b.append(exported_method_map.toString());
 		return b.toString();
 	}
 
@@ -88,11 +82,6 @@ public class ModuleDefinition
 	public List<ModuleMethod> getMethodsForMethodName(String method_name)
 	{
 		return exported_method_map.get(method_name);
-	}
-
-	public List<ModuleMethod> getMethods()
-	{
-		return exported_methods;
 	}
 
 }
