@@ -4,6 +4,7 @@ import com.pagesociety.persistence.Entity;
 
 public interface IBillingGateway
 {
+	//some of these probably need to take into account some sort of transaction id that the gateway will provide//
 	
 	/* Check if card is valid */
 	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year) 	throws BillingGatewayException;
