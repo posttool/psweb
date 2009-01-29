@@ -358,10 +358,13 @@ public class RecurringOrderModule extends ResourceModule
 		notification_module.createAlertNotificationForUser(null, user, notification_text);
 	}
 	
-	public Entity openRecurringOrder(Entity recurring_order) throws PersistenceException
+	public Entity openRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
+		if(!billing_module.isConfigured())
+			throw new WebApplicationException("ERROR:CANNOT OPEN ORDER DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.");
 		
 		recurring_order = EXPAND(recurring_order);
+		FILL_REFS(recurring_order);
 		MODULE_LOG(0,"OPENING RECURRING ORDER "+recurring_order.getId());
 		int status 		= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
 		
@@ -556,7 +559,7 @@ public class RecurringOrderModule extends ResourceModule
 		float initial_fee = 0f;
 		for(int i = 0;i < skus.size();i++)
 		{
-			Entity sku = EXPAND(skus.get(i));
+			Entity sku = skus.get(i);
 			initial_fee+= (Float)sku.getAttribute(RECURRING_SKU_FIELD_INITIAL_FEE);
 		}
 		if(initial_fee == 0)
@@ -583,7 +586,7 @@ public class RecurringOrderModule extends ResourceModule
 		float amount = 0f;
 		for(int i = 0;i < skus.size();i++)
 		{
-			Entity sku = EXPAND(skus.get(i));
+			Entity sku = skus.get(i);
 			amount    += (Float)sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
 		}
 		
@@ -665,11 +668,21 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 		
+		if(!billing_module.isConfigured())
+		{
+			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.");
+			ERROR("ERROR: ABORTING BILLING CYCLE DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.");
+			//make function that takes no template and just a body//
+			//email_module.sendEmail(from, to, subject, template_name, template_data);
+			return;
+		}
+		
 		List<Entity> orders_that_need_to_be_billed = result.getEntities();
 		for(int i = 0;i < orders_that_need_to_be_billed.size();i++)
 		{
 			try{
 				recurring_order = orders_that_need_to_be_billed.get(i);
+				FILL_REFS(recurring_order);
 				order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 				billing_record = billing_module.getPreferredBillingRecord(order_user);
 				if(billing_record == null)
