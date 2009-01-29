@@ -7,4 +7,6 @@ public interface IEncryptionModule
 
 	public String encryptString(String s) throws WebApplicationException;
 	public String decryptString(String s) throws WebApplicationException;
+	public boolean isConfigured();
+	public void clearKey();
 }
