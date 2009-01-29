@@ -53,9 +53,13 @@ return false;
 
 /*lifetime free*/
 /*
-var recurring_sku = EXPAND(order.getAttribute("sku"));
-order.setAttribute("initial_fee",0.0)
-sku.setAttribute("price",0.0);
+var recurring_skus = order.getAttribute("skus");
+for(var i = 0;i < recurring_skus.size();i++)
+{
+	var sku = recurring_skus.get(i);
+	sku.setAttribute("initial_fee",0.0)
+	sku.setAttribute("price",0.0);
+}
 return true;
 */
 
@@ -85,14 +89,17 @@ public class PromotionModule extends WebStoreModule
 
 	}
 
-	private static final String FREE_FOR_LIFE_PROGRAM =
-		"if(order.getType() == 'recurring_order')\n"+
+	//return true could mean dont delete me but it isnt hooked up currently
+	//inital_fee and price takes care of both recurring and non recurring promotions//
+	private static final String ALWAYS_FREE_PROGRAM =
+		"var skus = order.getAttribute('skus');\n"+
+		"for(var i=0;i < skus.size();i++)\n"+
 		"{\n"+
-		"\t var recurring_sku = EXPAND(order.getAttribute('sku'));\n"+
-		"\t sku.setAttribute('initial_fee',0.0);\n"+
-		"\t sku.setAttribute('price',0.0);\n"+
-		"\t return true;\n"+
-		"}\n";
+		"  var sku = skus.get(i);\n"+
+		"  sku.setAttribute('initial_fee',0.0);\n"+
+		"  sku.setAttribute('price',0.0);\n"+
+		"}\n"+
+		"return true;\n";
 
 	
 	private void init_free_for_life_promotion() throws InitializationException
@@ -101,7 +108,8 @@ public class PromotionModule extends WebStoreModule
 		Entity free_for_life_promotion = store.getEntityById(PROMOTION_ENTITY, 1);
 		if(free_for_life_promotion == null)
 		{
-			free_for_life_promotion = createPromotion(null, "Free For Life","This promotion always makes everything free.",FREE_FOR_LIFE_PROGRAM);
+			free_for_life_promotion = createPromotion(null, "Free For Life","This promotion always makes everything free.",ALWAYS_FREE_PROGRAM);
+			LOG("CREATED FREE FOR LIFE PROMOTIONS PROGRAM: \n"+ALWAYS_FREE_PROGRAM);
 		}
 		}catch(Exception e)
 		{
