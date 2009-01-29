@@ -1,9 +1,15 @@
 package com.pagesociety.web.module.resource;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.net.URI;
+import java.io.IOException;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.transcode.ImageMagick;
@@ -141,7 +147,13 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		File preview = new File(buf.toString());
 		if(!preview.exists())
 		{
-			create_preview(getFile(path_token),preview,width,height);
+			try {
+				create_preview(getFile(path_token),preview,width,height);
+			}catch(Exception e)
+			{
+				//FIXME handle this better!
+				preview_relative_path = "no_preview_available.jpg"; 
+			}
 		}
 
 		buf.setLength(0);
@@ -162,6 +174,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 
 	private static void create_preview(File original,File dest,int w, int h) throws WebApplicationException
 	{
+		// TODO imagemagick can create a preview for a tiff and other non-web formats,
+		// but we need to return it as a jpg, for flash/html compatibility
 		ImageMagick i = new ImageMagick(original,dest);
 		i.setSize(w, h);
 		

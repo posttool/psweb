@@ -7,24 +7,26 @@ public class FileInfo
 	public static final int JPG = 0;
 	public static final int GIF = 1;
 	public static final int PNG = 2;
-	public static final int MP3 = 3;
-	public static final int WAV = 4;
-	public static final int AIF = 5;
-	public static final int VOG = 6;
-	public static final int AVI = 7;
-	public static final int MOV = 8;
-	public static final int DIVX = 9;
-	public static final int MPG = 10;
-	public static final int PDF = 11;
-	public static final int DOC = 12;
-	public static final int SWF = 13;
-	public static final int EXTENSIONS_LENGTH = 14;
+	public static final int TIFF = 3;
+	public static final int MP3 = 4;
+	public static final int WAV = 5;
+	public static final int AIF = 6;
+	public static final int VOG = 7;
+	public static final int AVI = 8;
+	public static final int MOV = 9;
+	public static final int DIVX = 10;
+	public static final int MPG = 11;
+	public static final int PDF = 12;
+	public static final int DOC = 13;
+	public static final int SWF = 14;
+	public static final int EXTENSIONS_LENGTH = 15;
 	public static final String[][] EXTENSIONS = new String[EXTENSIONS_LENGTH][];
 	static
 	{
 		EXTENSIONS[JPG]  = new String[] { "jpg", "jpeg" };
 		EXTENSIONS[GIF]  = new String[] { "gif" };
 		EXTENSIONS[PNG]  = new String[] { "png" };
+		EXTENSIONS[TIFF] = new String[] { "tif", "tiff" };
 		EXTENSIONS[MP3]  = new String[] { "mp3" };
 		EXTENSIONS[WAV]  = new String[] { "wav" };
 		EXTENSIONS[AIF]  = new String[] { "aif", "aiff" };
@@ -79,6 +81,7 @@ public class FileInfo
 		case JPG:
 		case GIF:
 		case PNG:
+		case TIFF:
 			return SIMPLE_TYPE_IMAGE;
 		case AIF:
 		case MP3:

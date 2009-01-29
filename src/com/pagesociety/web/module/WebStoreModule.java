@@ -493,11 +493,18 @@ public abstract class WebStoreModule extends WebModule
 		{
 			long id = ids.get(i);
 			//this will throw a persistence exception if id doesnt exist
-			if(id == 0)
-				entity = null;
-			else
+//			if(id == 0)
+//				entity = null;
+//			else
+//				entity = GET(store,entity_type,id);
+// FIXME try to understand why this happens a bit more
+// so that the cms never asks for non existant entities
+// this fails when i ask for previews from the resource module
+			try {
 				entity = GET(store,entity_type,id);
-			
+			} catch (PersistenceException e) {
+				continue;
+			}
 			if(entities.contains(entity))
 				continue;
 			entities.add(entity);

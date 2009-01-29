@@ -232,15 +232,17 @@ public class ResourceModule extends WebStoreModule
 		return getResourceUrlWithDim( resource, w, h);
 	
 	}
-	
+	 
 	public String getResourceUrlWithDim(Entity resource,int w,int h) throws WebApplicationException
 	{
 		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
 
-		if(!resource.getAttribute(RESOURCE_FIELD_SIMPLE_TYPE).equals(FileInfo.SIMPLE_TYPE_IMAGE_STRING))
-			throw new WebApplicationException("RESOURCE "+resource+" IS NOT OF SIMPLE TYPE IMAGE. CAN'T RESIZE.");
+// FIXME handle previews for TIFFs (& PDFs) too
+// TODO if its a TIF or PDF, the previews should be converted to jpg
+//		if(!resource.getAttribute(RESOURCE_FIELD_SIMPLE_TYPE).equals(FileInfo.SIMPLE_TYPE_IMAGE_STRING))
+//			throw new WebApplicationException("RESOURCE "+resource+" IS NOT OF SIMPLE TYPE IMAGE. CAN'T RESIZE.");
 		
 		return path_provider.getPreviewUrl(path_token,w,h);		
 	}

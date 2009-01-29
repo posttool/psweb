@@ -88,8 +88,7 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		String bp1 = "C:\\Users\\Public\\Pictures\\Sample Pictures\\VAIO Sample Pictures\\";
 		File f1 = new File(bp1 + "2007VAIO_SS04.jpg");
 		File f2 = new File(bp1 + "2007VAIO_SS04.png");
-		ImageMagick
-				.setRuntimeExecPath("C:\\Program Files\\ImageMagick-6.3.5-Q16\\convert.exe");
+		ImageMagick.setRuntimeExecPath("C:\\Program Files\\ImageMagick-6.3.5-Q16\\convert.exe");
 		ImageMagick i = new ImageMagick(f1, f2);
 		i.setSize(150, 150);
 		try{
