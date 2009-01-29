@@ -39,13 +39,12 @@ public class FormGateway
 			args[0] = new Form(request.getParameterMap());
 		}
 		ModuleRequest module_request;
-		Object module_return;
 		try
 		{
 			module_request = GatewayUtil.parseModuleRequest(request, requestPath);
 			module_request.setArguments(args);
 			module_request.setUserContext(user_context);
-			module_return = _web_application.dispatch(module_request);
+			_web_application.dispatch(module_request);
 		}
 		catch (Exception e)
 		{
@@ -53,7 +52,6 @@ public class FormGateway
 		}
 		response.setContentType(GatewayConstants.MIME_TYPE_TEXT);
 		PrintWriter out = response.getWriter();
-		out.write("OK " + module_return.toString());
 		out.close();
 	}
 }

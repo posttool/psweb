@@ -34,6 +34,7 @@ public class HttpRequestRouter extends HttpServlet
 	private JsonGateway json_gateway;
 	private FreemarkerGateway freemarker_gateway;
 	private FormGateway form_gateway;
+	private RawGateway  raw_gateway;
 
 	public void init(ServletConfig cfg) throws ServletException
 	{
@@ -53,6 +54,7 @@ public class HttpRequestRouter extends HttpServlet
 		json_gateway = new JsonGateway(_web_application);
 		freemarker_gateway = new FreemarkerGateway(_web_application);
 		form_gateway = new FormGateway(_web_application);
+		raw_gateway  = new RawGateway(_web_application);
 		//
 		logger.info("ServletGateway init complete");
 	}
@@ -164,6 +166,12 @@ public class HttpRequestRouter extends HttpServlet
 				freemarker_gateway.doService(get_user_context(request, response), requestPath, request, response);
 				return;
 			}
+		}
+		//RAW
+		if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
+		{
+			raw_gateway.doService(get_user_context(request, response), request, response);
+			return;
 		}
 		// UNKNOWN
 		File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
