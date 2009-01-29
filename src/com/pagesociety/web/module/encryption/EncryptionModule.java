@@ -117,6 +117,8 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 	
 	public String encryptString(String s) throws WebApplicationException
 	{
+		if(!isConfigured())
+			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
 		try{
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			byte[] input = s.getBytes();
@@ -140,6 +142,8 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 
 	public String decryptString(String s) throws WebApplicationException
 	{
+		if(!isConfigured())
+			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
 		try{ 
 			byte[] cipherText = HexUtil.fromHexString(s);
 			int ctLength = cipherText.length;
