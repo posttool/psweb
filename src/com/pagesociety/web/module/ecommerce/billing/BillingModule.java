@@ -111,6 +111,9 @@ public class BillingModule extends WebStoreModule
 	
 	public Entity createBillingRecord(Entity creator,String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
+		if(!isConfigured())
+			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
+		
 		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
 		Entity billing_record =  NEW(BILLINGRECORD_ENTITY,
@@ -200,7 +203,8 @@ public class BillingModule extends WebStoreModule
 			  						  int exp_month,
 			  						  int exp_year) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		
+		if(!isConfigured())
+			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
 		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
 		
@@ -286,6 +290,11 @@ public class BillingModule extends WebStoreModule
 	public IBillingGateway getBillingGateway()
 	{
 		return billing_gateway;
+	}
+	
+	public boolean isConfigured()
+	{
+		return encryption_module.isConfigured();
 	}
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
