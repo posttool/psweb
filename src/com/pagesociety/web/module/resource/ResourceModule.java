@@ -222,34 +222,41 @@ public class ResourceModule extends WebStoreModule
 		return urls;
 	}
 
-	
+	//TODO: get resourcePreviewURLWithDim //
 	@Export(ParameterNames={"resource_id", "w", "h"})
-	public String GetResourceURLWithDim(UserApplicationContext uctx,long resource_id,int w, int h) throws WebApplicationException,PersistenceException
+	public String GetResourcePreviewURLWithDim(UserApplicationContext uctx,long resource_id,int w, int h) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity resource = GET(resource_entity_name,resource_id);
 		GUARD(guard.canGetResourceURL(user,resource));
-		return getResourceUrlWithDim( resource, w, h);
+		return getResourcePreviewUrlWithDim( resource, w, h);
 	
 	}
 	 
-	public String getResourceUrlWithDim(Entity resource,int w,int h) throws WebApplicationException
+	public String getResourcePreviewUrlWithDim(Entity resource,int w,int h) throws WebApplicationException
 	{
 		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
 
-// FIXME handle previews for TIFFs (& PDFs) too
-// TODO if its a TIF or PDF, the previews should be converted to jpg
-//		if(!resource.getAttribute(RESOURCE_FIELD_SIMPLE_TYPE).equals(FileInfo.SIMPLE_TYPE_IMAGE_STRING))
-//			throw new WebApplicationException("RESOURCE "+resource+" IS NOT OF SIMPLE TYPE IMAGE. CAN'T RESIZE.");
+		// FIXME handle previews for TIFFs (& PDFs) too
+		// TODO if its a TIF or PDF, the previews should be converted to jpg
+		//		if(!resource.getAttribute(RESOURCE_FIELD_SIMPLE_TYPE).equals(FileInfo.SIMPLE_TYPE_IMAGE_STRING))
+		//			throw new WebApplicationException("RESOURCE "+resource+" IS NOT OF SIMPLE TYPE IMAGE. CAN'T RESIZE.");
 		
-		return path_provider.getPreviewUrl(path_token,w,h);		
+		String url = null;
+		try{
+			path_provider.getPreviewUrl(path_token,w,h);		
+		}catch(WebApplicationException wae)
+		{
+			ERROR(wae); 
+		}
+		return url;
 	}
 
 
 	@Export(ParameterNames={"resource_ids", "w", "h"})
-	public List<String> GetResourceURLsWithDim(UserApplicationContext uctx,List<Long> resource_ids,int w, int h) throws WebApplicationException,PersistenceException
+	public List<String> GetResourcePreviewURLsWithDim(UserApplicationContext uctx,List<Long> resource_ids,int w, int h) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		//check to make sure it exists//
@@ -261,7 +268,7 @@ public class ResourceModule extends WebStoreModule
 		{
 			Entity resource = GET(resource_entity_name,resources.get(i).getId());
 			GUARD(guard.canGetResourceURL(user, resource));
-			urls.add( getResourceUrlWithDim(resource, w, h));
+			urls.add( getResourcePreviewUrlWithDim(resource, w, h));
 		}
 		return urls;
 	}

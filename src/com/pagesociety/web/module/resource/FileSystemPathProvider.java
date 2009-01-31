@@ -11,6 +11,8 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FileUtils;
+
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.transcode.ImageMagick;
 import com.pagesociety.util.FileInfo;
@@ -145,16 +147,13 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		buf.append(C_SLASH);
 		buf.append(preview_relative_path);
 		File preview = new File(buf.toString());
+		
+		//TODO: right here we could queue this stuff up and return a //
+		//preview not ready. we would look in the queue and if it wasnt in//
+		//there we would create a new queue item and put it on.//
+		
 		if(!preview.exists())
-		{
-			try {
-				create_preview(getFile(path_token),preview,width,height);
-			}catch(Exception e)
-			{
-				//FIXME handle this better!
-				preview_relative_path = "no_preview_available.jpg"; 
-			}
-		}
+			create_preview(getFile(path_token),preview,width,height);
 
 		buf.setLength(0);
 		buf.append(base_url);
@@ -174,8 +173,28 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 
 	private static void create_preview(File original,File dest,int w, int h) throws WebApplicationException
 	{
-		// TODO imagemagick can create a preview for a tiff and other non-web formats,
-		// but we need to return it as a jpg, for flash/html compatibility
+		int type = FileInfo.getSimpleType(original);
+		switch(type)
+		{
+			case FileInfo.SIMPLE_TYPE_IMAGE:
+				create_image_preview(original, dest, w, h);
+				break;
+			case FileInfo.SIMPLE_TYPE_DOCUMENT:
+				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+			case FileInfo.SIMPLE_TYPE_SWF:
+				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
+			case FileInfo.SIMPLE_TYPE_VIDEO:
+				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+			case FileInfo.SIMPLE_TYPE_AUDIO:
+				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
+			default:
+				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
+		}
+	}
+	
+	
+	private static void create_image_preview(File original,File dest,int w, int h) throws WebApplicationException
+	{
 		ImageMagick i = new ImageMagick(original,dest);
 		i.setSize(w, h);
 		
@@ -184,7 +203,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		}catch(Exception e)
 		{
 			throw new WebApplicationException("PROBLEM CREATING PREVIEW "+dest.getAbsolutePath(),e);
-		}
+		}		
 	}
 	
 	private String get_preview_file_relative_path(String path_token,int width,int height) throws WebApplicationException
@@ -213,11 +232,12 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		preview_name.append(String.valueOf(width));
 		preview_name.append('x');
 		preview_name.append(String.valueOf(height));
-		if(ext != null)
-		{
+		//if(ext != null)
+		//{
 			preview_name.append('.');
-			preview_name.append(ext);
-		}
+			preview_name.append(FileInfo.EXTENSIONS[FileInfo.JPG][0]);
+			//preview_name.append(ext);
+		//}
 		return preview_name.toString();
 	}
 }
