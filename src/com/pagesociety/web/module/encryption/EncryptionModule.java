@@ -186,7 +186,7 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 			request   = (HttpServletRequest)c.getRequest();
 			response = (HttpServletResponse)c.getResponse();
 			StringBuilder buf = new StringBuilder();
-			document_start(buf, getName(), "black", "arial", "aqua", 14);
+			DOCUMENT_START(buf, getName(), "black", "arial", "aqua", 14,"white","yellow");
 			if(secret_phrase_bytes != null)
 			{
 				buf.append("OK "+getName()+" IS CONFIGURED.");
@@ -209,9 +209,9 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 					if(secret_phrase.length() < encryption_strength)
 					{
 						buf.append("ERROR: SECRET PHRASE MUST BE AT LEAST "+encryption_strength+" CHARACTERS LONG. TRY AGAIN");		
-						p(buf);
+						P(buf);
 						render_phrase_form(buf);
-						document_end(buf);
+						DOCUMENT_END(buf);
 						response.getWriter().println(buf.toString());
 						return;
 					}
@@ -222,22 +222,22 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 					{
 						clearKey();
 						buf.append("ERROR: BAD KEY. TRY AGAIN.");
-						p(buf);
+						P(buf);
 						render_phrase_form(buf);
-						document_end(buf);
+						DOCUMENT_END(buf);
 						response.getWriter().println(buf.toString());
 						return;
 					}
-					p(buf);
+					P(buf);
 					buf.append(getName()+" IS CONFIGURED AND READY TO ENCRYPT/DECRYPT.");
-					document_end(buf);
+					DOCUMENT_END(buf);
 					response.getWriter().println(buf.toString());
 					return;
 				}
 				else
 				{
 					render_phrase_form(buf);
-					document_end(buf);
+					DOCUMENT_END(buf);
 					response.getWriter().println(buf.toString());
 					return;
 				}
@@ -257,137 +257,15 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 	
 	private void render_phrase_form(StringBuilder buf)
 	{
-		form_start(buf, getApplication().getConfig().getWebRootUrl()+"/"+getName()+"/configure/.raw", "post");
-		table_start(buf, 1, 400);
-		tr_start(buf);
-		td(buf, "ENTER SECRET PHRASE:");td_start(buf);form_password_field(buf, "secret_phrase",32);td_end(buf);
-		tr_end(buf);
-		table_end(buf);
-		form_submit_button(buf, "submit");
-		form_end(buf);						
+		FORM_START(buf, getApplication().getConfig().getWebRootUrl()+"/"+getName()+"/configure/.raw", "post");
+		TABLE_START(buf, 1, 400);
+		TR_START(buf);
+		TD(buf, "ENTER SECRET PHRASE:");TD_START(buf);FORM_PASSWORD_FIELD(buf, "secret_phrase",32);TD_END(buf);
+		TR_END(buf);
+		TABLE_END(buf);
+		FORM_SUBMIT_BUTTON(buf, "submit");
+		FORM_END(buf);						
 	}
 	
-	protected void document_start(StringBuilder buf,String title,String bgcolor,String font_family,String font_color,int font_size)
-	{
-		html_start(buf);
-		head_start(buf,title);
-		head_end(buf);
-		body_start(buf, bgcolor, font_family, font_color, font_size);
-		
-	}
-	
-	protected void document_end(StringBuilder buf)
-	{
-		body_end(buf);
-		html_end(buf);		
-	}
-	
-	protected void html_start(StringBuilder buf)
-	{
-		buf.append("<HTML>\n");
-	}
-	
-	protected void head_start(StringBuilder buf,String title)
-	{
-		buf.append("<HEAD> \n<TITLE>"+title+"</TITLE>\n");
-	}
-	
-	protected void head_end(StringBuilder buf)
-	{
-		buf.append("</HEAD>");
-	}
-	
-	
-	protected void body_start(StringBuilder buf,String bgcolor,String font_family,String font_color,int font_size)
-	{
-		if(font_family == null)
-			font_family = "arial";
-		buf.append("<BODY style='background-color:"+bgcolor+";font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(font_size)+"px'>");
-	}
-	
-	protected void form_start(StringBuilder buf,String action,String method)
-	{
-		buf.append("<FORM ACTION='"+action+"' METHOD='"+method+"'>\n");
-		
-	}	  
-	
-	protected void form_input_field(StringBuilder buf,String name,int size)
-	{
-		buf.append("<INPUT TYPE='text' name='"+name+"' size='"+size+"'/>\n");
-	}
-	
-	protected void form_password_field(StringBuilder buf,String name,int size)
-	{
-		buf.append("<INPUT TYPE='password' name='"+name+"' size='"+size+"'/>\n");
-	}
-	
-	protected void form_hidden_field(StringBuilder buf,String name,String value)
-	{
-		buf.append("<INPUT TYPE='hidden' name='"+name+"' value='"+value+"'/>\n");
-	}
-	
-	protected void form_submit_button(StringBuilder buf,String label)
-	{
-		buf.append("<INPUT TYPE='submit' value='"+label+"'/>");
-	}
-	
-	protected void form_end(StringBuilder buf)
-	{
-		buf.append("</FORM>\n");
-	}
-	
-	protected void body_end(StringBuilder buf)
-	{
-		buf.append("</BODY>\n");
-	}
-	protected void html_end(StringBuilder buf)
-	{
-		buf.append("</HTML>\n");
-	}
-    
-	protected void br(StringBuilder buf)
-	{
-		buf.append("<BR/>\n");
-	}
-	
-	protected void p(StringBuilder buf)
-	{
-		buf.append("<P/>\n");
-	}
-	
-	protected void table_start(StringBuilder buf,int border,int width)
-	{
-		buf.append("<TABLE BORDER='"+border+"' WIDTH='"+width+"'>\n");
-	}
-	
-	protected void tr_start(StringBuilder buf)
-	{
-		buf.append("<TR>\n");
-	}
-	
-	protected void td(StringBuilder buf,String data)
-	{
-		buf.append("<TD>"+data+"</TD>\n");		
-	}
-	
-	protected void td_start(StringBuilder buf)
-	{
-		buf.append("<TD>\n");		
-	}
-	
-	protected void td_end(StringBuilder buf)
-	{
-		buf.append("</TD>\n");		
-	}
 
-	
-	protected void tr_end(StringBuilder buf)
-	{
-		buf.append("</TR>\n");
-	}
-	
-	protected void table_end(StringBuilder buf)
-	{
-		buf.append("</TABLE>\n");				
-	}
 }
