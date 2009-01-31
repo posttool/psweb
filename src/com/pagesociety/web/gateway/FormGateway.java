@@ -39,19 +39,26 @@ public class FormGateway
 			args[0] = new Form(request.getParameterMap());
 		}
 		ModuleRequest module_request;
+		Object ret = null;
 		try
 		{
 			module_request = GatewayUtil.parseModuleRequest(request, requestPath);
 			module_request.setArguments(args);
 			module_request.setUserContext(user_context);
-			_web_application.dispatch(module_request);
+			ret = _web_application.dispatch(module_request);
 		}
+		
 		catch (Exception e)
 		{
 			throw new WebApplicationException("FORM GATEWAY ERROR", e);
 		}
-		response.setContentType(GatewayConstants.MIME_TYPE_TEXT);
+		response.setContentType(GatewayConstants.MIME_TYPE_HTML);
 		PrintWriter out = response.getWriter();
+		if(ret != null)
+		{
+			out.print(ret.toString());
+			out.flush();
+		}
 		out.close();
 	}
 }
