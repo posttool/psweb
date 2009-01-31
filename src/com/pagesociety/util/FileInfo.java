@@ -153,6 +153,7 @@ public class FileInfo
 		case JPG:
 		case GIF:
 		case PNG:
+		case TIFF:
 			return true;
 		default:
 			return false;
