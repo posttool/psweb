@@ -273,5 +273,202 @@ public abstract class WebModule extends Module
 			ERROR("BARF ON MODULE_LOG() FUNCTION.MESSAGE WAS "+message,ioe);
 		}
     }
+	
+	
+	///HTML MACROS FOR RAW MODULE CALLS//
+	protected void DOCUMENT_START(StringBuilder buf,String title,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
+	{
+		HTML_START(buf);
+		HEAD_START(buf,title);
+		STYLE(buf,bgcolor,font_family,font_color,font_size,link_color,link_hover_color);
+		HEAD_END(buf);
+		BODY_START(buf, bgcolor, font_family, font_color, font_size);
+		
+	}
+	
+	protected void DOCUMENT_END(StringBuilder buf)
+	{
+		BODY_END(buf);
+		HTML_END(buf);		
+	}
+	
+	protected void HTML_START(StringBuilder buf)
+	{
+		buf.append("<HTML>\n");
+	}
+	
+	protected void HEAD_START(StringBuilder buf,String title)
+	{
+		buf.append("<HEAD> \n<TITLE>"+title+"</TITLE>\n");
+	}
+	
+	protected void STYLE(StringBuilder buf,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
+	{
+		buf.append("<STYLE>\n");
+		buf.append("body { background-color:"+bgcolor+";font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(font_size)+"px;}\n");
+		buf.append("a{text-decoration:none;}");
+		buf.append("a:link { color:"+link_color+";}\n");
+		buf.append("a:visited { color:"+link_color+";}\n");
+		buf.append("a:hover { background-color:"+link_hover_color+";font-weight:bold;}\n");
+		buf.append("</STYLE>\n");
+		
+	}
+	
+	protected void HEAD_END(StringBuilder buf)
+	{
+		buf.append("</HEAD>");
+	}
+	
+	
+	protected void BODY_START(StringBuilder buf,String bgcolor,String font_family,String font_color,int font_size)
+	{
+		if(font_family == null)
+			font_family = "arial";
+		buf.append("<BODY style='background-color:"+bgcolor+";font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(font_size)+"px'>");
+	}
+	
+	protected void FORM_START(StringBuilder buf,String action,String method)
+	{
+		buf.append("<FORM ACTION='"+action+"' METHOD='"+method+"'>\n");
+		
+	}	  
 
+	protected void MULTIPART_FORM_START(StringBuilder buf,String action)
+	{
+		buf.append("<FORM ACTION='"+action+"' METHOD='post' ENCTYPE='multipart/form-data'>\n");
+	}
+	protected void FILE_INPUT_FIELD(StringBuilder buf,String name)
+	{
+		buf.append("<INPUT TYPE='file' name='"+name+"'/>");
+	}
+	
+	protected void FORM_INPUT_FIELD(StringBuilder buf,String name,int size)
+	{
+		buf.append("<INPUT TYPE='text' name='"+name+"' size='"+size+"'/>\n");
+	}
+	
+	protected void FORM_PASSWORD_FIELD(StringBuilder buf,String name,int size)
+	{
+		buf.append("<INPUT TYPE='password' name='"+name+"' size='"+size+"'/>\n");
+	}
+	
+	protected void FORM_HIDDEN_FIELD(StringBuilder buf,String name,String value)
+	{
+		buf.append("<INPUT TYPE='hidden' name='"+name+"' value='"+value+"'/>\n");
+	}
+	
+	protected void FORM_SUBMIT_BUTTON(StringBuilder buf,String label)
+	{
+		buf.append("<INPUT TYPE='submit' value='"+label+"'/>");
+	}
+	
+	protected void FORM_END(StringBuilder buf)
+	{
+		buf.append("</FORM>\n");
+	}
+	
+	protected void BODY_END(StringBuilder buf)
+	{
+		buf.append("</BODY>\n");
+	}
+	protected void HTML_END(StringBuilder buf)
+	{
+		buf.append("</HTML>\n");
+	}
+    
+	protected void BR(StringBuilder buf)
+	{
+		buf.append("<BR/>\n");
+	}
+	
+	protected void P(StringBuilder buf)
+	{
+		buf.append("<P/>\n");
+	}
+	
+	protected void A(StringBuilder buf,String url,String text)
+	{
+		buf.append("<A HREF='"+url+"'>"+text+"</A>");
+	}
+	
+	protected void TABLE_START(StringBuilder buf,int border,int width)
+	{
+		buf.append("<TABLE BORDER='"+border+"' WIDTH='"+width+"'>\n");
+	}
+	
+	protected void TR_START(StringBuilder buf)
+	{
+		buf.append("<TR>\n");
+	}
+	
+	protected void TD(StringBuilder buf,String data)
+	{
+		buf.append("<TD>"+data+"</TD>\n");		
+	}
+	
+	protected void TD_START(StringBuilder buf)
+	{
+		buf.append("<TD>\n");		
+	}
+	
+	protected void TD_END(StringBuilder buf)
+	{
+		buf.append("</TD>\n");		
+	}
+
+	
+	protected void TR_END(StringBuilder buf)
+	{
+		buf.append("</TR>\n");
+	}
+	
+	protected void TABLE_END(StringBuilder buf)
+	{
+		buf.append("</TABLE>\n");				
+	}
+
+	protected void SPAN(StringBuilder buf,String text,String color,int size)
+	{
+		buf.append("<SPAN style='color:"+color+";font-size:"+size+"px'>"+text+"</SPAN>\n");
+	}
+	
+	protected void SPAN(StringBuilder buf,String text, int size)
+	{
+		buf.append("<SPAN style='font-size:"+size+"px'>"+text+"</SPAN>\n");
+	}
+	
+	protected void SPAN(StringBuilder buf,String text, String color)
+	{
+		buf.append("<SPAN style='color:"+color+";>"+text+"</SPAN>\n");
+	}
+	
+	protected void SPAN(StringBuilder buf,String text)
+	{
+		buf.append("<SPAN>"+text+"</SPAN>\n");
+	}
+	
+	protected void NBSP(StringBuilder buf,int no)
+	{
+		for(int i = 0;i < no;i++)
+		{
+			NBSP(buf);
+		}
+	}
+	protected void NBSP(StringBuilder buf)
+	{
+		buf.append("&nbsp;");
+	}
+	
+	protected void JS_REDIRECT(StringBuilder buf,String url)
+	{
+		buf.append("<script type='text/javascript'>\n");
+		buf.append("window.location = "+url+"\n");
+		buf.append("</script>\n");
+	}
+	protected String RAW_MODULE_ROOT()
+	{
+		return getApplication().getConfig().getWebRootUrl()+"/"+getName();
+	}
+
+	
 }
