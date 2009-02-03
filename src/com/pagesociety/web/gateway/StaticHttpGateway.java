@@ -19,7 +19,17 @@ public class StaticHttpGateway
 	private static final String REQUEST_DATE_HEADER_IF_MOD_SINCE = "If-Modified-Since";
 	private static final String RESPONSE_DATE_HEADER_LAST_MOD = "Last-Modified";
 
-	public void serveFile(File file, String mimeType, HttpServletRequest request,
+	
+	//
+	//
+	// response.setHeader("Expires", "0");
+	// response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+	// response.setHeader("Pragma", "public");
+	//
+	// add this to make it download
+	// response.setHeader("Content-disposition", "attachment; filename=" + f.getName());
+
+	public static void serveFile(File file, String mimeType, HttpServletRequest request,
 			HttpServletResponse response) throws IOException, ServletException
 	{
 		if (!file.exists())

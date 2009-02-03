@@ -43,7 +43,7 @@ public class RawGateway
 		{
 			throw new WebApplicationException("RAW GATEWAY ERROR", e);
 		}
-		PrintWriter out = response.getWriter();
-		out.close();
+//		PrintWriter out = response.getWriter();
+//		out.close();
 	}
 }

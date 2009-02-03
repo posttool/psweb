@@ -340,6 +340,14 @@ public class ResourceModule extends WebStoreModule
 		return GET(resource_entity_name,resource_id);	 
 	}
 	
+	public File getFile(Entity resource) throws WebApplicationException
+	{
+		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
+		if(path_token == null)
+			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
+		return path_provider.getFile(path_token);		
+	}
+	
 	///////////////////////////////////END MODULE FUNCTIONS *//
 	private boolean do_upload(UserApplicationContext uctx,MultipartForm upload,boolean update,Entity update_resource) throws WebApplicationException,PersistenceException
 	{
