@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.pagesociety.web.exception.InitializationException;
 
@@ -82,6 +83,19 @@ public class ModuleDefinition
 	public List<ModuleMethod> getMethodsForMethodName(String method_name)
 	{
 		return exported_method_map.get(method_name);
+	}
+	
+	// i need this for the generated docs/ or i need another method 'getUniqueMethodNames',
+	// but i prefer this for now...!
+	public List<ModuleMethod> getMethods()
+	{
+		List<ModuleMethod> all_methods = new ArrayList<ModuleMethod>();
+		Set<String> keys = exported_method_map.keySet();
+		for (String s : keys)
+		{
+			all_methods.addAll(exported_method_map.get(s));
+		}
+		return all_methods;
 	}
 
 }
