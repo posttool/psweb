@@ -182,20 +182,15 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 				create_image_preview(original, dest, w, h);
 				break;
 			case FileInfo.SIMPLE_TYPE_DOCUMENT:
-				return;
-				//throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_SWF:
-				return;
-//				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
+				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_VIDEO:
-				return;
-//				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_AUDIO:
-				return;
-//				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
+				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
 			default:
-				return;
-//				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
+				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
 		}
 	}
 	
