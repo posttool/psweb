@@ -171,6 +171,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return null;
 	}
 
+	// DUDE this really cripples everything in the CMS if you throw exceptions in the middle
+	// of a group preview ... 
 	private static void create_preview(File original,File dest,int w, int h) throws WebApplicationException
 	{
 		int type = FileInfo.getSimpleType(original);
@@ -180,15 +182,20 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 				create_image_preview(original, dest, w, h);
 				break;
 			case FileInfo.SIMPLE_TYPE_DOCUMENT:
-				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+				return;
+				//throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_SWF:
-				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
+				return;
+//				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_VIDEO:
-				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+				return;
+//				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_AUDIO:
-				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
+				return;
+//				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
 			default:
-				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
+				return;
+//				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
 		}
 	}
 	
