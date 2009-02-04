@@ -246,7 +246,7 @@ public class ResourceModule extends WebStoreModule
 		
 		String url = null;
 		try{
-			path_provider.getPreviewUrl(path_token,w,h);		
+			url = path_provider.getPreviewUrl(path_token,w,h);
 		}catch(WebApplicationException wae)
 		{
 			ERROR(wae); 
