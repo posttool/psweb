@@ -1,11 +1,15 @@
 package com.pagesociety.web.module.user;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
@@ -22,8 +26,10 @@ import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.GatewayConstants;
+import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
+import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.util.Util;
 
@@ -62,7 +68,7 @@ public class UserModule extends WebStoreModule
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP USER MODULE.COULDNT CREATE ADMIN USER",e);
 		}
-
+		setup_ui();
 	}
 
 	
@@ -95,7 +101,7 @@ public class UserModule extends WebStoreModule
 					FIELD_USERNAME,username,
 					FIELD_EMAIL,email,
 					FIELD_PASSWORD,password,
-					FIELD_USERNAME,
+					FIELD_USERNAME,username,
 					FIELD_ROLES,roles);					
 		
 		dispatchEvent(EVENT_USER_CREATED, user);
@@ -434,13 +440,20 @@ public class UserModule extends WebStoreModule
 			admin_roles.add(USER_ROLE_WHEEL);
 			admin_roles.add(USER_ROLE_USER);
 			
-			NEW(USER_ENTITY,
-				null,
-				UserModule.FIELD_EMAIL,admin_email,
-				UserModule.FIELD_PASSWORD,Util.stringToHexEncodedMD5(admin_password),
-				UserModule.FIELD_ROLES,admin_roles,
-				UserModule.FIELD_LOCK,LOCK_UNLOCKED,
-				UserModule.FIELD_LOCK_CODE,LOCK_CODE_DEFAULT);			
+			try{
+				createPrivilegedUser(null,admin_email,Util.stringToHexEncodedMD5(admin_password),"admin",admin_roles);
+			}catch(WebApplicationException e)
+			{
+				ERROR(e);
+				throw new InitializationException("FAILED CREATING ADMIN USER.");
+			}
+			//NEW(USER_ENTITY,
+			//	null,
+			//	UserModule.FIELD_EMAIL,admin_email,
+			//	UserModule.FIELD_PASSWORD,Util.stringToHexEncodedMD5(admin_password),
+			//	UserModule.FIELD_ROLES,admin_roles,
+			//	UserModule.FIELD_LOCK,LOCK_UNLOCKED,
+			//	UserModule.FIELD_LOCK_CODE,LOCK_CODE_DEFAULT);			
 		}
 	}
 	
@@ -494,4 +507,271 @@ public class UserModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_LOCK_BY_LOCK_CODE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_LOCK,FIELD_LOCK_CODE);
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_ROLE, EntityIndex.TYPE_ARRAY_MEMBERSHIP_INDEX, FIELD_ROLES);
 	}
+	
+	//raw stuff//
+	
+
+	public static final int RAW_SUBMODE_DO_LOGIN   = 0x01;
+	public static final int RAW_SUBMODE_DO_LOGOUT  = 0x02;
+	public static final int RAW_SUBMODE_SHOW_USER  = 0x03;
+	
+	public static final String RETURN_TO  = "return_to";
+	
+	@Export
+	public void Exec(UserApplicationContext uctx,RawCommunique c)
+	{
+		HttpServletRequest  request  = null;
+		HttpServletResponse response = null;
+	       
+		StringBuilder buf = new StringBuilder();
+		try {
+			
+				request   = (HttpServletRequest)c.getRequest();
+				response  = (HttpServletResponse)c.getResponse();
+				
+				//TODO: this turns into get execution context or get stack//
+				//[adress of caller - modulename,methodname,submode]
+				//[submode or state int]
+				//[map of args]
+				//StackFrame f = GET_STACK_FRAME();
+				//if(f== null)
+				//	PUSH_NEW_STACK_FRAME();
+				//RETURN(f.execute());
+				int state = RAW_SUBMODE_DEFAULT;
+				try{
+					state = Integer.parseInt(request.getParameter("state"));
+				}catch(Exception e)
+				{
+				}
+
+				String return_to = (String)uctx.getProperty(RETURN_TO);
+				if(return_to == null)
+				{
+					return_to = RAW_MODULE_EXEC_ROOT()+"/Exec/.raw";
+				}
+				
+				switch(state)
+				{
+					case RAW_SUBMODE_DO_LOGIN:
+						String e = request.getParameter("email");//arg_email
+						String p = Util.stringToHexEncodedMD5(request.getParameter("password"));//arg_password
+						
+						try{
+							Login(uctx,e,p);
+							//GOTO
+							JS_REDIRECT(buf, RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state="+RAW_SUBMODE_SHOW_USER);
+							response.getWriter().println(buf.toString());
+							return;
+						}catch(LoginFailedException lfe)
+						{
+							//GOTO
+							JS_REDIRECT(buf, RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?error=login%20failed");
+							response.getWriter().println(buf.toString());
+							return;
+						}
+					case RAW_SUBMODE_DO_LOGOUT:
+						Logout(uctx);
+						//RETURN(uctx.getUser());
+						//GOTO
+						JS_REDIRECT(buf, return_to);
+						uctx.setProperty(RETURN_TO, null);
+						response.getWriter().println(buf.toString());
+						return;
+					case RAW_SUBMODE_SHOW_USER:
+						render_showuser_fragment(buf,(Entity)uctx.getUser());
+						//RETURN();
+						JS_TIMED_REDIRECT(buf, return_to, 1500);
+						uctx.setProperty(RETURN_TO, null);
+						DOCUMENT_END(buf);
+						response.getWriter().println(buf.toString());
+						return;
+					case RAW_SUBMODE_DEFAULT:
+					default:
+						if(uctx.getUser() == null)
+							render_login_screen(buf,request.getParameter("error"));
+						else
+							render_logout_screen(buf,(Entity)uctx.getUser());
+						response.getWriter().println(buf.toString());
+						return;				
+				}
+			
+			}catch(Exception e)
+			{
+				ERROR(e);
+				try{
+					response.getWriter().println("<font color='red'>ERROR: "+e.getClass().getName()+" "+e.getMessage()+"</FONT>");
+				}catch(IOException ioe)
+				{
+					ERROR(ioe);
+				}
+
+			}
+	}
+		
+	private void render_showuser_fragment(StringBuilder buf, Entity user)
+	{
+		DOCUMENT_START(buf, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+		P(buf);
+		SPAN(buf,"LOGIN",16);
+		P(buf);
+		if(user != null)
+			SPAN(buf,"You are currently logged in as "+user.getAttribute(UserModule.FIELD_EMAIL),12);
+		else
+			SPAN(buf,"You not currently logged in.",12);
+	}
+	
+	private void render_login_screen(StringBuilder buf, String message)
+	{
+
+		DOCUMENT_START(buf, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+		P(buf);
+		SPAN(buf,"",18);
+		P(buf);
+		if(message != null)
+		{
+			SPAN(buf,message,RAW_UI_ERROR_COLOR,16);
+			P(buf);
+		}
+		
+		FORM_START(buf,RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state="+RAW_SUBMODE_DO_LOGIN, "POST");
+			TABLE_START(buf, 0, 400);
+				TR_START(buf);
+				TD(buf, "email:");TD_START(buf);FORM_INPUT_FIELD(buf, "email", 30);TD_END(buf);
+				TR_END(buf);
+				TR_START(buf);
+				TD(buf, "password:");TD_START(buf);FORM_PASSWORD_FIELD(buf, "password", 30);TD_END(buf);
+				TR_END(buf);
+		    TABLE_END(buf);
+		 FORM_SUBMIT_BUTTON(buf, "Login");
+		FORM_END(buf);
+		DOCUMENT_END(buf);
+	}
+	
+	private void render_logout_screen(StringBuilder buf, Entity user)
+	{
+		render_showuser_fragment(buf, user);
+		P(buf);
+		A(buf,RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state="+RAW_SUBMODE_DO_LOGOUT,"[ LOGOUT ]");
+		DOCUMENT_END(buf);
+	}
+	
+
+	@Export
+	public void Exec2(UserApplicationContext uctx,RawCommunique c) 
+	{
+		DO_EXEC(uctx, c);
+	}
+	
+	private void setup_ui() throws InitializationException
+	{
+		try{
+			declareSubmode(RAW_SUBMODE_DEFAULT,   "submode_default");
+			declareSubmode(RAW_SUBMODE_DO_LOGIN,  "submode_do_login");
+			declareSubmode(RAW_SUBMODE_DO_LOGOUT, "submode_do_logout");
+			declareSubmode(RAW_SUBMODE_SHOW_USER, "submode_showuser");
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new InitializationException("FAILED BINDING SUBMODE "+e.getMessage());
+		}
+	}
+	
+	//TODO need a cutpoint between dispatch and mode execution //
+	private void submode_default(UserApplicationContext uctx,Map<String,Object> params)
+	{
+		if(uctx.getUser() != null)
+		{
+			GOTO(uctx,RAW_SUBMODE_DO_LOGOUT);
+		}
+		else
+		{
+			//HANDLE ERRORS AND MESSAGES IN DOCUMENT_START
+			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			P(uctx);
+			SPAN(uctx,"",18);
+			P(uctx);
+			FORM_START(uctx,getName(),RAW_SUBMODE_DO_LOGIN);
+				TABLE_START(uctx, 0, 400);
+					TR_START(uctx);
+					TD(uctx, "email:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "email", 30);TD_END(uctx);
+					TR_END(uctx);
+					TR_START(uctx);
+					TD(uctx, "password:");TD_START(uctx);FORM_PASSWORD_FIELD(uctx, "password", 30);TD_END(uctx);
+					TR_END(uctx);
+				TABLE_END(uctx);
+			 FORM_SUBMIT_BUTTON(uctx, "Login");
+		   FORM_END(uctx);
+		DOCUMENT_END(uctx);
+		}
+	}
+	
+	private void submode_do_login(UserApplicationContext uctx,Map<String,Object> params)
+	{
+		String e = (String)params.get("email");//arg_email
+		String p = Util.stringToHexEncodedMD5((String)params.get("password"));//arg_password
+		
+		try{
+			Login(uctx,e,p);
+			RETURN(uctx);
+
+		}catch(LoginFailedException lfe)
+		{
+			RETURN(uctx);
+		}
+		catch(Exception ee)
+		{
+			ERROR(ee);
+		}
+	}
+	
+	private void submode_do_logout(UserApplicationContext uctx,Map<String,Object> params)
+	{
+		Entity user = (Entity)uctx.getUser();
+		if(user == null)
+		{
+			GOTO(uctx, RAW_SUBMODE_DEFAULT);
+		}
+		else if(params.get("do_logout") != null)
+		{
+			try{
+				Logout(uctx);
+			}catch(Exception e){}
+			GOTO(uctx,RAW_SUBMODE_DO_LOGOUT);
+		}
+		else
+		{
+			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			P(uctx);
+			SPAN(uctx,"LOGIN",16);
+			P(uctx);
+			if(user != null)
+				SPAN(uctx,"You are currently logged in as "+user.getAttribute(UserModule.FIELD_EMAIL),12);
+			else
+				SPAN(uctx,"You not currently logged in.",12);
+			DOCUMENT_END(uctx);//DOCUMENT_END_RETURN_IN(uctx,3000);
+			P(uctx);
+			A(uctx,getName(),RAW_SUBMODE_DO_LOGOUT,"[ LOGOUT ]","do_logout","true");
+			DOCUMENT_END(uctx);
+		}
+	}
+	
+	private void submode_showuser(UserApplicationContext uctx,Map<String,Object> params)
+	{
+		Entity user = (Entity)uctx.getUser();
+		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+		P(uctx);
+		SPAN(uctx,"LOGIN",16);
+		P(uctx);
+		if(user != null)
+			SPAN(uctx,"You are currently logged in as "+user.getAttribute(UserModule.FIELD_EMAIL),12);
+		else
+			SPAN(uctx,"You not currently logged in.",12);
+
+		//RETURN_TO_CALLER();
+		//JS_TIMED_REDIRECT(buf, return_to, 1500);
+		//uctx.setProperty(RETURN_TO, null);
+		DOCUMENT_END(uctx);//DOCUMENT_END_RETURN_IN(uctx,3000);
+		RETURN(uctx);
+	}
+	
 }
