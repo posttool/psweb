@@ -92,7 +92,7 @@ public abstract class WebApplication
 	}
 
 	public Object dispatch(ModuleRequest request) throws WebApplicationException,
-			Exception
+			Throwable
 	{
 		Module module = getModule(request.getModuleName());
 		if (module == null)
@@ -103,7 +103,7 @@ public abstract class WebApplication
 	}
 
 	public Object execute( UserApplicationContext user_context,String moduleAndMethod,
-			Object... args) throws Exception
+			Object... args) throws Throwable
 	{
 		String[] mm = moduleAndMethod.split("/");
 		if (mm.length != 2)
@@ -117,7 +117,7 @@ public abstract class WebApplication
 	}
 
 	public Object execute(UserApplicationContext user_context,String moduleAndMethod, 
-			freemarker.template.SimpleSequence args) throws Exception
+			freemarker.template.SimpleSequence args) throws Throwable
 	{
 		Object[] obj_args = new Object[args.size()];
 		for (int i = 0; i < obj_args.length; i++)

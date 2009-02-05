@@ -39,7 +39,7 @@ public class RawGateway
 			module_request.setUserContext(user_context);
 			_web_application.dispatch(module_request);
 		}
-		catch (Exception e)
+		catch (Throwable e)
 		{
 			throw new WebApplicationException("RAW GATEWAY ERROR", e);
 		}

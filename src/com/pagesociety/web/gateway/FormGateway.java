@@ -48,7 +48,7 @@ public class FormGateway
 			ret = _web_application.dispatch(module_request);
 		}
 		
-		catch (Exception e)
+		catch (Throwable e)
 		{
 			throw new WebApplicationException("FORM GATEWAY ERROR", e);
 		}

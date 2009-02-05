@@ -40,7 +40,7 @@ public class JsonGateway
 			if (request.getParameter("noencode") == null)
 				text_response = Text.encodeURIComponent(text_response);
 		}
-		catch (Exception e)
+		catch (Throwable e)
 		{
 			e.printStackTrace();
 			doError(e, user_context, request, text_response, response);
@@ -55,7 +55,7 @@ public class JsonGateway
 		out.close();
 	}
 
-	private void doError(Exception e, UserApplicationContext user_context,
+	private void doError(Throwable e, UserApplicationContext user_context,
 			HttpServletRequest servlet_request, String request_path,
 			ServletResponse response) throws IOException
 	{

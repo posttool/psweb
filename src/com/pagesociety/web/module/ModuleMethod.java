@@ -88,15 +88,16 @@ public class ModuleMethod
 	}
 
 	public Object invoke(Module module, Object[] args)
-			throws Exception
+			throws Throwable
 	{
 		try
 		{
 			return method.invoke(module, args);
 		}
+		
 		catch (InvocationTargetException e)
 		{
-			throw (Exception) e.getCause();
+			throw (Throwable) e.getCause();
 		}
 		catch (IllegalArgumentException e)
 		{

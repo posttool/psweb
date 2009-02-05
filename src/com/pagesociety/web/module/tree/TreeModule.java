@@ -463,7 +463,7 @@ public class TreeModule extends WebStoreModule
 		if(iterate_style == ITERATE_STYLE_PREORDER)
 			f.apply(entity_node);
 		
-		int s = child_nodes.size();
+		int s = (child_nodes==null) ? 0 : child_nodes.size();
 		for(int i = 0; i < s;i++)
 			applyTreeFunctor(child_nodes.get(i),f,iterate_style);		
 

@@ -44,7 +44,7 @@ public class AmfGateway
 				return_value = _web_application.dispatch(module_request);
 				amf_routing = AmfConstants.RESULT_CALLBACK;
 			}
-			catch (Exception e)
+			catch (Throwable e)
 			{
 				return_value = new ErrorMessage(e);
 				amf_routing = AmfConstants.ERROR_CALLBACK;

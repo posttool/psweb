@@ -95,7 +95,7 @@ public class ModuleRegistry
 	}
 
 	public static Object invoke(Module module, String method_name,
-			UserApplicationContext user_context, Object[] args) throws Exception
+			UserApplicationContext user_context, Object[] args) throws Throwable
 	{
 		ModuleDefinition module_def = MODULES.get(module.getName());
 		if (module_def == null)
