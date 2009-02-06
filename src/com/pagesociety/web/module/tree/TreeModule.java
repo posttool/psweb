@@ -53,6 +53,7 @@ public class TreeModule extends WebStoreModule
 	@Export(ParameterNames={"name","root_class","root_id","root_data"})
 	public Entity CreateTree(UserApplicationContext uctx,String name,String root_class,String root_id,Entity root_data) throws WebApplicationException,PersistenceException
 	{
+		
 		Entity user = (Entity)uctx.getUser();
 		Entity t = getTreeForUserByName(user,name);
 		if(t != null)
@@ -72,6 +73,7 @@ public class TreeModule extends WebStoreModule
 		UPDATE(root_node,
 				TREE_NODE_FIELD_TREE,tree);
 		
+		System.out.println("CREATED TREE "+tree);
 		return tree;
 	}
 	
@@ -255,7 +257,7 @@ public class TreeModule extends WebStoreModule
 	
 	public Entity cloneTree(Entity tree,String new_tree_name) throws PersistenceException
 	{
-		return cloneSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),new_tree_name);	
+		return cloneSubTree(EXPAND((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE)),new_tree_name);	
 	}
 	
 	public Entity cloneSubTree(Entity node,String new_tree_name) throws PersistenceException
@@ -458,6 +460,7 @@ public class TreeModule extends WebStoreModule
 	//make this non recursive! //
 	public void applyTreeFunctor(Entity entity_node,TreeFunctor f,int iterate_style) throws Exception
 	{
+		entity_node = EXPAND(entity_node);
 		List<Entity> child_nodes = (List<Entity>)entity_node.getAttribute(TREE_NODE_FIELD_CHILDREN);
 		
 		if(iterate_style == ITERATE_STYLE_PREORDER)
@@ -483,34 +486,51 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity last_parent_node;
 		Entity cloned_tree;
+		Entity original_root_node;
 		ArrayDeque<Entity> parent_stack;
 		Map<Long,Entity> parent_map;
 		
-		public clone_functor(Entity node,String new_tree_name) throws PersistenceException
+		public clone_functor(Entity root_node,String new_tree_name) throws PersistenceException
 		{
-			Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
-			cloned_tree = CLONE_SHALLOW(tree);
-			cloned_tree.setAttribute(TREE_FIELD_NAME, new_tree_name);
 			parent_map = new HashMap<Long, Entity>();
+			
+			Entity creator = (Entity)root_node.getAttribute(FIELD_CREATOR);
+			cloned_tree = createTree(creator, new_tree_name, (String)root_node.getAttribute(TREE_NODE_FIELD_CLASS), (String)root_node.getAttribute(TREE_NODE_FIELD_ID), (Entity)root_node.getAttribute(TREE_NODE_FIELD_DATA));
+			Entity cloned_root_node = (Entity)cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE);
+			original_root_node = root_node;
+			parent_map.put(root_node.getId(),(Entity) cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE));
+//			Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
+//			cloned_tree = CLONE_SHALLOW(tree);
+//			cloned_tree.setAttribute(TREE_FIELD_NAME, new_tree_name);
+
+			System.out.println("CLONING TREE FROM NODE "+root_node);
+			System.out.println("CLONED TREE IS "+cloned_tree);
+			System.out.println("CLONED ROOT NODE IS "+cloned_root_node);
 		}
 		
 		public void apply(Entity entity_node) throws Exception
 		{
-			Entity parent_node = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
-			Entity cloned_node   = entity_node.cloneShallow();
-			if(parent_node == null)//root node//
+			
+			
+			if(entity_node.equals(original_root_node))//root node//
 			{
-				cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList<Entity>());
-				cloned_node.setAttribute(TREE_NODE_FIELD_TREE, cloned_tree);
-				cloned_node = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR),cloned_node);				
-				parent_map.put(entity_node.getId(), cloned_node);
+				System.out.println("CLONING ENTITY NODE  "+entity_node);
+				//cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList<Entity>());
+				//cloned_node.setAttribute(TREE_NODE_FIELD_TREE, cloned_tree);
+				//cloned_node = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR),cloned_node);				
 				
-				updateTree(cloned_tree, 
-						  (String)cloned_tree.getAttribute(TREE_FIELD_NAME),
-						   cloned_node);
+				
+				//updateTree(cloned_tree, 
+				//		  (String)cloned_tree.getAttribute(TREE_FIELD_NAME),
+				//		   cloned_node);
 			}
 			else
 			{
+				System.out.println("CLONING ENTITY NODE "+entity_node);
+				
+				Entity cloned_node   = entity_node.cloneShallow();	
+				Entity parent_node = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+				
 				cloned_node.setAttribute(TREE_NODE_FIELD_TREE, cloned_tree);
 				cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList<Entity>());
 				cloned_node.setAttribute(TREE_NODE_FIELD_PARENT_NODE, parent_map.get(parent_node.getId()));				
@@ -519,6 +539,7 @@ public class TreeModule extends WebStoreModule
 				if(((List<Entity>)entity_node.getAttribute(TREE_NODE_FIELD_CHILDREN)).size()!=0)
 					parent_map.put(entity_node.getId(),cloned_node);
 				
+				System.out.println("CLONED NODE IS "+cloned_node);
 			}
 			
 		}
