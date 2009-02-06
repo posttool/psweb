@@ -243,6 +243,7 @@ public class TreeModule extends WebStoreModule
 		List<Entity> deletees = (List<Entity>)df.getReturnObject();
 		if(tree != null)
 			DELETE(tree);
+		
 		return deletees;
 	}
 	
@@ -511,18 +512,9 @@ public class TreeModule extends WebStoreModule
 		public void apply(Entity entity_node) throws Exception
 		{
 			
-			
-			if(entity_node.equals(original_root_node))//root node//
+			if(entity_node.equals(original_root_node))//root node..we already accounted for this above//
 			{
 				System.out.println("CLONING ENTITY NODE  "+entity_node);
-				//cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList<Entity>());
-				//cloned_node.setAttribute(TREE_NODE_FIELD_TREE, cloned_tree);
-				//cloned_node = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR),cloned_node);				
-				
-				
-				//updateTree(cloned_tree, 
-				//		  (String)cloned_tree.getAttribute(TREE_FIELD_NAME),
-				//		   cloned_node);
 			}
 			else
 			{
@@ -565,6 +557,7 @@ public class TreeModule extends WebStoreModule
 		
 		public void apply(Entity entity_node) throws Exception
 		{
+			System.out.println("DELETEING NODE: "+entity_node);
 			deleted_nodes.add(DELETE(entity_node));
 		}
 
