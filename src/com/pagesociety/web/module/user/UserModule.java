@@ -508,160 +508,15 @@ public class UserModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_ROLE, EntityIndex.TYPE_ARRAY_MEMBERSHIP_INDEX, FIELD_ROLES);
 	}
 	
-	//raw stuff//
-	
-
-	public static final int RAW_SUBMODE_DO_LOGIN   = 0x01;
-	public static final int RAW_SUBMODE_DO_LOGOUT  = 0x02;
-	public static final int RAW_SUBMODE_SHOW_USER  = 0x03;
-	
-	public static final String RETURN_TO  = "return_to";
-	
-	@Export
-	public void Exec(UserApplicationContext uctx,RawCommunique c)
-	{
-		HttpServletRequest  request  = null;
-		HttpServletResponse response = null;
-	       
-		StringBuilder buf = new StringBuilder();
-		try {
-			
-				request   = (HttpServletRequest)c.getRequest();
-				response  = (HttpServletResponse)c.getResponse();
-				
-				//TODO: this turns into get execution context or get stack//
-				//[adress of caller - modulename,methodname,submode]
-				//[submode or state int]
-				//[map of args]
-				//StackFrame f = GET_STACK_FRAME();
-				//if(f== null)
-				//	PUSH_NEW_STACK_FRAME();
-				//RETURN(f.execute());
-				int state = RAW_SUBMODE_DEFAULT;
-				try{
-					state = Integer.parseInt(request.getParameter("state"));
-				}catch(Exception e)
-				{
-				}
-
-				String return_to = (String)uctx.getProperty(RETURN_TO);
-				if(return_to == null)
-				{
-					return_to = RAW_MODULE_EXEC_ROOT()+"/Exec/.raw";
-				}
-				
-				switch(state)
-				{
-					case RAW_SUBMODE_DO_LOGIN:
-						String e = request.getParameter("email");//arg_email
-						String p = Util.stringToHexEncodedMD5(request.getParameter("password"));//arg_password
-						
-						try{
-							Login(uctx,e,p);
-							//GOTO
-							JS_REDIRECT(buf, RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state="+RAW_SUBMODE_SHOW_USER);
-							response.getWriter().println(buf.toString());
-							return;
-						}catch(LoginFailedException lfe)
-						{
-							//GOTO
-							JS_REDIRECT(buf, RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?error=login%20failed");
-							response.getWriter().println(buf.toString());
-							return;
-						}
-					case RAW_SUBMODE_DO_LOGOUT:
-						Logout(uctx);
-						//RETURN(uctx.getUser());
-						//GOTO
-						JS_REDIRECT(buf, return_to);
-						uctx.setProperty(RETURN_TO, null);
-						response.getWriter().println(buf.toString());
-						return;
-					case RAW_SUBMODE_SHOW_USER:
-						render_showuser_fragment(buf,(Entity)uctx.getUser());
-						//RETURN();
-						JS_TIMED_REDIRECT(buf, return_to, 1500);
-						uctx.setProperty(RETURN_TO, null);
-						DOCUMENT_END(buf);
-						response.getWriter().println(buf.toString());
-						return;
-					case RAW_SUBMODE_DEFAULT:
-					default:
-						if(uctx.getUser() == null)
-							render_login_screen(buf,request.getParameter("error"));
-						else
-							render_logout_screen(buf,(Entity)uctx.getUser());
-						response.getWriter().println(buf.toString());
-						return;				
-				}
-			
-			}catch(Exception e)
-			{
-				ERROR(e);
-				try{
-					response.getWriter().println("<font color='red'>ERROR: "+e.getClass().getName()+" "+e.getMessage()+"</FONT>");
-				}catch(IOException ioe)
-				{
-					ERROR(ioe);
-				}
-
-			}
-	}
-		
-	private void render_showuser_fragment(StringBuilder buf, Entity user)
-	{
-		DOCUMENT_START(buf, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-		P(buf);
-		SPAN(buf,"LOGIN",16);
-		P(buf);
-		if(user != null)
-			SPAN(buf,"You are currently logged in as "+user.getAttribute(UserModule.FIELD_EMAIL),12);
-		else
-			SPAN(buf,"You not currently logged in.",12);
-	}
-	
-	private void render_login_screen(StringBuilder buf, String message)
-	{
-
-		DOCUMENT_START(buf, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-		P(buf);
-		SPAN(buf,"",18);
-		P(buf);
-		if(message != null)
-		{
-			SPAN(buf,message,RAW_UI_ERROR_COLOR,16);
-			P(buf);
-		}
-		
-		FORM_START(buf,RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state="+RAW_SUBMODE_DO_LOGIN, "POST");
-			TABLE_START(buf, 0, 400);
-				TR_START(buf);
-				TD(buf, "email:");TD_START(buf);FORM_INPUT_FIELD(buf, "email", 30);TD_END(buf);
-				TR_END(buf);
-				TR_START(buf);
-				TD(buf, "password:");TD_START(buf);FORM_PASSWORD_FIELD(buf, "password", 30);TD_END(buf);
-				TR_END(buf);
-		    TABLE_END(buf);
-		 FORM_SUBMIT_BUTTON(buf, "Login");
-		FORM_END(buf);
-		DOCUMENT_END(buf);
-	}
-	
-	private void render_logout_screen(StringBuilder buf, Entity user)
-	{
-		render_showuser_fragment(buf, user);
-		P(buf);
-		A(buf,RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state="+RAW_SUBMODE_DO_LOGOUT,"[ LOGOUT ]");
-		DOCUMENT_END(buf);
-	}
-	
-
 	@Export
 	public void Exec2(UserApplicationContext uctx,RawCommunique c) 
 	{
 		DO_EXEC(uctx, c);
 	}
 	
+	private static final int RAW_SUBMODE_DO_LOGIN 	  = 0x01;
+	private static final int RAW_SUBMODE_DO_LOGOUT 	  = 0x02;
+	private static final int RAW_SUBMODE_SHOW_USER = 0x03;
 	private void setup_ui() throws InitializationException
 	{
 		try{
@@ -676,7 +531,8 @@ public class UserModule extends WebStoreModule
 		}
 	}
 	
-	//TODO need a cutpoint between dispatch and mode execution //
+	//TODO need a cutpoint between dispatch and mode execution 
+	//for validating user   //
 	private void submode_default(UserApplicationContext uctx,Map<String,Object> params)
 	{
 		if(uctx.getUser() != null)
@@ -688,19 +544,21 @@ public class UserModule extends WebStoreModule
 			//HANDLE ERRORS AND MESSAGES IN DOCUMENT_START
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
-			SPAN(uctx,"",18);
+			SPAN(uctx,"LOGIN",18);BR(uctx);DISPLAY_ERROR(uctx,params);BR(uctx);DISPLAY_INFO(uctx,params);
 			P(uctx);
 			FORM_START(uctx,getName(),RAW_SUBMODE_DO_LOGIN);
 				TABLE_START(uctx, 0, 400);
 					TR_START(uctx);
-					TD(uctx, "email:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "email", 30);TD_END(uctx);
+					TD(uctx, "email:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "email", 30,(String)params.get("email"));TD_END(uctx);
 					TR_END(uctx);
 					TR_START(uctx);
 					TD(uctx, "password:");TD_START(uctx);FORM_PASSWORD_FIELD(uctx, "password", 30);TD_END(uctx);
 					TR_END(uctx);
 				TABLE_END(uctx);
+				P(uctx);
 			 FORM_SUBMIT_BUTTON(uctx, "Login");
-		   FORM_END(uctx);
+		   
+		FORM_END(uctx);
 		DOCUMENT_END(uctx);
 		}
 	}
@@ -713,14 +571,13 @@ public class UserModule extends WebStoreModule
 		try{
 			Login(uctx,e,p);
 			RETURN(uctx);
-
 		}catch(LoginFailedException lfe)
 		{
-			RETURN(uctx);
+			GOTO_WITH_ERROR(uctx,RAW_SUBMODE_DEFAULT,"Bad Login.",params);
 		}
 		catch(Exception ee)
 		{
-			ERROR(ee);
+			ERROR_PAGE(uctx,ee);
 		}
 	}
 	
@@ -729,7 +586,7 @@ public class UserModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		if(user == null)
 		{
-			GOTO(uctx, RAW_SUBMODE_DEFAULT);
+			GOTO_WITH_INFO(uctx,RAW_SUBMODE_DEFAULT," you have been logged out.",params);
 		}
 		else if(params.get("do_logout") != null)
 		{
@@ -752,7 +609,7 @@ public class UserModule extends WebStoreModule
 			P(uctx);
 			A(uctx,getName(),RAW_SUBMODE_DO_LOGOUT,"[ LOGOUT ]","do_logout","true");
 			DOCUMENT_END(uctx);
-		}
+		} 
 	}
 	
 	private void submode_showuser(UserApplicationContext uctx,Map<String,Object> params)
@@ -771,7 +628,7 @@ public class UserModule extends WebStoreModule
 		//JS_TIMED_REDIRECT(buf, return_to, 1500);
 		//uctx.setProperty(RETURN_TO, null);
 		DOCUMENT_END(uctx);//DOCUMENT_END_RETURN_IN(uctx,3000);
-		RETURN(uctx);
+		//RETURN(uctx);
 	}
 	
 }
