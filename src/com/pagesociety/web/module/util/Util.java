@@ -3,6 +3,8 @@ package com.pagesociety.web.module.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import com.pagesociety.util.RandomGUID;
+
 public class Util 
 {
 	public static String stringToHexEncodedMD5(String s)
@@ -29,5 +31,10 @@ public class Util
 			nsae.printStackTrace();
 			return "--- NO MD5 ALGORITHM AVAILABLE";
 		}
+	}
+	
+	public static String getGUID()
+	{
+		return RandomGUID.getGUID();
 	}
 }
