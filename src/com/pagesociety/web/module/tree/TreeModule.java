@@ -521,17 +521,22 @@ public class TreeModule extends WebStoreModule
 				System.out.println("CLONING ENTITY NODE "+entity_node);
 				
 				Entity cloned_node   = entity_node.cloneShallow();	
-				Entity parent_node = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+				Entity parent_node 	 = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+				
+				Entity cloned_parent_node = parent_map.get(parent_node.getId()) ;
 				
 				cloned_node.setAttribute(TREE_NODE_FIELD_TREE, cloned_tree);
-				cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList<Entity>());
-				cloned_node.setAttribute(TREE_NODE_FIELD_PARENT_NODE, parent_map.get(parent_node.getId()));				
+				cloned_node.setAttribute(TREE_NODE_FIELD_PARENT_NODE, cloned_parent_node);				
+				cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList());				
 				cloned_node = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR),cloned_node);
 				
 				if(((List<Entity>)entity_node.getAttribute(TREE_NODE_FIELD_CHILDREN)).size()!=0)
 					parent_map.put(entity_node.getId(),cloned_node);
 				
+				
 				System.out.println("CLONED NODE IS "+cloned_node);
+				if(cloned_parent_node != null)
+					System.out.println("CLONED PARENT NODE IS "+GET(TREE_NODE_ENTITY,cloned_parent_node.getId()));
 			}
 			
 		}
