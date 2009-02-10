@@ -499,7 +499,7 @@ public class TreeModule extends WebStoreModule
 			cloned_tree = createTree(creator, new_tree_name, (String)root_node.getAttribute(TREE_NODE_FIELD_CLASS), (String)root_node.getAttribute(TREE_NODE_FIELD_ID), (Entity)root_node.getAttribute(TREE_NODE_FIELD_DATA));
 			Entity cloned_root_node = (Entity)cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE);
 			original_root_node = root_node;
-			parent_map.put(root_node.getId(),(Entity) cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE));
+			parent_map.put(root_node.getId(),(Entity) cloned_root_node);
 //			Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
 //			cloned_tree = CLONE_SHALLOW(tree);
 //			cloned_tree.setAttribute(TREE_FIELD_NAME, new_tree_name);
@@ -515,6 +515,7 @@ public class TreeModule extends WebStoreModule
 			if(entity_node.equals(original_root_node))//root node..we already accounted for this above//
 			{
 				System.out.println("CLONING ENTITY NODE  "+entity_node);
+
 			}
 			else
 			{
@@ -530,13 +531,14 @@ public class TreeModule extends WebStoreModule
 				cloned_node.setAttribute(TREE_NODE_FIELD_CHILDREN, new ArrayList());				
 				cloned_node = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR),cloned_node);
 				
-				if(((List<Entity>)entity_node.getAttribute(TREE_NODE_FIELD_CHILDREN)).size()!=0)
+				List<Entity> original_children =  (List<Entity>)entity_node.getAttribute(TREE_NODE_FIELD_CHILDREN);
+				if(original_children != null && original_children.size()!=0)
+				{
 					parent_map.put(entity_node.getId(),cloned_node);
-				
+				}
 				
 				System.out.println("CLONED NODE IS "+cloned_node);
-				if(cloned_parent_node != null)
-					System.out.println("CLONED PARENT NODE IS "+GET(TREE_NODE_ENTITY,cloned_parent_node.getId()));
+
 			}
 			
 		}
