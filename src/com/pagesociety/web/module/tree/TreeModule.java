@@ -129,7 +129,15 @@ public class TreeModule extends WebStoreModule
 		//by default tree nodes are appended to the parents list of children. 
 		//we use Integer.MAX_VALUE to mean create and place last.
 		if(parent_child_index != Integer.MAX_VALUE)
-			reparentTreeNode(new_node, parent_node, parent_child_index);
+		{
+			try{
+				reparentTreeNode(new_node, parent_node, parent_child_index);
+			}catch(WebApplicationException e)
+			{
+				//this will never happen..ha ha famous last words//
+				ERROR(e);
+			}
+		}
 		return new_node;
 	}
 
@@ -164,11 +172,15 @@ public class TreeModule extends WebStoreModule
 		return reparentTreeNode(tree_node,parent_node,new_parent_child_index);
 	}
 	
-	public Entity reparentTreeNode(Entity tree_node,Entity new_parent,int new_parent_idx) throws PersistenceException
+	public Entity reparentTreeNode(Entity tree_node,Entity new_parent,int new_parent_idx) throws PersistenceException,WebApplicationException
 	{
 		if(new_parent == null)
 			throw new PersistenceException("NEW PARENT CANNOT BE NULL WHEN YOU ARE REPARENTING TREE NODE");
-		
+
+		List<Entity> ancestors = getAncestors(new_parent, new ArrayList());
+		if(ancestors.contains(tree_node))
+			throw new WebApplicationException("CANNOT REPARENT "+tree_node.getId()+" TO ONE OF ITS CHILDREN!");
+	
 		List<Entity> children = (List<Entity>)new_parent.getAttribute(TREE_NODE_FIELD_CHILDREN);
 		
 		if(new_parent_idx < 0)
@@ -200,6 +212,18 @@ public class TreeModule extends WebStoreModule
 	}
 
 
+
+	public List<Entity> getAncestors(Entity node,List<Entity> return_list) throws PersistenceException
+	{
+		Entity parent = (Entity)node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+		if(parent != null)
+		{
+			return_list.add(0,parent);
+			getAncestors(EXPAND(parent), return_list);
+		}
+		return return_list;
+	}
+	
 	@Export(ParameterNames={"entity_node_id"})
 	public List<Entity> DeleteTreeNode(UserApplicationContext uctx,long entity_node_id) throws WebApplicationException,PersistenceException
 	{
@@ -553,7 +577,9 @@ public class TreeModule extends WebStoreModule
 			return cloned_tree;
 		}
 	}
+
 	
+
 	public class delete_functor implements TreeFunctor
 	{
 		private List<Entity> deleted_nodes;
