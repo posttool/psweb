@@ -211,7 +211,14 @@ public class TreeModule extends WebStoreModule
 		return SAVE_ENTITY(tree_node);
 	}
 
-
+	@Export (ParameterNames={"entity_node_id"})
+	public List<Entity> getAncestors(UserApplicationContext uctx,long entity_node_id) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
+		GUARD(guard.canGetAncestors(user,tree_node));
+		return getAncestors(tree_node,new ArrayList<Entity>() );
+	}
 
 	public List<Entity> getAncestors(Entity node,List<Entity> return_list) throws PersistenceException
 	{

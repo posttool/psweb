@@ -34,6 +34,8 @@ public class DefaultTreeGuard extends PermissionsModule implements ITreeGuard
 	{return false;}
 	public boolean canGetTreeNodeById(Entity user, String node_id)throws PersistenceException
 	{return false;}
+	public boolean canGetAncestors(Entity user, Entity tree_node) throws PersistenceException
+	{return false;}
 
 	
 }

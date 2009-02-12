@@ -19,6 +19,7 @@ public interface ITreeGuard
 	public boolean canFillNode(Entity user, Entity node,int subtree_fill_depth,int data_fill_depth)throws PersistenceException;
 	public boolean canGetTreeNodesByClass(Entity user, String node_classname)throws PersistenceException;
 	public boolean canGetTreeNodeById(Entity user, String node_id)throws PersistenceException;
+	public boolean canGetAncestors(Entity user, Entity tree_node) throws PersistenceException;
 	
 	
 }
