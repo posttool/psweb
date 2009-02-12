@@ -60,7 +60,9 @@ public class UserModuleRawUI extends RawUIModule
 			//HANDLE ERRORS AND MESSAGES IN DOCUMENT_START
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
-			SPAN(uctx,"LOGIN",18);BR(uctx);DISPLAY_ERROR(uctx,params);BR(uctx);DISPLAY_INFO(uctx,params);
+			SPAN(uctx,"LOGIN",18);
+			DISPLAY_ERROR(uctx,params);
+			DISPLAY_INFO(uctx,params);
 			P(uctx);
 			FORM_START(uctx,getName(),RAW_SUBMODE_DO_LOGIN);
 				TABLE_START(uctx, 0, 400);
@@ -86,7 +88,9 @@ public class UserModuleRawUI extends RawUIModule
 		
 		try{
 			user_module.Login(uctx,e,p);
-			RETURN(uctx);
+			//RETURN(uctx);
+			GOTO(uctx,RAW_SUBMODE_SHOW_USER);
+			return;
 		}catch(LoginFailedException lfe)
 		{
 			GOTO_WITH_ERROR(uctx,RAW_SUBMODE_DEFAULT,"Bad Login.",params);
@@ -102,7 +106,9 @@ public class UserModuleRawUI extends RawUIModule
 		Entity user = (Entity)uctx.getUser();
 		if(user == null)
 		{
-			GOTO_WITH_INFO(uctx,RAW_SUBMODE_DEFAULT," you have been logged out.",params);
+			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			SPAN(uctx,"You have been logged out",12);
+			DOCUMENT_END_RETURN_IN(uctx, 1500);
 		}
 		else if(params.get("do_logout") != null)
 		{
@@ -140,11 +146,9 @@ public class UserModuleRawUI extends RawUIModule
 		else
 			SPAN(uctx,"You not currently logged in.",12);
 
-		//RETURN_TO_CALLER();
-		//JS_TIMED_REDIRECT(buf, return_to, 1500);
-		//uctx.setProperty(RETURN_TO, null);
-		DOCUMENT_END(uctx);//DOCUMENT_END_RETURN_IN(uctx,3000);
-		//RETURN(uctx);
+		//DOCUMENT_END(uctx);
+		DOCUMENT_END_RETURN_IN(uctx,1500);
+
 	}
 	
 }
