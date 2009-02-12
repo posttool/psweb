@@ -3,6 +3,7 @@ package com.pagesociety.web.module.encryption;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,15 +16,21 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.util.HexUtil;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.LoginFailedException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
+import com.pagesociety.web.module.PermissionsModule;
+import com.pagesociety.web.module.RawUIModule;
 import com.pagesociety.web.module.WebModule;
+import com.pagesociety.web.module.user.UserModule;
+import com.pagesociety.web.module.util.Util;
 
 //SECRET KEY AES ENCRYPTION//
 //SEE:
@@ -34,6 +41,7 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 {	
 	
 	private static final String PARAM_ENCRYPTION_STRENGTH = "encryption-strength";//num of chars used in phrase 32 is 256 bit//
+	public static final String VERIFY_KEY_DATA_FILENAME = "000";
 	private int encryption_strength;
 	private byte[] secret_phrase_bytes;
 	private SecretKeySpec key;
@@ -54,7 +62,7 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 		}
 	}
 
-	private static final String VERIFY_KEY_DATA_FILENAME = "000";
+	
 	private void setup_secret_key(WebApplication app) throws WebApplicationException,InitializationException
 	{
 		File key_test_file = GET_MODULE_DATA_FILE(app, VERIFY_KEY_DATA_FILENAME,false);
@@ -86,7 +94,7 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 				break;
 		}
 		
-		set_secret_key_phrase(secret_phrase);
+		set_secret_phrase(secret_phrase);
 		key_test_file = CREATE_MODULE_DATA_FILE(app, VERIFY_KEY_DATA_FILENAME);
 		try{
 			FileWriter fw = new FileWriter(key_test_file);
@@ -101,13 +109,51 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 	}
 	
 
-	private void set_secret_key_phrase(String phrase)
+	public void setSecretKeyPhrase(String phrase) throws WebApplicationException
+	{
+		String v_word = null;
+		int v_encryption_strength = 0;
+		try{
+			File key_test_file = GET_MODULE_DATA_FILE(getApplication(),VERIFY_KEY_DATA_FILENAME,false);
+			BufferedReader reader = new BufferedReader(new FileReader(key_test_file));
+			v_encryption_strength = Integer.parseInt(reader.readLine());
+			if(v_encryption_strength != encryption_strength)
+				throw new WebApplicationException("ENCRYPTION STRENGTHS DONT MATCH IN MODULE SPECIFICATION AND WHAT IS ON DISK. ON DISK: "+v_encryption_strength+" IN MODULE: "+encryption_strength);
+			v_word  = reader.readLine();
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new WebApplicationException("SET KEY FAILED.");
+		}
+		
+		if(phrase.length() < encryption_strength)
+			throw new WebApplicationException("ENCRYPTION STRENGTHS DONT MATCH IN MODULE SPECIFICATION AND WHAT IS ON DISK. ON DISK: "+v_encryption_strength+" IN MODULE: "+encryption_strength);
+
+		set_secret_phrase(phrase);	
+		try{
+			decryptString(v_word);
+		}catch(Exception e)
+		{
+			clearKey();
+			throw new WebApplicationException("DECRYPT FAILED. SETTING KEY TO NULL.TRY AGAIN.");
+		}		
+
+	}
+	
+	private void set_secret_phrase(String phrase)
 	{
 		secret_phrase_bytes = new byte[phrase.length()];
 		System.arraycopy(phrase.getBytes(), 0, secret_phrase_bytes, 0, secret_phrase_bytes.length);
-		key 		 = new SecretKeySpec(secret_phrase_bytes,0,encryption_strength,"AES");
+		key 		 = new SecretKeySpec(secret_phrase_bytes,0,encryption_strength,"AES");		
 	}
-		
+	
+	public int getEncryptionStrength()
+	{
+		return encryption_strength;
+	}
+	
+
+	
 //////////////MODULE FUNCTIONS/////////////////////////////////////////////////
 	@Export
 	public String EncryptString(UserApplicationContext uctx,String s) throws PersistenceException,WebApplicationException 
@@ -174,97 +220,6 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 	{
 		secret_phrase_bytes = null;
 		key = null;
-	}
-	
-	@Export
-	public void configure(UserApplicationContext uctx, RawCommunique c) 
-	{
-		HttpServletRequest request   = null;
-		HttpServletResponse response = null;
-
-		try {
-			request   = (HttpServletRequest)c.getRequest();
-			response = (HttpServletResponse)c.getResponse();
-			StringBuilder buf = new StringBuilder();
-			DOCUMENT_START(buf, getName(), "black", "arial", "aqua", 14,"white","yellow");
-			if(secret_phrase_bytes != null)
-			{
-				buf.append("OK "+getName()+" IS CONFIGURED.");
-				response.getWriter().println(buf.toString());
-				return;
-			}
-			else
-			{
-				File key_test_file = GET_MODULE_DATA_FILE(getApplication(), VERIFY_KEY_DATA_FILENAME,false);
-				BufferedReader reader = new BufferedReader(new FileReader(key_test_file));
-				int v_encryption_strength = Integer.parseInt(reader.readLine());
-				if(v_encryption_strength != encryption_strength)
-					throw new WebApplicationException("ENCRYPTION STRENGTHS DONT MATCH IN MODULE SPECIFICATION AND WHAT IS ON DISK. ON DISK: "+v_encryption_strength+" IN MODULE: "+encryption_strength);
-
-				String v_word  = reader.readLine();
-				
-				String secret_phrase = request.getParameter("secret_phrase");
-				if(secret_phrase != null && !secret_phrase.equals(""))
-				{
-					if(secret_phrase.length() < encryption_strength)
-					{
-						buf.append("ERROR: SECRET PHRASE MUST BE AT LEAST "+encryption_strength+" CHARACTERS LONG. TRY AGAIN");		
-						P(buf);
-						render_phrase_form(buf);
-						DOCUMENT_END(buf);
-						response.getWriter().println(buf.toString());
-						return;
-					}
-						set_secret_key_phrase(secret_phrase);
-					try{
-						decryptString(v_word);
-					}catch(Exception e)
-					{
-						clearKey();
-						buf.append("ERROR: BAD KEY. TRY AGAIN.");
-						P(buf);
-						render_phrase_form(buf);
-						DOCUMENT_END(buf);
-						response.getWriter().println(buf.toString());
-						return;
-					}
-					P(buf);
-					buf.append(getName()+" IS CONFIGURED AND READY TO ENCRYPT/DECRYPT.");
-					DOCUMENT_END(buf);
-					response.getWriter().println(buf.toString());
-					return;
-				}
-				else
-				{
-					render_phrase_form(buf);
-					DOCUMENT_END(buf);
-					response.getWriter().println(buf.toString());
-					return;
-				}
-			}
-
-		} catch (Exception e) 
-		{
-			ERROR(e);
-			try{
-				response.getWriter().println("<font color='red'>ERROR: "+e.getClass().getName()+" "+e.getMessage());
-			}catch(IOException ioe)
-			{
-				ERROR(ioe);
-			}
-		}
-	}
-	
-	private void render_phrase_form(StringBuilder buf)
-	{
-		FORM_START(buf, getApplication().getConfig().getWebRootUrl()+"/"+getName()+"/configure/.raw", "post");
-		TABLE_START(buf, 1, 400);
-		TR_START(buf);
-		TD(buf, "ENTER SECRET PHRASE:");TD_START(buf);FORM_PASSWORD_FIELD(buf, "secret_phrase",32);TD_END(buf);
-		TR_END(buf);
-		TABLE_END(buf);
-		FORM_SUBMIT_BUTTON(buf, "submit");
-		FORM_END(buf);						
 	}
 	
 
