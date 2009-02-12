@@ -56,7 +56,7 @@ public class EncryptionModuleRawUI extends RawUIModule
 			SPAN(uctx,"ENCRYPTION PHRASE",16);
 			P(uctx);
 			SPAN(uctx,"encryption phrase is set. please resart server to reset.");
-			DOCUMENT_END(uctx);
+			DOCUMENT_END_RETURN_IN(uctx, 1500);
 		}
 		else if(params.get("do_submit") != null)
 		{
@@ -75,13 +75,14 @@ public class EncryptionModuleRawUI extends RawUIModule
 		else
 		{
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-			P(uctx);
-			SPAN(uctx,"ENCRYPTION PHRASE",18);BR(uctx);DISPLAY_ERROR(uctx,params);BR(uctx);DISPLAY_INFO(uctx,params);
+			SPAN(uctx,"ENCRYPTION PHRASE",18);
+			DISPLAY_ERROR(uctx,params);
+			DISPLAY_INFO(uctx,params);
 			P(uctx);
 			FORM_START(uctx,getName(),RAW_SUBMODE_DEFAULT,"do_submit",true);
 				TABLE_START(uctx, 0, 400);
 					TR_START(uctx);
-					TD(uctx, "phrase:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "phrase", 30,null);TD_END(uctx);
+					TD(uctx, "phrase:");TD_START(uctx);FORM_PASSWORD_FIELD(uctx, "phrase", 30);TD_END(uctx);
 					TR_END(uctx);
 					TR_END(uctx);
 				TABLE_END(uctx);
