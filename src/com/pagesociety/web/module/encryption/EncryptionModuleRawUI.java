@@ -30,19 +30,8 @@ public class EncryptionModuleRawUI extends RawUIModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_ENCRYPTION_MODULE,IEncryptionModule.class,true);
 	}
-	
-	protected void declareSubmodes(WebApplication app,Map<String,Object> config) throws InitializationException
-	{
-		try{
-			declareSubmode(RAW_SUBMODE_DEFAULT,  "submode_default");
-		}catch(Exception e)
-		{
-			ERROR(e);
-			throw new InitializationException("FAILED BINDING SUBMODE "+e.getMessage());
-		}
-	}
-	
-	public void submode_default(UserApplicationContext uctx,Map<String,Object> params) throws WebApplicationException,FileNotFoundException,IOException
+
+	public void exec(UserApplicationContext uctx,Map<String,Object> params) throws WebApplicationException,FileNotFoundException,IOException
 	{
 		Entity user = (Entity)uctx.getUser();
 		if(!PermissionsModule.IS_ADMIN(user))
