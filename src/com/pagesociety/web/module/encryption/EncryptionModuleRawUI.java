@@ -38,7 +38,7 @@ public class EncryptionModuleRawUI extends RawUIModule
 		{
 			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Encryption module requires login.");
 		
-		}else if( encryption_module.isConfigured())
+		}else if( encryption_module.isConfigured())//this is the return//
 		{	
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
