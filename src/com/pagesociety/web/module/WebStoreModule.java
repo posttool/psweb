@@ -811,7 +811,7 @@ public abstract class WebStoreModule extends WebModule
 	{
 		if(e == null)
 			return null;
-		
+		e = EXPAND(store, e);
 
 		Entity clone = e.cloneShallow();
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
@@ -866,7 +866,7 @@ public abstract class WebStoreModule extends WebModule
 			}	
 		}
 
-		return SAVE_ENTITY(store,clone);
+		return CREATE_ENTITY(store,(Entity)clone.getAttribute(FIELD_CREATOR),clone);
 	}
 	
 	

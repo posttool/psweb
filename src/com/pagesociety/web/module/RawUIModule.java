@@ -35,11 +35,18 @@ public class RawUIModule extends WebModule
 		DO_EXEC(uctx, c);
 	}
 
+	//this is just the default. you can override this if you want more submodes//
 	protected void declareSubmodes(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		
+		try{
+			declareSubmode(RAW_SUBMODE_DEFAULT,  "exec");
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new InitializationException("FAILED BINDING SUBMODE "+e.getMessage());
+		}
 	}
-	
+
 
 	///HTML MACROS FOR RAW MODULE CALLS//
 	
@@ -70,6 +77,22 @@ public class RawUIModule extends WebModule
 	
 	protected void DOCUMENT_END(UserApplicationContext uctx)
 	{
+		DOCUMENT_END(get_user_buf(uctx));
+	}
+	
+	protected void DOCUMENT_END_RETURN_IN(UserApplicationContext uctx,int ms)
+	{
+		ui_module_stack_frame caller = pop_caller(uctx);
+			
+		String caller_module = getName();
+		int caller_return_to_submode = RAW_SUBMODE_DEFAULT;
+		if(caller != null)
+		{
+			caller_module 			 = caller.caller_module;
+			caller_return_to_submode = caller.caller_return_to_submode;
+			JS_TIMED_REDIRECT(uctx, caller_module, caller_return_to_submode,ms);
+		}
+		
 		DOCUMENT_END(get_user_buf(uctx));
 	}
 	
@@ -508,6 +531,13 @@ public class RawUIModule extends WebModule
 		buf.append("</script>\n");
 	}
 
+	protected void JS_TIMED_REDIRECT(UserApplicationContext uctx,String module_name,int submode,int ms)
+	{
+		String url = RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw";
+		if(submode != RAW_SUBMODE_DEFAULT)
+			url += "?"+KEY_UI_MODULE_SUBMODE_KEY+"="+submode;
+		JS_TIMED_REDIRECT(get_user_buf(uctx),url, ms);
+	}
 	
 	protected void JS_TIMED_REDIRECT(UserApplicationContext uctx,String url,int ms)
 	{
@@ -537,6 +567,7 @@ public class RawUIModule extends WebModule
 		if(error == null)
 			return;
 		StringBuilder buf = get_user_buf(uctx);
+		BR(uctx);
 		SPAN(uctx, error,RAW_UI_ERROR_COLOR,10);
 	}
 	
@@ -546,6 +577,7 @@ public class RawUIModule extends WebModule
 		if(error == null)
 			return;
 		StringBuilder buf = get_user_buf(uctx);
+		BR(uctx);
 		SPAN(uctx, error,RAW_UI_INFO_COLOR,10);
 
 	}
