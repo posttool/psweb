@@ -246,18 +246,28 @@ public class TreeModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
 		GUARD(guard.canDeleteTree(user,tree));
-		
 		return deleteTree(tree);
 	}
 	
 	public List<Entity> deleteTree(Entity tree) throws PersistenceException
 	{
-		return deleteSubTree(EXPAND((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE)));	
+		return deleteSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),false,false,null);	
+	}
+	
+	public List<Entity> deleteTree(Entity tree,boolean delete_data,boolean delete_data_deep,delete_policy data_delete_deep_policy) throws PersistenceException
+	{
+		return deleteSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),delete_data,delete_data_deep,data_delete_deep_policy);	
 	}
 	
 	public List<Entity> deleteSubTree(Entity node) throws PersistenceException
 	{
-		delete_functor df = new delete_functor();
+		return deleteSubTree(node,false,false,null);		
+	}
+	
+	public List<Entity> deleteSubTree(Entity node,boolean delete_data,boolean delete_data_deep,delete_policy data_delete_deep_policy) throws PersistenceException
+	{
+		node = EXPAND(node);
+		delete_functor df = new delete_functor(delete_data,delete_data_deep,data_delete_deep_policy);
 		Entity tree = null;
 		if(node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
 		{
@@ -289,12 +299,22 @@ public class TreeModule extends WebStoreModule
 	
 	public Entity cloneTree(Entity tree,String new_tree_name) throws PersistenceException
 	{
-		return cloneSubTree(EXPAND((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE)),new_tree_name);	
+		return cloneSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),new_tree_name,false,false,null);	
+	}
+	
+	public Entity cloneTree(Entity tree,String new_tree_name,boolean clone_data,boolean clone_data_deep,clone_policy data_deep_clone_policy) throws PersistenceException
+	{
+		return cloneSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),new_tree_name,clone_data,clone_data_deep,data_deep_clone_policy);	
 	}
 	
 	public Entity cloneSubTree(Entity node,String new_tree_name) throws PersistenceException
 	{
-		clone_functor cf = new clone_functor(node,new_tree_name);
+		return cloneSubTree(node, new_tree_name, false, false, null);
+	}
+	
+	public Entity cloneSubTree(Entity node,String new_tree_name,boolean clone_data,boolean clone_data_deep,clone_policy data_deep_clone_policy) throws PersistenceException
+	{
+		clone_functor cf = new clone_functor(node,new_tree_name,clone_data,clone_data_deep,data_deep_clone_policy);
 		try{
 			applyTreeFunctor(node, cf);
 		}catch(Exception e)
@@ -484,6 +504,7 @@ public class TreeModule extends WebStoreModule
 	public static final int ITERATE_STYLE_PREORDER 	= 0x01;//DEPTH FIRST 
 	public static final int ITERATE_STYLE_POSTORDER = 0x02;
 	//public static final int ITERATE_STYLE_LEVELORDER = 0x03;//unimplemented BREADTH FIRST
+
 	public void applyTreeFunctor(Entity entity_node,TreeFunctor f) throws Exception
 	{
 		applyTreeFunctor(entity_node, f, f.getIterationStyle());
@@ -521,20 +542,22 @@ public class TreeModule extends WebStoreModule
 		Entity original_root_node;
 		ArrayDeque<Entity> parent_stack;
 		Map<Long,Entity> parent_map;
+		boolean clone_data;
+		boolean clone_data_deep;
+		clone_policy data_clone_deep_policy;
 		
-		public clone_functor(Entity root_node,String new_tree_name) throws PersistenceException
+		public clone_functor(Entity root_node,String new_tree_name,boolean clone_data,boolean clone_data_deep,clone_policy clone_data_deep_policy) throws PersistenceException
 		{
-			parent_map = new HashMap<Long, Entity>();
+			this.clone_data 			= clone_data;
+			this.clone_data_deep		= clone_data_deep;
+			this.data_clone_deep_policy = clone_data_deep_policy;
 			
+			parent_map = new HashMap<Long, Entity>();
 			Entity creator = (Entity)root_node.getAttribute(FIELD_CREATOR);
 			cloned_tree = createTree(creator, new_tree_name, (String)root_node.getAttribute(TREE_NODE_FIELD_CLASS), (String)root_node.getAttribute(TREE_NODE_FIELD_ID), (Entity)root_node.getAttribute(TREE_NODE_FIELD_DATA));
 			Entity cloned_root_node = (Entity)cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE);
 			original_root_node = root_node;
 			parent_map.put(root_node.getId(),(Entity) cloned_root_node);
-//			Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
-//			cloned_tree = CLONE_SHALLOW(tree);
-//			cloned_tree.setAttribute(TREE_FIELD_NAME, new_tree_name);
-
 			System.out.println("CLONING TREE FROM NODE "+root_node);
 			System.out.println("CLONED TREE IS "+cloned_tree);
 			System.out.println("CLONED ROOT NODE IS "+cloned_root_node);
@@ -546,15 +569,34 @@ public class TreeModule extends WebStoreModule
 			if(entity_node.equals(original_root_node))//root node..we already accounted for this above//
 			{
 				System.out.println("CLONING ENTITY NODE  "+entity_node);
-
+				
 			}
 			else
 			{
 				System.out.println("CLONING ENTITY NODE "+entity_node);
 				
 				Entity cloned_node   = entity_node.cloneShallow();	
-				Entity parent_node 	 = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+				if(clone_data)
+				{
+					Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
+					Entity cloned_data = null;
+					if(clone_data_deep)
+					{
+						if(data_clone_deep_policy != null)
+							cloned_data = CLONE_DEEP(data, data_clone_deep_policy); 
+						else
+							cloned_data = CLONE_DEEP(data); 
+					}
+					else
+					{
+						if(data != null)
+							cloned_data = data.cloneShallow();
+						cloned_data = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR), cloned_data);
+					}
+					cloned_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
+				}
 				
+				Entity parent_node 	 = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
 				Entity cloned_parent_node = parent_map.get(parent_node.getId()) ;
 				
 				cloned_node.setAttribute(TREE_NODE_FIELD_TREE, cloned_tree);
@@ -590,14 +632,36 @@ public class TreeModule extends WebStoreModule
 	public class delete_functor implements TreeFunctor
 	{
 		private List<Entity> deleted_nodes;
-		public delete_functor()
+		private boolean delete_data;
+		private boolean delete_data_deep;
+		private delete_policy data_delete_deep_policy;
+		public delete_functor(boolean delete_data,boolean delete_data_deep,delete_policy data_delete_deep_policy)
 		{
+			this.delete_data 			 = delete_data;
+			this.delete_data_deep 		 = delete_data_deep;
+			this.data_delete_deep_policy = data_delete_deep_policy;
 			deleted_nodes = new ArrayList<Entity>();
 		}
 		
 		public void apply(Entity entity_node) throws Exception
 		{
 			System.out.println("DELETEING NODE: "+entity_node);
+			if(delete_data)
+			{
+				Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
+				if(delete_data_deep)
+				{
+					if(data_delete_deep_policy != null)
+						DELETE_DEEP(data,data_delete_deep_policy);
+					else
+						DELETE_DEEP(data);
+				}
+				else
+				{
+					if(data != null)
+						DELETE(data);
+				}
+			}
 			deleted_nodes.add(DELETE(entity_node));
 		}
 
