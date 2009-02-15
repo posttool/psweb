@@ -829,7 +829,7 @@ public abstract class WebStoreModule extends WebModule
 				List<Entity> clone_vals = new ArrayList<Entity>(s);
 				for(int j = 0;j <s;j++)
 				{
-					Entity val = vals.get(i);
+					Entity val = vals.get(j);
 					int clone_behavior = f.exec(e, ref_fieldname, val);
 					switch(clone_behavior)
 					{
