@@ -556,6 +556,29 @@ public class TreeModule extends WebStoreModule
 			Entity creator = (Entity)root_node.getAttribute(FIELD_CREATOR);
 			cloned_tree = createTree(creator, new_tree_name, (String)root_node.getAttribute(TREE_NODE_FIELD_CLASS), (String)root_node.getAttribute(TREE_NODE_FIELD_ID), (Entity)root_node.getAttribute(TREE_NODE_FIELD_DATA));
 			Entity cloned_root_node = (Entity)cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE);
+			if(clone_data)
+			{
+				Entity data = (Entity)cloned_root_node.getAttribute(TREE_NODE_FIELD_DATA);
+				System.out.println("CLONING DATA "+data);
+				Entity cloned_data = null;
+				if(clone_data_deep)
+				{
+					if(data_clone_deep_policy != null)
+						cloned_data = CLONE_DEEP(data, data_clone_deep_policy); 
+					else
+						cloned_data = CLONE_DEEP(data); 
+				
+				}
+				else
+				{
+					if(data != null)
+						cloned_data = data.cloneShallow();
+					cloned_data = CREATE_ENTITY((Entity)cloned_root_node.getAttribute(FIELD_CREATOR), cloned_data);
+				}
+				System.out.println("CLONED DATA IS "+cloned_data);
+				cloned_root_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
+				SAVE_ENTITY(cloned_root_node);
+			}			
 			original_root_node = root_node;
 			parent_map.put(root_node.getId(),(Entity) cloned_root_node);
 			System.out.println("CLONING TREE FROM NODE "+root_node);
@@ -579,6 +602,7 @@ public class TreeModule extends WebStoreModule
 				if(clone_data)
 				{
 					Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
+					System.out.println("CLONING DATA "+data);
 					Entity cloned_data = null;
 					if(clone_data_deep)
 					{
@@ -586,6 +610,7 @@ public class TreeModule extends WebStoreModule
 							cloned_data = CLONE_DEEP(data, data_clone_deep_policy); 
 						else
 							cloned_data = CLONE_DEEP(data); 
+					
 					}
 					else
 					{
@@ -593,6 +618,7 @@ public class TreeModule extends WebStoreModule
 							cloned_data = data.cloneShallow();
 						cloned_data = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR), cloned_data);
 					}
+					System.out.println("CLONED DATA IS "+cloned_data);
 					cloned_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
 				}
 				
