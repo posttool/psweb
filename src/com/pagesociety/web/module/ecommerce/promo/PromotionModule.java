@@ -175,6 +175,7 @@ public class PromotionModule extends WebStoreModule
 				   creator,
 				   PROMOTION_FIELD_TITLE,title,
 				   PROMOTION_FIELD_DESCRIPTION,description,
+				   PROMOTION_FIELD_PROGRAM,program,
 				   PROMOTION_FIELD_GR1,0L,
 				   PROMOTION_FIELD_GR2,0L);
 	}
