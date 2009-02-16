@@ -11,12 +11,14 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
+import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.RawUIModule;
 import com.pagesociety.web.upload.MultipartForm;
 import com.pagesociety.web.upload.MultipartFormException;
@@ -46,8 +48,11 @@ public class ExcelDumpModuleRawUI extends RawUIModule
 		String state = (String)params.get("state");
 		if(state == null)
 			state = "default";
-		
-		if(state.equals("excel_dump"))
+		if(!PermissionsModule.IS_ADMIN((Entity)uctx.getUser()))
+		{
+			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Excel Dump module requires admin login.");
+		}
+		else if(state.equals("excel_dump"))
 		{
 			do_excel_dump((HttpServletResponse)GET_RAW_COMMUNIQUE(uctx).getResponse());
 		}
