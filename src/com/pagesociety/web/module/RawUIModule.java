@@ -598,6 +598,7 @@ public class RawUIModule extends WebModule
 	private static final String KEY_UI_MODULE_SUBMODE_KEY   	= "submode";
 	private static final String KEY_UI_MODULE_INFO_KEY   		= "_info_";
 	private static final String KEY_UI_MODULE_ERROR_KEY   		= "_error_";
+
 	
 	protected void DO_EXEC(UserApplicationContext uctx,RawCommunique c) 
 	{
@@ -635,12 +636,25 @@ public class RawUIModule extends WebModule
 		HttpServletResponse response = (HttpServletResponse)c.getResponse();
 		try{
 			response.getWriter().println(get_user_buf(uctx).toString());
-		}catch(Exception e4)
+		}
+		catch(IllegalStateException ise)
+		{
+			//swallow it. someone has already accessed the output stream.
+			//of the RawCommunique. The only place this currently happens
+			//is in exceldump module when we send the dump file back using
+			//the response directly
+		}
+		catch(Exception e4)
 		{
 			ERROR(e4);
 		}
 	}
 	
+
+	protected RawCommunique GET_RAW_COMMUNIQUE(UserApplicationContext uctx)
+	{
+		return (RawCommunique)uctx.getProperty(KEY_UI_MODULE_RAW_COMMUNIQUE);
+	}
 	protected boolean canExecSubmode(Entity user,int submode,Map<String,Object> params)
 	{
 		return true;
@@ -803,7 +817,7 @@ public class RawUIModule extends WebModule
 		return (List<ui_module_stack_frame>)uctx.getProperty(KEY_UI_MODULE_STACK);
 	}
 	
-	private StringBuilder get_user_buf(UserApplicationContext uctx)
+	protected StringBuilder get_user_buf(UserApplicationContext uctx)
 	{
 		return (StringBuilder)uctx.getProperty(KEY_UI_MODULE_OUTPUT_BUF);
 	}
