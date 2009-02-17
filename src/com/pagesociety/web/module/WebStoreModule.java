@@ -57,17 +57,17 @@ public abstract class WebStoreModule extends WebModule
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
 	}	
 
-	protected void defineEntities(Map<String,Object> config)throws PersistenceException,SyncException,InitializationException
+	protected void defineEntities(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
 		/* do nothing by default*/
 	}
 	
-	protected void defineIndexes(Map<String,Object> config)throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
 		/*do nothing by default */
 	}
 	
-	protected void defineRelationships(Map<String,Object> config)throws PersistenceException,SyncException
+	protected void defineRelationships(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
 		/*do nothing by default */
 	}
@@ -157,7 +157,7 @@ public abstract class WebStoreModule extends WebModule
 		return proposed_def;
 	}
 
-	public static EntityDefinition ADD_FIELDS(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,SyncException
+	public static EntityDefinition ADD_FIELDS(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,InitializationException
 	{
 		EntityDefinition existing_def = store.getEntityDefinition(entity_name);
 		if(existing_def == null)
@@ -188,7 +188,7 @@ public abstract class WebStoreModule extends WebModule
 		return store.getEntityDefinition(entity_name);
 	}
 	
-	public static void DEFINE_ENTITY_INDEX(PersistentStore store,String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,SyncException
+	public static void DEFINE_ENTITY_INDEX(PersistentStore store,String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,InitializationException
 	{
 		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
 		for(int i = 0;i < idxs.size();i++)
@@ -738,26 +738,26 @@ public abstract class WebStoreModule extends WebModule
 			throw new WebApplicationException("TRYING TO UPDATE AN UNITINIALIZED ENTITY. "+e.getType()+" HAS ID OF "+e.getId());
 	}
 	
-	public EntityDefinition DEFINE_ENTITY(String entity_name,Object...args) throws PersistenceException,SyncException
+	public EntityDefinition DEFINE_ENTITY(String entity_name,Object...args) throws PersistenceException,InitializationException
 	{
 		EntityDefinition d = DEFINE_ENTITY(store,entity_name,args);
 		associated_entity_definitions.add(d);
 		return d;
 	}
 	
-	public EntityDefinition ADD_FIELDS(String entity_name,Object...args) throws PersistenceException,SyncException
+	public EntityDefinition ADD_FIELDS(String entity_name,Object...args) throws PersistenceException,InitializationException
 	{
 		EntityDefinition d = ADD_FIELDS(store,entity_name,args); 
 		associated_entity_definitions.add(d);
 		return d;
 	}
 	
-	public  void DEFINE_ENTITY_INDEX(String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,SyncException
+	public  void DEFINE_ENTITY_INDEX(String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(store,entity_name, index_name, index_type,field_names);	
 	}
 	
-	public  void DEFINE_ENTITY_RELATIONSHIP(String from_entity_name,String from_entity_field,int relationship_type,String to_entity_name,String to_entity_field) throws PersistenceException,SyncException
+	public  void DEFINE_ENTITY_RELATIONSHIP(String from_entity_name,String from_entity_field,int relationship_type,String to_entity_name,String to_entity_field) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_RELATIONSHIP(store,from_entity_name,from_entity_field,relationship_type,to_entity_name,to_entity_field);
 	}
