@@ -23,7 +23,9 @@ import com.pagesociety.web.module.encryption.IEncryptionModule;
 
 public class BillingModule extends WebStoreModule 
 {
-
+	//TODO: i think we need to be able to delete billing records as well..perhaps
+	//ones that are not preferred...evaluate what things would point to them. i dont
+	//think any really do. they are not stored with the order//
 	private static final String SLOT_ENCRYPTION_MODULE  	 = "encryption-module"; 
 	private static final String SLOT_BILLING_GATEWAY_MODULE  = "billing-gateway"; 
 	private static final String SLOT_BILLING_GUARD_MODULE  		 = "billing-guard"; 
@@ -39,6 +41,7 @@ public class BillingModule extends WebStoreModule
 	
 	public static final int EVENT_BILLING_RECORD_CREATED = 0x1001;
 	public static final int EVENT_BILLING_RECORD_UPDATED = 0x1002;
+	public static final String BILLING_EVENT_BILLING_RECORD = "billling_record";
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -135,7 +138,8 @@ public class BillingModule extends WebStoreModule
 		if(preferred)
 			setPreferredBillingRecord(creator,billing_record);
 	
-		dispatchEvent(EVENT_BILLING_RECORD_CREATED, billing_record);
+		DISPATCH_EVENT(EVENT_BILLING_RECORD_CREATED,
+				   BILLING_EVENT_BILLING_RECORD,billing_record);
 		return billing_record;
 	}
 			  
@@ -224,7 +228,9 @@ public class BillingModule extends WebStoreModule
 				BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 				BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 	
-		dispatchEvent(EVENT_BILLING_RECORD_UPDATED, billing_record);
+		DISPATCH_EVENT(EVENT_BILLING_RECORD_UPDATED,
+				       BILLING_EVENT_BILLING_RECORD,billing_record);
+	
 		return billing_record;
 	}
 	
