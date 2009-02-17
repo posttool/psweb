@@ -715,7 +715,7 @@ public class TreeModule extends WebStoreModule
 	public static String TREE_NODE_FIELD_DATA 			= "data";
 	public static String TREE_NODE_FIELD_METADATA 		= "metadata";
 	
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(TREE_ENTITY,
 			TREE_FIELD_NAME,Types.TYPE_STRING,null,
@@ -734,14 +734,14 @@ public class TreeModule extends WebStoreModule
 	public static final String IDX_BY_USER_BY_TREE_NAME 					= "byUserbyTreeName";
 	public static final String IDX_BY_TREE_BY_NODE_CLASS		    		= "byTreeByNodeClass";
 	public static final String IDX_BY_TREE_BY_NODE_ID		    			= "byTreeByNodeId";
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(TREE_ENTITY,IDX_BY_USER_BY_TREE_NAME , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,TREE_FIELD_NAME);
 		DEFINE_ENTITY_INDEX(TREE_NODE_ENTITY,IDX_BY_TREE_BY_NODE_CLASS , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,TREE_NODE_FIELD_TREE,TREE_NODE_FIELD_CLASS);
 		DEFINE_ENTITY_INDEX(TREE_NODE_ENTITY,IDX_BY_TREE_BY_NODE_ID , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, TREE_NODE_FIELD_TREE,TREE_NODE_FIELD_ID);
 	}
 	
-	protected void defineRelationships(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineRelationships(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_RELATIONSHIP(TREE_NODE_ENTITY, TREE_NODE_FIELD_PARENT_NODE, EntityRelationshipDefinition.TYPE_ONE_TO_MANY, TREE_NODE_ENTITY, TREE_NODE_FIELD_CHILDREN);
 	}
