@@ -216,7 +216,7 @@ public class SystemNotificationModule extends WebStoreModule
 	public static String IDX_BY_TYPE		=   "byType";
 	public static String IDX_BY_USER		=   "byUser";
 	
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(SYSTEM_NOTIFICATION_ENTITY,IDX_BY_TYPE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, SYSTEM_NOTIFICATION_FIELD_TYPE);
 		DEFINE_ENTITY_INDEX(SYSTEM_NOTIFICATION_ENTITY,IDX_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_CREATOR,SYSTEM_NOTIFICATION_FIELD_USER);		
