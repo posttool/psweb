@@ -90,7 +90,7 @@ public class LoggerModule extends WebStoreModule
 	public static String FIELD_LOG_MESSAGE		  = "message";
 	public static String FIELD_LOG_MESSAGE_DATA	  = "data";
 	
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException,InitializationException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		//sort of a little hack here so we can specify the entity name from the cofig file
 		log_entity_name = GET_REQUIRED_CONFIG_PARAM(PARAM_LOG_NAME, config);
@@ -106,7 +106,7 @@ public class LoggerModule extends WebStoreModule
 	public static String IDX_BY_TYPE				=   "byType";
 	public static String IDX_BY_CREATOR_BY_TYPE		=   "byCreatorByType";
 	
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(log_entity_name,IDX_BY_TYPE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_LOG_MESSAGE_TYPE);
 		DEFINE_ENTITY_INDEX(log_entity_name,IDX_BY_CREATOR_BY_TYPE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,FIELD_LOG_MESSAGE_TYPE);		
