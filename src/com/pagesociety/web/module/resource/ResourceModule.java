@@ -637,7 +637,7 @@ public class ResourceModule extends WebStoreModule
 	public static String RESOURCE_FIELD_PATH_TOKEN 		=   "path-token";
 
 
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(RESOURCE_ENTITY,
 					  RESOURCE_FIELD_CONTENT_TYPE,	Types.TYPE_STRING,null, 
