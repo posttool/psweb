@@ -832,7 +832,7 @@ public class RecurringOrderModule extends ResourceModule
 	public static final int RECURRING_SKU_CATALOG_STATE_INACTIVE   = 0; 
 	public static final int RECURRING_SKU_CATALOG_STATE_ACTIVE     = 1; 
 
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(RECURRING_SKU_ENTITY,
 					  RECURRING_SKU_FIELD_TITLE,Types.TYPE_STRING,"",
@@ -874,7 +874,7 @@ public class RecurringOrderModule extends ResourceModule
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_STATE 			 = "byCatalogState";
 
 	
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,RECURRING_ORDER_FIELD_STATUS,RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
 		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_USER);
