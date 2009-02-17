@@ -51,6 +51,8 @@ public class UserModule extends WebStoreModule
 	public static final int EVENT_USER_LOGGED_OUT 	 = 0x1004;
 	public static final int EVENT_USER_DELETED 	 	 = 0x1008;
 	
+	public static final String USER_EVENT_USER = "user";
+	
 	public static final int USER_ROLE_WHEEL 				 = 0x1000;
 	public static final int USER_ROLE_USER	 				 = 0x0001;
 	private IUserGuard guard;
@@ -104,7 +106,8 @@ public class UserModule extends WebStoreModule
 					FIELD_USERNAME,username,
 					FIELD_ROLES,roles);					
 		
-		dispatchEvent(EVENT_USER_CREATED, user);
+		DISPATCH_EVENT(EVENT_USER_CREATED,
+					   USER_EVENT_USER,user);
 		return user;
 	}
 	
@@ -132,7 +135,8 @@ public class UserModule extends WebStoreModule
 						   FIELD_PASSWORD,password,
 						   FIELD_ROLES,roles);				
 		
-		dispatchEvent(EVENT_USER_CREATED, user);
+		DISPATCH_EVENT(EVENT_USER_CREATED,
+				       USER_EVENT_USER, user);
 		return user;
 	}
 
@@ -287,7 +291,8 @@ public class UserModule extends WebStoreModule
 				throw new AccountLockedException(message);
 			}
 			uctx.setUser(user);
-			dispatchEvent(EVENT_USER_LOGGED_IN, user);
+			DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
+						   USER_EVENT_USER, user);
 			return UPDATE(user,
 					  FIELD_LAST_LOGIN, new Date());
 		}
@@ -300,7 +305,8 @@ public class UserModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		uctx.setUser(null);
-		dispatchEvent(EVENT_USER_LOGGED_OUT, user);
+		DISPATCH_EVENT(EVENT_USER_LOGGED_OUT,
+					   USER_EVENT_USER,user);
 		return UPDATE(user,
 				  FIELD_LAST_LOGOUT, new Date());
 	}
@@ -320,7 +326,8 @@ public class UserModule extends WebStoreModule
 		long id = user.getId();
 		DELETE(user);
 		user.setId(id);
-		dispatchEvent(EVENT_USER_DELETED, user);
+		DISPATCH_EVENT(EVENT_USER_DELETED, 
+					   USER_EVENT_USER,user);
 		user.setId(Entity.UNDEFINED);
 		return user;
 	}
