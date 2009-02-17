@@ -118,7 +118,7 @@ public class ForgotPasswordModule extends WebStoreModule
 	public static String OUTSTANDING_FORGOT_PASSWORD_ENTITY = "OutstandingForgotPassword";
 	public static String FIELD_ACTIVATION_TOKEN	= "activation_token";
 	public static String FIELD_ACTIVATION_UID   = "activation_uid";
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(OUTSTANDING_FORGOT_PASSWORD_ENTITY,
 					  FIELD_ACTIVATION_TOKEN, Types.TYPE_STRING,null, 
@@ -127,7 +127,7 @@ public class ForgotPasswordModule extends WebStoreModule
 	}
 	
 	public static String INDEX_BY_ACTIVATION_TOKEN	=   "byActivationToken";
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_ACTIVATION_TOKEN, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_ACTIVATION_TOKEN);
 	}

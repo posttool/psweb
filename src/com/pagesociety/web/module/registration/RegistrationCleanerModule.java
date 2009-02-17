@@ -119,7 +119,7 @@ public class RegistrationCleanerModule extends WebStoreModule
 	}
 
 	public static String INDEX_BY_DATE_CREATED		=   "byDateCreated";
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		if(store.getEntityDefinition(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY) == null)
 			throw new SyncException("Please place RegistrationCleanerModule after RegistrationModule in application.xml.It is dependent on it.");
