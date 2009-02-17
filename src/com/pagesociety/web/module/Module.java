@@ -147,14 +147,15 @@ public abstract class Module
 		_event_listeners.remove(listener);
 	}
 	
-	public void dispatchEvent(int event,Object arg)
+	public void dispatchEvent(ModuleEvent e)
 	{
 		int s = _event_listeners.size();
 		for(int i = 0;i < s;i++)
 		{
 			IEventListener l = _event_listeners.get(i);
-			l.onEvent(this, event,arg);
+			l.onEvent(this,e);
 		}
 	}
+
 
 }
