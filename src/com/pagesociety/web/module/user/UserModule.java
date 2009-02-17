@@ -483,7 +483,7 @@ public class UserModule extends WebStoreModule
 	
 
 	private List<Integer>DEFAULT_ROLES = new ArrayList<Integer>(); 
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 
 		DEFINE_ENTITY(USER_ENTITY,
@@ -501,7 +501,7 @@ public class UserModule extends WebStoreModule
 	public static String INDEX_BY_EMAIL				 	= 	"byEmail";
 	public static String INDEX_BY_LOCK_BY_LOCK_CODE		=   "byLockbyLockCode";
 	public static String INDEX_BY_ROLE					=   "byRoles";
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_EMAIL, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_EMAIL);
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_LOCK_BY_LOCK_CODE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_LOCK,FIELD_LOCK_CODE);
