@@ -873,7 +873,7 @@ public class GraphModule extends WebStoreModule
 	public static final int EDGE_TYPE_DIRECTED      = 0x01;
 	public static final int EDGE_TYPE_UNDIRECTED    = 0x02;
 
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(GRAPH_ENTITY,
 					  GRAPH_FIELD_NAME,Types.TYPE_STRING,null,
@@ -913,7 +913,7 @@ public class GraphModule extends WebStoreModule
 	public static final String IDX_GRAPH_UNDIRECTED_EDGE_BY_VERTICES            = "byVertices";
 	public static final String IDX_GRAPH_EDGE_BY_GRAPH			   			    = "byGraph";
 	
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(GRAPH_ENTITY,IDX_GRAPH_BY_CREATOR_BY_GRAPH_NAME , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,GRAPH_FIELD_NAME);
 		DEFINE_ENTITY_INDEX(GRAPH_VERTEX_ENTITY,IDX_GRAPH_VERTEX_BY_GRAPH_BY_VERTICE_CLASS , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,GRAPH_VERTEX_FIELD_GRAPH,GRAPH_VERTEX_FIELD_CLASS);
