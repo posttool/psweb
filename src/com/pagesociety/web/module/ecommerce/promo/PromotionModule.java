@@ -871,7 +871,7 @@ public class PromotionModule extends WebStoreModule
 
 	private static final int GLOBAL_PROMOTION_STATE_INACTIVE 	= 0x01;
 	private static final int GLOBAL_PROMOTION_STATE_ACTIVE 		= 0x02;
-	protected void defineEntities(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(PROMOTION_ENTITY,
 					  PROMOTION_FIELD_TITLE,Types.TYPE_STRING,"",
@@ -908,7 +908,7 @@ public class PromotionModule extends WebStoreModule
 	public static final String IDX_COUPON_PROMOTION_BY_PROMO_CODE   = "byPromoCode";
 	public static final String IDX_GLOBAL_PROMOTION_BY_ACTIVE     	= "byActive";
 	
-	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,SyncException
+	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(COUPON_PROMOTION_ENTITY,IDX_COUPON_PROMOTION_BY_PROMO_CODE , EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, COUPON_PROMOTION_FIELD_PROMO_CODE);
 		DEFINE_ENTITY_INDEX(GLOBAL_PROMOTION_ENTITY,IDX_GLOBAL_PROMOTION_BY_ACTIVE , EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, GLOBAL_PROMOTION_FIELD_ACTIVE);
