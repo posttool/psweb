@@ -109,7 +109,7 @@ public class PromotionModule extends WebStoreModule
 		if(free_for_life_promotion == null)
 		{
 			free_for_life_promotion = createPromotion(null, "Free For Life","This promotion always makes everything free.",ALWAYS_FREE_PROGRAM);
-			LOG("CREATED FREE FOR LIFE PROMOTIONS PROGRAM: \n"+ALWAYS_FREE_PROGRAM);
+			INFO("CREATED FREE FOR LIFE PROMOTIONS PROGRAM: \n"+ALWAYS_FREE_PROGRAM);
 		}
 		}catch(Exception e)
 		{
@@ -410,8 +410,8 @@ public class PromotionModule extends WebStoreModule
 		if(result.size() == 0)
 			throw new WebApplicationException("BAD PROMO CODE",ERROR_BAD_PROMO_CODE);
 		if(result.size() > 1)
-			LOG("MULTIPLE PROMOTIONS ["+result.getEntities()+"] FOR SINGLE PROMO CODE "+promo_code+" DATA INTEGRITY ISSUE.");
-		
+			INFO("MULTIPLE PROMOTIONS ["+result.getEntities()+"] FOR SINGLE PROMO CODE "+promo_code+" DATA INTEGRITY ISSUE.");
+		 
 		Entity coupon_promo = result.getEntities().get(0);
 		Date expr_date = (Date)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_EXPIRATION_DATE);
 		Date now = new Date();
