@@ -411,9 +411,10 @@ public class CommentModule extends WebStoreModule
 		if(rating_module != null)
 		{
 			//add fields to ourself related to rating subsystem
-			additional_comment_rating_fields = unflatten_field_definitions(rating_module.getCommentRatingFields(COMMENT_ENTITY));
-			ADD_FIELDS(COMMENT_ENTITY,additional_comment_rating_fields);
-		
+			Object[] comment_rating_field_descriptions = rating_module.getCommentRatingFields(COMMENT_ENTITY);
+			ADD_FIELDS(COMMENT_ENTITY,comment_rating_field_descriptions);
+			additional_comment_rating_fields = unflatten_field_definitions(comment_rating_field_descriptions);		
+			
 			//add fields to targets related to rating subsystem
 			commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);
 			additional_comment_target_rating_fields = unflatten_field_definitions(rating_module.getCommentTargetRatingFields(null));
