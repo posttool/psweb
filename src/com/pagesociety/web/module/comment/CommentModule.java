@@ -67,7 +67,7 @@ public class CommentModule extends WebStoreModule
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
-	@Export
+	@Export(ParameterNames={"comment","rating_data"})
 	public Entity CreateComment(UserApplicationContext uctx,Entity comment,Map<String,Object> rating_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 
@@ -98,7 +98,7 @@ public class CommentModule extends WebStoreModule
 	
 
 	
-	@Export
+	@Export(ParameterNames={"title","comment","target_type","target_id","rating_data"})
 	public Entity CreateComment(UserApplicationContext uctx,
 									  String title,
 									  String comment,
@@ -167,13 +167,13 @@ public class CommentModule extends WebStoreModule
 	}
 			  
 	
-	@Export
+	@Export(ParameterNames={"comment","rating_data"})
 	public Entity UpdateComment(UserApplicationContext uctx,Entity comment,Map<String,Object> rating_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		VALIDATE_TYPE(COMMENT_ENTITY, comment);
 		VALIDATE_EXISTING_INSTANCE(comment);
 		return UpdateComment(uctx,
-							 comment,
+							 comment.getId(),
 							(String)comment.getAttribute(COMMENT_FIELD_TITLE),
 							(String)comment.getAttribute(COMMENT_FIELD_COMMENT),
 							rating_data);
@@ -181,17 +181,18 @@ public class CommentModule extends WebStoreModule
 	
 
 	
-	@Export
+	@Export(ParameterNames={"comment_id","title","comment","rating_data"})
 	public Entity UpdateComment(UserApplicationContext uctx,
-								Entity comment_entity,
+								long  comment_id,
 								String title,
 								String comment,
 								Map<String,Object> rating_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		Entity user = (Entity)uctx.getUser();
+		Entity comment_entity = GET(COMMENT_ENTITY,comment_id);
 		GUARD(guard.canUpdateComment(user,comment_entity));
 		
-		return updateComment(user,title,comment,rating_data);
+		return updateComment(comment_entity,title,comment,rating_data);
 	
 	}
 	
@@ -241,14 +242,14 @@ public class CommentModule extends WebStoreModule
 		return comment_entity;
 	}
 	
-	@Export
+	@Export(ParameterNames={"comment"})
 	public Entity DeleteComment(UserApplicationContext uctx,Entity comment) throws PersistenceException,WebApplicationException
 	{
 		VALIDATE_TYPE(COMMENT_ENTITY, comment);
 		return DeleteComment(uctx,comment.getId());
 	}
 	
-	@Export
+	@Export(ParameterNames={"comment_id"})
 	private Entity DeleteComment(UserApplicationContext uctx, long comment_id) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -286,7 +287,7 @@ public class CommentModule extends WebStoreModule
 		return comment;
 	}
 	
-	@Export
+	@Export(ParameterNames={"comment_id"})
 	private Entity FlagComment(UserApplicationContext uctx, long comment_id) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -313,7 +314,7 @@ public class CommentModule extends WebStoreModule
 		return comment;
 	}
 	
-	@Export
+	@Export(ParameterNames={"comment_id"})
 	public Entity UnflagComment(UserApplicationContext uctx, long comment_id) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -339,7 +340,8 @@ public class CommentModule extends WebStoreModule
 		return comment;
 	}
 
-	@Export
+
+	@Export(ParameterNames={"entity_type","entity_id","offset","page_size"})
 	public PagingQueryResult GetAllComments(UserApplicationContext uctx,String entity_type,long entity_id,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -351,7 +353,7 @@ public class CommentModule extends WebStoreModule
 		return PAGING_QUERY(q);
 	}
 
-	@Export
+	@Export(ParameterNames={"offset","page_size"})
 	public PagingQueryResult GetFlaggedComments(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -360,7 +362,7 @@ public class CommentModule extends WebStoreModule
 		Query q = getFlaggedCommentsQ(FLAGGED_STATUS_FLAGGED);
 		q.offset(offset);
 		q.pageSize(page_size);
-		return PAGING_QUERY(q);
+		return PAGING_QUERY_FILL(q,COMMENT_FIELD_TARGET);
 	}
 
 	public Query getCommentsForTargetQ(Object target)
