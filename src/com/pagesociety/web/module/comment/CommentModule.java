@@ -28,7 +28,7 @@ import com.pagesociety.web.module.user.UserModule;
 public class CommentModule extends WebStoreModule 
 {
 
-	protected static final String SLOT_COMMENT_RATING_MODULE  	= "rating-module"; 
+	protected static final String SLOT_COMMENT_RATING_MODULE  	= "comment-rating-module"; 
 	protected static final String SLOT_COMMENT_GUARD_MODULE		= "comment-guard"; 
 	
 	/*this module needs to be after modules containing any entites you are referring to 
