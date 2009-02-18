@@ -27,12 +27,12 @@ public class RawUIAggregator extends RawUIModule
 		for(int i = 0;i < application_modules.size();i++)
 		{
 			Module m = application_modules.get(i);
-			if(m instanceof RawUIModule)
+			if(m instanceof RawUIModule) 
 			{
 				if(m.getName().equals(getName()))
 					continue;
 				raw_ui_modules.add(m);
-				LOG("DISCOVERED RAWUI MODULE "+m.getName());
+				INFO("DISCOVERED RAWUI MODULE "+m.getName());
 			}
 		}
 	}
