@@ -229,9 +229,9 @@ public class ExcelDumpModule extends WebStoreModule
 								entity.setAttribute(field_names[j],"");
 								continue;
 							}
-							LOG("BULK EXCEL IMPORTING ENTITY TYPE COL ERROR "+entity_type);
-							LOG("J IS "+j+" AND COL WIDTH IS "+col_width);
-							LOG(" THIS SHOULD NOT BE HAPPENING");
+							INFO("BULK EXCEL IMPORTING ENTITY TYPE COL ERROR "+entity_type);
+							INFO("J IS "+j+" AND COL WIDTH IS "+col_width);
+							INFO(" THIS SHOULD NOT BE HAPPENING");
 							continue;
 						}
 						
