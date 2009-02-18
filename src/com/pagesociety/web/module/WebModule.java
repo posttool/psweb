@@ -57,9 +57,14 @@ public abstract class WebModule extends Module
 	}
 	
 	
-	protected void LOG(String message)
+	protected void INFO(String message)
 	{
-		_application.LOG(getName()+": "+message);
+		_application.INFO(getName()+": "+message);
+	}
+	
+	protected void WARNING(String message)
+	{
+		_application.WARNING(getName()+": "+message);
 	}
 	
 	protected void ERROR(String message)
@@ -97,7 +102,7 @@ public abstract class WebModule extends Module
 		File f =  new File(app.getConfig().getWebRootDir()+File.separator+".."+File.separator+"ModuleData"+File.separator+getName()+"Data");
 		if(!f.exists())
 		{
-			LOG("CREATING DATA DIRECTORY FOR MODULE: "+getName()+"\n\t"+f.getAbsolutePath());
+			INFO("CREATING DATA DIRECTORY FOR MODULE: "+getName()+"\n\t"+f.getAbsolutePath());
 			f.mkdirs();
 		}
 		return f;
