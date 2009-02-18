@@ -100,14 +100,14 @@ public class RegistrationCleanerModule extends WebStoreModule
 		QueryResult result = QUERY(q);
 
 		List<Entity> old_records = result.getEntities();
-		System.out.println("OLD ACTIVITY RECORDS IS "+old_records.size());
+		//System.out.println("OLD ACTIVITY RECORDS IS "+old_records.size());
 		for(int i = 0;i < result.size();i++)
 		{
 			Entity old_record = old_records.get(i);
 			Entity user		  = null;
 			try {
 				user = GET(UserModule.USER_ENTITY, (Long)old_record.getAttribute(RegistrationModule.FIELD_ACTIVATION_UID));
-				System.out.println("ABOUT TO DELETE "+user);
+				//System.out.println("ABOUT TO DELETE "+user);
 				user_module.deleteUser(user);
 				DELETE(old_record);
 			} catch (PersistenceException e) {
