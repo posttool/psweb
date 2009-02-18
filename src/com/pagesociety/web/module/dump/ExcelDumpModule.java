@@ -56,8 +56,19 @@ public class ExcelDumpModule extends WebStoreModule
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
+		verifyLibraryDependencies();
 		spreadsheet_date_formatter = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss Z");
 
+	}
+	
+	protected void verifyLibraryDependencies() throws InitializationException
+	{
+		try{
+			Class.forName("org.apache.poi.hssf.usermodel.HSSFWorkbook");
+		}catch(Exception e)
+		{
+			throw new InitializationException(getName()+" SEEMS TO BE MISSING THE apache.poi LIBRARY. IS IT PART OF YOUR PROJECT?");
+		}		
 	}
 	
 	public void dumpDbToExcelFormat(OutputStream out) throws IOException,
