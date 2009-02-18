@@ -7,7 +7,7 @@
 	<servlet>
 		<servlet-name>ApplicationBootstrap</servlet-name>
 		<servlet-class>
-			com.pagesociety.web.gateway.ApplicationBootstrap
+			com.pagesociety.web.ApplicationBootstrap
 		</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
