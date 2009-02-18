@@ -441,7 +441,7 @@ public class UserModule extends WebStoreModule
 					break;
 			}
 			
-			LOG("CREATING ADMIN USER - "+admin_email);
+			INFO("CREATING ADMIN USER - "+admin_email);
 			
 			List<Integer> admin_roles = new ArrayList<Integer>();
 			admin_roles.add(USER_ROLE_WHEEL);
