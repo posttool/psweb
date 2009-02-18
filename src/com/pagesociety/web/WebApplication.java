@@ -154,7 +154,7 @@ public abstract class WebApplication
 	protected void registerAndLinkModules() throws InitializationException
 	{
 		/*instantiate modules*/
-		LOG("INSTANTIATING MODULES");
+		INFO("INSTANTIATING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
@@ -169,13 +169,13 @@ public abstract class WebApplication
 			_module_list.add(module);
 		}
 		
-		LOG("LINKING MODULES");
+		INFO("LINKING MODULES");
 		/*link modules */
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m_info 	    			  = _config.getModuleInfo().get(i);
 			String module_name 					  = m_info.getName();
-			LOG("\tLINKING "+module_name);
+			INFO("\tLINKING "+module_name);
 			
 			Map<String,String> module_info_slots  = m_info.getSlots();
 			Module module_instance  			  = _module_instances.get(module_name);
@@ -236,7 +236,7 @@ public abstract class WebApplication
 				}
 				
 				try{
-					LOG("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
+					INFO("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
 					module_instance.setSlot(slot_name, slot_instance);
 				}catch(SlotException se)
 				{
@@ -254,12 +254,12 @@ public abstract class WebApplication
 		}
 		
 		/*init modules*/
-		LOG("INITIALIZING MODULES");
+		INFO("INITIALIZING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			String module_name			= m.getName();
-			LOG("\tINITIALIZING "+module_name);
+			INFO("\tINITIALIZING "+module_name);
 			_module_instances.get(m.getName()).init(this,m.getProps());
 		}
 	}
@@ -273,7 +273,7 @@ public abstract class WebApplication
 		for (int i = 0; i < _config.getUrlMapInfoItems().size(); i++)
 		{
 			UrlMapInfo u = _config.getUrlMapInfoItems().get(i);
-			LOG("URL " + u.getUrl());
+			INFO("URL " + u.getUrl());
 		}
 	}
 
@@ -319,7 +319,7 @@ public abstract class WebApplication
 //			{
 //				logger.error("destroy", e);
 //			}
-		LOG("ApplicationConfig destroy complete");
+		INFO("ApplicationConfig destroy complete");
 	}
 
 	public WebApplicationInitParams getConfig()
@@ -365,17 +365,23 @@ public abstract class WebApplication
 	{
 		return _sess_name_space_mgr.get(name_space);
 	}
-	
-	
-	public void LOG(String message)
+
+	public void WARNING(String message)
 	{
-		System.out.println(message);
+		System.err.println("WARNING: "+message);
+	}
+	
+	public void INFO(String message)
+	{
+		System.out.println("INFO "+message);
 	}
 	
 	public void ERROR(String message)
 	{
-		System.err.println(message);
+		System.err.println("ERROR "+message);
 	}
+	
+
 
 	public void ERROR(Exception e)
 	{
@@ -384,7 +390,7 @@ public abstract class WebApplication
 	
 	public void ERROR(String message,Exception e)
 	{
-		System.err.println(message);
+		System.err.println("ERROR "+message);
 		e.printStackTrace();
 	}
 }
