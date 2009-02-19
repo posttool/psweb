@@ -127,14 +127,14 @@ public class ModuleRegistry
 			for(int i = 0;i < args.length;i++)
 			{
 				if(args[i]==null)
-					args_string.append("null, ");
-				args_string.append(args.getClass().getSimpleName()+":"+args[i].toString()+", ");
+					args_string.append("null,");
+				args_string.append(args[i].getClass().getSimpleName()+":"+args[i].toString()+", ");
 			
 			}
 			if(args_string.length() != 0)
 				args_string.setLength(args_string.length()-1);
 			
-			throw new WebApplicationException("NO METHOD NAMED "+method_name+" EXISTS IN "+module.getName()+" WHICH CAN BE CALLED FOR ARGS :"+args_string);
+			throw new WebApplicationException("NO METHOD NAMED "+method_name+" EXISTS IN "+module.getName()+" WHICH CAN BE CALLED FOR ARGS -\n "+args_string);
 		}
 		return resolved_method.invoke(module,args_with_user);
 	}

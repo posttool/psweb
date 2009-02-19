@@ -152,7 +152,11 @@ public class ModuleMethod
 			if(arg == null)
 				continue;
 			if (!compatible_classes(arg.getClass(),ptypes[i]) && !compatible_classes(ptypes[i], arg.getClass()))
+			{
+				System.out.println("NON COMPATIBLE CLASSES FOR METHOD SIG. "+arg.getClass().getSimpleName()+" "+ptypes[i].getSimpleName());
 				return false;
+		
+			}
 		}
 		return true;
 	}
@@ -166,7 +170,8 @@ public class ModuleMethod
 				(c1 == Boolean.class && c2 	== boolean.class)  ||
 				(c1 == Float.class   && c2 	== float.class)    ||
 				(c1 == Integer.class && c2 	== long.class)     ||
-				(c1 == Float.class && c2 	== double.class))
+				(c1 == Float.class && c2 	== double.class)   ||
+				(c1 == HashMap.class && c2  == Map.class))
 			return true;
 		
 		return false;		
