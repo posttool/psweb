@@ -50,14 +50,17 @@ public class CommentModule extends WebStoreModule
 	public static final String COMMENT_EVENT_FLAGGING_USER     = "flagging_user";
 	public static final String COMMENT_EVENT_UNFLAGGING_USER = "unflagging_user";
 	
-	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
+	
+	public void pre_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
-		super.init(app,config);
+		super.pre_init(app,config);
 		rating_module		 = (ICommentRatingModule)getSlot(SLOT_COMMENT_RATING_MODULE);
 		guard				 = (ICommentGuard)getSlot(SLOT_COMMENT_GUARD_MODULE);
 		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);
+		notify_evolution();
 	}
 
+	
 	protected void defineSlots()
 	{
 		super.defineSlots();
@@ -401,6 +404,7 @@ public class CommentModule extends WebStoreModule
 	protected List<FieldDefinition> additional_comment_rating_fields 	    = null;
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
+		
 		DEFINE_ENTITY(COMMENT_ENTITY,
 			COMMENT_FIELD_TITLE,Types.TYPE_STRING,"",
 			COMMENT_FIELD_COMMENT,Types.TYPE_STRING,"",
@@ -415,11 +419,11 @@ public class CommentModule extends WebStoreModule
 			//add fields to ourself related to rating subsystem
 			Object[] comment_rating_field_descriptions = rating_module.getCommentRatingFields(COMMENT_ENTITY);
 			ADD_FIELDS(COMMENT_ENTITY,comment_rating_field_descriptions);
-			additional_comment_rating_fields = unflatten_field_definitions(comment_rating_field_descriptions);		
+			additional_comment_rating_fields = UNFLATTEN_FIELD_DEFINITIONS(comment_rating_field_descriptions);		
 			
 			//add fields to targets related to rating subsystem
 			commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);
-			additional_comment_target_rating_fields = unflatten_field_definitions(rating_module.getCommentTargetRatingFields(null));
+			additional_comment_target_rating_fields = UNFLATTEN_FIELD_DEFINITIONS(rating_module.getCommentTargetRatingFields(null));
 			for(int i = 0;i < commentable_entities.length;i++)
 				ADD_FIELDS(commentable_entities[i],rating_module.getCommentTargetRatingFields(commentable_entities[i]));
 		}
@@ -435,34 +439,15 @@ public class CommentModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(COMMENT_ENTITY,IDX_BY_TARGET, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,COMMENT_FIELD_TARGET);
 	}
 
-	//maybe a usefule util to move up? lets see
-	private List<FieldDefinition> unflatten_field_definitions(Object... flat_defs)
+	private void notify_evolution()
 	{
-		String field_name;
-		int field_type;
-		String ref_type;
-		Object default_val;
-		List<FieldDefinition> ret = new ArrayList<FieldDefinition>();
-		for(int i = 0;i < flat_defs.length;i+=3)
+		if(rating_module != null)
 		{
-
-			field_name  = (String)flat_defs[i];
-			field_type  =  (Integer)flat_defs[i+1];
-			FieldDefinition f = new FieldDefinition(field_name,field_type);
-			if(field_type == Types.TYPE_REFERENCE)
-			{
-				ref_type = (String)flat_defs[i+2];
-				default_val = flat_defs[i+3];
-				f.setReferenceType(ref_type);
-				i++;
-			}
-			else
-			{
-				default_val = flat_defs[i+2];
-				f.setDefaultValue(default_val);
-			}
-			ret.add(f);
+			EVOLVE_IGNORE(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
+			for(int i = 0;i < commentable_entities.length;i++)
+				EVOLVE_IGNORE(commentable_entities[i], rating_module.getCommentTargetRatingFields(commentable_entities[i]));
 		}
-		return ret;
 	}
+
+
 }

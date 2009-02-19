@@ -18,7 +18,7 @@ public class TertiaryCommentRatingModule extends WebModule implements ICommentRa
 	public static final String TARGET_FIELD_RATING_TOTAL_POSITIVE  = "comment_rating_total_positive";
 	
 	//these ones get added to the comment entity
-	public Object[] getCommentRatingFields(String comment_entity_name)throws PersistenceException 
+	public Object[] getCommentRatingFields(String comment_entity_name)
 	{
 		return new Object[]
 		{
@@ -29,7 +29,7 @@ public class TertiaryCommentRatingModule extends WebModule implements ICommentRa
 
 	@Override
 	//these ones get added to all the possible targets of the comment entity
-	public Object[] getCommentTargetRatingFields(String target_entity)throws PersistenceException 
+	public Object[] getCommentTargetRatingFields(String target_entity)
 	{
 		return new Object[]
 		{
@@ -42,7 +42,7 @@ public class TertiaryCommentRatingModule extends WebModule implements ICommentRa
 	//right here you are being passed references to the value fields of all the things being commented on and
 	//the values of the comment itself...these are defined by you above in the order defined//
 	@Override
-	public void onCreateComment(Object[] comment_target_vals,Object[] comment_rating_vals) throws WebApplicationException,PersistenceException
+	public void onCreateComment(Object[] comment_target_vals,Object[] comment_rating_vals) throws WebApplicationException
 	{
 		Integer tertiary_rating = (Integer)comment_rating_vals[0];
 		if(tertiary_rating == null)
@@ -71,7 +71,7 @@ public class TertiaryCommentRatingModule extends WebModule implements ICommentRa
 	//right here you are being passed references to the value fields of all the things being commented on and
 	//the values of the comment itself...these are defined by you above in the order defined//
 	@Override
-	public void onUpdateComment(Object[] comment_target_vals,Object[] old_comment_rating_vals,Object[] comment_rating_vals) throws WebApplicationException,PersistenceException {
+	public void onUpdateComment(Object[] comment_target_vals,Object[] old_comment_rating_vals,Object[] comment_rating_vals) throws WebApplicationException {
 		Integer old_tertiary_rating = (Integer)old_comment_rating_vals[0];
 		Integer new_tertiary_rating = (Integer)comment_rating_vals[0];
 		if(new_tertiary_rating == null)
@@ -114,7 +114,7 @@ public class TertiaryCommentRatingModule extends WebModule implements ICommentRa
 	//right here you are being passed references to the value fields of all the things being commented on and
 	//the values of the comment itself...these are defined by you above in the order defined//
 	@Override
-	public void onDeleteComment(Object[] comment_target_vals,Object[] comment_rating_vals) throws WebApplicationException,PersistenceException
+	public void onDeleteComment(Object[] comment_target_vals,Object[] comment_rating_vals) throws WebApplicationException
 	{
 		Integer tertiary_rating = (Integer)comment_rating_vals[0];
 		switch(tertiary_rating)
