@@ -199,13 +199,24 @@ public abstract class WebApplication
 						/*otherwise the slot definition could have a default slot class */
 						/* this default slot class shouldnt really have any slots since they cannot */
 						/* be linked */
-						if(d.default_slot_class != null)
+						if(d.default_slot_val != null)
 						{
-							try{
-								slot_instance = d.default_slot_class.newInstance();
-							}catch(Exception e)
+							if(d.default_slot_val instanceof Class)
 							{
-								throw new InitializationException("MODULE "+module_instance.getName()+"FAILED SETTING UP DEFAULT FOR "+d.slot_name+" OF TYPE "+d.default_slot_class.getName()+" WHICH UNFORTUNATELY BOMBS THE INIT.");
+								try{
+									slot_instance = ((Class)d.default_slot_val).newInstance();
+								}catch(Exception e)
+								{
+									throw new InitializationException("MODULE "+module_instance.getName()+"FAILED SETTING UP DEFAULT FOR "+d.slot_name+" OF TYPE "+((Class)d.default_slot_val).getName()+" WHICH UNFORTUNATELY BOMBS THE INIT.");
+								}
+							}
+							else if(d.default_slot_val instanceof Module)
+							{
+								slot_instance = d.default_slot_val;
+							}
+							else
+							{
+								throw new InitializationException("MODULE "+module_instance.getName()+"FAILED SETTING UP DEFAULT VAL. UNSUPPORTED DEFAULT VAL TYPE");
 							}
 						}
 						else
@@ -224,7 +235,7 @@ public abstract class WebApplication
 							slot_instance = Class.forName(slot_module_name).newInstance();
 						}catch(Exception e)
 						{
-							throw new InitializationException("MODULE "+module_instance.getName()+" FAILED SETTING "+d.slot_name+" TO AN INSTANCE OF TYPE "+d.default_slot_class.getName()+" WHICH UNFORTUNATELY BOMBS THE INIT.");
+							throw new InitializationException("MODULE "+module_instance.getName()+" FAILED SETTING "+d.slot_name+" TO AN INSTANCE OF TYPE "+slot_module_name+" WHICH UNFORTUNATELY BOMBS THE INIT.");
 						}
 					}
 					else
