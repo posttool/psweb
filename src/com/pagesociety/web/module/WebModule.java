@@ -43,9 +43,9 @@ public abstract class WebModule extends Module
 		super.defineSlot(slot_name, slot_type, required);
 	}
 	
-	protected void DEFINE_SLOT(String slot_name,Class<?> slot_type,boolean required,Class<?> default_implementation)
+	protected void DEFINE_SLOT(String slot_name,Class<?> slot_type,boolean required,Object default_val)
 	{
-		super.defineSlot(slot_name, slot_type, required,default_implementation);
+		super.defineSlot(slot_name, slot_type, required,default_val);
 	}
 	
 	public String GET_REQUIRED_CONFIG_PARAM(String name,Map<String,Object> config) throws InitializationException

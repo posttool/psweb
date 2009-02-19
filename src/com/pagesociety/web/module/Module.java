@@ -24,14 +24,13 @@ public abstract class Module
 
 	public void pre_init(WebApplication web_app, Map<String, Object> config) throws InitializationException
 	{
-		
+		_application = web_app;
+		_config = config;
 	}
 	
 	public void init(WebApplication web_app, Map<String, Object> config) throws InitializationException
 	{
-		_application = web_app;
-		_config = config;
-	
+
 	}
 
 	public void setup_slots() throws InitializationException
@@ -83,13 +82,13 @@ public abstract class Module
 		defineSlot(slot_name, slot_type, required, null);
 	}
 	
-	protected void defineSlot(String slot_name,Class<?> slot_type,boolean required,Class<?> default_implementation)
+	protected void defineSlot(String slot_name,Class<?> slot_type,boolean required,Object default_slot_val)
 	{
 		SlotDescriptor d = new SlotDescriptor();
 		d.slot_name = slot_name;
 		d.slot_type = slot_type;
 		d.required  = required;
-		d.default_slot_class = default_implementation;
+		d.default_slot_val = default_slot_val;
 		_slot_descriptor_map.put(slot_name,d);
 		_slot_descriptor_list.add(d);
 	}
@@ -133,7 +132,7 @@ public abstract class Module
 		public String 	slot_name;
 		public Class<?> slot_type;
 		public boolean 	required;
-		public Class<?> default_slot_class;/* if not required can have a default */
+		public Object default_slot_val;/* if not required can have a default */
 	}
 
 

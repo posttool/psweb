@@ -18,22 +18,36 @@ import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.SlotException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.persistence.DefaultPersistenceEvolver;
+import com.pagesociety.web.module.persistence.IEvolutionProvider;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
 public abstract class WebStoreModule extends WebModule
 {
 
-	private static final String SLOT_STORE = "store";
+	private static final String SLOT_STORE 			    = "store";
+	private static final String SLOT_EVOLUTION_PROVIDER = "evolution-provider";
 	protected PersistentStore store;
+	protected IEvolutionProvider evolution_provider;
 	protected List<EntityDefinition> associated_entity_definitions;
 	
 	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		super.init(app, config);
+		super.pre_init(app, config);
 		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
 		associated_entity_definitions = new ArrayList<EntityDefinition>();
+		
+		//this breaks a loope since we need to pre-init the default one manually..see below//
+		if(!(this instanceof DefaultPersistenceEvolver))
+			setup_evolution_provider(app);//can probs pass config along here//
+	}
+	
+	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		super.init(app, config);
 		try{
 			defineEntities(config);
 			defineIndexes(config);
@@ -42,20 +56,41 @@ public abstract class WebStoreModule extends WebModule
 		{
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
-		}			
+		}	
+	}
 
-	}
-	
-	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
-	{
-		super.init(app, config);
-	}
-	
+
+	private static DefaultPersistenceEvolver default_persistence_evolver = new DefaultPersistenceEvolver();
 	protected void defineSlots()
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
+		DEFINE_SLOT(SLOT_EVOLUTION_PROVIDER, IEvolutionProvider.class, false,default_persistence_evolver);
 	}	
+	
+	private void setup_evolution_provider(WebApplication app) throws InitializationException
+	{
+		
+		evolution_provider = ((IEvolutionProvider)getSlot(SLOT_EVOLUTION_PROVIDER));
+		if(!(evolution_provider instanceof DefaultPersistenceEvolver))
+			return;
+
+		//this is how to programaticcaly init a module from within the app//		
+		((WebModule)evolution_provider).defineSlots();
+		((WebModule)evolution_provider).setName("DefaultEvolutionProvider");
+		//here we set the store on the default implmentation because we know it needs it//
+		try{
+			if(((WebStoreModule)evolution_provider).getSlot(SLOT_STORE) == null)
+				((WebStoreModule)evolution_provider).setSlot(SLOT_STORE,((IPersistenceProvider)getSlot(SLOT_STORE)));
+			((WebModule)evolution_provider).pre_init(app, new HashMap<String,Object>());
+			((WebModule)evolution_provider).init(app, new HashMap<String,Object>());
+		}catch(SlotException se)
+		{
+			ERROR(se);
+			throw new InitializationException(getName()+ ": FAILED SETTING STORE SLOT IN EVOLUTION PROVIDER");
+		}	
+	}
+
 
 	protected void defineEntities(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
@@ -91,7 +126,7 @@ public abstract class WebStoreModule extends WebModule
 		(new FieldDefinition(FIELD_LAST_MODIFIED, Types.TYPE_DATE)),
 	};	
 		
-	public static EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,SyncException
+	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,SyncException
 	{
 		EntityDefinition 		existing_def;
 		EntityDefinition 		proposed_def;
@@ -131,18 +166,7 @@ public abstract class WebStoreModule extends WebModule
 			if(existing_def.equals(proposed_def))
 				return proposed_def;
 			else
-			{
-				List<FieldDefinition> pfd = proposed_def.getFields();
-				for(i = 0;i < pfd.size();i++)
-				{
-					FieldDefinition proposed_field = pfd.get(i);
-					FieldDefinition existing_field = existing_def.getField(proposed_field.getName());
-					if(existing_field == null || !existing_field.equals(proposed_field))
-						throw new SyncException("FAILED DEFINING ENTITY: EXISTING DEF -\n "+existing_def+"\n"+
-												"DOES NOT CONTAIN ALL FIELDS OF PROPOSED DEF -\n"+proposed_def+"\n");
-				}
-
-			}
+				evolution_provider.evolveEntity(getName(), existing_def, proposed_def);
 			
 			/* add any additional default system fields...deletes of system fields 
 			 * have to be done with an alter for now... */
@@ -950,5 +974,45 @@ public abstract class WebStoreModule extends WebModule
 
 		return DELETE(store,e);
 	}
+
 	
+	protected void EVOLVE_IGNORE(String entity_name,Object ...flattened_field_definitions)
+	{
+		List<FieldDefinition> ff = UNFLATTEN_FIELD_DEFINITIONS(flattened_field_definitions);
+	
+		for(int i = 0;i < ff.size();i++)
+			evolution_provider.evolveIgnore(entity_name, ff.get(i).getName());		
+	}
+	
+	//maybe a usefule util to move up? lets see
+	protected List<FieldDefinition> UNFLATTEN_FIELD_DEFINITIONS(Object... flat_defs)
+	{
+		String field_name;
+		int field_type;
+		String ref_type;
+		Object default_val;
+		List<FieldDefinition> ret = new ArrayList<FieldDefinition>();
+		for(int i = 0;i < flat_defs.length;i+=3)
+		{
+
+			field_name  = (String)flat_defs[i];
+			field_type  =  (Integer)flat_defs[i+1];
+			FieldDefinition f = new FieldDefinition(field_name,field_type);
+			if(field_type == Types.TYPE_REFERENCE)
+			{
+				ref_type = (String)flat_defs[i+2];
+				default_val = flat_defs[i+3];
+				f.setReferenceType(ref_type);
+				i++;
+			}
+			else
+			{
+				default_val = flat_defs[i+2];
+				f.setDefaultValue(default_val);
+			}
+			ret.add(f);
+		}
+		return ret;
+	}
+
 }
