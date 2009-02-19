@@ -34,20 +34,28 @@ public abstract class WebStoreModule extends WebModule
 	protected IEvolutionProvider evolution_provider;
 	protected List<EntityDefinition> associated_entity_definitions;
 	
-	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
+
+	public List<Class<?>> dependencies()
 	{
-		super.pre_init(app, config);
+		List<Class<?>> list = super.dependencies();
+		list.add(IPersistenceProvider.class);
+		return list;
+	}
+
+
+	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		super.system_init(app, config);		
 		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
-		associated_entity_definitions = new ArrayList<EntityDefinition>();
-		
 		//this breaks a loope since we need to pre-init the default one manually..see below//
 		if(!(this instanceof DefaultPersistenceEvolver))
 			setup_evolution_provider(app);//can probs pass config along here//
 	}
-	
-	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
+/*	
+	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		super.init(app, config);
+		super.pre_init(app, config);
+		associated_entity_definitions = new ArrayList<EntityDefinition>();
 		try{
 			defineEntities(config);
 			defineIndexes(config);
@@ -56,16 +64,33 @@ public abstract class WebStoreModule extends WebModule
 		{
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
-		}	
+		}			
+
+	}
+	*/
+	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		super.init(app, config);		
+		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
+		//this breaks a loope since we need to pre-init the default one manually..see below//
+		
+		associated_entity_definitions = new ArrayList<EntityDefinition>();
+		try{
+			defineEntities(config);
+			defineIndexes(config);
+			defineRelationships(config);
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
+		}			
 	}
 
-
-	private static DefaultPersistenceEvolver default_persistence_evolver = new DefaultPersistenceEvolver();
 	protected void defineSlots()
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
-		DEFINE_SLOT(SLOT_EVOLUTION_PROVIDER, IEvolutionProvider.class, false,default_persistence_evolver);
+		DEFINE_SLOT(SLOT_EVOLUTION_PROVIDER, IEvolutionProvider.class, false,DefaultPersistenceEvolver.class);
 	}	
 	
 	private void setup_evolution_provider(WebApplication app) throws InitializationException
@@ -82,7 +107,8 @@ public abstract class WebStoreModule extends WebModule
 		try{
 			if(((WebStoreModule)evolution_provider).getSlot(SLOT_STORE) == null)
 				((WebStoreModule)evolution_provider).setSlot(SLOT_STORE,((IPersistenceProvider)getSlot(SLOT_STORE)));
-			((WebModule)evolution_provider).pre_init(app, new HashMap<String,Object>());
+//			((WebModule)evolution_provider).system_init(app, new HashMap<String,Object>());
+//			((WebModule)evolution_provider).pre_init(app, new HashMap<String,Object>());
 			((WebModule)evolution_provider).init(app, new HashMap<String,Object>());
 		}catch(SlotException se)
 		{

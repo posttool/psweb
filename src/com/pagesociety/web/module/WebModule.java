@@ -28,6 +28,18 @@ import com.pagesociety.web.exception.WebApplicationException;
 
 public abstract class WebModule extends Module
 {
+	
+	public List<Class<?>> ADD_DEPENDENCY(Class<?> c)
+	{
+		super.dependencies().add(c);
+		return dependencies();
+	}
+	
+	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		super.system_init(app, config);
+	}
+	
 	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.pre_init(app, config);
