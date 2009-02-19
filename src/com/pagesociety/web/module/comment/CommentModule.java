@@ -148,15 +148,15 @@ public class CommentModule extends WebStoreModule
 				comment_rating_vals[i] = rating_data.get(additional_comment_rating_fields.get(i).getName());
 			
 			Object[] target_comment_rating_vals = new Object[additional_comment_target_rating_fields.size()];
-			for(int i = 0;i < additional_comment_rating_fields.size();i++)
-				target_comment_rating_vals[i] = c.getAttribute(additional_comment_target_rating_fields.get(i).getName());
+			for(int i = 0;i < additional_comment_target_rating_fields.size();i++)
+				target_comment_rating_vals[i] = target.getAttribute(additional_comment_target_rating_fields.get(i).getName());
 
 			rating_module.onCreateComment(target_comment_rating_vals, comment_rating_vals);
 			
 			for(int i = 0;i < additional_comment_rating_fields.size();i++)
 				c.setAttribute(additional_comment_rating_fields.get(i).getName(), comment_rating_vals[i]);
 			
-			for(int i = 0;i < additional_comment_rating_fields.size();i++)
+			for(int i = 0;i < additional_comment_target_rating_fields.size();i++)
 				target.setAttribute(additional_comment_target_rating_fields.get(i).getName(), target_comment_rating_vals[i]);
 		
 			SAVE_ENTITY(c);
@@ -221,15 +221,15 @@ public class CommentModule extends WebStoreModule
 				comment_rating_vals[i] = rating_data.get(additional_comment_rating_fields.get(i).getName());
 			
 			Object[] target_comment_rating_vals = new Object[additional_comment_target_rating_fields.size()];
-			for(int i = 0;i < additional_comment_rating_fields.size();i++)
-				target_comment_rating_vals[i] = comment_entity.getAttribute(additional_comment_target_rating_fields.get(i).getName());
+			for(int i = 0;i < additional_comment_target_rating_fields.size();i++)
+				target_comment_rating_vals[i] = target.getAttribute(additional_comment_target_rating_fields.get(i).getName());
 
 			rating_module.onUpdateComment(target_comment_rating_vals,old_comment_rating_vals,comment_rating_vals);
 			
 			for(int i = 0;i < additional_comment_rating_fields.size();i++)
 				comment_entity.setAttribute(additional_comment_rating_fields.get(i).getName(), comment_rating_vals[i]);
 			
-			for(int i = 0;i < additional_comment_rating_fields.size();i++)
+			for(int i = 0;i < additional_comment_target_rating_fields.size();i++)
 				target.setAttribute(additional_comment_target_rating_fields.get(i).getName(), target_comment_rating_vals[i]);
 		
 			SAVE_ENTITY(target);
@@ -272,12 +272,12 @@ public class CommentModule extends WebStoreModule
 				comment_rating_vals[i] = comment.getAttribute(additional_comment_rating_fields.get(i).getName());
 			
 			Object[] target_comment_rating_vals = new Object[additional_comment_target_rating_fields.size()];
-			for(int i = 0;i < additional_comment_rating_fields.size();i++)
-				target_comment_rating_vals[i] = comment.getAttribute(additional_comment_target_rating_fields.get(i).getName());
+			for(int i = 0;i < additional_comment_target_rating_fields.size();i++)
+				target_comment_rating_vals[i] = target.getAttribute(additional_comment_target_rating_fields.get(i).getName());
 
 			rating_module.onDeleteComment(target_comment_rating_vals, comment_rating_vals);
 			
-			for(int i = 0;i < additional_comment_rating_fields.size();i++)
+			for(int i = 0;i < additional_comment_target_rating_fields.size();i++)
 				target.setAttribute(additional_comment_target_rating_fields.get(i).getName(), target_comment_rating_vals[i]);
 		
 			SAVE_ENTITY(target);
