@@ -32,7 +32,6 @@ public class GraphModule extends WebStoreModule
 
 
 	
-
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
