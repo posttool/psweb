@@ -22,15 +22,26 @@ public abstract class Module
 	private Map<String,Object>   		_slot_instance_map    = new HashMap<String,Object>();
 	private List<IEventListener>		_event_listeners	  = new ArrayList<IEventListener>();
 
-	public void pre_init(WebApplication web_app, Map<String, Object> config) throws InitializationException
+	private List<Class<?>> dependencies = new ArrayList<Class<?>>();
+	public List<Class<?>> dependencies()
 	{
-		_application = web_app;
-		_config = config;
+		return dependencies;
 	}
 	
-	public void init(WebApplication web_app, Map<String, Object> config) throws InitializationException
+	public void system_init(WebApplication app, Map<String, Object> config) throws InitializationException
 	{
 
+	}
+	
+	public void pre_init(WebApplication app, Map<String, Object> config) throws InitializationException
+	{
+	
+	}
+	
+	public void init(WebApplication app, Map<String, Object> config) throws InitializationException
+	{
+		_application = app;
+		_config = config;
 	}
 
 	public void setup_slots() throws InitializationException
@@ -156,5 +167,14 @@ public abstract class Module
 		}
 	}
 
+	private boolean is_initialized = false;
+	public void setInitialized(boolean b)
+	{
+		is_initialized = b;
+	}
+	public boolean isInitialized()
+	{
+		return is_initialized;
+	}
 
 }
