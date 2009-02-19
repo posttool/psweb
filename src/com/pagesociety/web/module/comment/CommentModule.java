@@ -50,16 +50,22 @@ public class CommentModule extends WebStoreModule
 	public static final String COMMENT_EVENT_FLAGGING_USER     = "flagging_user";
 	public static final String COMMENT_EVENT_UNFLAGGING_USER = "unflagging_user";
 	
-	
-	public void pre_init(WebApplication app, Map<String,Object> config) throws InitializationException
+	//system init happens first.all modules are linked and store is set for
+	//webstore modules. nothing elise is ready but here we are interceding to 
+	//teel evolution to ignore the fields that our rating plugin will be responsible for.
+	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
-		super.pre_init(app,config);
+		super.system_init(app,config);
 		rating_module		 = (ICommentRatingModule)getSlot(SLOT_COMMENT_RATING_MODULE);
-		guard				 = (ICommentGuard)getSlot(SLOT_COMMENT_GUARD_MODULE);
-		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);
+		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
 		notify_evolution();
 	}
 
+	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
+		super.init(app, config);
+		guard				 = (ICommentGuard)getSlot(SLOT_COMMENT_GUARD_MODULE);
+	}
 	
 	protected void defineSlots()
 	{
