@@ -35,44 +35,26 @@ public abstract class WebStoreModule extends WebModule
 	protected List<EntityDefinition> associated_entity_definitions;
 	
 
-	public List<Class<?>> dependencies()
-	{
-		List<Class<?>> list = super.dependencies();
-		list.add(IPersistenceProvider.class);
-		return list;
-	}
-
-
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);		
-		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
 		//this breaks a loope since we need to pre-init the default one manually..see below//
 		if(!(this instanceof DefaultPersistenceEvolver))
 			setup_evolution_provider(app);//can probs pass config along here//
 	}
-/*	
-	public void pre_init(WebApplication app,Map<String,Object> config) throws InitializationException
-	{
-		super.pre_init(app, config);
-		associated_entity_definitions = new ArrayList<EntityDefinition>();
-		try{
-			defineEntities(config);
-			defineIndexes(config);
-			defineRelationships(config);
-		}catch(Exception e)
-		{
-			ERROR(e);
-			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
-		}			
 
-	}
-	*/
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);		
-		store = ((IPersistenceProvider)getSlot(SLOT_STORE)).getStore();
-		//this breaks a loope since we need to pre-init the default one manually..see below//
+		IPersistenceProvider store_provider = (IPersistenceProvider)getSlot(SLOT_STORE);
+		//IN RARE CASES THE STORE PROVIDER SLOT IS NULL
+		//MAINLY WHEN A DEFAULT GUARD IS BEING USED. WE MAKE
+		//DEFAULT GUARDS EXTEND WEB STORE MODULE SO IT IS
+		//EASY TO EXTEND THEM AND STILL HAVE STORE FUNCTIONALITY.
+		//HOWEVER THE DEFAULT IMPLMENTATIONS NEVER HAVE THEIR STORE
+		//SET SINCE THEY ALWAYS RETURN FALSE FOR EVERY METHOD
+		if(store_provider != null)
+			store = store_provider.getStore();
 		
 		associated_entity_definitions = new ArrayList<EntityDefinition>();
 		try{
@@ -107,9 +89,8 @@ public abstract class WebStoreModule extends WebModule
 		try{
 			if(((WebStoreModule)evolution_provider).getSlot(SLOT_STORE) == null)
 				((WebStoreModule)evolution_provider).setSlot(SLOT_STORE,((IPersistenceProvider)getSlot(SLOT_STORE)));
-//			((WebModule)evolution_provider).system_init(app, new HashMap<String,Object>());
-//			((WebModule)evolution_provider).pre_init(app, new HashMap<String,Object>());
-			((WebModule)evolution_provider).init(app, new HashMap<String,Object>());
+
+			//((WebModule)evolution_provider).init(app, new HashMap<String,Object>());
 		}catch(SlotException se)
 		{
 			ERROR(se);
