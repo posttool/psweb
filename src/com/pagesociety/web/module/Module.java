@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SlotException;
 
@@ -176,5 +177,17 @@ public abstract class Module
 	{
 		return is_initialized;
 	}
+	
+	private ModuleInfo module_info;
+	public void setModuleInfo(ModuleInfo info)
+	{
+		module_info = info;
+	}
+	
+	public ModuleInfo getModuleInfo()
+	{
+		return module_info;
+	}
 
+	
 }
