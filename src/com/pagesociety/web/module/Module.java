@@ -184,6 +184,11 @@ public abstract class Module
 		return module_info;
 	}
 
+	public void applicationReady(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		
+	}
+	
 	public static final int ATTRIBUTE_IS_USER_MODULE = 0x01;
 	public static final int ATTRIBUTE_INIT_LATE		 = 0x10;
 	List<Integer> attributes = new ArrayList<Integer>();
