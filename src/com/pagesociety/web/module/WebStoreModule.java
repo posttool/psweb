@@ -90,7 +90,7 @@ public abstract class WebStoreModule extends WebModule
 			if(((WebStoreModule)evolution_provider).getSlot(SLOT_STORE) == null)
 				((WebStoreModule)evolution_provider).setSlot(SLOT_STORE,((IPersistenceProvider)getSlot(SLOT_STORE)));
 
-			//((WebModule)evolution_provider).init(app, new HashMap<String,Object>());
+			((WebModule)evolution_provider).system_init(app, new HashMap<String,Object>());
 		}catch(SlotException se)
 		{
 			ERROR(se);
