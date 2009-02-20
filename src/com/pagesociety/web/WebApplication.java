@@ -242,10 +242,8 @@ public abstract class WebApplication
 			}
 		}
 		
-		/* system init...this is the lowest level bootstrap. here you can do things
-		 * like tell the evolution mechanism to ignore certain fields etc. also this
-		 * is where the store field is set in WebStoreModule so it is always valid in 
-		 * during the rest of the setup.
+		/* system init...this is the lowest level bootstrap.slots are filled out
+		 * but their init methods have not been called
 		 */
 	
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
@@ -253,13 +251,7 @@ public abstract class WebApplication
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			_module_instances.get(m.getName()).system_init(this,m.getProps());
 		}
-	  /*	
-		for (int i = 0; i < _config.getModuleInfo().size(); i++)
-		{
-			ModuleInfo m 				= _config.getModuleInfo().get(i);
-			_module_instances.get(m.getName()).pre_init(this,m.getProps());
-		}
-	 */			
+
 		/*init modules*/
 		INFO("INITIALIZING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
@@ -267,19 +259,32 @@ public abstract class WebApplication
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			String module_name			= m.getName();
 			Module module_instance 		= _module_instances.get(module_name);
-			init_module(module_instance, m.getProps());
+			init_module(module_instance);
 		}
+	
+		for(int i = 0;i < init_late_modules.size();i++)
+		{
+			init_module(init_late_modules.get(i));
+		}
+	
 	}
 	
 	
-	private void init_module(Module m,Map<String,Object>config) throws InitializationException
+	private List<Module> init_late_modules = new ArrayList<Module>(); 
+	private void init_module(Module m) throws InitializationException
 	{
 		if(m.isInitialized())
 			return;
+
+		List<Integer> module_attributes = m.getModuleAttributes();
+		if(module_attributes.contains(Module.ATTRIBUTE_INIT_LATE) && !init_late_modules.contains(m))
+		{
+			init_late_modules.add(m);
+			return;
+		}
+
 		INFO("\tINITIALIZING "+m.getName());
-		List<Class<?>> dependencies = m.dependencies();
 		List<SlotDescriptor> slot_descriptors = m.getSlotDescriptors();
-		
 		for(int i = 0;i < slot_descriptors.size();i++)
 		{
 			SlotDescriptor d 	 = slot_descriptors.get(i);
@@ -297,7 +302,7 @@ public abstract class WebApplication
 			}
 		}
 
-		m.init(this, config);
+		m.init(this, m.getModuleInfo().getProps());
 		m.setInitialized(true);
 	}
 	
