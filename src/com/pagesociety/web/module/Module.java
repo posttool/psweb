@@ -31,18 +31,13 @@ public abstract class Module
 	
 	public void system_init(WebApplication app, Map<String, Object> config) throws InitializationException
 	{
-
-	}
-	
-	public void pre_init(WebApplication app, Map<String, Object> config) throws InitializationException
-	{
-	
+		_application = app;
+		_config = config;
 	}
 	
 	public void init(WebApplication app, Map<String, Object> config) throws InitializationException
 	{
-		_application = app;
-		_config = config;
+
 	}
 
 	public void setup_slots() throws InitializationException
@@ -189,5 +184,16 @@ public abstract class Module
 		return module_info;
 	}
 
+	public static final int ATTRIBUTE_IS_USER_MODULE = 0x01;
+	public static final int ATTRIBUTE_INIT_LATE		 = 0x10;
+	List<Integer> attributes = new ArrayList<Integer>();
+	public List<Integer> getModuleAttributes()
+	{
+		return attributes;
+	}
 	
+	public void addModuleAttribute(int att)
+	{
+		attributes.add(att);
+	}
 }
