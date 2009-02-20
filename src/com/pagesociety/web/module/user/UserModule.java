@@ -63,6 +63,11 @@ public class UserModule extends WebStoreModule
 		super.init(app,config);	
 		guard		= (IUserGuard)getSlot(SLOT_USER_GUARD);
 		
+
+	}
+	
+	public void applicationReady(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
 		try{
 			setup_admin_user(config);
 		}catch(Exception e)
@@ -70,7 +75,7 @@ public class UserModule extends WebStoreModule
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP USER MODULE.COULDNT CREATE ADMIN USER",e);
 		}
-
+		
 	}
 
 	
