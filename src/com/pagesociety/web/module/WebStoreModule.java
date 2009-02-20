@@ -352,7 +352,8 @@ public abstract class WebStoreModule extends WebModule
 	
 	public static Entity GET_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
-		return FILL_REF(store, instance, fieldname);
+		store.fillReferenceField(instance,fieldname);
+		return (Entity)instance.getAttribute(fieldname);
 	}
 
 	public static List<Entity> GET_LIST_REF(PersistentStore store,String entity_type,long entity_id, String fieldname) throws PersistenceException
@@ -370,9 +371,8 @@ public abstract class WebStoreModule extends WebModule
 	public static Entity FILL_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
 		store.fillReferenceField(instance,fieldname);
-		return (Entity)instance.getAttribute(fieldname);
+		return (Entity)instance;
 	}
-	
 	
 	public static Entity FILL_REFS(PersistentStore store,Entity instance, String... fieldnames) throws PersistenceException
 	{
