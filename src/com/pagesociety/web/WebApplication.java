@@ -267,6 +267,12 @@ public abstract class WebApplication
 			init_module(init_late_modules.get(i));
 		}
 	
+		for(int i = 0;i < _module_list.size();i++)
+		{
+			Module m = _module_list.get(i);
+			m.applicationReady(this,m.getModuleInfo().getProps());
+		}
+	
 	}
 	
 	
