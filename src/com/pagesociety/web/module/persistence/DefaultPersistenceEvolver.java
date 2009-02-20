@@ -142,6 +142,8 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		}
 		}catch(Exception e)
 		{
+			System.out.println("BAH@@ ");
+			e.printStackTrace();
 			ERROR(e);
 			throw new SyncException("FAILED EVOLVING ENTITY DEF.");
 		}
