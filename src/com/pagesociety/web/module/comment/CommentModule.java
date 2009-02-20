@@ -56,9 +56,7 @@ public class CommentModule extends WebStoreModule
 	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app,config);
-		rating_module		 = (ICommentRatingModule)getSlot(SLOT_COMMENT_RATING_MODULE);
-		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
-		notify_evolution();
+		notify_evolution(app,config);
 	}
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -445,8 +443,10 @@ public class CommentModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(COMMENT_ENTITY,IDX_BY_TARGET, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,COMMENT_FIELD_TARGET);
 	}
 
-	private void notify_evolution()
+	private void notify_evolution(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
+		rating_module		 = (ICommentRatingModule)getSlot(SLOT_COMMENT_RATING_MODULE);
+		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
 		if(rating_module != null)
 		{
 			EVOLVE_IGNORE(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
