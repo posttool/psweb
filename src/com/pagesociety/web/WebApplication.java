@@ -21,6 +21,7 @@ import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
+import com.pagesociety.web.module.Module.SlotDescriptor;
 
 
 public abstract class WebApplication
@@ -164,6 +165,7 @@ public abstract class WebApplication
 			
 			ModuleRegistry.register(module_name,module_classname, m.getProps());
 			Module module = ModuleRegistry.instantiate(module_name);
+			module.setModuleInfo(m);
 			module.setup_slots();
 			_module_instances.put(module_name, module);
 			_module_list.add(module);
@@ -188,7 +190,7 @@ public abstract class WebApplication
 				String slot_name   		= d.slot_name;
 				/*this is the reference to another module by name in application.xml*/
 				String slot_module_name = module_info_slots.get(slot_name);
-				Object slot_instance;
+				Module slot_instance;
 				
 				if(slot_module_name == null)
 				{
@@ -204,7 +206,7 @@ public abstract class WebApplication
 							if(d.default_slot_val instanceof Class)
 							{
 								try{
-									slot_instance = ((Class)d.default_slot_val).newInstance();
+									slot_instance = (Module)((Class)d.default_slot_val).newInstance();
 								}catch(Exception e)
 								{
 									throw new InitializationException("MODULE "+module_instance.getName()+"FAILED SETTING UP DEFAULT FOR "+d.slot_name+" OF TYPE "+((Class)d.default_slot_val).getName()+" WHICH UNFORTUNATELY BOMBS THE INIT.");
@@ -212,7 +214,7 @@ public abstract class WebApplication
 							}
 							else if(d.default_slot_val instanceof Module)
 							{
-								slot_instance = d.default_slot_val;
+								slot_instance = (Module)d.default_slot_val;
 							}
 							else
 							{
@@ -225,25 +227,9 @@ public abstract class WebApplication
 				}
 				else
 				{
-					/* this works fine for something that doesn't take any parameters
-					 * or is all default values 
-					 * but is generally a bad idea and mostly useless.
-					 */
-					if(slot_module_name.endsWith(".class"))
-					{
-						try{
-							slot_instance = Class.forName(slot_module_name).newInstance();
-						}catch(Exception e)
-						{
-							throw new InitializationException("MODULE "+module_instance.getName()+" FAILED SETTING "+d.slot_name+" TO AN INSTANCE OF TYPE "+slot_module_name+" WHICH UNFORTUNATELY BOMBS THE INIT.");
-						}
-					}
-					else
-					{
 						slot_instance = _module_instances.get(slot_module_name);
 						if(slot_instance == null)
 							throw new InitializationException("SLOT "+slot_name+" OF MODULE "+module_instance.getName()+" REFERS TO A MODULE NAMED "+slot_module_name+" WHICH IS UNDEFINED");
-					}
 				}
 				
 				try{
@@ -256,27 +242,64 @@ public abstract class WebApplication
 			}
 		}
 		
-		/* pre init...this gives us a chance to make sure that our stores are always\
-		 * setup before init is called */
+		/* system init...this is the lowest level bootstrap. here you can do things
+		 * like tell the evolution mechanism to ignore certain fields etc. also this
+		 * is where the store field is set in WebStoreModule so it is always valid in 
+		 * during the rest of the setup.
+		 */
+	
+		for (int i = 0; i < _config.getModuleInfo().size(); i++)
+		{
+			ModuleInfo m 				= _config.getModuleInfo().get(i);
+			_module_instances.get(m.getName()).system_init(this,m.getProps());
+		}
+	  /*	
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			_module_instances.get(m.getName()).pre_init(this,m.getProps());
 		}
-		
+	 */			
 		/*init modules*/
 		INFO("INITIALIZING MODULES");
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			String module_name			= m.getName();
-			INFO("\tINITIALIZING "+module_name);
-			_module_instances.get(m.getName()).init(this,m.getProps());
+			Module module_instance 		= _module_instances.get(module_name);
+			init_module(module_instance, m.getProps());
 		}
 	}
 	
 	
-	
+	private void init_module(Module m,Map<String,Object>config) throws InitializationException
+	{
+		if(m.isInitialized())
+			return;
+		INFO("\tINITIALIZING "+m.getName());
+		List<Class<?>> dependencies = m.dependencies();
+		List<SlotDescriptor> slot_descriptors = m.getSlotDescriptors();
+		
+		for(int i = 0;i < slot_descriptors.size();i++)
+		{
+			SlotDescriptor d 	 = slot_descriptors.get(i);
+			Module slot_instance = (Module)m.getSlot(d.slot_name);
+
+			//System.out.println("INITIALIZING SLOT "+d.slot_name+" INSTANCE OF "+slot_instance.getClass().getSimpleName());
+			if(slot_instance == null)
+				continue;
+			if(!slot_instance.isInitialized())
+			{
+				if(slot_instance.getModuleInfo() != null)
+					slot_instance.init(this, slot_instance.getModuleInfo().getProps());
+				else
+					slot_instance.init(this, null);
+			}
+		}
+
+		m.init(this, config);
+		m.setInitialized(true);
+	}
 	
 	@SuppressWarnings("unchecked")
 	protected void registerUrls() throws InitializationException
