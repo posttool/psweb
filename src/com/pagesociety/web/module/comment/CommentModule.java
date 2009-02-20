@@ -46,18 +46,11 @@ public class CommentModule extends WebStoreModule
 	public static final int EVENT_COMMENT_FLAGGED    = 0x24;
 	public static final int EVENT_COMMENT_UNFLAGGED  = 0x25;
 	
-	public static final String COMMENT_EVENT_COMMENT 	   			   = "comment";
-	public static final String COMMENT_EVENT_FLAGGING_USER     = "flagging_user";
-	public static final String COMMENT_EVENT_UNFLAGGING_USER = "unflagging_user";
+	public static final String COMMENT_EVENT_COMMENT 	   		= "comment";
+	public static final String COMMENT_EVENT_FLAGGING_USER      = "flagging_user";
+	public static final String COMMENT_EVENT_UNFLAGGING_USER 	= "unflagging_user";
 	
-	//system init happens first.all modules are linked and store is set for
-	//webstore modules. nothing elise is ready but here we are interceding to 
-	//teel evolution to ignore the fields that our rating plugin will be responsible for.
-	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
-	{
-		super.system_init(app,config);
-		notify_evolution(app,config);
-	}
+
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -443,6 +436,18 @@ public class CommentModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(COMMENT_ENTITY,IDX_BY_TARGET, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,COMMENT_FIELD_TARGET);
 	}
 
+	
+	/////BOOTSTRAPPY STUFF//
+	//system init happens first.all modules are linked and store is set for
+	//webstore modules. nothing elise is ready but here we are interceding to 
+	//teel evolution to ignore the fields that our rating plugin will be responsible for.
+	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
+		super.system_init(app,config);
+		addModuleAttribute(ATTRIBUTE_INIT_LATE);
+		notify_evolution(app,config);
+	}
+	
 	private void notify_evolution(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		rating_module		 = (ICommentRatingModule)getSlot(SLOT_COMMENT_RATING_MODULE);
@@ -456,4 +461,5 @@ public class CommentModule extends WebStoreModule
 	}
 
 
+	
 }
