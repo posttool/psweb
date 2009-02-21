@@ -82,7 +82,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_USER_PROFILE_GUARD_MODULE,IUserProfileGuard.class,false,null);
+		DEFINE_SLOT(SLOT_USER_PROFILE_GUARD_MODULE,IUserProfileGuard.class,false,DefaultUserProfileGuard.class);
 		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true,null);
 	}
 
