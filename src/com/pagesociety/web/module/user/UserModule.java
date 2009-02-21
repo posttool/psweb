@@ -66,7 +66,7 @@ public class UserModule extends WebStoreModule
 
 	}
 	
-	public void applicationReady(WebApplication app, Map<String,Object> config) throws InitializationException
+	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		try{
 			setup_admin_user(config);
