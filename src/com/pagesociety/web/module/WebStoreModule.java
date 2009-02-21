@@ -697,6 +697,11 @@ public abstract class WebStoreModule extends WebModule
 	}
 	
 	
+	public Entity UPDATE(Entity instance,Map<String,Object> entity_data) throws PersistenceException
+	{
+		return UPDATE(store, instance, entity_data);
+	}
+	
 	public Entity UPDATE(Entity instance,Object... name_value_pairs) throws PersistenceException
 	{
 		return UPDATE(store, instance, name_value_pairs);
