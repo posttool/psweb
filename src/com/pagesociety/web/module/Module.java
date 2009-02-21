@@ -184,7 +184,7 @@ public abstract class Module
 		return module_info;
 	}
 
-	public void applicationReady(WebApplication app,Map<String,Object> config) throws InitializationException
+	public void loadbang(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		
 	}
