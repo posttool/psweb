@@ -3,6 +3,7 @@ package com.pagesociety.web.module;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -132,23 +133,20 @@ public abstract class WebStoreModule extends WebModule
 		(new FieldDefinition(FIELD_DATE_CREATED, Types.TYPE_DATE)),
 		(new FieldDefinition(FIELD_LAST_MODIFIED, Types.TYPE_DATE)),
 	};	
-		
+	
+	
 	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,SyncException
 	{
-		EntityDefinition 		existing_def;
-		EntityDefinition 		proposed_def;
-			
-		existing_def = store.getEntityDefinition(entity_name);
-		proposed_def = new EntityDefinition(entity_name);
-
-		/* add system fields to proposed def */
-		for(int i = 0;i < FIELDS.length;i++)
-				proposed_def.addField(FIELDS[i]);
-		
+		return DEFINE_ENTITY(store, entity_name,null, fields);
+	}
+	
+	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,List<FieldDefinition> defs,Object ...fields) throws PersistenceException,SyncException
+	{
+		if(defs == null)
+			defs = new ArrayList<FieldDefinition>();
 		int i = 0;
 		for(;;)
 		{
-		
 			String fieldname 	= (String)fields[i++]; 
 			int type 		 	= (Integer)fields[i++];
 			FieldDefinition f ;
@@ -158,11 +156,27 @@ public abstract class WebStoreModule extends WebModule
 				f = new FieldDefinition(fieldname,type,(String)fields[i++]);
 			f.setDefaultValue(fields[i++]);
 			
-			proposed_def.addField(f);
+			defs.add(f);
 			if(i>fields.length - 1)
 				break;
 		}
+		return DEFINE_ENTITY(store, entity_name, defs);	
+	}
+	
+	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,List<FieldDefinition> defs) throws PersistenceException,SyncException
+	{
+		EntityDefinition 		existing_def;
+		EntityDefinition 		proposed_def;
+			
+		existing_def = store.getEntityDefinition(entity_name);
+		proposed_def = new EntityDefinition(entity_name);
+		/* add system fields to proposed def */
+
+		for(int i = 0;i < FIELDS.length;i++)
+			proposed_def.addField(FIELDS[i]);
 		
+		for(int i = 0;i < defs.size();i++)
+			proposed_def.addField(defs.get(i));
 		/*create it if it doesnt exist*/
 		if(existing_def == null)
 			store.addEntityDefinition(proposed_def);
@@ -176,8 +190,9 @@ public abstract class WebStoreModule extends WebModule
 				evolution_provider.evolveEntity(getName(), existing_def, proposed_def);
 			
 			/* add any additional default system fields...deletes of system fields 
-			 * have to be done with an alter for now... */
-			for(i = 0;i < FIELDS.length;i++)
+			 * have to be done with an alter for now...also need to take evolution into 
+			 * account when adding system fields */
+			for(int i = 0;i < FIELDS.length;i++)
 			{
 				FieldDefinition f = FIELDS[i];
 				if(existing_def.getField(f.getName())==null)
@@ -188,6 +203,9 @@ public abstract class WebStoreModule extends WebModule
 		return proposed_def;
 	}
 
+	
+
+	
 	public static EntityDefinition ADD_FIELDS(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,InitializationException
 	{
 		EntityDefinition existing_def = store.getEntityDefinition(entity_name);
@@ -264,10 +282,24 @@ public abstract class WebStoreModule extends WebModule
 		
 		Entity e = store.getEntityDefinition(entity_type).createInstance();
 		set_attributes(e, attribute_name_values);
-		//for(int i = 0;i < attribute_name_values.length;i+=2)
-		//{
-		//	e.setAttribute((String)attribute_name_values[i], attribute_name_values[i+1]);
-		//}
+		Date now = new Date();
+		e.setAttribute(FIELD_CREATOR,creator);
+		e.setAttribute(FIELD_DATE_CREATED,now);
+		e.setAttribute(FIELD_LAST_MODIFIED,now);
+		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
+		return store.saveEntity(e);
+	}
+	
+	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Map<String,Object> entity_atts) throws PersistenceException
+	{
+		
+		Entity e = store.getEntityDefinition(entity_type).createInstance();
+		Iterator<String> keys = entity_atts.keySet().iterator();
+		while(keys.hasNext())
+		{
+			String key = keys.next();
+			e.setAttribute(key, entity_atts.get(key));
+		}
 		Date now = new Date();
 		e.setAttribute(FIELD_CREATOR,creator);
 		e.setAttribute(FIELD_DATE_CREATED,now);
@@ -393,7 +425,20 @@ public abstract class WebStoreModule extends WebModule
 		return UPDATE(store,e,name_value_pairs);
 	}
 	
-	
+	public static Entity UPDATE(PersistentStore store,Entity instance,Map<String,Object> entity_atts) throws PersistenceException
+	{
+		Entity e = instance;
+		Iterator<String> keys = entity_atts.keySet().iterator();
+		while(keys.hasNext())
+		{
+			String key = keys.next();
+			e.setAttribute(key, entity_atts.get(key));
+		}
+		Date now = new Date();
+		e.setAttribute(FIELD_LAST_MODIFIED,now);
+		return store.saveEntity(e);
+	}
+
 	public static Entity UPDATE(PersistentStore store,Entity instance,Object... name_value_pairs) throws PersistenceException
 	{
 		if(instance == null)
@@ -572,6 +617,10 @@ public abstract class WebStoreModule extends WebModule
 
 	/* convenience stuff for inheritors */
 	
+	public Entity NEW(String entity_type,Entity creator,Map<String,Object> atts) throws PersistenceException
+	{
+		return NEW(store,entity_type,creator,atts);
+	}
 	public Entity NEW(String entity_type,Entity creator,Object ...attribute_name_values) throws PersistenceException
 	{
 		return NEW(store,entity_type,creator,attribute_name_values);
@@ -769,6 +818,19 @@ public abstract class WebStoreModule extends WebModule
 			throw new WebApplicationException("TRYING TO UPDATE AN UNITINIALIZED ENTITY. "+e.getType()+" HAS ID OF "+e.getId());
 	}
 	
+	public EntityDefinition DEFINE_ENTITY(String entity_name,List<FieldDefinition> field_defs,Object...args) throws PersistenceException,InitializationException
+	{
+		EntityDefinition d = DEFINE_ENTITY(store,entity_name,field_defs,args);
+		associated_entity_definitions.add(d);
+		return d;
+	}
+	
+	public EntityDefinition DEFINE_ENTITY(String entity_name,List<FieldDefinition> field_defs) throws PersistenceException,InitializationException
+	{
+		EntityDefinition d = DEFINE_ENTITY(store,entity_name,field_defs);
+		associated_entity_definitions.add(d);
+		return d;
+	}
 	public EntityDefinition DEFINE_ENTITY(String entity_name,Object...args) throws PersistenceException,InitializationException
 	{
 		EntityDefinition d = DEFINE_ENTITY(store,entity_name,args);
@@ -994,6 +1056,13 @@ public abstract class WebStoreModule extends WebModule
 	//maybe a usefule util to move up? lets see
 	protected List<FieldDefinition> UNFLATTEN_FIELD_DEFINITIONS(Object... flat_defs)
 	{
+		return UNFLATTEN_FIELD_DEFINITIONS(FROM_OBJECT_LIST,flat_defs);
+	}
+	
+	protected static final int FROM_OBJECT_LIST = 0x01;
+	protected static final int FROM_STRING_LIST = 0x02;
+	protected List<FieldDefinition> UNFLATTEN_FIELD_DEFINITIONS(int from,Object... flat_defs)
+	{
 		String field_name;
 		int field_type;
 		String ref_type;
@@ -1001,20 +1070,58 @@ public abstract class WebStoreModule extends WebModule
 		List<FieldDefinition> ret = new ArrayList<FieldDefinition>();
 		for(int i = 0;i < flat_defs.length;i+=3)
 		{
-
 			field_name  = (String)flat_defs[i];
-			field_type  =  (Integer)flat_defs[i+1];
+			if(from == FROM_STRING_LIST)
+			{
+				try{
+					field_type  =  Types.parseType((String)flat_defs[i+1]);
+				}catch(PersistenceException pe)
+				{
+					field_type = Types.TYPE_UNDEFINED;
+					ERROR(pe);
+				}
+			}else
+			{
+				field_type  =  (Integer)flat_defs[i+1];
+			}
+			
 			FieldDefinition f = new FieldDefinition(field_name,field_type);
 			if(field_type == Types.TYPE_REFERENCE)
 			{
 				ref_type = (String)flat_defs[i+2];
-				default_val = flat_defs[i+3];
+				if(from == FROM_STRING_LIST)
+				{
+					try{
+						default_val = Types.parseDefaultValue(field_type, (String)flat_defs[i+3]);
+					}catch(PersistenceException pe)
+					{
+						default_val = null;
+						ERROR(pe);
+					}
+				}
+				else
+					default_val = flat_defs[i+3];
+				
 				f.setReferenceType(ref_type);
+				f.setDefaultValue(default_val);
 				i++;
 			}
 			else
 			{
-				default_val = flat_defs[i+2];
+				if(from == FROM_STRING_LIST)
+				{
+					try{
+						System.out.println(field_name+" FIELD TYPE IS "+field_type+" +2 "+flat_defs[i+2]);
+						default_val = Types.parseDefaultValue(field_type, (String)flat_defs[i+2]);
+					}catch(PersistenceException pe)
+					{
+						default_val = null;
+						ERROR(pe);
+					}
+				}
+				else
+					default_val = flat_defs[i+2];
+			
 				f.setDefaultValue(default_val);
 			}
 			ret.add(f);
