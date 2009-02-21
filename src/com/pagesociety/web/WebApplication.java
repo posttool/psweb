@@ -270,7 +270,7 @@ public abstract class WebApplication
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
-			m.applicationReady(this,m.getModuleInfo().getProps());
+			m.loadbang(this,m.getModuleInfo().getProps());
 		}
 	
 	}
