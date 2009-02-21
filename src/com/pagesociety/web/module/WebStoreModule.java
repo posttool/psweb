@@ -1085,10 +1085,13 @@ public abstract class WebStoreModule extends WebModule
 				field_type  =  (Integer)flat_defs[i+1];
 			}
 			
-			FieldDefinition f = new FieldDefinition(field_name,field_type);
+			if(field_name.equals("profile_image"))
+				System.out.println("TYPE IS "+field_type);
+			FieldDefinition f;
 			if(field_type == Types.TYPE_REFERENCE)
 			{
 				ref_type = (String)flat_defs[i+2];
+				f = new FieldDefinition(field_name,field_type,ref_type);
 				if(from == FROM_STRING_LIST)
 				{
 					try{
@@ -1108,10 +1111,10 @@ public abstract class WebStoreModule extends WebModule
 			}
 			else
 			{
+				f = new FieldDefinition(field_name,field_type);
 				if(from == FROM_STRING_LIST)
 				{
 					try{
-						System.out.println(field_name+" FIELD TYPE IS "+field_type+" +2 "+flat_defs[i+2]);
 						default_val = Types.parseDefaultValue(field_type, (String)flat_defs[i+2]);
 					}catch(PersistenceException pe)
 					{
