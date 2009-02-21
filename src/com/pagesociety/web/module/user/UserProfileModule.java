@@ -44,7 +44,7 @@ import com.pagesociety.web.module.util.Util;
 
 public class UserProfileModule extends WebStoreModule implements IEventListener
 {
-	protected static final String SLOT_USER_PROFILE_GUARD_MODULE = "user-profile-guard-module"; 
+	protected static final String SLOT_USER_PROFILE_GUARD = "user-profile-guard"; 
 	protected static final String SLOT_USER_MODULE 				 = "user-module"; 
 	
 	/*this module needs to be after modules containing any entites you are referring to 
@@ -72,17 +72,17 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
-		guard				 = (IUserProfileGuard)getSlot(SLOT_USER_PROFILE_GUARD_MODULE);
+		guard				 = (IUserProfileGuard)getSlot(SLOT_USER_PROFILE_GUARD);
 		user_module 		 = (UserModule)getSlot(SLOT_USER_MODULE);
 		user_module.addEventListener(this);
-		System.out.println("PROFILE FIELDS IS "+profile_fields);
+		System.out.println(getName()+"PROFILE FIELDS IS "+profile_fields);
 	}
 	
 	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_USER_PROFILE_GUARD_MODULE,IUserProfileGuard.class,false,DefaultUserProfileGuard.class);
+		DEFINE_SLOT(SLOT_USER_PROFILE_GUARD,IUserProfileGuard.class,false,DefaultUserProfileGuard.class);
 		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true,null);
 	}
 
@@ -142,6 +142,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	public Entity updateUserProfile(Entity profile_entity,
 			  						Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
+		System.out.println("PROFILE DATA IS "+profile_data);
 		profile_entity = UPDATE(profile_entity,
 								profile_data);
 	
