@@ -322,7 +322,7 @@ public class CommentModule extends WebStoreModule
 		if((Integer)comment.getAttribute(COMMENT_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_NOT_FLAGGED)
 			return comment;
 		GUARD(guard.canUnflagComment(user,comment));
-		return flagComment(user,comment);
+		return unflagComment(user,comment);
 	}
 
 	
@@ -334,7 +334,7 @@ public class CommentModule extends WebStoreModule
 						COMMENT_FIELD_FLAGGED_STATUS,FLAGGED_STATUS_FLAGGED,		
 						COMMENT_FIELD_FLAGGING_USERS,flagging_users);
 						
-		DISPATCH_EVENT(EVENT_COMMENT_FLAGGED,
+		DISPATCH_EVENT(EVENT_COMMENT_UNFLAGGED,
 					   COMMENT_EVENT_COMMENT,comment,
 					   COMMENT_EVENT_UNFLAGGING_USER,unflagging_user);
 		return comment;
