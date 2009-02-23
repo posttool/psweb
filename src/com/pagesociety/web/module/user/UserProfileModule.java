@@ -1,15 +1,10 @@
 package com.pagesociety.web.module.user;
 
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityDefinition;
@@ -21,26 +16,15 @@ import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
-import com.pagesociety.web.exception.AccountLockedException;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.LoginFailedException;
-import com.pagesociety.web.exception.PermissionsException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.gateway.GatewayConstants;
-import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.IEventListener;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleEvent;
 import com.pagesociety.web.module.PagingQueryResult;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.comment.DefaultCommentGuard;
-import com.pagesociety.web.module.comment.ICommentGuard;
-import com.pagesociety.web.module.comment.ICommentRatingModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
-import com.pagesociety.web.module.util.Util;
 
 public class UserProfileModule extends WebStoreModule implements IEventListener
 {
