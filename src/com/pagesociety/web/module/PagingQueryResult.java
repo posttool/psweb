@@ -12,6 +12,8 @@ public class PagingQueryResult
 	private int 		 _offset;
 	private int 		 _total_count;
 	private int 		 _page_size;
+	private double		 _execution_time;
+	private double		 _rps;
 
 	public PagingQueryResult(QueryResult result, int total_count, int offset, int page_size)
 	{
@@ -50,5 +52,25 @@ public class PagingQueryResult
 	public int getPageSize()
 	{
 		return _page_size;
+	}
+
+	public void setExecutionTime(double t)
+	{
+		_execution_time = t;
+	}
+	
+	public double getExecutionTime()
+	{
+		return _execution_time;
+	}
+	
+	public void setResultsPerSecond(double t)
+	{
+		_execution_time = t;
+	}
+	
+	public double getResultsPerSdecond()
+	{
+		return _execution_time;
 	}
 }
