@@ -70,19 +70,20 @@ public class BillingModule extends WebStoreModule
 		VALIDATE_NEW_INSTANCE(billing_record);
 
 		return CreateBillingRecord(uctx,
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE),
-								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE),
-								   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO),
-								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH),
-								   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR));
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE),
+				   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE),
+				   (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO),
+				   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH),
+				   (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR),
+				   (Boolean)billing_record.getAttribute(BILLINGRECORD_FIELD_PREFERRED));
 	
 	}
 	
@@ -102,17 +103,35 @@ public class BillingModule extends WebStoreModule
 									  int cc_type,
 									  String cc_no,
 									  int exp_month,
-									  int exp_year) throws WebApplicationException,PersistenceException,BillingGatewayException
+									  int exp_year,
+									  Boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canCreateBillingRecord(user,user));
 		
-		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,false);
+		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,preferred);
 	
 	}
 	
+	public void validateBillingRecord(Entity billing_record) throws BillingGatewayException
+	{
+		   String first_name      = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME);
+		   String middle_initial  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL);
+		   String last_name       = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME);
+		   String add_1 		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1);
+		   String add_2 		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2);
+		   String city 			  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY);
+		   String state           = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE);
+		   String country         = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY);
+		   String postal_code     = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE);
+		   int cc_type            = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE);
+		   String cc_no  		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO);
+		   int exp_month          = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH);
+		   int exp_year           = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR);
+		   billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
+	}
 	
-	public Entity createBillingRecord(Entity creator,String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
+	public Entity createBillingRecord(Entity creator,String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,Boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		if(!isConfigured())
 			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
@@ -135,11 +154,14 @@ public class BillingModule extends WebStoreModule
 				   					BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
 				   					BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 				   					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
-		if(preferred)
-			setPreferredBillingRecord(creator,billing_record);
-	
+		
 		DISPATCH_EVENT(EVENT_BILLING_RECORD_CREATED,
 				   BILLING_EVENT_BILLING_RECORD,billing_record);
+		
+		if(preferred != null && preferred == true)
+			setPreferredBillingRecord(creator,billing_record);
+	
+	
 		return billing_record;
 	}
 			  

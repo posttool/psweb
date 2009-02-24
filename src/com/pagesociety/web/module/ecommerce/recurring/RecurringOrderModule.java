@@ -121,7 +121,20 @@ public class RecurringOrderModule extends ResourceModule
 
 		return PAGING_QUERY(q);
 	}
-	
+
+	public Entity getRecurringSKUByCatalogNumber(String catalog_num) throws PersistenceException
+	{
+		Query q = new Query(RECURRING_SKU_ENTITY);
+		q.idx(IDX_RECURRING_SKU_BY_CATALOG_NUMBER_BY_CATALOG_STATE);
+		q.eq(q.list(catalog_num,RECURRING_SKU_CATALOG_STATE_ACTIVE));
+		QueryResult result = QUERY(q);
+		if(result.size() == 0)
+			return null;
+		else if(result.size() > 0)
+			WARNING("THERE ARE MORE THAN ONE RECURRING SKUS WITH CATALOG NUM: "+catalog_num);
+		return result.getEntities().get(0);
+	}
+
 	
 	@Export
 	public Entity CreateRecurringSKU(UserApplicationContext uctx,Entity recurring_sku) throws WebApplicationException,PersistenceException
@@ -373,11 +386,24 @@ public class RecurringOrderModule extends ResourceModule
 		
 		if(billing_record == null)
 		{
-			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
-			MODULE_LOG("NO PREFERRED BILLING RECORD FOR USER:"+order_user+" WHEN TRYING TO OPEN RECURRING ORDER "+recurring_order.getId());
-			send_system_alert_notification(order_user,"There was a problem with your order. Please make sure you have a valid billing record. We don't seem to have one on file for you.");
-			send_billing_failed_email(recurring_order, "NO PREFERRED BILLING RECORD. PLEASE LOGIN AND UPDATE BILLING INFORMATION.");
-			return recurring_order;
+			List<Entity> promotion_instances = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
+			if(promotion_instances != null)
+			{
+				for(int i = 0;i< promotion_instances.size();i++)
+				{
+					Entity promotion_instance = promotion_instances.get(i);
+					if(promotion_module.isFreeForLifePromotion(promotion_instance))
+						break;
+				}
+			}
+			else
+			{
+				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
+				MODULE_LOG("NO PREFERRED BILLING RECORD FOR USER:"+order_user+" WHEN TRYING TO OPEN RECURRING ORDER "+recurring_order.getId());
+				send_system_alert_notification(order_user,"There was a problem with your order. Please make sure you have a valid billing record. We don't seem to have one on file for you.");
+				send_billing_failed_email(recurring_order, "NO PREFERRED BILLING RECORD. PLEASE LOGIN AND UPDATE BILLING INFORMATION.");
+				return recurring_order;
+			}
 		}
 		
 		try{
@@ -687,12 +713,25 @@ public class RecurringOrderModule extends ResourceModule
 				billing_record = billing_module.getPreferredBillingRecord(order_user);
 				if(billing_record == null)
 				{
-					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
-					MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
-					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
-					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
-					send_billing_failed_email(recurring_order, "ERROR: NO PREFERRED BILLING RECORD. PLEASE LOGIN AND SPECIFY PREFERRED BILLING RECORD.");
-					continue;
+					List<Entity> promotion_instances = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
+					if(promotion_instances != null)
+					{
+						for(int j = 0;j< promotion_instances.size();j++)
+						{
+							Entity promotion_instance = promotion_instances.get(j);
+							if(promotion_module.isFreeForLifePromotion(promotion_instance))
+								break;
+						}
+					}
+					else
+					{
+						MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
+						MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
+						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
+						send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
+						send_billing_failed_email(recurring_order, "ERROR: NO PREFERRED BILLING RECORD. PLEASE LOGIN AND SPECIFY PREFERRED BILLING RECORD.");
+						continue;
+					}
 				}
 				
 				try{
@@ -872,6 +911,7 @@ public class RecurringOrderModule extends ResourceModule
 	
 	
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_STATE 			 = "byCatalogState";
+	public static final String IDX_RECURRING_SKU_BY_CATALOG_NUMBER_BY_CATALOG_STATE = "byCatalogNumberByCatalogState";
 
 	
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
@@ -881,6 +921,7 @@ public class RecurringOrderModule extends ResourceModule
 		DEFINE_ENTITY_INDEX(RECURRING_ORDER_ENTITY, IDX_RECURRING_ORDER_BY_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_STATUS);
 		
 		DEFINE_ENTITY_INDEX(RECURRING_SKU_ENTITY, IDX_RECURRING_SKU_BY_CATALOG_STATE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_SKU_FIELD_CATALOG_STATE);
+		DEFINE_ENTITY_INDEX(RECURRING_SKU_ENTITY, IDX_RECURRING_SKU_BY_CATALOG_NUMBER_BY_CATALOG_STATE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,RECURRING_SKU_FIELD_CATALOG_NUMBER,RECURRING_SKU_FIELD_CATALOG_STATE);
 
 	}
 }
