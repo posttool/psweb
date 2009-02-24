@@ -458,7 +458,12 @@ public class UserModule extends WebStoreModule
 	{
 		return GET(USER_ENTITY,user_id);
 	}
-
+	
+	public Entity getAdminUser() throws PersistenceException
+	{
+		return getUser(1);
+	}
+	
 	public Entity getUserByEmail(String email) throws PersistenceException,WebApplicationException
 	{
 		Query q = new Query(USER_ENTITY);
@@ -495,7 +500,7 @@ public class UserModule extends WebStoreModule
 		throw new WebApplicationException("MORE THAN ONE USER WITH EMAIL "+username+" WITH SAME PASSWORD EXISTS! FIX DATA.");			
 	}
 	
-	
+
 
 
 	private void setup_admin_user(Map<String,Object> config) throws PersistenceException,InitializationException
