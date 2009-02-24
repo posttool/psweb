@@ -991,7 +991,7 @@ public abstract class WebStoreModule extends WebModule
 			this.protect_fields = protect_fields;
 		}
 		
-		public int exec(Entity e,String fieldname,Entity reference_val)
+		public int exec(Entity e,String fieldname,Entity reference_val) throws Exception
 		{
 			if(fieldname.equals(FIELD_CREATOR))
 				return DONT_DELETE_REFERENCE;
@@ -1008,20 +1008,34 @@ public abstract class WebStoreModule extends WebModule
 		if(e == null)
 			return null;
 
-		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
-		for(int i = 0;i < ref_fields.size();i++)
-		{
-			FieldDefinition ref_field 	 = ref_fields.get(i);
-			String ref_fieldname 		 = ref_field.getName();
-			if(ref_field.isArray())
+		try{
+			List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
+			for(int i = 0;i < ref_fields.size();i++)
 			{
-				List<Entity> vals = (List<Entity>)e.getAttribute(ref_fieldname);
-				if(vals == null)
-					continue;
-				int s = vals.size();
-				for(int j = 0;j <s;j++)
+				FieldDefinition ref_field 	 = ref_fields.get(i);
+				String ref_fieldname 		 = ref_field.getName();
+				if(ref_field.isArray())
 				{
-					Entity val = vals.get(i);
+					List<Entity> vals = (List<Entity>)e.getAttribute(ref_fieldname);
+					if(vals == null)
+						continue;
+					int s = vals.size();
+					for(int j = 0;j <s;j++)
+					{
+						Entity val = vals.get(i);
+						int delete_behavior = f.exec(e, ref_fieldname, val);
+						switch(delete_behavior)
+						{
+							case DELETE_REFERENCE:
+								DELETE_DEEP(store,val,f);
+							case DONT_DELETE_REFERENCE:
+								break;
+						}
+					}
+				}
+				else
+				{				
+					Entity val = (Entity)e.getAttribute(ref_fieldname);
 					int delete_behavior = f.exec(e, ref_fieldname, val);
 					switch(delete_behavior)
 					{
@@ -1030,23 +1044,15 @@ public abstract class WebStoreModule extends WebModule
 						case DONT_DELETE_REFERENCE:
 							break;
 					}
-				}
+				}	
 			}
-			else
-			{				
-				Entity val = (Entity)e.getAttribute(ref_fieldname);
-				int delete_behavior = f.exec(e, ref_fieldname, val);
-				switch(delete_behavior)
-				{
-					case DELETE_REFERENCE:
-						DELETE_DEEP(store,val,f);
-					case DONT_DELETE_REFERENCE:
-						break;
-				}
-			}	
+	
+			return DELETE(store,e);
+		}catch(Exception ee)
+		{
+			ee.printStackTrace();
+			throw new PersistenceException("BARFED IN DELETE DEEP "+ee.getMessage());
 		}
-
-		return DELETE(store,e);
 	}
 
 	
