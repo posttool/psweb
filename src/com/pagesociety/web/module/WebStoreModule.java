@@ -236,6 +236,7 @@ public abstract class WebStoreModule extends WebModule
 		}
 		return store.getEntityDefinition(entity_name);
 	}
+
 	
 	public static void DEFINE_ENTITY_INDEX(PersistentStore store,String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,InitializationException
 	{
