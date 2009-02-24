@@ -399,9 +399,14 @@ public class UserModule extends WebStoreModule
 		return GatewayConstants.SESSION_ID_KEY + "=" + user_context.getId();
 	}
 	
+	
+	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 	
-
+	public Entity getUser(long user_id) throws PersistenceException
+	{
+		return GET(USER_ENTITY,user_id);
+	}
 
 	public Entity getUserByEmail(String email) throws PersistenceException,WebApplicationException
 	{
