@@ -39,6 +39,7 @@ import com.pagesociety.web.module.user.UserModule;
 public class RecurringOrderModule extends ResourceModule 
 {
 	
+	protected static final String SLOT_USER_MODULE  		  = "user-module";
 	private static final String SLOT_BILLING_MODULE 		  = "billing-module";
 	private static final String SLOT_EMAIL_MODULE 		  	  = "email-module";
 	private static final String SLOT_LOGGER_MODULE 		  	  = "logger-module";
@@ -53,6 +54,7 @@ public class RecurringOrderModule extends ResourceModule
 	public static final int ORDER_STATUS_LAST_MONTHLY_BILL_FAILED 		= 0x0008;
 	public static final int ORDER_STATUS_NO_PREFERRED_BILLING_RECORD 	= 0x0010;
 
+	protected UserModule user_module;
 	protected BillingModule billing_module;
 	protected IBillingGateway billing_gateway;
 	protected IEmailModule email_module;
@@ -66,6 +68,7 @@ public class RecurringOrderModule extends ResourceModule
 		super.init(app,config);
 		/* see notes in super class...this is cheap inheritence */
 		super.setResourceEntityName(RECURRING_SKU_RESOURCE_ENTITY);
+		user_module = (UserModule)getSlot(SLOT_USER_MODULE);
 		billing_module  		= (BillingModule)getSlot(SLOT_BILLING_MODULE);
 		billing_gateway 		= billing_module.getBillingGateway(); 
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
@@ -84,6 +87,7 @@ public class RecurringOrderModule extends ResourceModule
 		DEFINE_SLOT(SLOT_LOGGER_MODULE, com.pagesociety.web.module.logger.LoggerModule.class, true);
 		DEFINE_SLOT(SLOT_NOTIFICATION_MODULE, com.pagesociety.web.module.notification.SystemNotificationModule.class, true);
 		DEFINE_SLOT(SLOT_PROMOTION_MODULE, com.pagesociety.web.module.ecommerce.promo.PromotionModule.class, true);
+		DEFINE_SLOT(SLOT_USER_MODULE, com.pagesociety.web.module.user.UserModule.class, true);
 	}
 	
 
@@ -317,7 +321,7 @@ public class RecurringOrderModule extends ResourceModule
 	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,int recurring_unit,int recurring_period,List<Long> recurring_sku_ids,List<Long> promotion_ids) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   = (Entity)uctx.getUser();
-		Entity target_user = GET(UserModule.USER_ENTITY,target_user_id);
+		Entity target_user = user_module.getUser(target_user_id);
 		
 		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
 			throw new PermissionsException("NO PERMISSION");
@@ -536,7 +540,8 @@ public class RecurringOrderModule extends ResourceModule
 	public PagingQueryResult GetRecurringOrdersByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity target_user = GET(UserModule.USER_ENTITY,user_id);
+		Entity target_user = user_module.getUser(user_id);
+
 		
 		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
 			throw new PermissionsException("NO PERMISSION");
@@ -558,7 +563,7 @@ public class RecurringOrderModule extends ResourceModule
 	public PagingQueryResult GetTransactionHistoryByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity target_user = GET(UserModule.USER_ENTITY,user_id);
+		Entity target_user = user_module.getUser(user_id);
 		
 		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
 			throw new PermissionsException("NO PERMISSION");
