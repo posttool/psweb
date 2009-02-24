@@ -159,7 +159,12 @@ public abstract class Module
 		for(int i = 0;i < s;i++)
 		{
 			IEventListener l = _event_listeners.get(i);
-			l.onEvent(this,e);
+			try{
+				l.onEvent(this,e);
+			}catch(Exception ee)
+			{
+				getApplication().ERROR(ee);
+			}
 		}
 	}
 
