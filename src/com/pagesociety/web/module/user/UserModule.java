@@ -1,15 +1,14 @@
 package com.pagesociety.web.module.user;
 
 
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
@@ -23,20 +22,18 @@ import com.pagesociety.web.exception.AccountLockedException;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.LoginFailedException;
 import com.pagesociety.web.exception.PermissionsException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.GatewayConstants;
-import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.util.Util;
+import com.pagesociety.web.module.util.Validator;
+
 
 public class UserModule extends WebStoreModule 
 {
-	private static final String PARAM_ADMIN_EMAIL 	 = "admin-email";
-	private static final String PARAM_ADMIN_PASSWORD = "admin-password";
+	private static final String PARAM_ENFORCE_UNIQUE_USERNAME = "enforce-unique-username";
 	
 	public static final int LOCK_UNLOCKED 	 			  			= 0x10;
 	public static final int LOCK_LOCKED				  				= 0x20;
@@ -56,14 +53,17 @@ public class UserModule extends WebStoreModule
 	public static final int USER_ROLE_WHEEL 				 = 0x1000;
 	public static final int USER_ROLE_USER	 				 = 0x0001;
 	private IUserGuard guard;
+	private boolean enforce_unique_username = false;
+	
 
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
 		guard		= (IUserGuard)getSlot(SLOT_USER_GUARD);
-		
-
+		String euu = GET_OPTIONAL_CONFIG_PARAM(PARAM_ENFORCE_UNIQUE_USERNAME, config);
+		if(euu != null && !euu.equals("false"))
+			enforce_unique_username = true;
 	}
 	
 	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -101,7 +101,14 @@ public class UserModule extends WebStoreModule
 	{
 		Entity existing_user = getUserByEmail(email);
 		if(existing_user != null)
-			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS.");
+			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS.",ERROR_USER_EMAIL_EXISTS);
+		
+		if(enforce_unique_username)
+		{
+			existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
+			if(existing_user != null)
+				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
+		}
 		
 		Entity user =  NEW(USER_ENTITY,
 					creator,
@@ -125,12 +132,20 @@ public class UserModule extends WebStoreModule
 	}
 	
 	public static final int ERROR_USER_EMAIL_EXISTS = 0x20001;
+	public static final int ERROR_USER_USERNAME_EXISTS = 0x20002;
 	public Entity createPublicUser(Entity creator,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity existing_user = getUserByEmail(email);
 		if(existing_user != null)
-			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS");
+			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS",ERROR_USER_EMAIL_EXISTS);
 
+		if(enforce_unique_username)
+		{
+			existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
+			if(existing_user != null)
+				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
+		}
+		
 		List<Integer> roles = new ArrayList<Integer>();
 		roles.add(USER_ROLE_USER);
 		
@@ -174,8 +189,14 @@ public class UserModule extends WebStoreModule
 		return updateUserName(target, username);
 	}
 	
-	public Entity updateUserName(Entity user,String username) throws PersistenceException
+	public Entity updateUserName(Entity user,String username) throws PersistenceException,WebApplicationException
 	{
+		if(enforce_unique_username)
+		{
+			Entity existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
+			if(existing_user != null)
+				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
+		}
 		return UPDATE(user,
 				  FIELD_USERNAME,username);		
 	}
@@ -278,32 +299,57 @@ public class UserModule extends WebStoreModule
 	}
 
 		
-	@Export(ParameterNames={"email", "password"})
-	public Entity Login(UserApplicationContext uctx,String email,String password) throws WebApplicationException,PersistenceException
+	@Export(ParameterNames={"email_or_username", "password"})
+	public Entity Login(UserApplicationContext uctx,String email_or_username,String password) throws WebApplicationException,PersistenceException
+	{
+		
+		Entity user = null;
+		if(isValidEmail(email_or_username))
+			user = loginViaEmail(email_or_username, password);
+		else
+			user = loginViaUsername(email_or_username, password);
+		
+		if(user.getAttribute(FIELD_LOCK).equals(LOCK_LOCKED))
+		{
+			int lock_code = (Integer)user.getAttribute(FIELD_LOCK_CODE);
+			String message = getLockCodeMessage(lock_code);
+			if(message == null)
+				message = "ACCOUNT IS LOCKED: code"+Integer.toHexString(lock_code); 
+			
+			throw new AccountLockedException(message);
+		}
+
+		uctx.setUser(user);
+		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
+						   USER_EVENT_USER, user);
+		return UPDATE(user,
+					  FIELD_LAST_LOGIN, new Date());
+		
+		
+		
+	}
+	
+	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
 	{
 		Entity user = getUserByEmail(email);
 		if(user == null)
 			throw new LoginFailedException("LOGIN FAILED");
-
 		if(user.getAttribute(FIELD_PASSWORD).equals(password))
-		{
-			if(user.getAttribute(FIELD_LOCK).equals(LOCK_LOCKED))
-			{
-				int lock_code = (Integer)user.getAttribute(FIELD_LOCK_CODE);
-				String message = getLockCodeMessage(lock_code);
-				if(message == null)
-					message = "ACCOUNT IS LOCKED: code"+Integer.toHexString(lock_code); 
-				
-				throw new AccountLockedException(message);
-			}
-			uctx.setUser(user);
-			DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
-						   USER_EVENT_USER, user);
-			return UPDATE(user,
-					  FIELD_LAST_LOGIN, new Date());
-		}
-		
+			return user;
 		throw new LoginFailedException("LOGIN FAILED");
+	}
+	
+	public Entity loginViaUsername(String username,String password)throws WebApplicationException,PersistenceException
+	{
+		Entity user = getUserByUsernameAndPassword(username, password);
+		if(user == null)
+			throw new LoginFailedException("LOGIN FAILED");
+		return user;
+	}
+	
+	public boolean isValidEmail(String email)
+	{
+		return Validator.isValidEmail(email);
 	}
 	
 	@Export
@@ -423,6 +469,19 @@ public class UserModule extends WebStoreModule
 		throw new WebApplicationException("MORE THAN ONE USER WITH EMAIL "+email+" EXISTS! FIX DATA.");			
 	}
 	
+	public Entity getUserByUsernameAndPassword(String username,Object password) throws PersistenceException,WebApplicationException
+	{
+		Query q = new Query(USER_ENTITY);
+		q.idx(INDEX_BY_USERNAME_BY_PASSWORD);
+		q.eq(q.list(username,password));
+		QueryResult result = QUERY(q);
+		if(result.size() == 1)
+			return result.getEntities().get(0);
+		else if(result.size() == 0)
+			return null;
+		throw new WebApplicationException("MORE THAN ONE USER WITH EMAIL "+username+" WITH SAME PASSWORD EXISTS! FIX DATA.");			
+	}
+	
 	
 
 
@@ -519,11 +578,14 @@ public class UserModule extends WebStoreModule
 	public static String INDEX_BY_EMAIL				 	= 	"byEmail";
 	public static String INDEX_BY_LOCK_BY_LOCK_CODE		=   "byLockbyLockCode";
 	public static String INDEX_BY_ROLE					=   "byRoles";
+	public static String INDEX_BY_USERNAME_BY_PASSWORD	=   "byUsernameByPassword";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_EMAIL, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_EMAIL);
 		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_LOCK_BY_LOCK_CODE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_LOCK,FIELD_LOCK_CODE);
-		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_ROLE, EntityIndex.TYPE_ARRAY_MEMBERSHIP_INDEX, FIELD_ROLES);
+		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_ROLE, EntityIndex.TYPE_ARRAY_MEMBERSHIP_INDEX, FIELD_ROLES);		
+		DEFINE_ENTITY_INDEX(USER_ENTITY,INDEX_BY_USERNAME_BY_PASSWORD, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_USERNAME,FIELD_PASSWORD);
+
 	}
 	
 }
