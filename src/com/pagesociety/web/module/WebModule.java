@@ -62,7 +62,13 @@ public abstract class WebModule extends Module
 			throw new InitializationException("MISSING REQUIRED CONFIG PARAM..."+name);
 		return (String)val;
 	}
-	
+
+	public String GET_OPTIONAL_CONFIG_PARAM(String name,Map<String,Object> config) throws InitializationException
+	{
+		Object val = config.get(name);
+		return (String)val;
+	}
+
 	
 	protected void INFO(String message)
 	{
