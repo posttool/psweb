@@ -124,6 +124,7 @@ public class UserModule extends WebStoreModule
 		return createPublicUser(user, email, password, username);
 	}
 	
+	public static final int ERROR_USER_EMAIL_EXISTS = 0x20001;
 	public Entity createPublicUser(Entity creator,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity existing_user = getUserByEmail(email);
