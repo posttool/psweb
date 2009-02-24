@@ -440,13 +440,18 @@ public class UserModule extends WebStoreModule
 	}
 		
 	@Export
-	public String GetSessionId(UserApplicationContext user_context)
+	public String GetSessionId(UserApplicationContext uctx)
 	{
-		return GatewayConstants.SESSION_ID_KEY + "=" + user_context.getId();
+		return GatewayConstants.SESSION_ID_KEY + "=" + uctx.getId();
 	}
 	
+	@Export
+	public Entity GetUser(UserApplicationContext uctx)
+	{
+		return (Entity)uctx.getUser();
+	}
 	
-	
+
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 	
 	public Entity getUser(long user_id) throws PersistenceException
@@ -467,6 +472,14 @@ public class UserModule extends WebStoreModule
 			return null;
 
 		throw new WebApplicationException("MORE THAN ONE USER WITH EMAIL "+email+" EXISTS! FIX DATA.");			
+	}
+	
+	public Entity getUserByUniqueUsername(String username) throws PersistenceException,WebApplicationException
+	{
+		if(enforce_unique_username)
+			return getUserByUsernameAndPassword(username, Query.VAL_GLOB);
+
+		throw new WebApplicationException("CANNOT GET A UNIQUE USER BY USERNAME SINCE UNIQUE USERNAMES ARE NOT CURRENTLY ENFORCED.");
 	}
 	
 	public Entity getUserByUsernameAndPassword(String username,Object password) throws PersistenceException,WebApplicationException
