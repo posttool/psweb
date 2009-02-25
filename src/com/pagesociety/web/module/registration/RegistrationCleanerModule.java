@@ -43,9 +43,6 @@ public class RegistrationCleanerModule extends WebStoreModule
 	
 		registration_prune_period 			= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_PRUNE_PERIOD, config)));
 		registration_expiration_threshold 	= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_EXPIRATION_THRESHOLD, config)));
-		System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!prune period "+registration_prune_period);
-		System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!exp threshold "+registration_expiration_threshold);
-		
 		user_module  = (UserModule)getSlot(SLOT_USER_MODULE);
 		start_cleaner();
 	}
