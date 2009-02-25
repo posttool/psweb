@@ -129,7 +129,11 @@ public class ForgotPasswordModule extends WebStoreModule
 	public static String INDEX_BY_ACTIVATION_TOKEN	=   "byActivationToken";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEX(OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_ACTIVATION_TOKEN, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_ACTIVATION_TOKEN);
+		DEFINE_ENTITY_INDEXES
+		(
+			OUTSTANDING_FORGOT_PASSWORD_ENTITY,
+			ENTITY_INDEX(INDEX_BY_ACTIVATION_TOKEN, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_ACTIVATION_TOKEN)
+		);
 	}
 	
 }
