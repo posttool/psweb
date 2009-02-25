@@ -432,7 +432,7 @@ public class CommentModule extends WebStoreModule
 	public static final String IDX_BY_TARGET 		 = "byTarget";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 			COMMENT_ENTITY,
 			ENTITY_INDEX(IDX_BY_FLAGGED_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,COMMENT_FIELD_FLAGGED_STATUS),
@@ -458,9 +458,9 @@ public class CommentModule extends WebStoreModule
 		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
 		if(rating_module != null)
 		{
-			EVOLVE_IGNORE(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
+			EVOLVE_IGNORE_FIELD(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
 			for(int i = 0;i < commentable_entities.length;i++)
-				EVOLVE_IGNORE(commentable_entities[i], rating_module.getCommentTargetRatingFields(commentable_entities[i]));
+				EVOLVE_IGNORE_FIELD(commentable_entities[i], rating_module.getCommentTargetRatingFields(commentable_entities[i]));
 		}
 	}
 
