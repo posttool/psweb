@@ -108,8 +108,12 @@ public class LoggerModule extends WebStoreModule
 	
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEX(log_entity_name,IDX_BY_TYPE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_LOG_MESSAGE_TYPE);
-		DEFINE_ENTITY_INDEX(log_entity_name,IDX_BY_CREATOR_BY_TYPE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,FIELD_LOG_MESSAGE_TYPE);		
+		DEFINE_ENTITY_INDEXES
+		(
+				log_entity_name,
+				ENTITY_INDEX(IDX_BY_TYPE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_LOG_MESSAGE_TYPE),
+				ENTITY_INDEX(IDX_BY_CREATOR_BY_TYPE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,FIELD_LOG_MESSAGE_TYPE)	
+		);
 	}
 	
 
