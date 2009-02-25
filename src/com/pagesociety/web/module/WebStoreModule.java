@@ -1144,4 +1144,71 @@ public abstract class WebStoreModule extends WebModule
 		return ret;
 	}
 
+	
+	public List<EntityIndex> DEFINE_ENTITY_INDEXES(String entity_name,entity_index_descriptor... indexes) throws PersistenceException,InitializationException
+	{
+		return DEFINE_ENTITY_INDEXES(store, entity_name, indexes);
+	}
+	
+	public static List<EntityIndex> DEFINE_ENTITY_INDEXES(PersistentStore store,String entity_name,entity_index_descriptor... indexes) throws PersistenceException,InitializationException
+	{
+		EntityDefinition def = store.getEntityDefinition(entity_name);
+		List<EntityIndex> ret = new ArrayList<EntityIndex>();
+		for(int i = 0;i < indexes.length;i++)
+		{
+			entity_index_descriptor eid = indexes[i];
+			EntityIndex idx = do_define_entity_index(store, entity_name, eid);
+			ret.add(idx);
+		}
+		return ret; 
+	}
+	
+	private static EntityIndex do_define_entity_index(PersistentStore store,String entity_name,entity_index_descriptor d) throws PersistenceException,InitializationException
+	{
+
+		String index_name = d.index_name;
+		int index_type    = d.index_type;
+		String[] field_names = d.field_names;
+		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
+		for(int i = 0;i < idxs.size();i++) 
+		{
+			EntityIndex idx = idxs.get(i);
+			if(idx.getName().equals(index_name))
+			{
+				List<FieldDefinition> fields = idx.getFields();
+				
+				if(fields.size() != field_names.length)
+					throw new SyncException("ENTITY INDEX "+index_name+" ALREADY EXISTS ON ENTITY "+entity_name+" BUT THE DATABASE VERSION HAS A DIFFERENT NUMBER OF FIELDS dbVersion is "+idx);
+				
+				for(int j = 0;j < fields.size();j++)
+				{
+					FieldDefinition f = fields.get(j);
+					if(field_names[j].equals(f.getName()))
+						continue;
+					else
+						throw new SyncException("ENTITY INDEX "+index_name+" ALREADY EXISTS ON ENTITY "+entity_name+" BUT THE DATABASE VERSION DIFFERS ON FIELD "+field_names[j]+" dbVersion "+idx);
+				}
+				return idx;//the index exists and it checked out
+			}
+		}
+		//the index didnt exist..create it 
+		return store.addEntityIndex(entity_name, field_names, index_type, index_name, null);	
+	}
+	
+	public class entity_index_descriptor
+	{
+		String index_name;
+		int index_type;
+		String[] field_names;
+	}
+	
+	public entity_index_descriptor ENTITY_INDEX(String index_name,int index_type,String... field_names)
+	{
+		entity_index_descriptor d = new entity_index_descriptor();
+		d.index_name = index_name;
+		d.index_type = index_type;
+		d.field_names = field_names;
+		return d;
+	}
+
 }
