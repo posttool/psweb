@@ -736,12 +736,12 @@ public class TreeModule extends WebStoreModule
 	public static final String IDX_BY_TREE_BY_NODE_ID		    			= "byTreeByNodeId";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 				TREE_ENTITY,
 				ENTITY_INDEX(IDX_BY_USER_BY_TREE_NAME , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,TREE_FIELD_NAME)
 		);
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 				TREE_NODE_ENTITY,
 				ENTITY_INDEX(IDX_BY_TREE_BY_NODE_CLASS , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX,TREE_NODE_FIELD_TREE,TREE_NODE_FIELD_CLASS),

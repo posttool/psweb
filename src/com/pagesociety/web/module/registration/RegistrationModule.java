@@ -147,7 +147,7 @@ public class RegistrationModule extends WebStoreModule
 	public static String INDEX_BY_ACTIVATION_TOKEN	=   "byActivationToken";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 			OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,
 			ENTITY_INDEX(INDEX_BY_ACTIVATION_TOKEN, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_ACTIVATION_TOKEN)

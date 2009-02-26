@@ -94,6 +94,7 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 
 	}
 
+	//TODO: need to slot forgot password module//
 	public static String INDEX_BY_DATE_CREATED		=   "byDateCreated";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
@@ -103,4 +104,12 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(ForgotPasswordModule.OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_DATE_CREATED, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,WebStoreModule.FIELD_DATE_CREATED);
 	}
 		
+	
+	//NEED TO DO THIS EVOLVE IGNORE STUFF WHEN YOU ARE ADDING FIELDS OR INDEXES BEHIND THE SCENES
+	//COULD BE ADDRESSED FURTHER AT SOME POINT
+	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
+		super.system_init(app, config);
+		EVOLVE_IGNORE_INDEX(ForgotPasswordModule.OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_DATE_CREATED);
+	}
 }

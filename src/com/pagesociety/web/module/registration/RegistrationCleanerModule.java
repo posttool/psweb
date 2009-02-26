@@ -115,13 +115,21 @@ public class RegistrationCleanerModule extends WebStoreModule
 
 	}
 
+	//TODO: need to slot registration module here//
 	public static String INDEX_BY_DATE_CREATED		=   "byDateCreated";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		if(store.getEntityDefinition(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY) == null)
 			throw new SyncException("Please place RegistrationCleanerModule after RegistrationModule in application.xml.It is dependent on it.");
-
+		
 		DEFINE_ENTITY_INDEX(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,INDEX_BY_DATE_CREATED, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,WebStoreModule.FIELD_DATE_CREATED);
 	}
-		
+	
+	//NEED TO DO THIS EVOLVE IGNORE STUFF WHEN YOU ARE ADDING FIELDS OR INDEXES BEHIND THE SCENES
+	//COULD BE ADDRESSED FURTHER AT SOME POINT
+	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
+		super.system_init(app, config);
+		EVOLVE_IGNORE_INDEX(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,INDEX_BY_DATE_CREATED);
+	}
 }

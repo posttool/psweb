@@ -371,7 +371,7 @@ public class BillingModule extends WebStoreModule
 	public static final String IDX_BY_USER_BY_PREFERRED = "byUserByPreferred";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 				BILLINGRECORD_ENTITY,
 				ENTITY_INDEX(IDX_BY_USER_BY_PREFERRED , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,BILLINGRECORD_FIELD_PREFERRED)

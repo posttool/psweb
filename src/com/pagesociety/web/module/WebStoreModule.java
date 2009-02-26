@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.mail.Store;
+
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityDefinition;
 import com.pagesociety.persistence.EntityIndex;
@@ -1057,12 +1059,17 @@ public abstract class WebStoreModule extends WebModule
 	}
 
 	
-	protected void EVOLVE_IGNORE(String entity_name,Object ...flattened_field_definitions)
+	protected void EVOLVE_IGNORE_FIELD(String entity_name,Object ...flattened_field_definitions)
 	{
 		List<FieldDefinition> ff = UNFLATTEN_FIELD_DEFINITIONS(flattened_field_definitions);
 	
 		for(int i = 0;i < ff.size();i++)
-			evolution_provider.evolveIgnore(entity_name, ff.get(i).getName());		
+			evolution_provider.evolveIgnoreField(entity_name, ff.get(i).getName());		
+	}
+	
+	protected void EVOLVE_IGNORE_INDEX(String entity_name,String index_name)
+	{
+		evolution_provider.evolveIgnoreIndex(entity_name, index_name);		
 	}
 	
 	//maybe a usefule util to move up? lets see
@@ -1145,30 +1152,69 @@ public abstract class WebStoreModule extends WebModule
 	}
 
 	
-	public List<EntityIndex> DEFINE_ENTITY_INDEXES(String entity_name,entity_index_descriptor... indexes) throws PersistenceException,InitializationException
+	public List<EntityIndex> DEFINE_ENTITY_INDICES(String entity_name,entity_index_descriptor... indexes) throws PersistenceException,InitializationException
 	{
-		return DEFINE_ENTITY_INDEXES(store, entity_name, indexes);
+		return DEFINE_ENTITY_INDICES(store, entity_name, indexes);
 	}
 	
-	public static List<EntityIndex> DEFINE_ENTITY_INDEXES(PersistentStore store,String entity_name,entity_index_descriptor... indexes) throws PersistenceException,InitializationException
+	public List<EntityIndex> DEFINE_ENTITY_INDICES(PersistentStore store,String entity_name,entity_index_descriptor... proposed_indexes) throws PersistenceException,InitializationException
 	{
-		EntityDefinition def = store.getEntityDefinition(entity_name);
-		List<EntityIndex> ret = new ArrayList<EntityIndex>();
-		for(int i = 0;i < indexes.length;i++)
+		EntityDefinition  def				= store.getEntityDefinition(entity_name);
+		List<EntityIndex> ret				= new ArrayList<EntityIndex>();
+		List<EntityIndex> existing_indices	= store.getEntityIndices(entity_name); 
+		List<EntityIndex> proposed_indices	= translate_proposed_indices(def,proposed_indexes); 
+		if(existing_indices.size() == 0)
 		{
-			entity_index_descriptor eid = indexes[i];
-			EntityIndex idx = do_define_entity_index(store, entity_name, eid);
+			for(int i = 0;i < proposed_indices.size();i++)
+			{
+				EntityIndex pro_idx = proposed_indices.get(i);			
+				pro_idx = do_define_entity_index(store, entity_name, pro_idx);
+				ret.add(pro_idx);
+			}
+			return ret; 
+		}
+		else if(existing_indices.equals(proposed_indices))
+		{
+			return existing_indices;
+		}
+		else
+		{
+			evolution_provider.evolveIndexes(getName(),entity_name,existing_indices,proposed_indices);
+			
+		}
+		return proposed_indices;
+	}
+	
+	
+	private static List<EntityIndex> translate_proposed_indices(EntityDefinition def, entity_index_descriptor[] proposed_indexes) throws InitializationException
+	{
+		List<EntityIndex> ret = new ArrayList<EntityIndex>();
+		for(int i = 0;i < proposed_indexes.length;i++)
+		{
+			EntityIndex idx 	  = new EntityIndex(proposed_indexes[i].index_name,proposed_indexes[i].index_type);
+			idx.setEntity(def.getName());
+			String[] index_fields = proposed_indexes[i].field_names;
+			for(int j=0;j < index_fields.length;j++)
+			{
+				FieldDefinition f = def.getField(index_fields[j]);
+				if(f==null)
+					throw new InitializationException("BAD FIELDNAME IN ENTITY INDEX DECL: "+proposed_indexes[i].index_name+" FIELD: "+index_fields[j]+" DOES NOT EXIST IN "+def.getName());
+				idx.addField(f);
+			}
 			ret.add(idx);
 		}
-		return ret; 
+		return ret;
 	}
-	
-	private static EntityIndex do_define_entity_index(PersistentStore store,String entity_name,entity_index_descriptor d) throws PersistenceException,InitializationException
+
+	private static EntityIndex do_define_entity_index(PersistentStore store,String entity_name,EntityIndex index) throws PersistenceException,InitializationException
 	{
 
-		String index_name = d.index_name;
-		int index_type    = d.index_type;
-		String[] field_names = d.field_names;
+		String index_name    = index.getName();
+		int index_type       = index.getType();
+		String[] field_names = new String[index.getFields().size()];
+		for(int i=0;i < index.getFields().size();i++)
+			field_names[i] = index.getFields().get(i).getName();
+		
 		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
 		for(int i = 0;i < idxs.size();i++) 
 		{

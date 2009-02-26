@@ -218,7 +218,7 @@ public class SystemNotificationModule extends WebStoreModule
 	
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 			SYSTEM_NOTIFICATION_ENTITY,
 			ENTITY_INDEX(IDX_BY_TYPE, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, SYSTEM_NOTIFICATION_FIELD_TYPE),

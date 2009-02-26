@@ -599,7 +599,7 @@ public class UserModule extends WebStoreModule
 	public static String INDEX_BY_USERNAME_BY_PASSWORD	=   "byUsernameByPassword";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEXES
+		DEFINE_ENTITY_INDICES
 		(
 				USER_ENTITY,
 				ENTITY_INDEX(INDEX_BY_EMAIL, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_EMAIL),
