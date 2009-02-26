@@ -110,6 +110,9 @@ public class UserModule extends WebStoreModule
 				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
 		}
 		
+		if(getUserByUsernameAndPassword(username,password) != null)
+			throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
+		
 		Entity user =  NEW(USER_ENTITY,
 					creator,
 					FIELD_USERNAME,username,
@@ -133,6 +136,7 @@ public class UserModule extends WebStoreModule
 	
 	public static final int ERROR_USER_EMAIL_EXISTS = 0x20001;
 	public static final int ERROR_USER_USERNAME_EXISTS = 0x20002;
+	public static final int ERROR_BAD_PASSWORD = 0x20003;
 	public Entity createPublicUser(Entity creator,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity existing_user = getUserByEmail(email);
@@ -145,6 +149,8 @@ public class UserModule extends WebStoreModule
 			if(existing_user != null)
 				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
 		}
+		if(getUserByUsernameAndPassword(username,password) != null)
+			throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
 		
 		List<Integer> roles = new ArrayList<Integer>();
 		roles.add(USER_ROLE_USER);
