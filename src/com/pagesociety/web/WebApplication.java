@@ -32,7 +32,7 @@ public abstract class WebApplication
 	private List<Module> 				 _module_list;
 	private SessionNameSpaceManager 	 _sess_name_space_mgr;
 
-	
+
 	public WebApplication() throws InitializationException
 	{
 
