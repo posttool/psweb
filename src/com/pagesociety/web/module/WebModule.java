@@ -177,24 +177,35 @@ public abstract class WebModule extends Module
 
 	protected String GET_CONSOLE_INPUT(String prompt)throws WebApplicationException
 	{
-	    if(prompt != null)
-	    {
-	    	System.out.print(prompt);
-	    	System.out.flush();
-	    }
+		return GET_CONSOLE_INPUT(5, prompt);
+	}
+	
+	protected String GET_CONSOLE_INPUT(int num_times,String prompt)throws WebApplicationException
+	{
+		while(num_times > 0)
+		{
+			if(prompt != null)
+			{
+				System.out.print(prompt);
+				System.out.flush();
+			}
 	    
-	    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-	    String input = "";
+			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+			String input = "";
 
-	    try{
-	        input = in.readLine();
-	       }catch(IOException ioe)
+			try{
+				input = in.readLine();
+			}catch(IOException ioe)
 	        {
 	    	   ioe.printStackTrace();
 	    	   throw new WebApplicationException("ERROR READING CONSOLE INPUT "+ioe.getMessage());
 	        }
-	       
-	   return input;
+			if(input == null || input.equals(""))
+				num_times--;
+			else
+				return input;
+		}
+		throw new WebApplicationException("THE APP REQUIRES CONSOLE INPUT TO STARTUP.");
 	}
 	
 	//string functions//
