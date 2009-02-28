@@ -76,7 +76,12 @@ public class RecurringOrderModule extends ResourceModule
 		logger_module 		= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
 		notification_module = (SystemNotificationModule)getSlot(SLOT_NOTIFICATION_MODULE);
 		promotion_module = (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
-		start_billing_thread();
+	
+	}
+	
+	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
+		start_billing_thread();	
 	}
 
 	protected void defineSlots()

@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.upload.MultipartForm;
@@ -44,31 +45,38 @@ public class ModuleRegistry
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void register(String moduleName,String moduleClassName, Map<String, Object> config)
-			throws InitializationException
+	
+	public static ModuleDefinition register(String moduleName,String moduleClassName)throws InitializationException
 	{
-		if (moduleClassName == null || moduleName == null)
-			throw new InitializationException("IMPROPER MODULE REGISTRATION:  A module name attribute and module-class tag are required!");
-		ModuleDefinition module_def = new ModuleDefinition(moduleName,config);
-		Class<? extends Module> moduleClass;
-		try
-		{
-			moduleClass = (Class<? extends Module>) Class.forName(moduleClassName);
-		}
-		catch (ClassNotFoundException e)
-		{
-			throw new InitializationException("ClassNotFound " + moduleClassName, e);
-		}
-		if (MODULES.get(moduleName) != null)
-			throw new InitializationException("MODULE " + moduleName + " ALREADY DEFINED ");
-		if (moduleClass != null)
-		{
-			module_def.reflect(moduleClass);
-			MODULES.put(moduleName, module_def);
-			MODULE_LIST.add(module_def);
-		}
-		logger.info("ModuleRegistry registered " + moduleName + " with instance of " + moduleClass);
+			if (moduleClassName == null || moduleName == null)
+				throw new InitializationException("IMPROPER MODULE REGISTRATION:  A module name attribute and module-class tag are required!");
+			if (MODULES.get(moduleName) != null)
+				throw new InitializationException("MODULE " + moduleName + " ALREADY DEFINED ");
+		
+			Class<? extends Module> moduleClass;
+			try
+			{
+				moduleClass = (Class<? extends Module>) Class.forName(moduleClassName);
+			}
+			catch (ClassNotFoundException e)
+			{
+				throw new InitializationException("ClassNotFound " + moduleClassName, e);
+			}		
+			return register(moduleName, moduleClass);
+	}
+	
+	public static ModuleDefinition register(String moduleName,Class<? extends Module> module_class)throws InitializationException
+
+	{
+
+		ModuleDefinition module_def;
+		module_def = new ModuleDefinition(moduleName,module_class);
+		MODULES.put(moduleName, module_def);
+		MODULE_LIST.add(module_def);
+
+		logger.info("ModuleRegistry registered " + moduleName + " with instance of " + module_class);
 		logger.info(module_def);
+		return module_def;
 	}
 
 	public static List<ModuleDefinition> getModules()
@@ -76,21 +84,23 @@ public class ModuleRegistry
 		return MODULE_LIST;
 	}
 
-	public static Module instantiate(String module_name) throws InitializationException
+	public static Module instantiate(ModuleDefinition module_def, Map<String,Object> params) throws InitializationException
 	{
-		ModuleDefinition module_def = MODULES.get(module_name);
-		if (module_def == null)
-			throw new InitializationException("ModuleRegistry NO SUCH MODULE " + module_name);
+
 		try
 		{
 			Module module = module_def.newInstance();
-			module.setName(module_name);
+			module.setName(module_def.getName());
+			//module.setName(module_info.getName());
+			//module.setModuleInfo(module_info);
+			module.setParams(params);
+			module.setup_slots();
 			return module;
 		}
 		catch (Exception e)
 		{
 			logger.error("instantiate(String, UserApplicationContext)", e);
-			throw new InitializationException("ModuleRegistry UNABLE TO INSTANTIATE MODULE " + module_name, e);
+			throw new InitializationException("ModuleRegistry UNABLE TO INSTANTIATE MODULE " + module_def.getName(), e);
 		}
 	}
 
@@ -139,6 +149,9 @@ public class ModuleRegistry
 		return resolved_method.invoke(module,args_with_user);
 	}
 
-
+	public static ModuleDefinition getModuleDefinition(String module_name)
+	{
+		return MODULES.get(module_name);
+	}
 
 }

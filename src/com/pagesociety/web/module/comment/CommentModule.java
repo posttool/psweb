@@ -458,9 +458,9 @@ public class CommentModule extends WebStoreModule
 		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
 		if(rating_module != null)
 		{
-			EVOLVE_IGNORE_FIELD(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
-			for(int i = 0;i < commentable_entities.length;i++)
-				EVOLVE_IGNORE_FIELD(commentable_entities[i], rating_module.getCommentTargetRatingFields(commentable_entities[i]));
+		//	EVOLVE_IGNORE_FIELD(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
+		//	for(int i = 0;i < commentable_entities.length;i++)
+		//		EVOLVE_IGNORE_FIELD(commentable_entities[i], rating_module.getCommentTargetRatingFields(commentable_entities[i]));
 		}
 	}
 

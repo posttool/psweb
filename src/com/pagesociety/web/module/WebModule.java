@@ -45,6 +45,7 @@ public abstract class WebModule extends Module
 		super.init(app, config);
 	}
 	
+
 	protected void DEFINE_SLOT(String slot_name,Class<?> slot_type,boolean required)
 	{
 		super.defineSlot(slot_name, slot_type, required);

@@ -22,12 +22,20 @@ public class ModuleDefinition
 		this.exported_method_map = new HashMap<String, List<ModuleMethod>>();
 	}
 	
+	public ModuleDefinition(String name, Class<? extends Module> module_class) throws InitializationException
+	{
+		this.name = name;
+		this.exported_method_map = new HashMap<String, List<ModuleMethod>>();
+		this.module = module_class;
+		reflect(module);
+	}
+	
 	public String getName()
 	{
 		return name;
 	}
 
-	public void reflect(Class<? extends Module> module) throws InitializationException
+	private void reflect(Class<? extends Module> module) throws InitializationException
 	{
 		this.module = module;
 		Method methods[] = module.getMethods();

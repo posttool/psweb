@@ -36,10 +36,14 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 		super.init(app,config);	
 		forgot_password_prune_period 			= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_PRUNE_PERIOD, config)));
 		forgot_password_expiration_threshold 	= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_FORGOT_PASSWORD_EXPIRATION_THRESHOLD, config)));
-		start_cleaner();
+		
 	}
 	
-	///  B E G I N      M O D U L E      F U N C T I O N S //////////
+	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
+		start_cleaner();
+	}
+		///  B E G I N      M O D U L E      F U N C T I O N S //////////
 
 	
 	//// E N D         M O D U L E       F U N C T I O N S //////////
@@ -110,6 +114,6 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);
-		EVOLVE_IGNORE_INDEX(ForgotPasswordModule.OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_DATE_CREATED);
+		//EVOLVE_IGNORE_INDEX(ForgotPasswordModule.OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_DATE_CREATED);
 	}
 }

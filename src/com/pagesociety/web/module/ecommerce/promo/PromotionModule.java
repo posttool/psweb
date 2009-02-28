@@ -85,8 +85,12 @@ public class PromotionModule extends WebStoreModule
 		super.init(app,config);
 		guard				= (IPromotionGuard)getSlot(SLOT_PROMOTION_GUARD);
 
+		
+	}
+	
+	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
 		init_free_for_life_promotion();
-
 	}
 
 	//return true could mean dont delete me but it isnt hooked up currently

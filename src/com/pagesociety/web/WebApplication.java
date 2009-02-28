@@ -21,6 +21,7 @@ import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
+import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.Module.SlotDescriptor;
 
 
@@ -163,10 +164,9 @@ public abstract class WebApplication
 			logger.info("\tINSTANTIATING "+module_name);
 			String module_classname   	= m.getClassName();
 			
-			ModuleRegistry.register(module_name,module_classname, m.getProps());
-			Module module = ModuleRegistry.instantiate(module_name);
-			module.setModuleInfo(m);
-			module.setup_slots();
+			ModuleDefinition def = ModuleRegistry.register(module_name,module_classname);
+			Module module = ModuleRegistry.instantiate(def,m.getProps());
+
 			_module_instances.put(module_name, module);
 			_module_list.add(module);
 		}
@@ -245,15 +245,15 @@ public abstract class WebApplication
 		/* system init...this is the lowest level bootstrap.slots are filled out
 		 * but their init methods have not been called
 		 */
-	
+		WebStoreModule.web_store_subsystem_init_start(this);	
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
 			_module_instances.get(m.getName()).system_init(this,m.getProps());
 		}
-
 		/*init modules*/
 		INFO("INITIALIZING MODULES");
+
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
@@ -262,33 +262,30 @@ public abstract class WebApplication
 			init_module(module_instance);
 		}
 	
-		for(int i = 0;i < init_late_modules.size();i++)
+		try{
+			WebStoreModule.web_store_subsystem_init_complete(this);
+		}catch(Exception e)
 		{
-			init_module(init_late_modules.get(i));
+			ERROR(e);
+			throw new InitializationException(e.getMessage());
 		}
-	
+		
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
-			m.loadbang(this,m.getModuleInfo().getProps());
+			m.loadbang(this,m.getParams());
 		}
 	
 	}
 	
 	
-	private List<Module> init_late_modules = new ArrayList<Module>(); 
+	
 	private void init_module(Module m) throws InitializationException
 	{
 		if(m.isInitialized())
 			return;
 
 		List<Integer> module_attributes = m.getModuleAttributes();
-		if(module_attributes.contains(Module.ATTRIBUTE_INIT_LATE) && !init_late_modules.contains(m))
-		{
-			init_late_modules.add(m);
-			return;
-		}
-
 		INFO("\tINITIALIZING "+m.getName());
 		List<SlotDescriptor> slot_descriptors = m.getSlotDescriptors();
 		for(int i = 0;i < slot_descriptors.size();i++)
@@ -301,14 +298,17 @@ public abstract class WebApplication
 				continue;
 			if(!slot_instance.isInitialized())
 			{
-				if(slot_instance.getModuleInfo() != null)
-					slot_instance.init(this, slot_instance.getModuleInfo().getProps());
-				else
-					slot_instance.init(this, null);
+				init_module(slot_instance);
+				//if(slot_instance.getParams() != null)
+				//	slot_instance.init(this, slot_instance.getParams());
+				//else
+				//	slot_instance.init(this, null);
 			}
 		}
-
-		m.init(this, m.getModuleInfo().getProps());
+		if(m.getParams() == null)
+			m.init(this, new HashMap<String,Object>());
+		else
+			m.init(this, m.getParams());
 		m.setInitialized(true);
 	}
 	

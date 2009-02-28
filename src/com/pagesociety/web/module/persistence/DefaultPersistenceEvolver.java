@@ -20,7 +20,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 {
 
 	@Override
-	public void evolveIndexes(String source, String entity_name,List<EntityIndex> existing_indices,List<EntityIndex> proposed_indices) throws SyncException
+	public void evolveIndexes(WebStoreModule.schema_receiver resolver, String entity_name,List<EntityIndex> existing_indices,List<EntityIndex> proposed_indices) throws SyncException
 	{
 		List<EntityIndex> delete_indices = new ArrayList<EntityIndex>();
 		List<EntityIndex> add_indices	= new ArrayList<EntityIndex>();
@@ -69,17 +69,17 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				else
 				{
 			
-					INFO(" WAS UNABLE TO AUTOMATICALLY RESOLVE THE EVOLUTION\n OF THE "+entity_name+" ENTITY IN "+source+" PLEASE ASSIST.");
+					INFO(" WAS UNABLE TO AUTOMATICALLY RESOLVE THE EVOLUTION\n OF THE "+entity_name+" ENTITY IN "+resolver.getDeclaringModuleForEntity(entity_name)+" PLEASE ASSIST.");
 					for(int i = 0;i < add_indices.size();i++)
 					{
 				
 						EntityIndex idx;
 						idx = add_indices.get(i);
-						System.out.println("PROBLEM EVOLVING "+entity_name+" INDEX "+idx.getName());
-						StringBuilder question = new StringBuilder("Do you mean to:\n\t[0] Add index "+idx.getName()+" to "+source+"."+entity_name);
+						System.out.println("PROBLEM EVOLVING "+entity_name+" INDEX "+idx.getName()+" DECLARED BY "+resolver.getDeclaringModuleForIndex(entity_name, idx.getName()));
+						StringBuilder question = new StringBuilder("Do you mean to:\n\t[0] Add index "+idx.getName()+" to "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 						for(int j = 0;j < delete_indices.size();j++)
 						{						
-							question.append("\n\t["+(j+1)+"] Rename "+delete_indices.get(j).getName()+" to "+idx.getName()+" in "+source+"."+entity_name);						
+							question.append("\n\t["+(j+1)+"] Rename "+delete_indices.get(j).getName()+" to "+idx.getName()+" in "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);						
 						}
 						question.append("?\n"); 
 						String answer = null;
@@ -90,16 +90,16 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							if(answer.equals("0"))
 							{
 								try{
-									boolean go_on = confirm("ADD INDEX "+idx.getName()+" TO "+entity_name+"? ");
+									boolean go_on = confirm("ADD INDEX "+idx.getName()+" DECLARED BY "+resolver.getDeclaringModuleForIndex(entity_name,idx.getName())+" TO "+entity_name+"? ");
 									if(go_on)
 										do_define_entity_index(entity_name, idx);
 									else
 										continue;
-									INFO(getName()+": ADDED INDEX "+idx.getName()+" TO "+source+"."+entity_name);
+									INFO(getName()+": ADDED INDEX "+idx.getName()+" TO "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 								}catch(PersistenceException p)
 								{
 									ERROR(p);
-									throw new InitializationException(getName()+": FAILED ADDING INDEX "+idx+" TO "+source+"."+entity_name);
+									throw new InitializationException(getName()+": FAILED ADDING INDEX "+idx+" TO "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 								}
 							}
 							else
@@ -118,7 +118,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 										else
 											continue;
 										delete_indices.remove(delete_idx);
-										INFO(getName()+": RENAMED INDEX "+renamed_index.getName()+" TO "+idx.getName()+" IN "+source+"."+entity_name);
+										INFO(getName()+": RENAMED INDEX "+renamed_index.getName()+" TO "+idx.getName()+" IN "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 									}
 								}catch(Exception e)
 								{
@@ -143,7 +143,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				
 		}catch(Exception e)
 		{
-			System.out.println("BAH@@ ");
+			System.out.println("@@@@@@@@@@@@BAH!!!");
 			e.printStackTrace();
 			ERROR(e);
 			throw new SyncException("FAILED EVOLVING ENTITY INDEXES FOR "+entity_name);
@@ -151,7 +151,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 	}
 	
 	@Override
-	public void evolveEntity(String source,EntityDefinition old_def,
+	public void evolveEntity(WebStoreModule.schema_receiver resolver,EntityDefinition old_def,
 			EntityDefinition proposed_def) throws SyncException
 	{
 		try{
@@ -201,17 +201,18 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			else
 			{
 		
-					INFO(" WAS UNABLE TO AUTOMATICALLY RESOLVE THE EVOLUTION\n OF THE "+old_def.getName()+" ENTITY IN "+source+" PLEASE ASSIST.");
+					String entity_name = old_def.getName();
+					INFO(" WAS UNABLE TO AUTOMATICALLY RESOLVE THE EVOLUTION\n OF THE "+old_def.getName()+" ENTITY IN "+resolver.getDeclaringModuleForEntity(entity_name)+" PLEASE ASSIST.");
 					for(int i = 0;i < add_fields.size();i++)
 					{
 				
 						FieldDefinition f;
 						f = add_fields.get(i);
-						System.out.println("PROBLEM EVOLVING "+old_def.getName()+"."+f.getName());
-						StringBuilder question = new StringBuilder("Do you mean to:\n\t[0] Add field "+f.getName()+" to "+source+"."+old_def.getName());
+						System.out.println("PROBLEM EVOLVING "+entity_name+"."+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName()));
+						StringBuilder question = new StringBuilder("Do you mean to:\n\t[0] Add field "+f.getName()+" to "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 						for(int j = 0;j < delete_fields.size();j++)
 						{						
-							question.append("\n\t["+(j+1)+"] Rename "+delete_fields.get(j).getName()+" to "+f.getName()+" in "+source+"."+old_def.getName());						
+							question.append("\n\t["+(j+1)+"] Rename "+delete_fields.get(j).getName()+" to "+f.getName()+" in "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);						
 						}
 						question.append("?\n"); 
 						String answer = null;
@@ -222,16 +223,16 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							if(answer.equals("0"))
 							{
 								try{
-									boolean go_on = confirm("ADD FIELD "+f.getName()+" TO "+old_def.getName()+"? ");
+									boolean go_on = confirm("ADD FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+old_def.getName()+"? ");
 									if(go_on)
 										store.addEntityField(old_def.getName(), f);
 									else
 										continue;
-									INFO(getName()+": ADDED FIELD "+f.getName()+" TO "+source+"."+old_def.getName());
+									INFO(getName()+": ADDED FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 								}catch(PersistenceException p)
 								{
 									ERROR(p);
-									throw new InitializationException(getName()+": FAILED ADDING FIELD "+f+" TO "+source+"."+old_def.getName());
+									throw new InitializationException(getName()+": FAILED ADDING FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName());
 								}
 							}
 							else
@@ -250,7 +251,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 										else
 											continue;
 										delete_fields.remove(delete_idx);
-										INFO(getName()+": RENAMED FIELD "+renamed_field.getName()+" TO "+f.getName()+" IN "+source+"."+old_def.getName());
+										INFO(getName()+": RENAMED FIELD "+renamed_field.getName()+" TO "+f.getName()+" IN "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName());
 									}
 								}catch(Exception e)
 								{

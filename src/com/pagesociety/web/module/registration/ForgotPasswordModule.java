@@ -55,7 +55,7 @@ public class ForgotPasswordModule extends WebStoreModule
 	}
 
 	
-	protected void defineSlots()
+	protected void defineSlots() 
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true);

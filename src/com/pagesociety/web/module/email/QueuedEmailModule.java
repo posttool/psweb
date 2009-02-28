@@ -60,8 +60,14 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		if(config.get(PARAM_EMAIL_QUEUE_SIZE) != null)
 			email_queue_size = Integer.parseInt((String)config.get(PARAM_EMAIL_QUEUE_SIZE));
 		email_queue         = new ArrayBlockingQueue<queue_obj>(email_queue_size);
+		
+	}
+	
+	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
 		start_email_thread();
 	}
+
 
 	protected void defineSlots()
 	{

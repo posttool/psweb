@@ -178,15 +178,15 @@ public abstract class Module
 		return is_initialized;
 	}
 	
-	private ModuleInfo module_info;
-	public void setModuleInfo(ModuleInfo info)
+	private Map<String,Object> params;
+	public void setParams(Map<String,Object> params)
 	{
-		module_info = info;
+		this.params = params;
 	}
 	
-	public ModuleInfo getModuleInfo()
+	public Map<String,Object> getParams()
 	{
-		return module_info;
+		return params;
 	}
 
 	public void loadbang(WebApplication app,Map<String,Object> config) throws InitializationException

@@ -44,6 +44,11 @@ public class RegistrationCleanerModule extends WebStoreModule
 		registration_prune_period 			= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_PRUNE_PERIOD, config)));
 		registration_expiration_threshold 	= (int)(1000 * 60 * 60 * Float.parseFloat(GET_REQUIRED_CONFIG_PARAM(PARAM_REGISTRATION_EXPIRATION_THRESHOLD, config)));
 		user_module  = (UserModule)getSlot(SLOT_USER_MODULE);
+	}
+	
+	
+	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
+	{
 		start_cleaner();
 	}
 	
@@ -130,6 +135,6 @@ public class RegistrationCleanerModule extends WebStoreModule
 	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);
-		EVOLVE_IGNORE_INDEX(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,INDEX_BY_DATE_CREATED);
+		//EVOLVE_IGNORE_INDEX(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,INDEX_BY_DATE_CREATED);
 	}
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import com.pagesociety.persistence.EntityDefinition;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.EntityRelationshipDefinition;
 import com.pagesociety.persistence.FieldDefinition;
+import com.pagesociety.persistence.PersistenceAdapter;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.persistence.Query;
@@ -28,22 +30,21 @@ import com.pagesociety.web.module.persistence.DefaultPersistenceEvolver;
 import com.pagesociety.web.module.persistence.IEvolutionProvider;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
-public abstract class WebStoreModule extends WebModule
+public  class WebStoreModule extends WebModule
 {
 
-	private static final String SLOT_STORE 			    = "store";
-	private static final String SLOT_EVOLUTION_PROVIDER = "evolution-provider";
+	public static final String SLOT_STORE 			    = "store";
 	protected PersistentStore store;
-	protected IEvolutionProvider evolution_provider;
 	protected List<EntityDefinition> associated_entity_definitions;
 	
-
+	
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);		
+		//TODO: we should have to do this any more//
+		associated_entity_definitions = new ArrayList<EntityDefinition>();
 		//this breaks a loope since we need to pre-init the default one manually..see below//
-		if(!(this instanceof DefaultPersistenceEvolver))
-			setup_evolution_provider(app);//can probs pass config along here//
+
 	}
 
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
@@ -56,10 +57,14 @@ public abstract class WebStoreModule extends WebModule
 		//EASY TO EXTEND THEM AND STILL HAVE STORE FUNCTIONALITY.
 		//HOWEVER THE DEFAULT IMPLMENTATIONS NEVER HAVE THEIR STORE
 		//SET SINCE THEY ALWAYS RETURN FALSE FOR EVERY METHOD
-		if(store_provider != null)
-			store = store_provider.getStore();
+		if(store_provider == null)
+			return;
 		
-		associated_entity_definitions = new ArrayList<EntityDefinition>();
+		//collect entity defs for this web module via store adapter//
+		schema_receiver r = get_schema_receiver_for_store(app,getName(),store_provider);
+		store = r.getStore();
+		r.setWebStoreModuleContext(this);
+		//TODO: probs need to preserve the module source of declaration//
 		try{
 			defineEntities(config);
 			defineIndexes(config);
@@ -68,39 +73,19 @@ public abstract class WebStoreModule extends WebModule
 		{
 			ERROR(e);
 			throw new InitializationException("FAILED SETTING UP "+getName()+" MODULE.");
-		}			
+		}
+		r.setWebStoreModuleContext(null);
+		store = store_provider.getStore();
+
 	}
 
 	protected void defineSlots()
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
-		DEFINE_SLOT(SLOT_EVOLUTION_PROVIDER, IEvolutionProvider.class, false,DefaultPersistenceEvolver.class);
 	}	
 	
-	private void setup_evolution_provider(WebApplication app) throws InitializationException
-	{
-		
-		evolution_provider = ((IEvolutionProvider)getSlot(SLOT_EVOLUTION_PROVIDER));
-		if(!(evolution_provider instanceof DefaultPersistenceEvolver))
-			return;
-
-		//this is how to programaticcaly init a module from within the app//		
-		((WebModule)evolution_provider).defineSlots();
-		((WebModule)evolution_provider).setName("DefaultEvolutionProvider");
-		//here we set the store on the default implmentation because we know it needs it//
-		try{
-			if(((WebStoreModule)evolution_provider).getSlot(SLOT_STORE) == null)
-				((WebStoreModule)evolution_provider).setSlot(SLOT_STORE,((IPersistenceProvider)getSlot(SLOT_STORE)));
-
-			((WebModule)evolution_provider).system_init(app, new HashMap<String,Object>());
-		}catch(SlotException se)
-		{
-			ERROR(se);
-			throw new InitializationException(getName()+ ": FAILED SETTING STORE SLOT IN EVOLUTION PROVIDER");
-		}	
-	}
-
+	
 
 	protected void defineEntities(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
@@ -167,52 +152,23 @@ public abstract class WebStoreModule extends WebModule
 	
 	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,List<FieldDefinition> defs) throws PersistenceException,SyncException
 	{
-		EntityDefinition 		existing_def;
-		EntityDefinition 		proposed_def;
-			
-		existing_def = store.getEntityDefinition(entity_name);
-		proposed_def = new EntityDefinition(entity_name);
+
+		EntityDefinition proposed_def = new EntityDefinition(entity_name);
 		/* add system fields to proposed def */
 
 		for(int i = 0;i < FIELDS.length;i++)
 			proposed_def.addField(FIELDS[i]);
-		
 		for(int i = 0;i < defs.size();i++)
 			proposed_def.addField(defs.get(i));
-		/*create it if it doesnt exist*/
-		if(existing_def == null)
-			store.addEntityDefinition(proposed_def);
-		else
-		{
-			/* check it to make sure the version passed in matches the one in the store */
-			
-			if(existing_def.equals(proposed_def))
-				return proposed_def;
-			else
-				evolution_provider.evolveEntity(getName(), existing_def, proposed_def);
-			
-			/* add any additional default system fields...deletes of system fields 
-			 * have to be done with an alter for now...also need to take evolution into 
-			 * account when adding system fields */
-			for(int i = 0;i < FIELDS.length;i++)
-			{
-				FieldDefinition f = FIELDS[i];
-				if(existing_def.getField(f.getName())==null)
-					store.addEntityField(entity_name,f);
-			}
-		}
+		if(store.getEntityDefinition(entity_name) != null)
+			return proposed_def;
 
+		store.addEntityDefinition(proposed_def);
 		return proposed_def;
 	}
-
-	
-
 	
 	public static EntityDefinition ADD_FIELDS(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,InitializationException
 	{
-		EntityDefinition existing_def = store.getEntityDefinition(entity_name);
-		if(existing_def == null)
-			throw new SyncException("TRYING TO ADD FIELDS TO ENTITY "+entity_name+" BUT "+entity_name+" DOES NOT EXIST IN STORE");
 		int i = 0;
 		for(;;)
 		{
@@ -224,20 +180,14 @@ public abstract class WebStoreModule extends WebModule
 			else
 				f = new FieldDefinition(fieldname,type,(String)fields[i++]);
 			f.setDefaultValue(fields[i++]);
-			
-			FieldDefinition existing_field = existing_def.getField(fieldname);
-			if(existing_field == null)
-				store.addEntityField(entity_name, f);
-			else
-			{
-				if(!existing_field.equals(f))
-					throw new SyncException("FIELD "+f+" ALREADY EXISTS IN ENTITY "+entity_name+" BUT IS DIFFERENT "+existing_field);
-			}
+		
+			store.addEntityField(entity_name, f);
 			if(i>fields.length - 1)
 				break;
 		}
 		return store.getEntityDefinition(entity_name);
 	}
+	
 
 	
 	public static void DEFINE_ENTITY_INDEX(PersistentStore store,String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,InitializationException
@@ -266,7 +216,6 @@ public abstract class WebStoreModule extends WebModule
 		}
 		//the index didnt exist..create it
 		store.addEntityIndex(entity_name, field_names, index_type, index_name, null);	
-		store.getEntityRelationships();
 	}
 
 	public static void DEFINE_ENTITY_RELATIONSHIP(PersistentStore store,String from_entity_name, String from_entity_field,int relationship_type, String to_entity_name, String to_entity_field) throws PersistenceException,SyncException
@@ -1059,19 +1008,6 @@ public abstract class WebStoreModule extends WebModule
 	}
 
 	
-	protected void EVOLVE_IGNORE_FIELD(String entity_name,Object ...flattened_field_definitions)
-	{
-		List<FieldDefinition> ff = UNFLATTEN_FIELD_DEFINITIONS(flattened_field_definitions);
-	
-		for(int i = 0;i < ff.size();i++)
-			evolution_provider.evolveIgnoreField(entity_name, ff.get(i).getName());		
-	}
-	
-	protected void EVOLVE_IGNORE_INDEX(String entity_name,String index_name)
-	{
-		evolution_provider.evolveIgnoreIndex(entity_name, index_name);		
-	}
-	
 	//maybe a usefule util to move up? lets see
 	protected List<FieldDefinition> UNFLATTEN_FIELD_DEFINITIONS(Object... flat_defs)
 	{
@@ -1104,8 +1040,6 @@ public abstract class WebStoreModule extends WebModule
 				field_type  =  (Integer)flat_defs[i+1];
 			}
 			
-			if(field_name.equals("profile_image"))
-				System.out.println("TYPE IS "+field_type);
 			FieldDefinition f;
 			if(field_type == Types.TYPE_REFERENCE)
 			{
@@ -1159,28 +1093,12 @@ public abstract class WebStoreModule extends WebModule
 	
 	public List<EntityIndex> DEFINE_ENTITY_INDICES(PersistentStore store,String entity_name,entity_index_descriptor... proposed_indexes) throws PersistenceException,InitializationException
 	{
-		EntityDefinition  def				= store.getEntityDefinition(entity_name);
-		List<EntityIndex> ret				= new ArrayList<EntityIndex>();
-		List<EntityIndex> existing_indices	= store.getEntityIndices(entity_name); 
-		List<EntityIndex> proposed_indices	= translate_proposed_indices(def,proposed_indexes); 
-		if(existing_indices.size() == 0)
+		EntityDefinition def 				= store.getEntityDefinition(entity_name);
+		List<EntityIndex> proposed_indices 	= translate_proposed_indices(def, proposed_indexes);
+		for(int i=0;i < proposed_indices.size();i++)
 		{
-			for(int i = 0;i < proposed_indices.size();i++)
-			{
-				EntityIndex pro_idx = proposed_indices.get(i);			
-				pro_idx = do_define_entity_index(store, entity_name, pro_idx);
-				ret.add(pro_idx);
-			}
-			return ret; 
-		}
-		else if(existing_indices.equals(proposed_indices))
-		{
-			return existing_indices;
-		}
-		else
-		{
-			evolution_provider.evolveIndexes(getName(),entity_name,existing_indices,proposed_indices);
-			
+			EntityIndex pro_idx = proposed_indices.get(i);			
+			do_define_entity_index(store, entity_name, pro_idx);
 		}
 		return proposed_indices;
 	}
@@ -1214,7 +1132,7 @@ public abstract class WebStoreModule extends WebModule
 		String[] field_names = new String[index.getFields().size()];
 		for(int i=0;i < index.getFields().size();i++)
 			field_names[i] = index.getFields().get(i).getName();
-		
+	
 		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
 		for(int i = 0;i < idxs.size();i++) 
 		{
@@ -1256,5 +1174,377 @@ public abstract class WebStoreModule extends WebModule
 		d.field_names = field_names;
 		return d;
 	}
+
+	
+	
+	/////////SCHEMA//////////////
+
+	//each persistent store has its own schema.
+	private static  Map<String,schema_receiver> schema_map;
+	private static  List<schema_receiver> schema_map_as_list;
+	public static void web_store_subsystem_init_start(WebApplication app)
+	{
+		schema_map = new HashMap<String,schema_receiver>();	
+		schema_map_as_list = new ArrayList<schema_receiver>();
+	}
+
+	public static void web_store_subsystem_init_complete(WebApplication app) throws PersistenceException,InitializationException
+	{
+		for(int i = 0;i < schema_map_as_list.size();i++)
+		{
+			schema_receiver s = schema_map_as_list.get(i);
+			s.actualize();
+		}
+	}
+	
+
+	public static schema_receiver get_schema_receiver_for_store(WebApplication app,String module_name,IPersistenceProvider p)
+	{
+		if(p == null)
+			return null;
+		schema_receiver r = schema_map.get(p.getName());
+		if(r == null)
+		{
+			r = new WebStoreModule().new schema_receiver(app,p);
+			schema_map.put(p.getName(),r);
+			schema_map_as_list.add(r);
+		}
+
+		return r;
+	}
+	
+	public class schema_receiver extends PersistenceAdapter 
+	{
+		
+		WebApplication app;
+		List<EntityDefinition> 				entity_definitions;
+		List<String>						entity_definition_declarers;
+
+		//we are using entity def here just because it is a name and a collection of fields//
+		List<EntityDefinition> 				entity_fields;
+		List<String>						entity_field_declarers;
+		
+		List<EntityIndex> 	   				entity_indices;
+		List<String>						entity_index_declarers;
+		
+		List<EntityRelationshipDefinition> 	entity_relationships;
+		List<String>						entity_relationship_declarers;
+				
+		IPersistenceProvider				p;
+		
+		private WebStoreModule webstore_context;
+		private HashMap<String, String> entity_to_declarer;
+		private HashMap<String, String> entity_index_to_declarer;
+		private HashMap<String, String> entity_fieldname_to_declarer;
+				
+		public schema_receiver(WebApplication app,IPersistenceProvider p)
+		{
+			this.app = app;
+			this.entity_definitions 		 	 = new ArrayList<EntityDefinition>();
+			this.entity_definition_declarers 	 = new ArrayList<String>();
+			
+			this.entity_fields 		 	 	 	 = new ArrayList<EntityDefinition>();
+			this.entity_field_declarers 		 = new ArrayList<String>();			
+			
+			this.entity_indices 			 	 = new ArrayList<EntityIndex>();
+			this.entity_index_declarers 	 	 = new ArrayList<String>();
+			
+			this.entity_relationships 		 	 = new ArrayList<EntityRelationshipDefinition>();
+			this.entity_relationship_declarers 	 = new ArrayList<String>();
+			
+	
+			this.p 		 					 	 = p;
+		}
+			
+		public String getDeclaringModuleForIndex(String entity_name,String index_name)
+		{
+			return entity_index_to_declarer.get(entity_name+"."+index_name);
+		}
+		
+		public String getDeclaringModuleForEntity(String entity_name)
+		{
+			return entity_to_declarer.get(entity_name);
+		}
+		
+		public String getDeclaringModuleForEntityField(String entity_name,String fieldname)
+		{
+			return entity_fieldname_to_declarer.get(entity_name+"."+fieldname);
+		}
+		
+		public String getDeclaringModuleForEntityRelationship(String entity_name,String fieldname)
+		{
+			//TODO: UNIMPLEMENTED //
+			return null;
+		}
+		
+		public void actualize() throws PersistenceException,InitializationException
+		{
+			actualize_entity_defs();
+			actualize_entity_indices();
+			actualize_entity_relationships();
+		} 
+		
+		private void actualize_entity_defs() throws PersistenceException,InitializationException
+		{
+			Map<String,EntityDefinition>  entity_to_def = new LinkedHashMap<String, EntityDefinition>();
+			entity_to_declarer = new HashMap<String,String>();
+			entity_fieldname_to_declarer = new HashMap<String,String>();
+			for(int i = 0;i < entity_definitions.size();i++)
+			{
+				EntityDefinition d = entity_definitions.get(i);
+				String entity_name = d.getName();
+				String declarer = entity_definition_declarers.get(i);
+				entity_to_def.put(entity_name, d);
+				entity_to_declarer.put(entity_name,declarer);
+				for(int j=0;j < d.getFields().size();j++)
+					entity_fieldname_to_declarer.put(entity_name+"."+d.getFields().get(j).getName(),declarer);
+			}
+			
+			//entity fields in this case is a list of entity defs with one field and the entity name//
+			//we use entity def becuase field definition does not have an entity name
+			for(int i =0;i < entity_fields.size();i++)
+			{
+				EntityDefinition ff 		  = entity_fields.get(i);
+				String declarer 			  = entity_field_declarers.get(i);	
+				String entity_name 			  = ff.getName();
+				FieldDefinition f 			  = ff.getFields().get(0);
+				EntityDefinition proposed_def = entity_to_def.get(entity_name);
+				if(proposed_def == null)
+					throw new PersistenceException("ENTITY "+entity_name+" DOES NOT EXIST."+declarer+" CANNOT ADD FIELD "+ff.getFields().get(0).getName());
+				entity_fieldname_to_declarer.put(proposed_def.getName()+"."+f.getName(),declarer);
+				proposed_def.addField(f);
+			}
+			for(int i = 0;i < entity_definitions.size();i++)
+			{
+				EntityDefinition proposed_def = entity_definitions.get(i);
+				app.INFO("WEBSTORE SUBSYSTEM ACTUALIZING ENTITY "+entity_to_declarer.get(proposed_def.getName())+"."+proposed_def.getName()+" PERSISTENCE PROVIDER IS "+p.getName());
+				EVOLVE_ENTITY(p.getStore(),this, p.getEvolutionProvider(), entity_definitions.get(i));
+			}
+		}
+		
+		private void actualize_entity_indices() throws PersistenceException,InitializationException
+		{
+
+			if(entity_indices.size() == 0)
+				return;
+			
+			Map<String,List<EntityIndex>> entity_to_indices 		= new LinkedHashMap<String, List<EntityIndex>>();
+			entity_index_to_declarer 	= new HashMap<String,String>();
+			
+			//entity fields in this case is a list of entity defs with one field and the entity name//
+			//we use entity def becuase field definition does not have an entity name
+			for(int i =0;i < entity_indices.size();i++)
+			{
+				EntityIndex idx 		      	= entity_indices.get(i);
+				String declarer 			  	= entity_index_declarers.get(i);	
+				String entity_name 			  	= idx.getEntity();
+				List<EntityIndex> proposed_idxs = entity_to_indices.get(entity_name);
+				if(proposed_idxs == null)
+				{
+					proposed_idxs = new ArrayList<EntityIndex>();
+					entity_to_indices.put(entity_name, proposed_idxs);
+				}
+				entity_index_to_declarer.put(entity_name+"."+idx.getName(),declarer);
+				proposed_idxs.add(idx);
+			}				
+			
+			Iterator<String> iter = entity_to_indices.keySet().iterator();
+			while(iter.hasNext())
+			{
+				String entity_name = iter.next();
+				List<EntityIndex> proposed_idxs = entity_to_indices.get(entity_name);
+				app.INFO("WEBSTORE SUBSYSTEM ACTUALIZING ENTITY INDEXES FOR "+entity_name+" PERSISTENCE PROVIDER IS "+p.getName());
+				EVOLVE_ENTITY_INDICES(p.getStore(), this, p.getEvolutionProvider(), entity_name, proposed_idxs);
+			}
+
+		}
+			
+		private void actualize_entity_relationships() throws PersistenceException,InitializationException
+		{
+			for(int i =0;i < entity_relationships.size();i++)
+			{
+				EntityRelationshipDefinition erd = entity_relationships.get(i);
+				app.INFO("WEBSTORE SUBSYSTEM ACTUALIZING ENTITY RELATIONSHIP FOR "+entity_relationship_declarers.get(i)+":\n"+erd);
+				List<EntityRelationshipDefinition> lr = p.getStore().getEntityRelationships();
+				if(lr.contains(erd))
+					return;
+				p.getStore().addEntityRelationship(erd);
+			}
+		}
+		
+		//////
+		public void addEntityDefinition(EntityDefinition entity_def) throws PersistenceException
+		{
+			System.out.println(webstore_context.getName()+" IS ADDING ENTITY "+entity_def.getName());
+			entity_definitions.add(entity_def);
+			entity_definition_declarers.add(webstore_context.getName());
+		}
+		
+		public int addEntityField(String entity, FieldDefinition entity_field_def) throws PersistenceException
+		{
+			EntityDefinition def = new EntityDefinition(entity);
+			def.addField(entity_field_def);
+			entity_fields.add(def);
+			entity_field_declarers.add(webstore_context.getName());
+			return 0;
+		}
+		
+		public EntityIndex addEntityIndex(String entity, String field_name,int index_type, String index_name, Map<String, String> attributes)throws PersistenceException
+		{
+			return addEntityIndex(entity, new String[]{field_name}, index_type, index_name, attributes);
+		}
+		
+		public EntityIndex addEntityIndex(String entity, String[] field_names,int index_type, String index_name, Map<String, String> attributes)throws PersistenceException
+		{
+			EntityIndex idx = new EntityIndex(index_name,index_type);
+			idx.setEntity(entity);
+			
+			for(int i = 0;i < field_names.length;i++)
+			{
+				FieldDefinition f = get_field(entity,field_names[i]);
+				if(f == null)
+					throw new PersistenceException(webstore_context+" IS TRYING TO ADD AN INDEX "+idx.getName()+" WITH A BAD FIELD NAME "+field_names[i]);
+				idx.addField(f);
+			}
+			entity_indices.add(idx);
+			entity_index_declarers.add(webstore_context.getName());
+			return idx;
+		}
+		
+		private FieldDefinition get_field(String entity_name,String field_name)
+		{
+			EntityDefinition d = getEntityDefinition(entity_name);
+			FieldDefinition f = d.getField(field_name);
+			return f;
+		}
+		
+		public void addEntityRelationship(EntityRelationshipDefinition r)throws PersistenceException
+		{
+			entity_relationships.add(r);
+			entity_relationship_declarers.add(webstore_context.getName());
+		}
+		
+		public EntityDefinition getEntityDefinition(String name)
+		{
+			for(int i = 0;i < entity_definitions.size();i++)
+			{
+				EntityDefinition d = entity_definitions.get(i);
+				if(d.getName().equals(name))
+					return d;
+			}
+			return null;
+		}
+		
+		public List<EntityDefinition> getEntityDefinitions()
+		{
+			return entity_definitions;
+		}
+		
+		public List<EntityIndex> getEntityIndices(String entity_name)
+		{
+			List<EntityIndex> ret = new ArrayList<EntityIndex>();
+			for(int i = 0;i < entity_indices.size();i++)
+			{
+				EntityIndex idx = entity_indices.get(i);
+				if(idx.getEntity().equals(entity_name))
+					ret.add(idx);
+			}
+			return ret;
+		}
+		
+		public List<EntityRelationshipDefinition> getEntityRelationships()
+		{
+			return entity_relationships;
+		}
+		
+		//IPersistenceProvider
+		public PersistentStore getStore()
+		{ 
+			return this;
+		}
+		
+		public String getName()
+		{ 
+			return "schema receiver";
+		}
+
+		public IEvolutionProvider getEvolutionProvider() 
+		{
+			return null;
+		}
+	
+		public void setWebStoreModuleContext(WebStoreModule c)
+		{
+			webstore_context = c;
+		}
+
+	}
+
+	public static EntityDefinition EVOLVE_ENTITY(PersistentStore store,schema_receiver resolver,IEvolutionProvider evolution_provider,EntityDefinition proposed_def) throws PersistenceException,SyncException
+	{
+		
+		String entity_name = proposed_def.getName();
+		EntityDefinition 		existing_def;			
+		existing_def = store.getEntityDefinition(entity_name);
+
+		/*create it if it doesnt exist*/
+		if(existing_def == null)
+		{
+			System.out.println(entity_name+" DOESNT EXISTS!!.");
+			store.addEntityDefinition(proposed_def);
+
+		}
+		else
+		{
+			/* check it to make sure the version passed in matches the one in the store */
+			
+			if(existing_def.equals(proposed_def))
+				return proposed_def;
+			else
+				evolution_provider.evolveEntity(resolver, existing_def, proposed_def);
+			
+			/* add any additional default system fields...deletes of system fields 
+			 * have to be done with an alter for now...also need to take evolution into 
+			 * account when adding system fields */
+			for(int i = 0;i < FIELDS.length;i++)
+			{
+				FieldDefinition f = FIELDS[i];
+				if(existing_def.getField(f.getName())==null)
+					store.addEntityField(entity_name,f);
+			}
+		}
+
+		return proposed_def;
+	}
+
+	public static List<EntityIndex> EVOLVE_ENTITY_INDICES(PersistentStore store,schema_receiver resolver,IEvolutionProvider evolution_provider,String entity_name,List<EntityIndex> proposed_indices) throws PersistenceException,InitializationException
+	{
+		List<EntityIndex> ret				= new ArrayList<EntityIndex>();
+		List<EntityIndex> existing_indices	= store.getEntityIndices(entity_name); 
+
+		if(existing_indices.size() == 0)
+		{
+			for(int i = 0;i < proposed_indices.size();i++)
+			{
+				EntityIndex pro_idx = proposed_indices.get(i);			
+				pro_idx = do_define_entity_index(store, entity_name, pro_idx);
+				ret.add(pro_idx);
+			}
+			return ret; 
+		}
+		else if(existing_indices.size() == proposed_indices.size() && 
+				existing_indices.containsAll(proposed_indices))
+		{
+			
+			return existing_indices;
+		}
+		else
+		{
+			System.out.println("EXISTING INDIXES DO NOT EQUAL PROPOSED INDICES. \n"+existing_indices+"\n"+proposed_indices);
+			evolution_provider.evolveIndexes(resolver,entity_name,existing_indices,proposed_indices);
+		}
+		return proposed_indices;
+	}
+	
 
 }

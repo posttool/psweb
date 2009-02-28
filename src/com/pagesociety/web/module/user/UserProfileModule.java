@@ -59,7 +59,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 		guard				 = (IUserProfileGuard)getSlot(SLOT_USER_PROFILE_GUARD);
 		user_module 		 = (UserModule)getSlot(SLOT_USER_MODULE);
 		user_module.addEventListener(this);
-		System.out.println(getName()+"PROFILE FIELDS IS "+profile_fields);
+		System.out.println(getName()+"PROFILE FIELDS ARE "+profile_fields);
 	}
 	
 	

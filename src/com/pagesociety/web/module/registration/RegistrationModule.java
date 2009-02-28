@@ -71,7 +71,7 @@ public class RegistrationModule extends WebStoreModule
 	}
 
 	
-	protected void defineSlots()
+	public void defineSlots()
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true);
