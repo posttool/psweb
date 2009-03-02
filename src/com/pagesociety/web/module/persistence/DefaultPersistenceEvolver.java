@@ -33,7 +33,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 						EntityIndex idx;
 						idx = add_indices.get(i);
 						try{
-							boolean go_on = confirm("ADD INDEX "+idx.getName()+" TO "+entity_name+"?");
+							boolean go_on = confirm("ADD INDEX "+idx.getName()+" DECLARED BY "+resolver.getDeclaringModuleForIndex(entity_name,idx.getName() ) +" TO "+entity_name+"?");
 							if(go_on)
 								do_define_entity_index(entity_name, idx);
 							else
@@ -165,7 +165,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					FieldDefinition f;
 					f = add_fields.get(i);
 					try{
-						boolean go_on = confirm("ADD FIELD "+f.getName()+" TO "+old_def.getName()+"?");
+						boolean go_on = confirm("ADD FIELD "+f.getName()+" DEFINED BY "+resolver.getDeclaringModuleForEntityField(old_def.getName(), f.getName()) +" TO "+old_def.getName()+"?");
 						if(go_on)
 							store.addEntityField(old_def.getName(), f);
 						else
