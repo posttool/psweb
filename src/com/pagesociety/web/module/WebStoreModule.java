@@ -1307,10 +1307,10 @@ public  class WebStoreModule extends WebModule
 				EntityDefinition ff 		  = entity_fields.get(i);
 				String declarer 			  = entity_field_declarers.get(i);	
 				String entity_name 			  = ff.getName();
-				FieldDefinition f 			  = ff.getFields().get(0);
+				FieldDefinition f 			  = ff.getFields().get(1);//1 here because field 0 is always id
 				EntityDefinition proposed_def = entity_to_def.get(entity_name);
 				if(proposed_def == null)
-					throw new PersistenceException("ENTITY "+entity_name+" DOES NOT EXIST."+declarer+" CANNOT ADD FIELD "+ff.getFields().get(0).getName());
+					throw new PersistenceException("ENTITY "+entity_name+" DOES NOT EXIST."+declarer+" CANNOT ADD FIELD "+ff.getFields().get(1).getName());
 				entity_fieldname_to_declarer.put(proposed_def.getName()+"."+f.getName(),declarer);
 				proposed_def.addField(f);
 			}
@@ -1383,9 +1383,14 @@ public  class WebStoreModule extends WebModule
 		public int addEntityField(String entity, FieldDefinition entity_field_def) throws PersistenceException
 		{
 			EntityDefinition def = new EntityDefinition(entity);
+			
 			def.addField(entity_field_def);
 			entity_fields.add(def);
 			entity_field_declarers.add(webstore_context.getName());
+			
+			System.out.println(webstore_context.getName()+"ADDING ENTITY FIELD "+def);
+			System.out.println("EXISTING DEF IS "+getEntityDefinition(entity));
+			
 			return 0;
 		}
 		
@@ -1430,7 +1435,20 @@ public  class WebStoreModule extends WebModule
 			{
 				EntityDefinition d = entity_definitions.get(i);
 				if(d.getName().equals(name))
+				{
+					//here we add any proposed fields to the def.
+					//this is so a module can add a field and an
+					//index at the same time.
+					for(int j = 0;j < entity_fields.size();j++)
+					{
+						EntityDefinition field_declaration = entity_fields.get(j);
+						if(field_declaration.getName().equals(d.getName()))
+							d.addField(field_declaration.getFields().get(1));
+					}
 					return d;
+			
+				
+				}
 			}
 			return null;
 		}
@@ -1490,7 +1508,6 @@ public  class WebStoreModule extends WebModule
 		/*create it if it doesnt exist*/
 		if(existing_def == null)
 		{
-			System.out.println(entity_name+" DOESNT EXISTS!!.");
 			store.addEntityDefinition(proposed_def);
 
 		}
