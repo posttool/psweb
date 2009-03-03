@@ -1557,7 +1557,7 @@ public  class WebStoreModule extends WebModule
 		}
 		else
 		{
-			System.out.println("EXISTING INDIXES DO NOT EQUAL PROPOSED INDICES. \n"+existing_indices+"\n"+proposed_indices);
+			System.out.println("EXISTING INDIXES DO NOT EQUAL PROPOSED INDICES. \nEXISTING:\n"+existing_indices+"\nPROPOSED:\n"+proposed_indices);
 			evolution_provider.evolveIndexes(resolver,entity_name,existing_indices,proposed_indices);
 		}
 		return proposed_indices;
