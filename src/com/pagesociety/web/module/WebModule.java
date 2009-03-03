@@ -238,6 +238,11 @@ public abstract class WebModule extends Module
 		dispatchEvent(new ModuleEvent(event_type,event_context));
 	}
 	
+	protected void DISPATCH_EVENT(int event_type,Map<String,Object> event_context)
+	{
+		dispatchEvent(new ModuleEvent(event_type,event_context));
+	}
+	
 	//EXPERIMENTAL currently used by recurring order module//
 
 	File   current_log_file;
