@@ -53,7 +53,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 						EntityIndex idx;
 						idx = delete_indices.get(i);
 						try{
-							boolean go_on = confirm("DELETE INDEX "+idx.getName()+" IN "+entity_name+"?");
+							boolean go_on = confirm("DELETE INDEX "+idx.getName()+" IN "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name+"?");
 							if(go_on)
 								store.deleteEntityIndex(entity_name, idx.getName());
 							else
@@ -90,7 +90,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							if(answer.equals("0"))
 							{
 								try{
-									boolean go_on = confirm("ADD INDEX "+idx.getName()+" DECLARED BY "+resolver.getDeclaringModuleForIndex(entity_name,idx.getName())+" TO "+entity_name+"? ");
+									boolean go_on = confirm("ADD INDEX "+idx.getName()+" DECLARED BY "+resolver.getDeclaringModuleForIndex(entity_name,idx.getName())+" TO "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name+"? ");
 									if(go_on)
 										do_define_entity_index(entity_name, idx);
 									else
@@ -131,7 +131,11 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					{
 						EntityIndex idx = delete_indices.get(i);
 						try{
-							store.deleteEntityIndex(entity_name, idx.getName());
+							boolean go_on = confirm("DELETE INDEX "+idx.getName()+" IN "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name+"?");
+							if(go_on)
+								store.deleteEntityIndex(entity_name, idx.getName());
+							else
+								continue;
 							INFO(getName()+": DELETED INDEX "+idx.getName()+" FROM "+entity_name);
 						}catch(PersistenceException p)
 						{
@@ -264,7 +268,11 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					{
 						FieldDefinition f = delete_fields.get(i);
 						try{
-							store.deleteEntityField(old_def.getName(), f.getName());
+							boolean go_on = confirm("DELETE FIELD "+f.getName()+" IN "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"?");
+							if(go_on)
+								store.deleteEntityField(old_def.getName(), f.getName());
+							else
+								continue;
 							INFO(getName()+": DELETED FIELD "+f.getName()+" FROM "+old_def.getName());
 						}catch(PersistenceException p)
 						{
