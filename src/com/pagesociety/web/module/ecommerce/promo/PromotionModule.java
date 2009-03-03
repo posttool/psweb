@@ -436,7 +436,7 @@ public class PromotionModule extends WebStoreModule
 	
 	public Query getCouponPromotionByPromoCodeQ(String promo_code)
 	{
-		Query q = new Query(PROMOTION_INSTANCE_ENTITY);
+		Query q = new Query(COUPON_PROMOTION_ENTITY);//is this what you mean?
 		q.idx(IDX_COUPON_PROMOTION_BY_PROMO_CODE);
 		q.eq(promo_code);
 		return q;
