@@ -97,7 +97,7 @@ public class UserModule extends WebStoreModule
 		return createPrivilegedUser(user, email, password, username, roles);
 	}	
 	
-	public Entity createPrivilegedUser(Entity creator,String email,String password,String username,List<Integer> roles) throws WebApplicationException,PersistenceException
+	public Entity createPrivilegedUser(Entity creator,String email,String password,String username,List<Integer> roles,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
 	{
 		Entity existing_user = getUserByEmail(email);
 		if(existing_user != null)
@@ -120,9 +120,13 @@ public class UserModule extends WebStoreModule
 					FIELD_PASSWORD,password,
 					FIELD_USERNAME,username,
 					FIELD_ROLES,roles);					
-		
-		DISPATCH_EVENT(EVENT_USER_CREATED,
-					   USER_EVENT_USER,user);
+	
+		Map<String,Object> event_context = new HashMap<String, Object>();
+		event_context.put(USER_EVENT_USER, user);
+		for(int i = 0;i < xtra_event_context_params.length;i+=2)
+			event_context.put((String)xtra_event_context_params[i], xtra_event_context_params[i+1]);
+
+		DISPATCH_EVENT(EVENT_USER_CREATED,event_context);
 		return user;
 	}
 	
@@ -137,7 +141,7 @@ public class UserModule extends WebStoreModule
 	public static final int ERROR_USER_EMAIL_EXISTS = 0x20001;
 	public static final int ERROR_USER_USERNAME_EXISTS = 0x20002;
 	public static final int ERROR_BAD_PASSWORD = 0x20003;
-	public Entity createPublicUser(Entity creator,String email,String password,String username) throws PersistenceException,WebApplicationException
+	public Entity createPublicUser(Entity creator,String email,String password,String username,Object... xtra_event_context_params) throws PersistenceException,WebApplicationException
 	{
 		Entity existing_user = getUserByEmail(email);
 		if(existing_user != null)
@@ -162,8 +166,12 @@ public class UserModule extends WebStoreModule
 						   FIELD_PASSWORD,password,
 						   FIELD_ROLES,roles);				
 		
-		DISPATCH_EVENT(EVENT_USER_CREATED,
-				       USER_EVENT_USER, user);
+		Map<String,Object> event_context = new HashMap<String, Object>();
+		event_context.put(USER_EVENT_USER, user);
+		for(int i = 0;i < xtra_event_context_params.length;i+=2)
+			event_context.put((String)xtra_event_context_params[i], xtra_event_context_params[i+1]);
+
+		DISPATCH_EVENT(EVENT_USER_CREATED,event_context);
 		return user;
 	}
 
