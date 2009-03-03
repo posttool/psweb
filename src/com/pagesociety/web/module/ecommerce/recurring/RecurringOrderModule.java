@@ -139,7 +139,7 @@ public class RecurringOrderModule extends ResourceModule
 		QueryResult result = QUERY(q);
 		if(result.size() == 0)
 			return null;
-		else if(result.size() > 0)
+		else if(result.size() > 1)
 			WARNING("THERE ARE MORE THAN ONE RECURRING SKUS WITH CATALOG NUM: "+catalog_num);
 		return result.getEntities().get(0);
 	}
