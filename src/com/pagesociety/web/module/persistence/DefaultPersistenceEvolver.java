@@ -131,7 +131,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					{
 						EntityIndex idx = delete_indices.get(i);
 						try{
-							store.deleteEntityField(entity_name, idx.getName());
+							store.deleteEntityIndex(entity_name, idx.getName());
 							INFO(getName()+": DELETED INDEX "+idx.getName()+" FROM "+entity_name);
 						}catch(PersistenceException p)
 						{
@@ -165,7 +165,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					FieldDefinition f;
 					f = add_fields.get(i);
 					try{
-						boolean go_on = confirm("ADD FIELD "+f.getName()+" DEFINED BY "+resolver.getDeclaringModuleForEntityField(old_def.getName(), f.getName()) +" TO "+old_def.getName()+"?");
+						boolean go_on = confirm("ADD FIELD "+f.getName()+" DEFINED BY "+resolver.getDeclaringModuleForEntityField(old_def.getName(), f.getName()) +" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"?");
 						if(go_on)
 							store.addEntityField(old_def.getName(), f);
 						else
@@ -223,7 +223,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							if(answer.equals("0"))
 							{
 								try{
-									boolean go_on = confirm("ADD FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+old_def.getName()+"? ");
+									boolean go_on = confirm("ADD FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"? ");
 									if(go_on)
 										store.addEntityField(old_def.getName(), f);
 									else
