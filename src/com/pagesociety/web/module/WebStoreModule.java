@@ -43,8 +43,7 @@ public  class WebStoreModule extends WebModule
 		super.system_init(app, config);		
 		//TODO: we should have to do this any more//
 		associated_entity_definitions = new ArrayList<EntityDefinition>();
-		//this breaks a loope since we need to pre-init the default one manually..see below//
-
+		
 	}
 
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
