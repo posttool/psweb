@@ -11,4 +11,13 @@ public class Validator
 		Matcher m =  email_pattern.matcher(email);
 		return m.matches();
 	}
+	
+	public static boolean isEmptyOrNull(String s) 
+	{
+		if(s== null)
+			return true;
+		if(s.equals(""))
+			return true;
+		return false;
+	}
 }
