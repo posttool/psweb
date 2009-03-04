@@ -3,15 +3,18 @@ package com.pagesociety.web.gateway;
 import javax.servlet.http.HttpServletRequest;
 
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.ModuleDefinition;
-import com.pagesociety.web.module.ModuleMethod;
-import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
 
 public class GatewayUtil
 {
 	public static final String REQUEST_PATH_SEPARATOR = "/";
 
+	public static ModuleRequest parseModuleRequest(HttpServletRequest servlet_request) throws WebApplicationException
+	{
+		return parseModuleRequest(servlet_request, servlet_request.getRequestURI().
+			substring(servlet_request.getContextPath().length()));
+	}
+	
 	public static ModuleRequest parseModuleRequest(HttpServletRequest servlet_request,
 			String request_path) throws WebApplicationException
 	{
