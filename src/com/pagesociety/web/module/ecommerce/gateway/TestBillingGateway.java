@@ -37,33 +37,33 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 
 		switch(cc_type)
 		{
-		case BillingModule.CC_TYPE_VISA:
-		case BillingModule.CC_TYPE_MASTERCARD:
-		case BillingModule.CC_TYPE_AMEX:
-		case BillingModule.CC_TYPE_DISCOVER:
-		case BillingModule.CC_TYPE_DINERS:
-			break;
-		default:
-				throw new BillingGatewayException("BAD CREDIT CARD TYPE"); 
-		}
-				
-		Calendar now = Calendar.getInstance();
-		int year = now.get(Calendar.YEAR);
-		int month = now.get(Calendar.MONTH)+1;
-
-
-		if(year < exp_year)
-		{
-			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
-		}
-		
-		if(year == exp_year && month > exp_month)
-		{
-			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
-		}
-		
-		validate_credit_card_number(cc_type,cc_no);
-		return response;
+			case BillingModule.CC_TYPE_VISA:
+			case BillingModule.CC_TYPE_MASTERCARD:
+			case BillingModule.CC_TYPE_AMEX:
+			case BillingModule.CC_TYPE_DISCOVER:
+			case BillingModule.CC_TYPE_DINERS:
+				break;
+			default:
+					throw new BillingGatewayException("BAD CREDIT CARD TYPE"); 
+			}
+					
+			Calendar now = Calendar.getInstance();
+			int year = now.get(Calendar.YEAR);
+			int month = now.get(Calendar.MONTH)+1;
+	
+	
+			if(year < exp_year)
+			{
+				throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
+			}
+			
+			if(year == exp_year && month > exp_month)
+			{
+				throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
+			}
+			
+			validate_credit_card_number(cc_type,cc_no);
+			return response;
 	}
 	
 	
