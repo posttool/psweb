@@ -1,10 +1,15 @@
 package com.pagesociety.web.module.ecommerce.gateway;
 
 import java.util.Calendar;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
+
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.ecommerce.billing.BillingModule;
@@ -12,7 +17,16 @@ import com.pagesociety.web.module.util.Validator;
 
 public class TestBillingGateway extends WebModule implements IBillingGateway
 {
-	
+	public static final String PARAM_DO_FULL_CREDIT_CARD_VALIDATION = "do-full-credit-card-validation"; 
+	private boolean do_full_credit_card_validation = false;
+	public void init(WebApplication app,Map<String,Object> config) throws  InitializationException
+	{
+		String p = GET_OPTIONAL_CONFIG_PARAM(PARAM_DO_FULL_CREDIT_CARD_VALIDATION, config);
+		if(p == null)
+			do_full_credit_card_validation = false;
+		else if(p.equalsIgnoreCase("true"))
+			do_full_credit_card_validation = true;
+	}
 	/* Check if card is valid */
 	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year) throws BillingGatewayException
 	{
@@ -33,7 +47,8 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 			throw new BillingGatewayException("POSTAL CODE IS REQUIRED");
 		if(Validator.isEmptyOrNull(cc_no))
 			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
-		
+		if(!do_full_credit_card_validation)
+			return new BillingGatewayResponse();
 
 		switch(cc_type)
 		{
