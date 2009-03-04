@@ -38,6 +38,7 @@ public class BillingModule extends WebStoreModule
 	public static final int CC_TYPE_MASTERCARD = 0x02;
 	public static final int CC_TYPE_AMEX 	   = 0x03;
 	public static final int CC_TYPE_DISCOVER   = 0x04;
+	public static final int CC_TYPE_DINERS	   = 0x05; 
 	
 	public static final int EVENT_BILLING_RECORD_CREATED = 0x1001;
 	public static final int EVENT_BILLING_RECORD_UPDATED = 0x1002;
