@@ -11,20 +11,12 @@ public class AmfLong
 	
 	public AmfLong(Long v)
 	{
-		boolean ltz = v < 0;
-		if (ltz)
-		{
-			_v = "-"+Long.toHexString(-v);
-		}
-		else
-		{
-			_v = Long.toHexString(v);
-		}
+		_v = Long.toString(v);
 	}
 
 	public Long longValue()
 	{
-		return Long.parseLong(_v, 16);
+		return Long.parseLong(_v);
 	}
 
 	public String getStringValue()
