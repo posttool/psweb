@@ -20,6 +20,7 @@ import com.pagesociety.web.module.WebStoreModule;
 public class BDBPersistenceModule extends WebModule implements IPersistenceProvider
 {
 	private static final String PARAM_STORE_ROOT_DIRECTORY = "store-root-directory";
+	private static final String PARAM_STORE_BACKUP_DIRECTORY = "store-backup-directory";
 	private static final String SLOT_EVOLUTION_PROVIDER    = "evolution-provider";
 	
 	private PersistentStore    bdb_store;
@@ -30,11 +31,21 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	{
 		super.system_init(app,config);
 		
-		String root_dir = GET_REQUIRED_CONFIG_PARAM(PARAM_STORE_ROOT_DIRECTORY,config);
+		String root_dir   = GET_REQUIRED_CONFIG_PARAM(PARAM_STORE_ROOT_DIRECTORY,config);
+		String backup_dir = GET_OPTIONAL_CONFIG_PARAM(PARAM_STORE_BACKUP_DIRECTORY,config);
 		
-		File f = new File(root_dir);
+		File f;
+		f = new File(root_dir);
 		if(!f.exists())
 			f.mkdirs();
+		
+		if(backup_dir != null)
+		{
+			f = new File(root_dir);
+			if(!f.exists())
+			f.mkdirs();
+		}
+		
 		bdb_store = new BDBStore();
 		try{
 			bdb_store.init(config);	
