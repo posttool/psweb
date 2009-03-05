@@ -81,6 +81,7 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
+
 		start_billing_thread();	
 	}
 
