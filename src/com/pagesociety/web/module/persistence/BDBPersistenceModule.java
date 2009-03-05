@@ -30,9 +30,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	{
 		super.system_init(app,config);
 		
-		String root_dir = (String)config.get(PARAM_STORE_ROOT_DIRECTORY);
-		if(root_dir == null)
-			throw new InitializationException("BDBPersistenceModule requires paramter "+PARAM_STORE_ROOT_DIRECTORY);
+		String root_dir = GET_REQUIRED_CONFIG_PARAM(PARAM_STORE_ROOT_DIRECTORY,config);
 		
 		File f = new File(root_dir);
 		if(!f.exists())
