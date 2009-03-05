@@ -535,7 +535,8 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public PagingQueryResult getRecurringOrdersByStatus(int status,int page_size,int offset) throws WebApplicationException,PersistenceException
 	{
-		Query q = new Query(IDX_RECURRING_ORDER_BY_STATUS);
+		Query q = new Query(RECURRING_ORDER_ENTITY);
+		q.idx(IDX_RECURRING_ORDER_BY_STATUS);
 		q.eq(status);
 		q.offset(offset);
 		q.pageSize(page_size);
@@ -558,7 +559,8 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public PagingQueryResult getRecurringOrdersByUser(Entity user,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
-		Query q = new Query(IDX_RECURRING_ORDER_BY_USER);
+		Query q = new Query(RECURRING_ORDER_ENTITY);
+		q.idx(IDX_RECURRING_ORDER_BY_USER);
 		q.eq(user);
 		q.offset(offset);
 		q.pageSize(page_size);
