@@ -48,6 +48,7 @@ public class LoggerModule extends WebStoreModule
 	{
 		return NEW(log_entity_name,
 					user,
+					FIELD_LOG_MESSAGE,message,
 					FIELD_LOG_MESSAGE_TYPE,message_type,
 					FIELD_LOG_MESSAGE_DATA,data);
 	}
