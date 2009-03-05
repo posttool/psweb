@@ -25,5 +25,6 @@ public interface IPromotionGuard {
 	public boolean canGetGlobalPromotions(Entity user);
 	
 	public boolean canGetCouponPromotions(Entity user);
+	public boolean canGetPromotions(Entity user);
 
 }

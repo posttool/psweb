@@ -356,6 +356,17 @@ public class PromotionModule extends WebStoreModule
 		return DELETE(coupon_promotion);
 	}
 
+	@Export
+	public PagingQueryResult GetPromotions(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		GUARD(guard.canGetPromotions(user));		
+		Query q = getPromotionsQ();
+		q.offset(offset);
+		q.pageSize(page_size);
+		q.orderBy(FIELD_DATE_CREATED,Query.DESC);
+		return PAGING_QUERY(q);	
+	}
 	
 	@Export
 	public PagingQueryResult GetCouponPromotions(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
@@ -373,6 +384,14 @@ public class PromotionModule extends WebStoreModule
 	public Query getCouponPromotionsQ()
 	{
 		Query q = new Query(COUPON_PROMOTION_ENTITY);
+		q.idx(Query.PRIMARY_IDX);
+		q.eq(Query.VAL_GLOB);
+		return q;
+	}
+	
+	public Query getPromotionsQ()
+	{
+		Query q = new Query(PROMOTION_ENTITY);
 		q.idx(Query.PRIMARY_IDX);
 		q.eq(Query.VAL_GLOB);
 		return q;

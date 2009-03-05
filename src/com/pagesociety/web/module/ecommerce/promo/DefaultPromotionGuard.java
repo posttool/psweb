@@ -27,4 +27,6 @@ public class DefaultPromotionGuard extends PermissionsModule implements IPromoti
 
 	public boolean canGetCouponPromotions(Entity user){return false;}
 
+	public boolean canGetPromotions(Entity user){return false;}
+
 }
