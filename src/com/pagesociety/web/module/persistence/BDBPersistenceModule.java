@@ -2,18 +2,26 @@ package com.pagesociety.web.module.persistence;
 
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.bdb.BDBStore;
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.PersistentStore;
+import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.SlotException;
+import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
+import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.WebStoreModule;
 
@@ -23,7 +31,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	private static final String PARAM_STORE_BACKUP_DIRECTORY = "store-backup-directory";
 	private static final String SLOT_EVOLUTION_PROVIDER    = "evolution-provider";
 	
-	private PersistentStore    bdb_store;
+	private PersistentStore    store;
 	private IEvolutionProvider evolution_provider;
 
 
@@ -33,7 +41,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		
 		String root_dir   = GET_REQUIRED_CONFIG_PARAM(PARAM_STORE_ROOT_DIRECTORY,config);
 		String backup_dir = GET_OPTIONAL_CONFIG_PARAM(PARAM_STORE_BACKUP_DIRECTORY,config);
-		
+		System.out.println("BACKUP DIR IS "+backup_dir);
 		File f;
 		f = new File(root_dir);
 		if(!f.exists())
@@ -41,14 +49,14 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		
 		if(backup_dir != null)
 		{
-			f = new File(root_dir);
+			f = new File(backup_dir);
 			if(!f.exists())
 			f.mkdirs();
 		}
 		
-		bdb_store = new BDBStore();
+		store = new BDBStore();
 		try{
-			bdb_store.init(config);	
+			store.init(config);	
 		}catch(PersistenceException pe)
 		{
 			pe.printStackTrace();
@@ -91,7 +99,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	
 	public PersistentStore getStore()
 	{
-		return bdb_store;
+		return store;
 	}
 
 	public IEvolutionProvider getEvolutionProvider() 
@@ -99,4 +107,94 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		//return null;
 		return evolution_provider;
 	}
+	
+	
+	public void loadbang(WebApplication app,Map<String,Object> params) throws InitializationException
+	{
+		try{
+			System.out.println("STORE SUPPORTS FULL BACKUP: "+store.supportsFullBackup());
+			System.out.println("STORE SUPPORTS BACKUP: "+store.supportsFullBackup());
+			System.out.println("CURRENT BACKUPS: ");
+			String[] backup_identifiers = store.getBackupIdentifiers();
+			for(int i = 0;i < backup_identifiers.length;i++)
+				System.out.println("\t"+backup_identifiers[i]);
+		}catch(PersistenceException pe)
+		{
+			pe.printStackTrace();
+			throw new InitializationException("FAILED....");
+		}
+	}
+	
+	@Export
+	public List<String> GetBackupIdentifiers(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_ADMIN(user))
+			throw new PermissionsException("NO PERMISSION.");	
+		return getBackupIdentifiers();
+	}
+	
+	public List<String> getBackupIdentifiers() throws PersistenceException
+	{
+		return Arrays.asList(store.getBackupIdentifiers());
+	}
+	
+	@Export
+	public String DoFullBackup(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_ADMIN(user))
+			throw new PermissionsException("NO PERMISSION.");	
+		return doFullBackup();
+	}
+	
+	public String doFullBackup() throws PersistenceException
+	{
+		return store.doFullBackup();
+	}
+
+	@Export
+	public String DoIncrementalBackup(UserApplicationContext uctx,String fullbackup_token) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_ADMIN(user))
+			throw new PermissionsException("NO PERMISSION.");	
+		return doIncrementalBackup(fullbackup_token);
+	}
+	
+	public String doIncrementalBackup(String fullbackup_token) throws PersistenceException
+	{
+		return store.doIncrementalBackup(fullbackup_token);
+	}
+	
+	@Export
+	public void RestoreFromBackup(UserApplicationContext uctx,String fullbackup_token) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_ADMIN(user))
+			throw new PermissionsException("NO PERMISSION.");	
+		restoreFromBackup(fullbackup_token);
+	}
+	
+	public void restoreFromBackup(String fullbackup_token) throws PersistenceException
+	{
+		store.restoreFromBackup(fullbackup_token);
+	}
+	
+	
+	@Export
+	public void DeleteBackup(UserApplicationContext uctx,String fullbackup_token) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_ADMIN(user))
+			throw new PermissionsException("NO PERMISSION.");	
+		deleteBackup(fullbackup_token);
+	}
+	
+	public void deleteBackup(String fullbackup_token) throws PersistenceException
+	{
+		store.deleteBackup(fullbackup_token);
+	}
+
+	
 }

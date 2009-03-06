@@ -63,7 +63,7 @@ public  class WebStoreModule extends WebModule
 		schema_receiver r = get_schema_receiver_for_store(app,getName(),store_provider);
 		store = r.getStore();
 		r.setWebStoreModuleContext(this);
-		//TODO: probs need to preserve the module source of declaration//
+
 		try{
 			defineEntities(config);
 			defineIndexes(config);
