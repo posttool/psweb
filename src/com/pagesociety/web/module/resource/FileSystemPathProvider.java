@@ -73,7 +73,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		File dest_dir = new File(base_dir,relative_path);
 		dest_dir.mkdirs();
 
-		String save_filename = get_save_filename(user,f);
+		String save_filename = get_save_filename(user,dest_dir,f);
 		File dest_file = new File(dest_dir,save_filename);
 		
 		f.renameTo(dest_file);
@@ -96,7 +96,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	}
 	
 	
-	protected String get_save_filename(Entity user,File f) 
+	protected String get_save_filename(Entity user,File dest_dir,File f) 
 	{
 		StringBuilder buf = new StringBuilder();
 		buf.append(RandomGUID.getGUID().substring(16));
