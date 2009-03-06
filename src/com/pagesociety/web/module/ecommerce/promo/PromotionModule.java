@@ -70,8 +70,20 @@ var price 		  = recurring_sku.getAttribute("price");
 sku.setAttribute("price",0.20 * price);
 return true;
 
-*/
 
+The MEM in the context looks like this
+MEM m = new MEM((Long)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_IR1),
+		(Long)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_IR2),
+		(Long)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_IR3),
+		(Long)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_IR4),
+		(String)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_SR1),
+		(String)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_SR2),
+		(Double)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_FPR1),
+		(Double)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FIELD_FPR2),
+		(Long)promotion.getAttribute(PROMOTION_FIELD_GR1),
+		(Long)promotion.getAttribute(PROMOTION_FIELD_GR2));
+
+*/
 
 public class PromotionModule extends WebStoreModule 
 {
@@ -221,8 +233,7 @@ public class PromotionModule extends WebStoreModule
 	public Entity updatePromotion(Entity promotion,String title,String description,String program,long gr1,long gr2) throws WebApplicationException,PersistenceException
 	{
 		validate_promotion_source(title,program);
-		return NEW(PROMOTION_ENTITY,
-				   promotion,
+		return UPDATE(promotion,
 				   PROMOTION_FIELD_TITLE,title,
 				   PROMOTION_FIELD_DESCRIPTION,description,
 				   PROMOTION_FIELD_PROGRAM,program);
