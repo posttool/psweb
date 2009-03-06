@@ -120,9 +120,9 @@ public class ExcelDumpModuleRawUI extends RawUIModule
 			SPAN(buf,message,RAW_UI_INFO_COLOR,16);
 			P(buf);
 		}
-		NBSP(buf,4);A(buf,RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state=excel_dump","[ DUMP DATABASE ]");
+		NBSP(buf,4);A(buf,RAW_MODULE_ROOT()+"/Exec/.raw?state=excel_dump","[ DUMP DATABASE ]");
 		P(buf);
-		NBSP(buf,4);A(buf,RAW_MODULE_EXEC_ROOT()+"/Exec/.raw?state=restore","[ RESTORE DATABASE ]");
+		NBSP(buf,4);A(buf,RAW_MODULE_ROOT()+"/Exec/.raw?state=restore","[ RESTORE DATABASE ]");
 		DOCUMENT_END(buf);
 	}
 	
