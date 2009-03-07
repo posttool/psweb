@@ -1499,7 +1499,7 @@ public  class WebStoreModule extends WebModule
 
 	}
 
-	public static EntityDefinition EVOLVE_ENTITY(schema_receiver resolver,EntityDefinition proposed_def) throws PersistenceException,SyncException
+	public static EntityDefinition EVOLVE_ENTITY(schema_receiver resolver,EntityDefinition proposed_def) throws PersistenceException,InitializationException
 	{
 		IPersistenceProvider p				   = resolver.p;
 		PersistentStore 	store 			   = p.getStore();
@@ -1589,7 +1589,7 @@ public  class WebStoreModule extends WebModule
 		return proposed_indices;
 	}
 	
-	private static boolean confirm(String message)
+	private static boolean confirm(String message) throws InitializationException
 	{
 		String answer = null;
 		while(answer == null)
@@ -1606,6 +1606,8 @@ public  class WebStoreModule extends WebModule
 				return true;
 			if(answer.equals("n"))
 				return false;
+			if(answer.equals("a"))
+				throw new InitializationException("USER ABORTED STARTUP.");
 			else
 				answer = null;
 		}
