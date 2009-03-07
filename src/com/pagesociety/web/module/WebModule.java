@@ -176,12 +176,12 @@ public abstract class WebModule extends Module
 	}
 	
 
-	protected String GET_CONSOLE_INPUT(String prompt)throws WebApplicationException
+	protected static String GET_CONSOLE_INPUT(String prompt)throws WebApplicationException
 	{
 		return GET_CONSOLE_INPUT(5, prompt);
 	}
 	
-	protected String GET_CONSOLE_INPUT(int num_times,String prompt)throws WebApplicationException
+	protected static String GET_CONSOLE_INPUT(int num_times,String prompt)throws WebApplicationException
 	{
 		while(num_times > 0)
 		{

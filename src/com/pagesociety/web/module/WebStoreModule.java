@@ -1230,12 +1230,14 @@ public  class WebStoreModule extends WebModule
 		List<String>						entity_relationship_declarers;
 				
 		IPersistenceProvider				p;
+
 		
 		private WebStoreModule webstore_context;
 		private HashMap<String, String> entity_to_declarer;
 		private HashMap<String, String> entity_index_to_declarer;
 		private HashMap<String, String> entity_fieldname_to_declarer;
-				
+
+		boolean made_backup_during_evolution = false;
 		public schema_receiver(WebApplication app,IPersistenceProvider p)
 		{
 			this.app = app;
@@ -1317,7 +1319,7 @@ public  class WebStoreModule extends WebModule
 			{
 				EntityDefinition proposed_def = entity_definitions.get(i);
 				app.INFO("WEBSTORE SUBSYSTEM ACTUALIZING ENTITY "+entity_to_declarer.get(proposed_def.getName())+"."+proposed_def.getName()+" PERSISTENCE PROVIDER IS "+p.getName());
-				EVOLVE_ENTITY(p.getStore(),this, p.getEvolutionProvider(), entity_definitions.get(i));
+				EVOLVE_ENTITY(this, entity_definitions.get(i));
 			}
 		}
 		
@@ -1353,7 +1355,7 @@ public  class WebStoreModule extends WebModule
 				String entity_name = iter.next();
 				List<EntityIndex> proposed_idxs = entity_to_indices.get(entity_name);
 				app.INFO("WEBSTORE SUBSYSTEM ACTUALIZING ENTITY INDEXES FOR "+entity_name+" PERSISTENCE PROVIDER IS "+p.getName());
-				EVOLVE_ENTITY_INDICES(p.getStore(), this, p.getEvolutionProvider(), entity_name, proposed_idxs);
+				EVOLVE_ENTITY_INDICES(this,entity_name, proposed_idxs);
 			}
 
 		}
@@ -1497,9 +1499,11 @@ public  class WebStoreModule extends WebModule
 
 	}
 
-	public static EntityDefinition EVOLVE_ENTITY(PersistentStore store,schema_receiver resolver,IEvolutionProvider evolution_provider,EntityDefinition proposed_def) throws PersistenceException,SyncException
+	public static EntityDefinition EVOLVE_ENTITY(schema_receiver resolver,EntityDefinition proposed_def) throws PersistenceException,SyncException
 	{
-		
+		IPersistenceProvider p				   = resolver.p;
+		PersistentStore 	store 			   = p.getStore();
+		IEvolutionProvider 	evolution_provider = p.getEvolutionProvider();
 		String entity_name = proposed_def.getName();
 		EntityDefinition 		existing_def;			
 		existing_def = store.getEntityDefinition(entity_name);
@@ -1508,7 +1512,6 @@ public  class WebStoreModule extends WebModule
 		if(existing_def == null)
 		{
 			store.addEntityDefinition(proposed_def);
-
 		}
 		else
 		{
@@ -1517,8 +1520,19 @@ public  class WebStoreModule extends WebModule
 			if(existing_def.equals(proposed_def))
 				return proposed_def;
 			else
+			{
+				if(!resolver.made_backup_during_evolution)
+				{
+					boolean make_backup = confirm("ABOUT TO DROP INTO ENTITY EVOLUTION. WOULD YOU LIKE TO MAKE A COMPLETE BACKUP OF THE DATABASE?");
+					if(make_backup)
+					{
+						String token = p.doFullBackup();
+						System.out.println("DID FULL BACKUP: "+token);
+						resolver.made_backup_during_evolution = true;
+					}
+				}
 				evolution_provider.evolveEntity(resolver, existing_def, proposed_def);
-			
+			}
 			/* add any additional default system fields...deletes of system fields 
 			 * have to be done with an alter for now...also need to take evolution into 
 			 * account when adding system fields */
@@ -1533,8 +1547,11 @@ public  class WebStoreModule extends WebModule
 		return proposed_def;
 	}
 
-	public static List<EntityIndex> EVOLVE_ENTITY_INDICES(PersistentStore store,schema_receiver resolver,IEvolutionProvider evolution_provider,String entity_name,List<EntityIndex> proposed_indices) throws PersistenceException,InitializationException
+	public static List<EntityIndex> EVOLVE_ENTITY_INDICES(schema_receiver resolver,String entity_name,List<EntityIndex> proposed_indices) throws PersistenceException,InitializationException
 	{
+		IPersistenceProvider p				   = resolver.p;
+		PersistentStore 	store 			   = p.getStore();
+		IEvolutionProvider 	evolution_provider = p.getEvolutionProvider();
 		List<EntityIndex> ret				= new ArrayList<EntityIndex>();
 		List<EntityIndex> existing_indices	= store.getEntityIndices(entity_name); 
 
@@ -1556,11 +1573,42 @@ public  class WebStoreModule extends WebModule
 		}
 		else
 		{
+			if(!resolver.made_backup_during_evolution)
+			{
+				boolean make_backup = confirm("ABOUT TO DROP INTO ENTITY INDEX EVOLUTION. WOULD YOU LIKE TO MAKE A COMPLETE BACKUP OF THE DATABASE?");
+				if(make_backup)
+				{
+					String token = p.doFullBackup();
+					System.out.println("DID FULL BACKUP: "+token);
+					resolver.made_backup_during_evolution = true;
+				}
+			}
 			System.out.println("EXISTING INDIXES DO NOT EQUAL PROPOSED INDICES. \nEXISTING:\n"+existing_indices+"\nPROPOSED:\n"+proposed_indices);
 			evolution_provider.evolveIndexes(resolver,entity_name,existing_indices,proposed_indices);
 		}
 		return proposed_indices;
 	}
 	
-
+	private static boolean confirm(String message)
+	{
+		String answer = null;
+		while(answer == null)
+		{
+			try{
+				answer = GET_CONSOLE_INPUT(message+"\n\t[Y] YES\n\t[N] NO \n\t[A] Abort\n");
+			}catch(WebApplicationException wae)
+			{
+				wae.printStackTrace();
+			}
+			answer = answer.toLowerCase();
+			
+			if(answer.equals("y"))
+				return true;
+			if(answer.equals("n"))
+				return false;
+			else
+				answer = null;
+		}
+		return false;
+	}
 }
