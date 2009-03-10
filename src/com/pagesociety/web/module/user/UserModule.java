@@ -177,12 +177,15 @@ public class UserModule extends WebStoreModule
 	}
 
 	@Export(ParameterNames={"user_entity_id","email"})
-	public Entity UpdateEmail(UserApplicationContext ctx,long user_entity_id,String email) throws WebApplicationException,PersistenceException
+	public Entity UpdateEmail(UserApplicationContext uctx,long user_entity_id,String email) throws WebApplicationException,PersistenceException
 	{
-		Entity editor    = (Entity)ctx.getUser();
+		Entity editor    = (Entity)uctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canUpdateField(editor,target,FIELD_EMAIL,email));					
-		return updateEmail(target, email);
+		Entity updated_user =  updateEmail(target, email);
+		if(editor.equals(target))
+			uctx.setUser(updated_user);
+		return updated_user;
 	}
 		
 	public Entity updateEmail(Entity user,String email) throws WebApplicationException,PersistenceException
@@ -196,12 +199,15 @@ public class UserModule extends WebStoreModule
 	
 	
 	@Export(ParameterNames={"user_entity_id","username"})
-	public Entity UpdateUserName(UserApplicationContext ctx,long user_entity_id,String username) throws PersistenceException,WebApplicationException
+	public Entity UpdateUserName(UserApplicationContext uctx,long user_entity_id,String username) throws PersistenceException,WebApplicationException
 	{
-		Entity editor    = (Entity)ctx.getUser();
+		Entity editor    = (Entity)uctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canUpdateField(editor,target,FIELD_USERNAME,username));
-		return updateUserName(target, username);
+		Entity updated_user =  updateUserName(target, username);
+		if(editor.equals(target))
+			uctx.setUser(updated_user);
+		return updated_user;
 	}
 	
 	public Entity updateUserName(Entity user,String username) throws PersistenceException,WebApplicationException
@@ -213,21 +219,28 @@ public class UserModule extends WebStoreModule
 				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
 		}
 		return UPDATE(user,
-				  FIELD_USERNAME,username);		
+				  	  FIELD_USERNAME,username);		
+		
 	}
 	
 	@Export(ParameterNames={"user_entity_id","old_password","new_password"})
-	public Entity UpdatePassword(UserApplicationContext ctx,long user_entity_id,String old_password,String new_password/*,boolean do_md5_on_server*/) throws PersistenceException,WebApplicationException
+	public Entity UpdatePassword(UserApplicationContext uctx,long user_entity_id,String old_password,String new_password/*,boolean do_md5_on_server*/) throws PersistenceException,WebApplicationException
 	{
-		Entity editor    = (Entity)ctx.getUser();
+		Entity editor    = (Entity)uctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 	
 		GUARD(guard.canUpdateField(editor,target,FIELD_PASSWORD,new_password));
 		
-		if(!target.getAttribute(FIELD_PASSWORD).equals(old_password))
-			throw new PermissionsException("BAD OLD PASSWORD");
-					
-		return updatePassword(target, new_password);
+		if(editor.equals(target))
+		{
+			if(!target.getAttribute(FIELD_PASSWORD).equals(old_password))
+				throw new PermissionsException("BAD OLD PASSWORD");
+		}
+		
+		Entity updated_user =  updatePassword(target, new_password);
+		if(editor.equals(target))
+			uctx.setUser(updated_user);
+		return updated_user;
 	}
 	
 	public Entity updatePassword(Entity user,String password) throws PersistenceException
@@ -242,7 +255,10 @@ public class UserModule extends WebStoreModule
 		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canAddRole(editor,target,role));
-		return addRole(target, role);
+		Entity updated_user =  addRole(target, role);
+		if(editor.equals(target))
+			ctx.setUser(updated_user);
+		return updated_user;
 	}
 	
 	public Entity addRole(Entity user,int role) throws PersistenceException
@@ -259,7 +275,10 @@ public class UserModule extends WebStoreModule
 		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
 		GUARD(guard.canRemoveRole(editor,target,role));
-		return removeRole(target, role);
+		Entity updated_user =  removeRole(target, role);
+		if(editor.equals(target))
+			ctx.setUser(updated_user);
+		return updated_user;
 	}
 	
 	public Entity removeRole(Entity user,int role) throws PersistenceException
@@ -280,7 +299,6 @@ public class UserModule extends WebStoreModule
 			return target;
 		GUARD(guard.canLockUser(editor,lock_code));
 		return lockUser(target, lock_code,notes);
-
 	}
 	
 	public Entity lockUser(Entity user,int lock_code,String notes) throws PersistenceException
@@ -339,9 +357,7 @@ public class UserModule extends WebStoreModule
 						   USER_EVENT_USER, user);
 		return UPDATE(user,
 					  FIELD_LAST_LOGIN, new Date());
-		
-		
-		
+				
 	}
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
