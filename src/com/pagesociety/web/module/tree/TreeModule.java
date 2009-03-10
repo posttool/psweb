@@ -176,6 +176,8 @@ public class TreeModule extends WebStoreModule
 	{
 		if(new_parent == null)
 			throw new PersistenceException("NEW PARENT CANNOT BE NULL WHEN YOU ARE REPARENTING TREE NODE");
+		if(new_parent.equals(tree_node))
+			throw new PersistenceException("CANNOT MAKE A NODE A PARENT OF ITSELF.");
 
 		List<Entity> ancestors = getAncestors(new_parent, new ArrayList());
 		if(ancestors.contains(tree_node))
