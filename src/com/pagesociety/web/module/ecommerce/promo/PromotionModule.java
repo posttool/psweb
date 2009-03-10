@@ -284,7 +284,7 @@ public class PromotionModule extends WebStoreModule
 		Entity promotion = (Entity)coupon_promotion.getAttribute(COUPON_PROMOTION_FIELD_PROMOTION);
 		if(promotion == null)
 			throw new WebApplicationException("MUST PROVIDE PROMOTION TO CREATE PROMOTION INSTANCE");
-		VALIDATE_TYPE(PROMOTION_INSTANCE_ENTITY, promotion);
+		VALIDATE_TYPE(PROMOTION_ENTITY, promotion);
 		promotion = GET(PROMOTION_ENTITY,promotion.getId());
 		
 		String promotion_code = (String)coupon_promotion.getAttribute(COUPON_PROMOTION_FIELD_PROMO_CODE);
@@ -449,7 +449,7 @@ public class PromotionModule extends WebStoreModule
 		Entity coupon_promo = result.getEntities().get(0);
 		Date expr_date = (Date)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_EXPIRATION_DATE);
 		Date now = new Date();
-		if(now.getTime() > expr_date.getTime())
+		if(expr_date != null && now.getTime() > expr_date.getTime())
 			throw new WebApplicationException("EXPIRED PROMOCODE "+promo_code,ERROR_EXPIRED_PROMO_CODE);
 		
 		int number_times_can_be_used = (Integer)coupon_promo.getAttribute(COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED);
