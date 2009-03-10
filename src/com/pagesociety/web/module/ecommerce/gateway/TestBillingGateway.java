@@ -47,8 +47,6 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 			throw new BillingGatewayException("POSTAL CODE IS REQUIRED");
 		if(Validator.isEmptyOrNull(cc_no))
 			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
-		if(!do_full_credit_card_validation)
-			return new BillingGatewayResponse();
 
 		switch(cc_type)
 		{
@@ -60,31 +58,31 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 				break;
 			default:
 					throw new BillingGatewayException("BAD CREDIT CARD TYPE"); 
-			}
+		}
 					
-			Calendar now = Calendar.getInstance();
-			int year = now.get(Calendar.YEAR);
-			int month = now.get(Calendar.MONTH)+1;
+		Calendar now = Calendar.getInstance();
+		int year = now.get(Calendar.YEAR);
+		int month = now.get(Calendar.MONTH)+1;
+
+
+		if(year < exp_year)
+		{
+			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
+		}
+		
+		if(year == exp_year && month > exp_month)
+		{
+			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
+		}
 	
-	
-			if(year < exp_year)
-			{
-				throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
-			}
-			
-			if(year == exp_year && month > exp_month)
-			{
-				throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
-			}
-			
-			validate_credit_card_number(cc_type,cc_no);
-			return response;
+		if(!do_full_credit_card_validation)
+			return new BillingGatewayResponse();
+		
+		validate_credit_card_number(cc_type,cc_no);
+		return response;
 	}
-	
-	
-	
-	
-	
+
+		
 	/* Transaction sales are submitted and immediately flagged for settlement.*/
 	public BillingGatewayResponse doSale(Entity billing_record,float amount) 	throws BillingGatewayException
 	{
