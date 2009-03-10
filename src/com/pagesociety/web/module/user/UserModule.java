@@ -49,6 +49,7 @@ public class UserModule extends WebStoreModule
 	public static final int EVENT_USER_DELETED 	 	 = 0x1008;
 	
 	public static final String USER_EVENT_USER = "user";
+	public static final String USER_EVENT_USER_CONTEXT = "user-context";
 	
 	public static final int USER_ROLE_WHEEL 				 = 0x1000;
 	public static final int USER_ROLE_USER	 				 = 0x0001;
@@ -234,7 +235,7 @@ public class UserModule extends WebStoreModule
 		return UPDATE(user,
 				  UserModule.FIELD_PASSWORD,password);				
 	}
-		
+	
 	@Export(ParameterNames={"user_entity_id","role"})
 	public Entity AddRole(UserApplicationContext ctx,long user_entity_id,int role) throws PersistenceException,WebApplicationException
 	{
@@ -370,9 +371,11 @@ public class UserModule extends WebStoreModule
 	public Entity Logout(UserApplicationContext uctx) throws PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		uctx.setUser(null);
+
 		DISPATCH_EVENT(EVENT_USER_LOGGED_OUT,
-					   USER_EVENT_USER,user);
+					   USER_EVENT_USER,user,
+					   USER_EVENT_USER_CONTEXT,uctx);
+		uctx.setUser(null);
 		return UPDATE(user,
 				  FIELD_LAST_LOGOUT, new Date());
 	}

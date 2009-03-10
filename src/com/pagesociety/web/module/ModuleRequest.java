@@ -18,6 +18,12 @@ public class ModuleRequest
 	public ModuleRequest()
 	{
 	}
+	
+	public ModuleRequest(String module_name, String method_name)
+	{
+		_module_name = module_name;
+		_method_name = method_name;
+	}
 
 	public ModuleRequest(String path)
 	{
