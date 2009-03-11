@@ -14,6 +14,7 @@ import javax.script.ScriptException;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
+import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
@@ -705,6 +706,14 @@ public class PromotionModule extends WebStoreModule
 		ctx.setAttribute(ScriptEngine.FILENAME ,promotion_name,ScriptContext.ENGINE_SCOPE);
 		ctx.setAttribute("P", this,ScriptContext.ENGINE_SCOPE );
 		ctx.setAttribute("MEM",m ,ScriptContext.ENGINE_SCOPE );
+		
+		try {
+			//System.out.println("ABOUT TO EVALUATE:\n"+buf.toString());
+			jsEngine.eval(buf.toString());
+		} catch (ScriptException ex)
+		{
+			throw new WebApplicationException("SYNTAX ERROR IN PROMOTIONS SCRIPT.\n"+ex.getMessage(),ex);
+		}    
 		
 		  //apply promotion//
 		Object ret = null;  
