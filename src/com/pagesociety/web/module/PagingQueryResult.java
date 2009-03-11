@@ -69,8 +69,8 @@ public class PagingQueryResult
 		_execution_time = t;
 	}
 	
-	public double getResultsPerSdecond()
+	public double getResultsPerSecond()
 	{
-		return _execution_time;
+		return _rps;
 	}
 }
