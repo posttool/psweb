@@ -84,7 +84,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 
 		
 	/* Transaction sales are submitted and immediately flagged for settlement.*/
-	public BillingGatewayResponse doSale(Entity billing_record,float amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doSale(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING SALE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
@@ -93,7 +93,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	/* Transaction authorizations are authorized immediately but are not flagged for settlement.
 	 *  These transactions must be flagged for settled using doCapture.
 	 *  Authorizations typically remain active for 3 to 7 business days. */
-	public BillingGatewayResponse doAuth(Entity billing_record,float amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doAuth(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING AUTH FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
@@ -104,7 +104,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	 * Only authorizations can be captured. Captures can be submitted for an amount
 	 * equal to or less than the original authorization. */
 	//TODO: need auth code here probably
-	public BillingGatewayResponse doCapture(Entity billing_record,float amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doCapture(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING CAPTURE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
@@ -126,7 +126,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	
 	/*Transaction refunds will reverse a previously settled transaction. 
 	 *If the transaction has not been settled, it must be voided instead of refunded.*/
-	public BillingGatewayResponse doRefund(Entity billing_record,float amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doRefund(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING REFUND FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
@@ -137,7 +137,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	/*Transaction credits apply a negative amount to the cardholder’s card.
 	 *In most situations, credits are disabled as transaction refunds should
 	 *be used instead.*/	
-	public BillingGatewayResponse doCredit(Entity billing_record,float amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doCredit(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING CREDIT FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);

@@ -3,13 +3,13 @@ package com.pagesociety.web.module.ecommerce.gateway;
 @SuppressWarnings("serial")
 public class BillingGatewayException extends Exception 
 {
-	private float amount;
+	private double amount;
 	public BillingGatewayException(String msg)
 	{
 		super(msg);
 	}
 	
-	public BillingGatewayException(String msg,float amount)
+	public BillingGatewayException(String msg,double amount)
 	{
 		super(msg);
 		this.amount = amount;
@@ -20,7 +20,7 @@ public class BillingGatewayException extends Exception
 		super(msg, e);
 	}
 	
-	public float getAmount()
+	public double getAmount()
 	{
 		return amount;
 	}
