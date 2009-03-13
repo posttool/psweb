@@ -2,56 +2,68 @@ package com.pagesociety.web.upload;
 
 public class UploadProgressInfo
 {
-	protected String contentType;
-	protected String fieldName;
-	protected String fileName;
-	protected double progress = 0;
-	protected long fileSize = -1;
-	protected long bytesRead = -1;
-	/*this thing is complete when its resource object is set */
-	private boolean complete = false;
+	protected String content_type;
+	protected String file_name;
+	protected double progress 	= 0;
+	protected long 	 file_size  = 0;
+	protected long 	 bytes_read = 0;
 	private Object completionObject;
 
-	public String getFieldName()
-	{
-		return fieldName;
-	}
-
+	
 	public String getFileName()
 	{
-		return fileName;
+		return file_name;
 	}
 
+	public void setFileName(String file_name)
+	{
+		this.file_name = file_name;
+	}
+	
 	public double getProgress()
 	{
 		return progress;
 	}
 
+	public void setProgress(double progress)
+	{
+		this.progress = progress;
+	}
+	
 	public String getContentType()
 	{
-		return contentType;
+		return content_type;
+	}
+	
+	public void setContentType(String content_type)
+	{
+		this.content_type = content_type;
 	}
 	
 	public long getFileSize()
 	{
-		return fileSize;
+		return file_size;
 	}
 
-	public long getBytesRead()
+	public void setFileSize(long file_size)
 	{
-		return bytesRead;
+		this.file_size = file_size;
 	}
 	
-	public synchronized boolean isComplete()
+	public long getBytesRead()
 	{
-		return complete;		
+		return bytes_read;
+	}
+	
+	public void setBytesRead(long bytes_read)
+	{
+		this.bytes_read = bytes_read;
 	}
 	
 
 	public synchronized void setCompletionObject(Object o)
 	{
 		completionObject = o;
-		complete 		 = true;
 	}
 	
 	public synchronized Object getCompletionObject()
