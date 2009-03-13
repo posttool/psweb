@@ -71,11 +71,35 @@ public class FileInfo
 		}
 		return -1;
 	}
+	
+	public static int getType(String filename)
+	{
+		if (filename == null)
+			return -1;
+		String file_extention = getExtension(filename);
+		for (int i = 0; i < EXTENSIONS_LENGTH; i++)
+		{
+			String[] ext = EXTENSIONS[i];
+			for (int j = 0; j < ext.length; j++)
+			{
+				if (ext[j].equals(file_extention))
+				{
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
 
 	
 	public static int getSimpleType(File file)
 	{
-		int type = getType(file);
+		return getSimpleType(file.getName());
+	}
+	
+	public static int getSimpleType(String filename)
+	{
+		int type = getType(filename);
 		switch (type)
 		{
 		case JPG:
@@ -104,7 +128,12 @@ public class FileInfo
 	
 	public static String getSimpleTypeAsString(File file)
 	{
-		int type = getType(file);
+		return getSimpleTypeAsString(file.getName());
+	}
+	
+	public static String getSimpleTypeAsString(String filename)
+	{
+		int type = getType(filename);
 		switch (type)
 		{
 			case JPG:
