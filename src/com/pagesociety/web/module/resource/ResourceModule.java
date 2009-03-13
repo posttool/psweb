@@ -3,6 +3,8 @@ package com.pagesociety.web.module.resource;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +17,11 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 
 import com.pagesociety.persistence.Entity;
@@ -30,6 +37,7 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.upload.MultipartForm;
+import com.pagesociety.web.upload.MultipartFormConstants;
 import com.pagesociety.web.upload.MultipartFormException;
 import com.pagesociety.web.upload.UploadProgressInfo;
 
@@ -274,7 +282,7 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"channel_name"})
-	public List<UploadProgressInfo> GetUploadProgress(UserApplicationContext uctx,String channel_name) throws PersistenceException,WebApplicationException
+	public UploadProgressInfo GetUploadProgress(UserApplicationContext uctx,String channel_name) throws PersistenceException,WebApplicationException
 	{
 		System.out.println("GET PROGRESS SESSION ID IS "+uctx.getId());
 		check_exceptions(uctx);
@@ -283,14 +291,15 @@ public class ResourceModule extends WebStoreModule
 		
 		Map<String,MultipartForm> channel_upload_map = (Map<String,MultipartForm>)uctx.getProperty(KEY_CURRENT_UPLOAD_MAP);
 		if(channel_upload_map == null)
-			return EMPTY_UPLOAD_PROGRESS_LIST;
+			return null;
 		
 		MultipartForm channel_upload = channel_upload_map.get(channel_name);
 		if(channel_upload == null)
-			return EMPTY_UPLOAD_PROGRESS_LIST;
+			return null;
 		
-		List<UploadProgressInfo> ret = channel_upload.getUploadProgress();
-		if(channel_upload.isComplete())
+		UploadProgressInfo ret = channel_upload.getUploadProgressInfo();
+
+		if(ret.getCompletionObject() != null)
 		{
 			System.out.println("UPLOAD IS COMPLETE FOR SESSION"+uctx.getId());
 			channel_upload_map.remove(channel_name);
@@ -299,7 +308,7 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"channel_name"})
-	public List<UploadProgressInfo> CancelUpload(UserApplicationContext ctx,String channel_name)throws PersistenceException,WebApplicationException
+	public UploadProgressInfo CancelUpload(UserApplicationContext ctx,String channel_name)throws PersistenceException,WebApplicationException
 	{
 		check_exceptions(ctx);
 		Entity user = (Entity)ctx.getUser();
@@ -307,13 +316,13 @@ public class ResourceModule extends WebStoreModule
 		
 		Map<String,MultipartForm> channel_upload_map = (Map<String,MultipartForm>)ctx.getProperty(KEY_CURRENT_UPLOAD_MAP);
 		if(channel_upload_map == null)
-			return EMPTY_UPLOAD_PROGRESS_LIST;
+			return null;
 		
 		MultipartForm channel_upload = channel_upload_map.get(channel_name);
 		if(channel_upload == null)
-			return EMPTY_UPLOAD_PROGRESS_LIST;
+			return null;
 	
-		List<UploadProgressInfo> ret = channel_upload.getUploadProgress();
+		UploadProgressInfo ret = channel_upload.getUploadProgressInfo();
 		try{
 			channel_upload.cancel();
 		}catch(IOException e)
@@ -348,13 +357,13 @@ public class ResourceModule extends WebStoreModule
 		return path_provider.getFile(path_token);		
 	}
 	
-	///////////////////////////////////END MODULE FUNCTIONS *//
+	///////////////////////////////////END MODULE FUNCTIONS ///////
 	private boolean do_upload(UserApplicationContext uctx,MultipartForm upload,boolean update,Entity update_resource) throws WebApplicationException,PersistenceException
 	{
 		System.out.println("INITIATING UPLOAD FOR SESSION"+uctx.getId());
 		Entity user = (Entity)uctx.getUser();		
 		String channel_name = upload.getParameter(FORM_ELEMENT_CHANNEL);
-		
+	
 		if(channel_name == null)
 		{
 			Exception e = new WebApplicationException("UPLOAD MUST SPECIFY CHANNEL NAME AS A PARAMETER NAMED 'channel' IN THE QUERY STRING OF THE POST URL.");
@@ -379,15 +388,53 @@ public class ResourceModule extends WebStoreModule
 			uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, e);
 			return false;
 		}
-
-		upload.setUploadDirectory(upload_temp_dir);
-		upload.setMaxUploadItemSize(upload_max_file_size);
 		
+		String path_token = path_provider.getPathToken(user, upload.getFileName());
+		OutputStream out = path_provider.getOutputStream(path_token); 
+		System.out.println("UPLOADING PATH TOKEN IS "+path_token);
+		upload.setMaxUploadItemSize(upload_max_file_size);		
 		current_upload = upload;
 		current_upload_map.put(channel_name, current_upload);
 		
+		UploadProgressInfo uploaded_file_info = current_upload.getUploadProgressInfo();
+		String content_type	 		 = current_upload.getContentType();
+		String simple_type	 		 = FileInfo.getSimpleTypeAsString(current_upload.getFileName());
+		long file_size				 = current_upload.getFileSize();
+		String file_name 			 = Text.makeUrlSafe(current_upload.getFileName());	
+		String ext 					 = FileInfo.getExtension(file_name);		
+		
+		System.out.println("UPLOAD CONTENT TYPE: "+content_type);
+		System.out.println("UPLOAD SIMPLE TYPE: "+simple_type);
+		System.out.println("UPLOAD FILE SIZE: "+file_size);
+		System.out.println("UPLOAD FILE NAME: "+file_name);
+		System.out.println("UPLOAD EXT: "+ext);
+		
+		boolean bulk_upload = false;
+		File tmp_zip_file = null;
+		if(ext != null && ext.toLowerCase().equals("zip"))
+		{
+			if(update)
+			{
+				Exception ee = new WebApplicationException("YOU CANT UPDATE A RESOURCE FILE WITH A ZIP. IT NEEDS TO BE A SINGLE FILE.SINCE A RESOURCE HOLDS ONE FILE."); 
+				ee.printStackTrace();
+				uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
+				return false;
+			}
+			
+			bulk_upload 		= true;
+			tmp_zip_file 		= new File(System.getProperty("java.io.tmpdir")+File.separator+file_name);
+			try{
+				out = new FileOutputStream(tmp_zip_file);
+			}catch(FileNotFoundException fnf)
+			{
+				//this should not happen ever//
+				fnf.printStackTrace(); 
+			}
+		}
+		
+		
 		try{
-			current_upload.parse();
+			current_upload.parse(out);
 		}catch(MultipartFormException e)
 		{
 			if(current_upload.isCancelled())
@@ -400,91 +447,56 @@ public class ResourceModule extends WebStoreModule
 			uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
 			return false;
 		}
-		
-		List<File> 	uploaded_files 					 = current_upload.getFiles();
-		List<UploadProgressInfo> uploaded_files_info = current_upload.getUploadProgress();
-		int s = uploaded_files.size();
-		for(int i = 0;i < s;i++)
+		if(bulk_upload)
 		{
-			File uploaded_file 			 = uploaded_files.get(i);
-			UploadProgressInfo file_info = uploaded_files_info.get(i); 
-			String content_type	 		 = file_info.getContentType();
-			String simple_type	 		 = FileInfo.getSimpleTypeAsString(uploaded_file);
-			long file_size				 = file_info.getFileSize();
-			String file_name 			 = Text.makeUrlSafe(file_info.getFileName());	
-			String ext 					 = FileInfo.getExtension(file_name);		
-			
-			if(ext != null && ext.toLowerCase().equals("zip"))
+			List<Entity> resources;
+			//zip insert will set filename and title
+			try{
+				resources = add_resources_from_zip(upload,user,tmp_zip_file);
+			}catch(Exception e)
 			{
-				if(update)
-				{
-					Exception ee = new WebApplicationException("YOU CANT UPDATE A RESOURCE FILE WITH A ZIP. IT NEEDS TO BE A SINGLE FILE.SINCE A RESOURCE HOLDS ONE FILE."); 
-					ee.printStackTrace();
-					uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
-					return false;
-				}
-				
-				List<Entity> resources;
-				//zip insert will set filename and title
-				try{
-					resources = add_resources_from_zip(upload,user,uploaded_file);
-				}catch(Exception e)
-				{
-					e.printStackTrace();
-					uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, e);
-					return false;
-				}
-				file_info.setCompletionObject(resources);
-				System.out.println("ADDED RESOURCES "+resources);
+				e.printStackTrace();
+				uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, e);
+				return false;
 			}
-			else
-			{
-				Entity resource = null;
-				String path_token;
-				try{
-					path_token = path_provider.save(user,uploaded_file);
-					/* we don't delete the file. it is up to the path provider to 
-					 * make this descion as it may just want to rename it
-					 */
-				}catch(Exception e)
-				{
-					uploaded_file.delete();
-					Exception ee = new WebApplicationException("PATH PROVIDER FAILED WRITING FILE",e);
-					e.printStackTrace();
-					uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
-					return false;
-				}
-				
-				try{
-					if(update)
-					{
-						do_update_resource(upload,update_resource, content_type, simple_type, file_name, ext, file_size, path_token);
-						file_info.setCompletionObject(update_resource);
-					}
-					else
-					{
-						resource = do_add_resource(upload,user,content_type,simple_type,file_name,ext,file_size,path_token);					  
-						file_info.setCompletionObject(resource);
-					}
-				}catch(PersistenceException pe)
-				{
-					/* if we cant create a resource we need to delete the upload */
-					try{
-						path_provider.delete(path_token);
-					}catch(Exception e){e.printStackTrace();}//swallow this one
-					
-					pe.printStackTrace();
-					Exception ee = new WebApplicationException("COULDNT CREATE RESOURCE FOR FILE UPLOAD",pe);
-					uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
-					return false;
-				}
-				
-				if(update)
-					System.out.println("UPDATED RESOURCE "+update_resource);
-				else
-					System.out.println("ADDED RESOURCE "+resource);
-			}
+			uploaded_file_info.setCompletionObject(resources);
+			System.out.println("ADDED RESOURCES "+resources);
 		}
+		else
+		{
+
+			Entity resource = null;
+			try{
+				if(update)
+				{
+					do_update_resource(upload,update_resource, content_type, simple_type, file_name, ext, file_size, path_token);
+					uploaded_file_info.setCompletionObject(update_resource);
+				}
+				else
+				{
+					resource = do_add_resource(upload,user,content_type,simple_type,file_name,ext,file_size,path_token);					  
+					uploaded_file_info.setCompletionObject(resource);
+				}
+			
+			}catch(PersistenceException pe)
+			{
+				/* if we cant create a resource we need to delete the upload */
+				try{
+					path_provider.delete(path_token);
+				}catch(Exception e){e.printStackTrace();}//swallow this one
+				
+				pe.printStackTrace();
+				Exception ee = new WebApplicationException("COULDNT CREATE RESOURCE FOR FILE UPLOAD",pe);
+				uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
+				return false;
+			}
+			
+			if(update)
+				System.out.println("UPDATED RESOURCE "+update_resource);
+			else
+				System.out.println("ADDED RESOURCE "+resource);
+		}
+		
 		return true;	
 	}
 	
@@ -496,7 +508,7 @@ public class ResourceModule extends WebStoreModule
 			zipFile = new ZipFile(zip);
 			entries = zipFile.entries();
 			List<Entity> resources = new ArrayList<Entity>();
-			while(entries.hasMoreElements()) 
+			while(entries.hasMoreElements())
 			{
 				ZipEntry entry = (ZipEntry)entries.nextElement();
 				if(entry.isDirectory()) {
@@ -518,9 +530,22 @@ public class ResourceModule extends WebStoreModule
 	           new BufferedOutputStream(new FileOutputStream(uncompressed_entry)));
 	       
 	        String content_type = "????";
-	        String simple_type = FileInfo.getSimpleTypeAsString(uncompressed_entry);
+	        String simple_type 	= FileInfo.getSimpleTypeAsString(uncompressed_entry);
 	        long file_size 		= uncompressed_entry.length();
-	        String path_token 	= path_provider.save(creator,uncompressed_entry);
+	        String path_token 	= path_provider.getPathToken(creator, filename);
+	        OutputStream os 	= path_provider.getOutputStream(path_token);
+	      
+	        //here are getting each file from the zip and creating a resource 
+	        //for each one 
+	        FileInputStream fis = new FileInputStream(uncompressed_entry);
+	        int l = 0;
+	        byte[] buf = new byte[16384];
+	        while((l = fis.read(buf)) != -1)
+	        	os.write(buf, 0, l);
+	        os.flush();
+	        os.close();
+	        fis.close();
+	        
 	        Entity resource 	= do_add_resource(upload,creator, content_type,simple_type, filename, ext, file_size, path_token);
 	        resources.add(resource);
 	      }
@@ -574,7 +599,8 @@ public class ResourceModule extends WebStoreModule
 	
 	private Entity do_update_resource(MultipartForm upload,Entity resource,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
-		path_provider.delete((String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN));
+		//DONT NEED THIS ANYMORE SINCE THE STREAM SHOULD WRITE RIGHT OVER THE FILE
+		// path_provider.delete((String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN));
 		Object[] annotations = annotate(upload, (Entity)resource.getAttribute(FIELD_CREATOR), content_type, simple_type, filename, ext, file_size);
 		Entity r = UPDATE(resource,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
@@ -622,9 +648,9 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-
-	
 	//BEGIN UTIL FUNTIONS
+	
+	
 	//END UTIL FUNCTIONS //
 	
 	//ENTITY BOOTSTRAP STUFF //

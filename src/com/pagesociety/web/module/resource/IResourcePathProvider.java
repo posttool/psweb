@@ -1,16 +1,21 @@
 package com.pagesociety.web.module.resource;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.exception.WebApplicationException;
 
 public interface IResourcePathProvider 
 {
-	public String/*path token*/ save(Entity user,File f) throws WebApplicationException;
+
+	public String getPathToken(Entity user,String filename) throws WebApplicationException;
 	public void delete(String path_token) throws WebApplicationException;
 	public String getUrl(String path_token) throws WebApplicationException;
 	public String getPreviewUrl(String path_token,int width,int height) throws WebApplicationException;
+	public OutputStream getOutputStream(String path_token) throws WebApplicationException;
+	public InputStream getInputStream(String path_token) throws WebApplicationException;
 	public File getFile(String path_token) throws WebApplicationException;
 	
 }

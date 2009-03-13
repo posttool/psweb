@@ -6,7 +6,12 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -31,7 +36,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	protected String base_dir;
 	protected String base_url;
 	protected String image_magick_path;
-	protected String image_magick_convert_path;
+	protected String image_magick_convert_cmd;
 	protected int    depth = 8;//myst be <=32
 
 	
@@ -47,10 +52,10 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		
 		if(!new File(image_magick_path).exists())
 			throw new InitializationException("CANT FIND IMAGE MAGICK INSTALL AT "+image_magick_path);
-		image_magick_convert_path = image_magick_path+File.separator+"convert";
+		image_magick_convert_cmd = image_magick_path+File.separator+"convert";
 		if(System.getProperty("os.name").startsWith("Windows"))
 		{
-			image_magick_convert_path = image_magick_convert_path+".exe";
+			image_magick_convert_cmd = image_magick_convert_cmd+".exe";
 		}
 		/*
 		System.out.println("FileSystemPathProvider base resource dir is "+base_dir);
@@ -58,31 +63,25 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		System.out.println("FileSystemPathProvider image magick path is "+image_magick_path);
 		System.out.println("FileSystemPathProvider image magick convert path is "+image_magick_convert_path);
 		*/
-		ImageMagick.setRuntimeExecPath(image_magick_convert_path);
+		ImageMagick.setRuntimeExecPath(image_magick_convert_cmd);
 		if(!base_dir.endsWith(SLASH) && 
 		   !base_dir.endsWith(File.separator))
 			base_dir = base_dir+SLASH;
 
 	}
 	
-	public String/*path token*/ save(Entity user,File f) throws WebApplicationException
+	public String getPathToken(Entity user,String filename) throws WebApplicationException
 	{
-		
-		String relative_path = get_save_directory(user,f);
-		
+		String relative_path = get_save_directory(user,filename);
 		File dest_dir = new File(base_dir,relative_path);
 		dest_dir.mkdirs();
 
-		String save_filename = get_save_filename(user,dest_dir,f);
-		File dest_file = new File(dest_dir,save_filename);
-		
-		f.renameTo(dest_file);
-		System.out.println("PathProvider SAVING TO "+dest_file+" RP:"+relative_path+" FN:"+save_filename);
+		String save_filename = get_save_filename(user,dest_dir,filename);
 		return relative_path+save_filename;
 	}
 	
 	/* returns relative/path/to/dir/ */
-	protected String get_save_directory(Entity user,File f) 
+	protected String get_save_directory(Entity user,String filename) 
 	{
 		String guid = RandomGUID.getGUID();
 		StringBuilder path = new StringBuilder();
@@ -96,16 +95,18 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	}
 	
 	
-	protected String get_save_filename(Entity user,File dest_dir,File f) 
+	protected String get_save_filename(Entity user,File dest_dir,String filename) 
 	{
 		StringBuilder buf = new StringBuilder();
 		buf.append(RandomGUID.getGUID().substring(16));
 		buf.append('.');
-		String ext = FileInfo.getExtension(f.getName()); 
+		String ext = FileInfo.getExtension(filename); 
 		if(ext != null)
 			buf.append(ext);
 		return buf.toString();
 	}
+	
+	
 	
 	/* deletes file pointed to by this token as well as all previews */
 	public void delete(String path_token) throws WebApplicationException
@@ -162,7 +163,37 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return buf.toString();			
 
 	}
-		
+
+	public OutputStream getOutputStream(String path_token) throws WebApplicationException
+	{
+		File f = new File(base_dir,path_token);
+		System.out.println("PATH PROVIDER PROVIDING OUTPUT STREAM TO "+f.getAbsolutePath());
+		try{
+			return new FileOutputStream(f);
+		}catch(FileNotFoundException fnf)
+		{
+			//should never get here//
+			fnf.printStackTrace();
+			return null;
+		}
+	}
+
+	public InputStream getInputStream(String path_token) throws WebApplicationException
+	{
+		File f = getFile(path_token);
+		if(f != null)
+		{
+			try{
+				return new FileInputStream(f);
+			}catch(FileNotFoundException fne)
+			{
+				fne.printStackTrace();
+				throw new WebApplicationException("SHOULDNT BE HERE.SEE LOGS");
+			}
+		}
+		return null;
+	}
+
 	public File getFile(String path_token) throws WebApplicationException
 	{
 		File f = new File(base_dir,path_token);
@@ -171,8 +202,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return null;
 	}
 
-	// DUDE this really cripples everything in the CMS if you throw exceptions in the middle
-	// of a group preview ... 
+	
+
 	private static void create_preview(File original,File dest,int w, int h) throws WebApplicationException
 	{
 		int type = FileInfo.getSimpleType(original);
@@ -214,7 +245,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		if(original_file == null)
 			throw new WebApplicationException("NO FILE EXISTS FOR PATH TOKEN "+path_token+" CANT GENERATE PREVIEW.");
 		
-		int last_slash_index = path_token.lastIndexOf(C_SLASH);
+		int last_slash_index 		= path_token.lastIndexOf(C_SLASH);
 		String dir 				  	= path_token.substring(0,last_slash_index); //original_file_relative_path.getParent();
 		String original_file_name 	= path_token.substring(last_slash_index+1);
 		int dot_idx 			  	= original_file_name.lastIndexOf('.');

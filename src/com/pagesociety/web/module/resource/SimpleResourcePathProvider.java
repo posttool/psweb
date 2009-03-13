@@ -20,21 +20,21 @@ public class SimpleResourcePathProvider extends FileSystemPathProvider
 		
 	}
 	/* returns relative/path/to/dir/ */
-	protected String get_save_directory(Entity user,File f) 
+	protected String get_save_directory(Entity user,String filename) 
 	{
 		return directory_name;
 	}
+
 	
-	
-	protected String get_save_filename(Entity user,File f) 
+	protected String get_save_filename(Entity user,File dest_dir,String filename) 
 	{
-		String name = f.getName().substring(0,f.getName().lastIndexOf('.'));
-		String ext = FileInfo.getExtension(f.getName()); 
-		String dir = get_save_directory(user, f);		
-		return get_next_unique_filename(dir, name, ext, 0); 
+		String name = filename.substring(0,filename.lastIndexOf('.'));
+		String ext = FileInfo.getExtension(filename); 
+		
+		return get_next_unique_filename(dest_dir, name, ext, 0); 
 	}
 
-	private String get_next_unique_filename(String dir,String filename,String ext,int no)
+	private String get_next_unique_filename(File dest_dir,String filename,String ext,int no)
 	{
 		String t_filename;
 		String num_ext	= null;
@@ -45,11 +45,14 @@ public class SimpleResourcePathProvider extends FileSystemPathProvider
 			t_filename = filename+"."+ext;
 		else
 			t_filename = filename+num_ext+"."+ext;
-		
-		File f = new File(dir,filename);
+	
+
+		File f = new File(dest_dir,t_filename);
 		if(f.exists())
-			return get_next_unique_filename(dir,filename, ext, ++no);
-		else
+		{
+			return get_next_unique_filename(dest_dir,filename, ext, ++no);
+		
+		}else
 			return t_filename;
 	}
 }
