@@ -12,6 +12,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.ModuleRequest;
 import com.pagesociety.web.upload.MultipartForm;
+import com.pagesociety.web.upload.MultipartFormException;
 
 public class FormGateway
 {
@@ -32,7 +33,12 @@ public class FormGateway
 		Object[] args = new Object[1];
 		if (content_type != null && content_type.startsWith("multipart"))
 		{
-			args[0] = new MultipartForm(request);
+			try{
+				args[0] = new MultipartForm(request);
+			}catch(MultipartFormException mfe)
+			{
+				throw new WebApplicationException(mfe.getMessage());
+			}
 		}
 		else
 		{
