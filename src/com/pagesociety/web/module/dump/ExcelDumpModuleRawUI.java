@@ -2,6 +2,7 @@ package com.pagesociety.web.module.dump;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -76,18 +77,20 @@ public class ExcelDumpModuleRawUI extends RawUIModule
 		
 		File tmp = new File(System.getProperty("java.io.tmpdir")+File.separator+"excel_dump_upload");
 		tmp.mkdir();
-		upload.setUploadDirectory(tmp);
-		upload.setMaxUploadItemSize(0);//unlimited//
+		
+		File f 					= null;
+		FileOutputStream fos 	= null;
 		try{
-			upload.parse();
+			f = new File(tmp,upload.getFileName());
+			fos = new FileOutputStream(f);
+		}catch(Exception e){e.printStackTrace();}
+		try{
+			upload.parse(fos);
 		}catch(MultipartFormException e)
 		{
 			ERROR(e);
 			return ("<font color='red'>ERROR: "+e.getClass().getName()+" "+e.getMessage()+"</FONT>");
 		}
-		
-		List<File> 	uploaded_files 	= upload.getFiles();
-		File f 						= uploaded_files.get(0);
 		
 		StringBuilder buf = new StringBuilder();
 		
