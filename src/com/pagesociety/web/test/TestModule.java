@@ -87,7 +87,7 @@ public class TestModule extends Module
 		Map<String, Object> result = new HashMap<String, Object>();
 		try
 		{
-			upload.parse();
+			//upload.parse();
 		}
 		catch (Exception e)
 		{
@@ -95,8 +95,8 @@ public class TestModule extends Module
 			result.put("error", e.getMessage());
 			return result;
 		}
-		upload.getUploadProgress().get(0).setCompletionObject(result);
-		result.put("picture_path", upload.getFile("picture").getAbsolutePath());
+		//upload.getUploadProgress().get(0).setCompletionObject(result);
+		//result.put("picture_path", upload.getFile("picture").getAbsolutePath());
 		result.put("first_name", upload.getStringArrayParameter("first_name"));
 		result.put("ints", upload.getIntArrayParameter("ints"));
 		result.put("last_name", upload.getStringParameter("last_name"));
@@ -110,9 +110,10 @@ public class TestModule extends Module
 	public UploadProgressInfo getUploadInfo(UserApplicationContext user_context)
 	{
 		MultipartForm current_upload = (MultipartForm) user_context.getProperty(UPLOAD_FOR_USER_KEY);
-		if (current_upload == null || current_upload.getUploadProgress().isEmpty())
-			return null;
-		return current_upload.getUploadProgress().get(0);
+	//	if (current_upload == null || current_upload.getUploadProgress().isEmpty())
+	//		return null;
+	//	return current_upload.getUploadProgress().get(0);
+		return null;
 	}
 
 	@Export
