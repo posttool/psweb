@@ -18,6 +18,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileItem;
@@ -390,7 +391,7 @@ public class ResourceModule extends WebStoreModule
 		}
 		
 		String path_token = path_provider.getPathToken(user, upload.getFileName());
-		OutputStream out = path_provider.getOutputStream(path_token); 
+
 		System.out.println("UPLOADING PATH TOKEN IS "+path_token);
 		upload.setMaxUploadItemSize(upload_max_file_size);		
 		current_upload = upload;
@@ -402,13 +403,14 @@ public class ResourceModule extends WebStoreModule
 		long file_size				 = current_upload.getFileSize();
 		String file_name 			 = Text.makeUrlSafe(current_upload.getFileName());	
 		String ext 					 = FileInfo.getExtension(file_name);		
-		
+
 		System.out.println("UPLOAD CONTENT TYPE: "+content_type);
 		System.out.println("UPLOAD SIMPLE TYPE: "+simple_type);
 		System.out.println("UPLOAD FILE SIZE: "+file_size);
 		System.out.println("UPLOAD FILE NAME: "+file_name);
 		System.out.println("UPLOAD EXT: "+ext);
-		
+
+		OutputStream out=null;
 		boolean bulk_upload = false;
 		File tmp_zip_file = null;
 		if(ext != null && ext.toLowerCase().equals("zip"))
@@ -431,10 +433,11 @@ public class ResourceModule extends WebStoreModule
 				fnf.printStackTrace(); 
 			}
 		}
-		
-		
+		if(!bulk_upload)
+			out = path_provider.getOutputStream(path_token,content_type,file_size); 
 		try{
 			current_upload.parse(out);
+			path_provider.endParse(path_token);
 		}catch(MultipartFormException e)
 		{
 			if(current_upload.isCancelled())
@@ -529,11 +532,11 @@ public class ResourceModule extends WebStoreModule
 	        copy_input_stream(zipFile.getInputStream(entry),
 	           new BufferedOutputStream(new FileOutputStream(uncompressed_entry)));
 	       
-	        String content_type = "????";
+	        String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
 	        String simple_type 	= FileInfo.getSimpleTypeAsString(uncompressed_entry);
 	        long file_size 		= uncompressed_entry.length();
 	        String path_token 	= path_provider.getPathToken(creator, filename);
-	        OutputStream os 	= path_provider.getOutputStream(path_token);
+	        OutputStream os 	= path_provider.getOutputStream(path_token,content_type,file_size);
 	      
 	        //here are getting each file from the zip and creating a resource 
 	        //for each one 
@@ -545,6 +548,7 @@ public class ResourceModule extends WebStoreModule
 	        os.flush();
 	        os.close();
 	        fis.close();
+	        path_provider.endParse(path_token);
 	        
 	        Entity resource 	= do_add_resource(upload,creator, content_type,simple_type, filename, ext, file_size, path_token);
 	        resources.add(resource);

@@ -14,8 +14,10 @@ public interface IResourcePathProvider
 	public void delete(String path_token) throws WebApplicationException;
 	public String getUrl(String path_token) throws WebApplicationException;
 	public String getPreviewUrl(String path_token,int width,int height) throws WebApplicationException;
-	public OutputStream getOutputStream(String path_token) throws WebApplicationException;
+	public OutputStream getOutputStream(String path_token,String content_type,long content_length) throws WebApplicationException;
 	public InputStream getInputStream(String path_token) throws WebApplicationException;
 	public File getFile(String path_token) throws WebApplicationException;
+	public void beginParse(String path_token) throws WebApplicationException;
+	public void endParse(String path_token) throws WebApplicationException;
 	
 }

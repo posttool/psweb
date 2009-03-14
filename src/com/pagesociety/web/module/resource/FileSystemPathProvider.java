@@ -164,7 +164,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 
 	}
 
-	public OutputStream getOutputStream(String path_token) throws WebApplicationException
+	public OutputStream getOutputStream(String path_token,String content_type,long content_length) throws WebApplicationException
 	{
 		File f = new File(base_dir,path_token);
 		System.out.println("PATH PROVIDER PROVIDING OUTPUT STREAM TO "+f.getAbsolutePath());
@@ -272,5 +272,17 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 			//preview_name.append(ext);
 		//}
 		return preview_name.toString();
+	}
+
+	@Override
+	public void beginParse(String path_token) throws WebApplicationException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void endParse(String path_token) throws WebApplicationException {
+		// TODO Auto-generated method stub
+		
 	}
 }
