@@ -31,6 +31,8 @@ public class Files
 	{
 		try
 		{
+			File parent_dir = new File(dst.getParent());
+			parent_dir.mkdirs();
 			copy(new FileInputStream(src), dst);
 		}
 		catch (FileNotFoundException e)
