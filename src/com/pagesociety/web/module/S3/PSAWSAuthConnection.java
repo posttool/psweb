@@ -59,9 +59,7 @@ public class PSAWSAuthConnection extends AWSAuthConnection
         OutputStream os = request.getOutputStream();
         try {
 
-          tot = 0;//7542629859369943040L; 
-          System.out.println("tot is "+tot);
-          System.out.println("long max is "+Long.MAX_VALUE);
+          tot = 0;
           byte[] buffer = new byte[16384];
           int l;
           while ((l = is.read(buffer)) != -1) {
@@ -69,7 +67,7 @@ public class PSAWSAuthConnection extends AWSAuthConnection
             os.flush();
             tot += l;
             double pct = (tot/(double)object.getSize())*100.0;
-            System.out.println("WROTE "+pct+"%");
+            //System.out.println("WROTE "+pct+"%");
           }
         } finally {
          is.close();

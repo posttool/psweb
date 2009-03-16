@@ -1,14 +1,8 @@
 package com.pagesociety.web.module.S3;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,15 +10,15 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.imageio.ImageIO;
 
-import org.apache.commons.io.FileUtils;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.transcode.ImageMagick;
@@ -38,23 +32,23 @@ import com.pagesociety.web.module.S3.amazon.AWSAuthConnection;
 import com.pagesociety.web.module.S3.amazon.GetResponse;
 import com.pagesociety.web.module.S3.amazon.ListAllMyBucketsResponse;
 import com.pagesociety.web.module.S3.amazon.Response;
-import com.pagesociety.web.module.S3.amazon.S3Object;
 import com.pagesociety.web.module.S3.amazon.Utils;
 import com.pagesociety.web.module.resource.IResourcePathProvider;
-import com.sun.corba.se.pept.transport.Connection;
+
 
 public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 {
 	private static final String PARAM_S3_BUCKET			  		  = "s3-bucket";
 	private static final String PARAM_S3_API_KEY  				  = "s3-api-key";
 	private static final String PARAM_S3_SECRET_KEY  			  = "s3-secret-key";
+	private static final String PARAM_SCRATCH_DIRECTORY  		  = "scratch-directory";
 	private static final String PARAM_IMAGE_MAGICK_PATH   		  = "path-provider-image-magick-path";
 	
 	protected String s3_bucket;
 	protected String s3_api_key;
 	protected String s3_secret_key;
 	protected String base_s3_url;
-	protected String resize_tmp_directory = System.getProperty("java.io.tmpdir");
+	protected String scratch_directory;
 	
 	protected String image_magick_path;
 	protected String image_magick_convert_cmd;
@@ -65,8 +59,22 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 		s3_api_key    = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_API_KEY, config);
 		s3_secret_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_SECRET_KEY, config);
 		
+		 scratch_directory = GET_OPTIONAL_CONFIG_PARAM(PARAM_SCRATCH_DIRECTORY, config);
+		 if(scratch_directory == null)
+			 scratch_directory = System.getProperty("java.io.tmpdir");
+		 try{
+			 File f = new File(scratch_directory);
+			 if(!f.exists())
+			 {
+				 INFO("CREATING SCRATCH DIRECTORY "+f.getAbsolutePath());
+				 f.mkdirs();
+			 }
+		 }catch(Exception e)
+		 {
+			 throw new InitializationException("PROBLEM CREATING SCRATCH DIRECTORY "+scratch_directory);
+		 }
+		 
 		init_bucket();
-		
 		image_magick_path = GET_REQUIRED_CONFIG_PARAM(PARAM_IMAGE_MAGICK_PATH, config);
 		base_s3_url   	  = "http://"+s3_bucket+".s3.amazonaws.com/";
 		
@@ -78,6 +86,11 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			image_magick_convert_cmd = image_magick_convert_cmd+".exe";
 		}
 		ImageMagick.setRuntimeExecPath(image_magick_convert_cmd);
+	}
+	
+	public void loadbang(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		start_scratch_directory_cleaner();
 	}
 	
 	private void init_bucket() throws InitializationException
@@ -109,7 +122,7 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 		StringBuilder path_token = new StringBuilder();
 		String rid		   = RandomGUID.getGUID().substring(24);
 		path_token.append(user.getId());
-		path_token.append('_');
+		path_token.append('/');
 		path_token.append(rid);
 		path_token.append('_');
 		path_token.append(filename);
@@ -161,8 +174,6 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			
 
 			Object lock = current_thumbnail_generators.putIfAbsent(preview_key, new Object());
-
-
 			if(lock != null)
 			{
 				try{
@@ -184,26 +195,30 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			}	
 
 			System.out.println("DIDNT FIND "+preview_key+" PREVIEW AT "+width+" "+height);
-			GetResponse r = conn.get(s3_bucket,path_token,null);
-			if(r.object == null)
+			//look for it in the scratch directory//
+			File original_file = new File(scratch_directory,path_token);
+			if(!original_file.exists())
 			{
-				throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
+				System.out.println("DIDNT FIND "+path_token+" IN SCRATCH DIRECTORY. GOING TO AMAZON FOR ORIGINAL.");
+				GetResponse r = conn.get(s3_bucket,path_token,null);
+				if(r.object == null)
+					throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
+		
+				original_file.getParentFile().mkdirs();
+				FileOutputStream fos = new FileOutputStream(original_file);
+				fos.write(r.object.data);
+				fos.flush();
+				fos.close();
 			}
 		
-			File expanded_file = new File(resize_tmp_directory,path_token);
-			FileOutputStream fos = new FileOutputStream(expanded_file);
-			fos.write(r.object.data);
-			fos.flush();
-			fos.close();
-		
-		
-			File preview = new File(resize_tmp_directory,preview_key);
-			create_preview(expanded_file,preview,width,height);
+			File preview = new File(scratch_directory,preview_key);
+			preview.getParentFile().mkdirs();
+			create_preview(original_file,preview,width,height);
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
 			PSS3Object pobj = new PSS3Object(new FileInputStream(preview),preview.length(),content_type,PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, preview_key, pobj);
 			if(pr.connection.getResponseCode() != pr.connection.HTTP_OK)
-				throw new WebApplicationException("PROBLEM WRITNG PREVIEW TO S3 "+s3_bucket+" "+preview_key+" HTTP RESPONSE WAS "+r.connection.getResponseCode());
+				throw new WebApplicationException("PROBLEM WRITNG PREVIEW TO S3 "+s3_bucket+" "+preview_key+" HTTP RESPONSE WAS "+pr.connection.getResponseCode());
 			synchronized (lock) 
 			{			
 				lock.notifyAll();
@@ -219,9 +234,8 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 	}
 
 	//dont forget to close output stream if you use this method
-	public OutputStream getOutputStream(String path_token,String content_type,long content_size) throws WebApplicationException
+	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_size) throws WebApplicationException
 	{
-		System.out.println("SETTING FIXED CONTENT SIZE TO "+content_size);
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 		Map headers = new LinkedHashMap();
         headers.put("x-amz-acl", Arrays.asList(new String[] { PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ}));
@@ -235,8 +249,15 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			//request.setChunkedStreamingMode(16384);//StreamingMode((int)content_size);
 			request.setDoOutput(true);
 			current_transfer_map.put(path_token, request);
-			System.out.println("REQUEST IS "+request);
-			return request.getOutputStream();
+			
+			//we also provide an output stream to a local file so we
+			//dont always have to go to amazon when resizing and download
+			//the original
+			File local_copy = new File(scratch_directory,path_token);
+			local_copy.getParentFile().mkdirs();
+			FileOutputStream local_out_stream = new FileOutputStream(local_copy);
+			
+			return new OutputStream[]{request.getOutputStream(),local_out_stream};
 		}catch(Exception e)
 		{
 			ERROR(e);
@@ -268,7 +289,7 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			if(r.object == null)
 				throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
 			
-			File expanded_file = new File(resize_tmp_directory,path_token);
+			File expanded_file = new File(scratch_directory,path_token);
 			FileOutputStream fos = new FileOutputStream(expanded_file);
 			fos.write(r.object.data);
 			fos.flush();
@@ -345,16 +366,90 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 	private Map <String,HttpURLConnection> current_transfer_map = new HashMap<String, HttpURLConnection>();
 	@Override
 	public void endParse(String path_token) throws WebApplicationException {
-		// TODO Auto-generated method stub
+
 		HttpURLConnection c = current_transfer_map.get(path_token);
 		try{
 			Response r = new Response(c);
 			int code = r.connection.getResponseCode();
-			System.out.println("RESPONSE STATUS "+path_token+" IS "+code+" "+r.connection.getResponseMessage());
+			//System.out.println("RESPONSE STATUS "+path_token+" IS "+code+" "+r.connection.getResponseMessage());
 		}catch(IOException ioe)
 		{
 			ERROR(ioe);
 		}
 		current_transfer_map.remove(path_token);
 	}
+
+	private static final int SCRATCH_CLEANER_INTERVAL   = (60 * 1000) * 15;//15 minutes...run every 15 minutes
+	private static final int SCRATCH_CLEANER_THRESHHOLD = (60 * 1000) * 60;//1 hour...delete ones older than this
+	private void start_scratch_directory_cleaner()
+	{
+		Thread t = new Thread()
+		{
+			public void run()
+			{
+				while(true)
+				{
+					try{
+						clean_scratch_directory();
+						Thread.sleep(SCRATCH_CLEANER_INTERVAL);
+					}catch(Exception e)
+					{
+						ERROR(e);
+					}
+				}
+			}
+		};
+		t.setDaemon(true);
+		t.start();
+	}
+
+	private void clean_scratch_directory()
+	{
+		do_clean_directory(new File(scratch_directory));
+	}
+	
+	private void do_clean_directory(File dir)
+	{
+		long now = new Date().getTime();
+		File[] files = dir.listFiles();
+ 		sortFilesAsc(files);
+ 		for(int i = 0;i < files.length;i++)
+ 		{
+ 			File f = files[i];
+ 			if(f.isDirectory())
+ 			{
+ 				do_clean_directory(f);
+ 				if(f.listFiles().length == 0)
+ 					f.delete();
+ 			}
+ 			else
+ 			{
+ 				if(f.lastModified() + SCRATCH_CLEANER_THRESHHOLD < now )
+ 					f.delete();
+ 				else//files are sorted with oldest first so we can break here//
+ 					break;
+ 			}
+ 		}
+	}
+
+	public static void sortFilesAsc(File[] files) {
+		  Arrays.sort(files, new Comparator()
+		  {
+		    public int compare(Object o1, Object o2)
+		    {
+		    	File f1 = (File)o1;
+		    	File f2 = (File)o2;
+		    	if (f1.lastModified() > f2.lastModified())
+		    	{
+		    		return +1;
+		    	} else if (((File) o1).lastModified() < ((File) o2).lastModified()) 
+		    	{
+		    		return -1;
+		    	} else 
+		      {
+		        return 0;
+		      }
+		    }
+		  });
+		}
 }
