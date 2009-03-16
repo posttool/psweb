@@ -1,6 +1,5 @@
 package com.pagesociety.web.upload;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,7 +46,9 @@ public class MultipartForm
 	long   upload_file_size;
 	String upload_file_name;
 	InputStream upload_input_stream;
-
+	
+	private static String upload_tmp_dir;
+	
 	public MultipartForm(HttpServletRequest request) throws MultipartFormException
 	{
 		this.request 			= new WeakReference<HttpServletRequest>(request);
@@ -67,13 +68,14 @@ public class MultipartForm
 		return name;
 	}
 
-	public void parse(OutputStream os) throws MultipartFormException
+	public void parse(OutputStream... os) throws MultipartFormException
 	{
 		if (this.request == null)
 			throw new MultipartFormException("UPLOAD " + name + " WAS NOT CONSTRUCTED WITH A REQUEST");
 		parse_multipart_form(os);
 		this.request = null;
 	}
+
 
 	private void parse_query_string()
 	{
@@ -87,7 +89,7 @@ public class MultipartForm
 			String[] v = l_request.getParameterValues(k);
 			form_parameters.put(k, Arrays.asList(v));
 		}
-		System.out.println("FORM PARAMETERS: "+form_parameters);
+		//System.out.println("FORM PARAMETERS: "+form_parameters);
 	}
 	
 	//NOTE: WHEN YOU ARE SUBMITTING A MULTIPART FORM ALWAYS PUT YOUR FILE FIELD LAST IN THE FORM DATA//
@@ -101,7 +103,7 @@ public class MultipartForm
 			HttpServletRequest l_request = request.get();
 			if(form_parameters.get("size") != null)
 			{
-				System.out.println("SIZE PARAMTER IS "+form_parameters.get("size"));
+				//System.out.println("SIZE PARAMTER IS "+form_parameters.get("size"));
 				upload_file_size = Long.parseLong(form_parameters.get("size").get(0));
 			
 			}else
@@ -120,7 +122,6 @@ public class MultipartForm
 			{
 				FileItemStream item   = iter.next();
 			    String 		   name	  = item.getFieldName();
-			    System.out.println("FORM FIELD: "+name);
 			    InputStream    stream = item.openStream();
 				if(item.isFormField())
 				{
@@ -137,7 +138,6 @@ public class MultipartForm
 				else
 				{
 					FileItemHeaders headers = item.getHeaders();
-					System.out.println("HEADERS IS "+headers);
 					upload_file_name = item.getName();					
 					upload_input_stream = stream;
 					upload_content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(upload_file_name);
@@ -151,7 +151,7 @@ public class MultipartForm
 		}
 	}
 	
-	private void parse_multipart_form(OutputStream os) throws MultipartFormException
+	private void parse_multipart_form(OutputStream... os) throws MultipartFormException
 	{
 		HttpServletRequest l_request = request.get();
 		if (l_request == null)
@@ -169,9 +169,12 @@ public class MultipartForm
 			try{
 		        while ((l = upload_input_stream.read(buffer)) != -1)
 		        {
-		            os.write(buffer, 0, l);
-		            os.flush();
-		            tot += l;
+		        	for(int i = 0;i < os.length;i++)
+		        	{
+		        		os[i].write(buffer, 0, l);
+		        		os[i].flush();
+		        	}
+		        	tot += l;
 		          
 		            double progress = (tot/(double)upload_file_size)*100.0;
 		            //System.out.println("PROGRESS "+progress+" WROTE "+tot+" BYTES");
@@ -188,7 +191,8 @@ public class MultipartForm
 			} finally 
 			{
 				upload_input_stream.close();
-				os.close();
+				for(int i = 0;i < os.length;i++)
+					os[i].close();
 			}
 			upload_progress_info.setProgress(100);
 			setState(COMPLETE);
@@ -374,5 +378,7 @@ public class MultipartForm
 	{
 		return new ArrayList<String>(form_parameters.keySet());
 	}
+	
+	
 
 }
