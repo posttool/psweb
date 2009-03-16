@@ -164,12 +164,12 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 
 	}
 
-	public OutputStream getOutputStream(String path_token,String content_type,long content_length) throws WebApplicationException
+	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_length) throws WebApplicationException
 	{
 		File f = new File(base_dir,path_token);
 		System.out.println("PATH PROVIDER PROVIDING OUTPUT STREAM TO "+f.getAbsolutePath());
 		try{
-			return new FileOutputStream(f);
+			return new OutputStream[]{new FileOutputStream(f)};
 		}catch(FileNotFoundException fnf)
 		{
 			//should never get here//
@@ -285,4 +285,6 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		// TODO Auto-generated method stub
 		
 	}
+
+
 }

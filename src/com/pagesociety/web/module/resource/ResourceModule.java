@@ -285,7 +285,7 @@ public class ResourceModule extends WebStoreModule
 	@Export(ParameterNames={"channel_name"})
 	public UploadProgressInfo GetUploadProgress(UserApplicationContext uctx,String channel_name) throws PersistenceException,WebApplicationException
 	{
-		System.out.println("GET PROGRESS SESSION ID IS "+uctx.getId());
+		//System.out.println("GET PROGRESS SESSION ID IS "+uctx.getId());
 		check_exceptions(uctx);
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canGetUploadProgress(user,channel_name));
@@ -410,7 +410,7 @@ public class ResourceModule extends WebStoreModule
 		System.out.println("UPLOAD FILE NAME: "+file_name);
 		System.out.println("UPLOAD EXT: "+ext);
 
-		OutputStream out=null;
+		OutputStream[] outs=null;
 		boolean bulk_upload = false;
 		File tmp_zip_file = null;
 		if(ext != null && ext.toLowerCase().equals("zip"))
@@ -426,7 +426,7 @@ public class ResourceModule extends WebStoreModule
 			bulk_upload 		= true;
 			tmp_zip_file 		= new File(System.getProperty("java.io.tmpdir")+File.separator+file_name);
 			try{
-				out = new FileOutputStream(tmp_zip_file);
+				outs = new OutputStream[]{new FileOutputStream(tmp_zip_file)};
 			}catch(FileNotFoundException fnf)
 			{
 				//this should not happen ever//
@@ -434,9 +434,9 @@ public class ResourceModule extends WebStoreModule
 			}
 		}
 		if(!bulk_upload)
-			out = path_provider.getOutputStream(path_token,content_type,file_size); 
+			outs = path_provider.getOutputStreams(path_token,content_type,file_size); 
 		try{
-			current_upload.parse(out);
+			current_upload.parse(outs);
 			path_provider.endParse(path_token);
 		}catch(MultipartFormException e)
 		{
@@ -536,17 +536,21 @@ public class ResourceModule extends WebStoreModule
 	        String simple_type 	= FileInfo.getSimpleTypeAsString(uncompressed_entry);
 	        long file_size 		= uncompressed_entry.length();
 	        String path_token 	= path_provider.getPathToken(creator, filename);
-	        OutputStream os 	= path_provider.getOutputStream(path_token,content_type,file_size);
+	        OutputStream[] os 	= path_provider.getOutputStreams(path_token,content_type,file_size);
 	      
 	        //here are getting each file from the zip and creating a resource 
 	        //for each one 
 	        FileInputStream fis = new FileInputStream(uncompressed_entry);
 	        int l = 0;
 	        byte[] buf = new byte[16384];
-	        while((l = fis.read(buf)) != -1)
-	        	os.write(buf, 0, l);
-	        os.flush();
-	        os.close();
+	        for(int i = 0;i < os.length;i++)
+	        {
+	        	while((l = fis.read(buf)) != -1)
+	        		os[i].write(buf, 0, l);
+	        	os[i].flush();
+	        }
+	        for(int i =0;i < os.length;i++)
+	        	os[i].close();
 	        fis.close();
 	        path_provider.endParse(path_token);
 	        
