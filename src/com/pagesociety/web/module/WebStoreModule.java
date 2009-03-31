@@ -284,7 +284,6 @@ public  class WebStoreModule extends WebModule
 		e.setAttribute(FIELD_CREATOR,creator);
 		e.setAttribute(FIELD_DATE_CREATED,now);
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
-		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
 		return store.saveEntity(e);
 	}
 	
@@ -1113,11 +1112,13 @@ public  class WebStoreModule extends WebModule
 			String[] index_fields = proposed_indexes[i].field_names;
 			for(int j=0;j < index_fields.length;j++)
 			{
-				FieldDefinition f = def.getField(index_fields[j]);
+				FieldDefinition f;
+				f = def.getField(index_fields[j]);
 				if(f==null)
 					throw new InitializationException("BAD FIELDNAME IN ENTITY INDEX DECL: "+proposed_indexes[i].index_name+" FIELD: "+index_fields[j]+" DOES NOT EXIST IN "+def.getName());
 				idx.addField(f);
 			}
+			idx.setAttributes(proposed_indexes[i].attributes);
 			ret.add(idx);
 		}
 		return ret;
@@ -1128,6 +1129,7 @@ public  class WebStoreModule extends WebModule
 
 		String index_name    = index.getName();
 		int index_type       = index.getType();
+		Map<String,Object>	index_atts  = index.getAttributes();
 		String[] field_names = new String[index.getFields().size()];
 		for(int i=0;i < index.getFields().size();i++)
 			field_names[i] = index.getFields().get(i).getName();
@@ -1155,7 +1157,7 @@ public  class WebStoreModule extends WebModule
 			}
 		}
 		//the index didnt exist..create it 
-		return store.addEntityIndex(entity_name, field_names, index_type, index_name, null);	
+		return store.addEntityIndex(entity_name, field_names, index_type, index_name,index_atts );	
 	}
 	
 	public class entity_index_descriptor
@@ -1163,6 +1165,7 @@ public  class WebStoreModule extends WebModule
 		String index_name;
 		int index_type;
 		String[] field_names;
+		Map<String,Object> attributes;
 	}
 	
 	public entity_index_descriptor ENTITY_INDEX(String index_name,int index_type,String... field_names)
@@ -1171,10 +1174,20 @@ public  class WebStoreModule extends WebModule
 		d.index_name = index_name;
 		d.index_type = index_type;
 		d.field_names = field_names;
+		d.attributes = null;
 		return d;
 	}
 
-	
+	public entity_index_descriptor ENTITY_INDEX(String index_name,int index_type,Map<String,Object> attributes,String... field_names)
+	{
+		entity_index_descriptor d = new entity_index_descriptor();
+		d.index_name = index_name;
+		d.index_type = index_type;
+		d.field_names = field_names;
+		d.attributes = attributes;
+		System.out.println("ATTRIBUTES ARE "+d.attributes+" FOR "+index_name);
+		return d;	
+	}
 	
 	/////////SCHEMA//////////////
 
@@ -1395,21 +1408,25 @@ public  class WebStoreModule extends WebModule
 			return 0;
 		}
 		
-		public EntityIndex addEntityIndex(String entity, String field_name,int index_type, String index_name, Map<String, String> attributes)throws PersistenceException
+		public EntityIndex addEntityIndex(String entity, String field_name,int index_type, String index_name, Map<String, Object> attributes)throws PersistenceException
 		{
 			return addEntityIndex(entity, new String[]{field_name}, index_type, index_name, attributes);
 		}
 		
-		public EntityIndex addEntityIndex(String entity, String[] field_names,int index_type, String index_name, Map<String, String> attributes)throws PersistenceException
+		public EntityIndex addEntityIndex(String entity, String[] field_names,int index_type, String index_name, Map<String, Object> attributes)throws PersistenceException
 		{
 			EntityIndex idx = new EntityIndex(index_name,index_type);
+			idx.setAttributes(attributes);
 			idx.setEntity(entity);
-			
+
 			for(int i = 0;i < field_names.length;i++)
 			{
-				FieldDefinition f = get_field(entity,field_names[i]);
+				//TODO: damn deep indexes//
+				FieldDefinition f;
+				f = get_field(entity,field_names[i]);
 				if(f == null)
 					throw new PersistenceException(webstore_context+" IS TRYING TO ADD AN INDEX "+idx.getName()+" WITH A BAD FIELD NAME "+field_names[i]);
+
 				idx.addField(f);
 			}
 			entity_indices.add(idx);
