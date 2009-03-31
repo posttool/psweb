@@ -1185,7 +1185,7 @@ public  class WebStoreModule extends WebModule
 		d.index_type = index_type;
 		d.field_names = field_names;
 		d.attributes = attributes;
-		System.out.println("ATTRIBUTES ARE "+d.attributes+" FOR "+index_name);
+		//System.out.println("ATTRIBUTES ARE "+d.attributes+" FOR "+index_name);
 		return d;	
 	}
 	
@@ -1389,7 +1389,7 @@ public  class WebStoreModule extends WebModule
 		//////
 		public void addEntityDefinition(EntityDefinition entity_def) throws PersistenceException
 		{
-			System.out.println(webstore_context.getName()+" IS ADDING ENTITY "+entity_def.getName());
+			//System.out.println(webstore_context.getName()+" IS ADDING ENTITY "+entity_def.getName());
 			entity_definitions.add(entity_def);
 			entity_definition_declarers.add(webstore_context.getName());
 		}
@@ -1402,8 +1402,8 @@ public  class WebStoreModule extends WebModule
 			entity_fields.add(def);
 			entity_field_declarers.add(webstore_context.getName());
 			
-			System.out.println(webstore_context.getName()+"ADDING ENTITY FIELD "+def);
-			System.out.println("EXISTING DEF IS "+getEntityDefinition(entity));
+			//System.out.println(webstore_context.getName()+"ADDING ENTITY FIELD "+def);
+			//System.out.println("EXISTING DEF IS "+getEntityDefinition(entity));
 			
 			return 0;
 		}
