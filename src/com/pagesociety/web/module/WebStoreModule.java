@@ -1581,7 +1581,7 @@ public  class WebStoreModule extends WebModule
 				ret.add(pro_idx);
 			}
 			return ret; 
-		}
+		} 
 		else if(existing_indices.size() == proposed_indices.size() && 
 				existing_indices.containsAll(proposed_indices))
 		{
