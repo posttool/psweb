@@ -95,10 +95,10 @@ public class CmsModule extends WebStoreModule
 		Entity editor = (Entity)uctx.getUser();
 		
 		GUARD(guard.canUpdateEntity(editor, e));
-		return updateEntity(editor, e);
+		return updateEntity(e);
 	}
 	
-	public Entity updateEntity(Entity editor,Entity e) throws PersistenceException
+	public Entity updateEntity(Entity e) throws PersistenceException
 	{
 		return SAVE_ENTITY(e);
 	}
@@ -109,10 +109,10 @@ public class CmsModule extends WebStoreModule
 		Entity deleter = (Entity)uctx.getUser();
 		GUARD(guard.canDeleteEntity(deleter, e));
 		/* call to delete provider slot here */
-		return deleteEntity(deleter, e);	
+		return deleteEntity( e);	
 	}
 	
-	public Entity deleteEntity(Entity deleter,Entity e) throws PersistenceException
+	public Entity deleteEntity(Entity e) throws PersistenceException
 	{
 		return DELETE(e);
 	}
