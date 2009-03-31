@@ -492,7 +492,7 @@ public class TreeModule extends WebStoreModule
 			else
 			{
 				Entity val = (Entity)data.getAttribute(ref_field_name);
-				do_fill_data(val, c++, d);
+				do_fill_data(val, ++c, d);
 			}
 		}
 	}
@@ -704,18 +704,18 @@ public class TreeModule extends WebStoreModule
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
-	public static String TREE_ENTITY 				= "Tree";
-	public static String TREE_FIELD_NAME 			= "name";
-	public static String TREE_FIELD_ROOT_NODE 		= "root";
+	public static final String TREE_ENTITY 				= "Tree";
+	public static final String TREE_FIELD_NAME 			= "name";
+	public static final String TREE_FIELD_ROOT_NODE 		= "root";
 
-	public static String TREE_NODE_ENTITY				= "TreeNode";
-	public static String TREE_NODE_FIELD_TREE		 	= "tree";
-	public static String TREE_NODE_FIELD_ID				= "node_id";
-	public static String TREE_NODE_FIELD_CLASS			= "node_class";
-	public static String TREE_NODE_FIELD_PARENT_NODE 	= "parent_node";
-	public static String TREE_NODE_FIELD_CHILDREN 		= "children";
-	public static String TREE_NODE_FIELD_DATA 			= "data";
-	public static String TREE_NODE_FIELD_METADATA 		= "metadata";
+	public static final String TREE_NODE_ENTITY					= "TreeNode";
+	public static final String TREE_NODE_FIELD_TREE		 		= "tree";
+	public static final String TREE_NODE_FIELD_ID				= "node_id";
+	public static final String TREE_NODE_FIELD_CLASS			= "node_class";
+	public static final String TREE_NODE_FIELD_PARENT_NODE 		= "parent_node";
+	public static final String TREE_NODE_FIELD_CHILDREN 		= "children";
+	public static final String TREE_NODE_FIELD_DATA 			= "data";
+	public static final String TREE_NODE_FIELD_METADATA 		= "metadata";
 	
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
