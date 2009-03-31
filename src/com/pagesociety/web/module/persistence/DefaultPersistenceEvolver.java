@@ -396,6 +396,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 
 		String index_name    = index.getName();
 		int index_type       = index.getType();
+		Map<String,Object> index_atts  = index.getAttributes();
 		String[] field_names = new String[index.getFields().size()];
 		for(int i=0;i < index.getFields().size();i++)
 			field_names[i] = index.getFields().get(i).getName();
@@ -423,7 +424,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			}
 		}
 		//the index didnt exist..create it 
-		return store.addEntityIndex(entity_name, field_names, index_type, index_name, null);	
+		return store.addEntityIndex(entity_name, field_names, index_type, index_name,index_atts);	
 	}
 
 
