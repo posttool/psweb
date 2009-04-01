@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,6 +32,8 @@ import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.S3.amazon.AWSAuthConnection;
 import com.pagesociety.web.module.S3.amazon.GetResponse;
 import com.pagesociety.web.module.S3.amazon.ListAllMyBucketsResponse;
+import com.pagesociety.web.module.S3.amazon.ListBucketResponse;
+import com.pagesociety.web.module.S3.amazon.ListEntry;
 import com.pagesociety.web.module.S3.amazon.Response;
 import com.pagesociety.web.module.S3.amazon.Utils;
 import com.pagesociety.web.module.resource.IResourcePathProvider;
@@ -133,12 +136,18 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 	public void delete(String path_token) throws WebApplicationException
 	{
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
-	
 		try {
-			Response r =  conn.delete(s3_bucket, path_token, null);
-			if(r.connection.getResponseCode() != r.connection.HTTP_OK)
-				throw new WebApplicationException("Failed S3 delete of "+s3_bucket+" "+path_token+" HTTP response code was "+r.connection.getResponseMessage());
-
+			String deletee_prefix = get_preview_file_prefix(path_token);
+			List<ListEntry>  delete_keys = list(deletee_prefix);
+			for(int i = 0;i < delete_keys.size();i++)
+			{
+				String delete_key = delete_keys.get(i).key;
+				System.out.println("DELETING "+delete_key+"FROM S3.");
+				Response r 		  =  conn.delete(s3_bucket, delete_key, null);
+				if(r.connection.getResponseCode() != r.connection.HTTP_NO_CONTENT)
+					throw new WebApplicationException("Failed S3 delete of "+s3_bucket+" "+path_token+" HTTP response code was "+r.connection.getResponseMessage());
+			}
+			
 		} catch (MalformedURLException e) {
 			ERROR(e);
 			throw new WebApplicationException("Malformed URL for S3 Delete: "+s3_bucket+" "+path_token);
@@ -147,6 +156,27 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			throw new WebApplicationException("IOError for S3 Delete: "+s3_bucket+" "+path_token);	
 		}
 
+	}
+	
+	public List<ListEntry> list(String prefix) throws WebApplicationException
+	{
+		if(prefix.equals("*"))
+			prefix = null;
+		
+		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
+		try {
+			ListBucketResponse r =  conn.listBucket(s3_bucket, prefix, null, null, null);
+			if(r.connection.getResponseCode() != r.connection.HTTP_OK)
+				throw new WebApplicationException("Failed S3 LIST of "+s3_bucket+" HTTP response code was "+r.connection.getResponseMessage());
+			return r.entries;
+		} catch (MalformedURLException e) {
+			ERROR(e);
+			throw new WebApplicationException("Malformed URL for S3 LIST: "+s3_bucket);
+		} catch (IOException e) {
+			ERROR(e);
+			throw new WebApplicationException("IOError for S3 LIST: "+s3_bucket);	
+		}		
+		
 	}
 	
 	public String getUrl(String path_token)	throws WebApplicationException
@@ -354,6 +384,15 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 		preview_name.append('.');
 		preview_name.append(FileInfo.EXTENSIONS[FileInfo.JPG][0]);
 		return preview_name.toString();
+	}
+	
+	private String get_preview_file_prefix(String path_token) throws WebApplicationException
+	{
+		int dot_idx 			  	= path_token.lastIndexOf('.');
+		if(dot_idx != -1)
+			path_token = path_token.substring(0,dot_idx);
+		
+		return path_token;
 	}
 
 	@Override
