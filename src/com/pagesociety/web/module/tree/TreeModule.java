@@ -499,7 +499,6 @@ public class TreeModule extends WebStoreModule
 	
 	
 	
-	
 	///////////////////////////////////
 	//http://en.wikipedia.org/wiki/Tree_traversal
 	////////////////
