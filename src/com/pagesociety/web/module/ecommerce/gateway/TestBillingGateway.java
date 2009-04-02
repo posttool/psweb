@@ -48,6 +48,9 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 		if(Validator.isEmptyOrNull(cc_no))
 			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
 
+		if(cc_no.length() < 16)
+			throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+		
 		switch(cc_type)
 		{
 			case BillingModule.CC_TYPE_VISA:
@@ -63,7 +66,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 		Calendar now = Calendar.getInstance();
 		int year = now.get(Calendar.YEAR);
 		int month = now.get(Calendar.MONTH)+1;
-
+		
 
 		if(year < exp_year)
 		{
