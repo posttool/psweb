@@ -19,7 +19,6 @@ import com.pagesociety.persistence.Types;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
@@ -73,7 +72,7 @@ public class TreeModule extends WebStoreModule
 		UPDATE(root_node,
 				TREE_NODE_FIELD_TREE,tree);
 		
-		System.out.println("CREATED TREE "+tree);
+		//System.out.println("CREATED TREE "+tree);
 		return tree;
 	}
 	
@@ -126,9 +125,9 @@ public class TreeModule extends WebStoreModule
 								TREE_NODE_FIELD_PARENT_NODE,parent_node,
 								TREE_NODE_FIELD_CHILDREN,new ArrayList<Entity>(),
 								TREE_NODE_FIELD_DATA,data);
-		//by default tree nodes are appended to the parents list of children. 
+		//by default tree nodes are prepended to the parents list of children. 
 		//we use Integer.MAX_VALUE to mean create and place last.
-		if(parent_child_index != Integer.MAX_VALUE)
+		if(parent_node != null && parent_child_index != Integer.MAX_VALUE )
 		{
 			try{
 				reparentTreeNode(new_node, parent_node, parent_child_index);
@@ -178,7 +177,8 @@ public class TreeModule extends WebStoreModule
 			throw new PersistenceException("NEW PARENT CANNOT BE NULL WHEN YOU ARE REPARENTING TREE NODE");
 		if(new_parent.equals(tree_node))
 			throw new PersistenceException("CANNOT MAKE A NODE A PARENT OF ITSELF.");
-
+			
+		
 		List<Entity> ancestors = getAncestors(new_parent, new ArrayList());
 		if(ancestors.contains(tree_node))
 			throw new WebApplicationException("CANNOT REPARENT "+tree_node.getId()+" TO ONE OF ITS CHILDREN!");
@@ -190,7 +190,8 @@ public class TreeModule extends WebStoreModule
 		if(new_parent_idx > children.size())
 			new_parent_idx = children.size();
 		
-		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE).equals(new_parent))
+		Entity existing_parent_node = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+		if(existing_parent_node != null && existing_parent_node.equals(new_parent))
 		{
 			int original_idx = children.indexOf(tree_node);
 
@@ -202,15 +203,20 @@ public class TreeModule extends WebStoreModule
 				children.remove(original_idx);
 		}
 		else
+		{
+			//System.out.println("ADDING TREE NODE "+tree_node.getId()+" TO "+new_parent.getId());
 			children.add(new_parent_idx, tree_node);
+		
+		}
 		//TODO:even though the reference is changed here we still need to set the attribute so that
 		// it is dirty. could ovveride list at some point and have it automagically mark it
 		//dirty but not now fer sure !
-		new_parent.setAttribute(TREE_NODE_FIELD_CHILDREN, children);
-		SAVE_ENTITY(new_parent);
+		UPDATE(new_parent,
+			   TREE_NODE_FIELD_CHILDREN, children);
 		
-		tree_node.setAttribute(TREE_NODE_FIELD_TREE,new_parent.getAttribute(TREE_NODE_FIELD_TREE));
-		return SAVE_ENTITY(tree_node);
+		return UPDATE(tree_node,
+					  TREE_NODE_FIELD_TREE,new_parent.getAttribute(TREE_NODE_FIELD_TREE));
+
 	}
 
 	@Export (ParameterNames={"entity_node_id"})
@@ -259,6 +265,29 @@ public class TreeModule extends WebStoreModule
 	public List<Entity> deleteTree(Entity tree,boolean delete_data,boolean delete_data_deep,delete_policy data_delete_deep_policy) throws PersistenceException
 	{
 		return deleteSubTree((Entity)tree.getAttribute(TREE_FIELD_ROOT_NODE),delete_data,delete_data_deep,data_delete_deep_policy);	
+	}
+	
+	//delete the children and leave the parent
+	public List<Entity> deleteChildren(Entity parent_node,boolean delete_data,boolean delete_data_deep,delete_policy data_delete_deep_policy) throws PersistenceException
+	{
+		List<Entity> children 	 = (List<Entity>)parent_node.getAttribute(TREE_NODE_FIELD_CHILDREN);
+		List<Entity> delete_list = new ArrayList<Entity>();
+		//delete children of current edit root node//
+		if(children != null)
+		{
+			int s = children.size();
+			for(int i = 0;i < s;i++)
+			{
+
+				Entity c = EXPAND(children.get(i));
+				//System.out.println("....DELETEING CHILD "+c);
+				delete_list.addAll(deleteSubTree(c, delete_data, delete_data_deep, data_delete_deep_policy));
+			}
+			//keep the caller in sync//
+			children.removeAll(children);
+			//System.out.println("........DELETE CHILDREN FOR "+parent_node+" CHILDREN IS NOW "+children);
+		}
+		return delete_list;
 	}
 	
 	public List<Entity> deleteSubTree(Entity node) throws PersistenceException
@@ -518,14 +547,19 @@ public class TreeModule extends WebStoreModule
 		List<Entity> child_nodes = (List<Entity>)entity_node.getAttribute(TREE_NODE_FIELD_CHILDREN);
 		
 		if(iterate_style == ITERATE_STYLE_PREORDER)
+		{
+			//System.out.println("...........PREORDER APPLYING DELETE ON NODE "+entity_node);
 			f.apply(entity_node);
-		
+		}
 		int s = (child_nodes==null) ? 0 : child_nodes.size();
 		for(int i = 0; i < s;i++)
 			applyTreeFunctor(child_nodes.get(i),f,iterate_style);		
 
 		if(iterate_style == ITERATE_STYLE_POSTORDER)
+		{
+			//System.out.println("...........POSTORDER APPLYING DELETE ON NODE "+entity_node);
 			f.apply(entity_node);
+		}
 	}
 
 	
@@ -560,7 +594,7 @@ public class TreeModule extends WebStoreModule
 			if(clone_data)
 			{
 				Entity data = (Entity)cloned_root_node.getAttribute(TREE_NODE_FIELD_DATA);
-				System.out.println("CLONING DATA "+data);
+				//System.out.println("CLONING DATA "+data);
 				Entity cloned_data = null;
 				if(clone_data_deep)
 				{
@@ -576,15 +610,15 @@ public class TreeModule extends WebStoreModule
 						cloned_data = data.cloneShallow();
 					cloned_data = CREATE_ENTITY((Entity)cloned_root_node.getAttribute(FIELD_CREATOR), cloned_data);
 				}
-				System.out.println("CLONED DATA IS "+cloned_data);
+				//System.out.println("CLONED DATA IS "+cloned_data);
 				cloned_root_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
 				SAVE_ENTITY(cloned_root_node);
 			}			
 			original_root_node = root_node;
 			parent_map.put(root_node.getId(),(Entity) cloned_root_node);
-			System.out.println("CLONING TREE FROM NODE "+root_node);
-			System.out.println("CLONED TREE IS "+cloned_tree);
-			System.out.println("CLONED ROOT NODE IS "+cloned_root_node);
+			//System.out.println("CLONING TREE FROM NODE "+root_node);
+			//System.out.println("CLONED TREE IS "+cloned_tree);
+			//System.out.println("CLONED ROOT NODE IS "+cloned_root_node);
 		}
 		
 		public void apply(Entity entity_node) throws Exception
@@ -592,18 +626,18 @@ public class TreeModule extends WebStoreModule
 			
 			if(entity_node.equals(original_root_node))//root node..we already accounted for this above//
 			{
-				System.out.println("CLONING ENTITY NODE  "+entity_node);
+				//System.out.println("CLONING ENTITY NODE  "+entity_node);
 				
 			}
 			else
 			{
-				System.out.println("CLONING ENTITY NODE "+entity_node);
+				//System.out.println("CLONING ENTITY NODE "+entity_node);
 				
 				Entity cloned_node   = entity_node.cloneShallow();	
 				if(clone_data)
 				{
 					Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
-					System.out.println("CLONING DATA "+data);
+					//System.out.println("CLONING DATA "+data);
 					Entity cloned_data = null;
 					if(clone_data_deep)
 					{
@@ -619,7 +653,7 @@ public class TreeModule extends WebStoreModule
 							cloned_data = data.cloneShallow();
 						cloned_data = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR), cloned_data);
 					}
-					System.out.println("CLONED DATA IS "+cloned_data);
+					//System.out.println("CLONED DATA IS "+cloned_data);
 					cloned_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
 				}
 				
@@ -637,7 +671,7 @@ public class TreeModule extends WebStoreModule
 					parent_map.put(entity_node.getId(),cloned_node);
 				}
 				
-				System.out.println("CLONED NODE IS "+cloned_node);
+				//System.out.println("CLONED NODE IS "+cloned_node);
 
 			}
 			
@@ -672,7 +706,7 @@ public class TreeModule extends WebStoreModule
 		
 		public void apply(Entity entity_node) throws Exception
 		{
-			System.out.println("DELETEING NODE: "+entity_node);
+			//System.out.println("DELETEING NODE: "+entity_node);
 			if(delete_data)
 			{
 				Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
@@ -686,7 +720,18 @@ public class TreeModule extends WebStoreModule
 				else
 				{
 					if(data != null)
-						DELETE(data);
+					{//might have to do a get here if we want to be paranoid
+						try{
+							DELETE(data);
+						}catch(PersistenceException pe)
+						{
+							if(!(pe.getErrorCode() == PersistenceException.ENTITY_DOES_NOT_EXIST))
+								throw pe;//two tree nodes could be pointing to the same data
+										//in this case we assume if the delete failed and the
+										// reason was NOT_EXIST that we are fine since the data
+										// must have already been deleted by a different node
+						}
+					}
 				}
 			}
 			deleted_nodes.add(DELETE(entity_node));
