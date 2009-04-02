@@ -607,8 +607,10 @@ public class TreeModule extends WebStoreModule
 				else
 				{
 					if(data != null)
+					{
 						cloned_data = data.cloneShallow();
-					cloned_data = CREATE_ENTITY((Entity)cloned_root_node.getAttribute(FIELD_CREATOR), cloned_data);
+						cloned_data = CREATE_ENTITY((Entity)cloned_root_node.getAttribute(FIELD_CREATOR), cloned_data);
+					}
 				}
 				//System.out.println("CLONED DATA IS "+cloned_data);
 				cloned_root_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
