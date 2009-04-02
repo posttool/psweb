@@ -393,14 +393,11 @@ public  class WebStoreModule extends WebModule
 	{
 		if(instance == null)
 			throw new PersistenceException("BAD UPDATE.CANNOT UPDATE A NULL ENTITY");
-		
-		set_attributes(instance, name_value_pairs);
-		//for(int i = 0;i < name_value_pairs.length;i+=2)
-		//	instance.setAttribute((String)name_value_pairs[i],name_value_pairs[i+1]);
 
+		set_attributes(instance, name_value_pairs);
 		Date now = new Date();
-		instance.setAttribute(FIELD_LAST_MODIFIED,now);		
-		return store.saveEntity(instance);		
+		instance.setAttribute(FIELD_LAST_MODIFIED,now);
+		return store.saveEntity(instance);
 	}
 
 	/*SAVE UPDATE */
