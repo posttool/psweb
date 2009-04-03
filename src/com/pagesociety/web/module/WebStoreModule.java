@@ -994,7 +994,15 @@ public  class WebStoreModule extends WebModule
 				}	
 			}
 	
-			return DELETE(store,e);
+			Entity dd=null;
+			try{
+				dd =  DELETE(store,e);
+			}catch(PersistenceException pe)
+			{
+				if(pe.getErrorCode() == PersistenceException.ENTITY_DOES_NOT_EXIST)
+					return e;
+			}
+			return dd;
 		}catch(Exception ee)
 		{
 			ee.printStackTrace();
