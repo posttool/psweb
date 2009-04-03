@@ -526,7 +526,20 @@ public class TreeModule extends WebStoreModule
 		}
 	}
 	
-	
+	public void getPathToRoot(Entity tree_node,List<Entity> return_path) throws PersistenceException
+	{
+		tree_node 	  = EXPAND(tree_node);
+		Entity parent = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE);
+		
+		if(parent == null) //we hit root//
+			return;
+		else
+		{
+			FILL_REF(parent, TREE_NODE_FIELD_DATA);
+			return_path.add(parent);
+			getPathToRoot(parent, return_path);
+		}
+	}
 	
 	///////////////////////////////////
 	//http://en.wikipedia.org/wiki/Tree_traversal
