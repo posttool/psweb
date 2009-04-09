@@ -16,7 +16,12 @@ public class AmfLong
 
 	public Long longValue()
 	{
+		try {
 		return Long.parseLong(_v);
+		} catch (Exception e)
+		{
+			return -1L;
+		}
 	}
 
 	public String getStringValue()
