@@ -282,33 +282,36 @@ public abstract class WebApplication
 	
 	private void init_module(Module m) throws InitializationException
 	{
-		if(m.isInitialized())
+		if(m.isInitialized() || m.isInitializing())
 			return;
-
+		m.setInitializing(true);
+		
 		List<Integer> module_attributes = m.getModuleAttributes();
 		INFO("\tINITIALIZING "+m.getName());
+		if(m == null)
+			System.out.println("\tWARNING: MODULE WITH NULL NAME "+m);
+
 		List<SlotDescriptor> slot_descriptors = m.getSlotDescriptors();
 		for(int i = 0;i < slot_descriptors.size();i++)
 		{
 			SlotDescriptor d 	 = slot_descriptors.get(i);
 			Module slot_instance = (Module)m.getSlot(d.slot_name);
 
-			//System.out.println("INITIALIZING SLOT "+d.slot_name+" INSTANCE OF "+slot_instance.getClass().getSimpleName());
+
 			if(slot_instance == null)
 				continue;
 			if(!slot_instance.isInitialized())
 			{
+				//INFO("\tINITIALIZING SLOT "+d.slot_name+" INSTANCE OF "+slot_instance.getClass().getSimpleName()+" TO "+slot_instance.getName());
 				init_module(slot_instance);
-				//if(slot_instance.getParams() != null)
-				//	slot_instance.init(this, slot_instance.getParams());
-				//else
-				//	slot_instance.init(this, null);
 			}
 		}
 		if(m.getParams() == null)
 			m.init(this, new HashMap<String,Object>());
 		else
 			m.init(this, m.getParams());
+
+		m.setInitializing(false);
 		m.setInitialized(true);
 	}
 	
