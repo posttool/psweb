@@ -15,19 +15,18 @@ import com.pagesociety.web.exception.InitializationException;
 
 public class WebApplicationInitParams
 {
-	public static final String WEB_ROOT_DIR_KEY 				= "web-root-directory";
-	public static final String WEB_ROOT_URL_KEY 				= "web-root-url";
 	
 	private static final String DEPLOYMENT_PROPERTIES_FILE_NAME = "deployment.properties";
 	private static final String APPLICATION_SPEC_FILE_NAME 		= "application.xml";
 	private static final String APPLICATION_URL_MAPPINGS 		= "url-mappings.xml";
 
-	private static final String NODE_TYPE_APPLICATION   = "application";
-	private static final String ATTR_APP_CLASS 			= "class";
-	private static final String ATTR_APP_NAME  			= "name";
-	private static final String ATTR_APP_WEB_ROOT_DIR  	= "web-root-directory";
-	private static final String ATTR_APP_WEB_ROOT_URL  	= "web-root-url";
-	private static final String ATTR_APP_VERSION  		= "version";
+	private static final String NODE_TYPE_APPLICATION   		= "application";
+	private static final String ATTR_APP_CLASS 					= "class";
+	private static final String ATTR_APP_NAME  					= "name";
+	private static final String ATTR_APP_WEB_ROOT_DIR  			= "web-root-directory";
+	private static final String ATTR_APP_WEB_ROOT_URL  			= "web-root-url";
+	private static final String ATTR_APP_WEB_ROOT_URL_SECURE  	= "web-root-url-secure";
+	private static final String ATTR_APP_VERSION  				= "version";
 	
 	//
 	private File configDir;
@@ -41,6 +40,7 @@ public class WebApplicationInitParams
 	private String name;
 	private String webRootDir;
 	private String webRootUrl;
+	private String webRootUrlSecure;
 	private String version;
 	//
 	private ModuleInitParams modules;
@@ -98,6 +98,7 @@ public class WebApplicationInitParams
 		webRootUrl 				= expand_property(application_element.getAttribute(ATTR_APP_WEB_ROOT_URL));
 		if(webRootUrl == null)
 			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_WEB_ROOT_URL);
+		webRootUrlSecure 		= expand_property(application_element.getAttribute(ATTR_APP_WEB_ROOT_URL_SECURE));
 		version = expand_property(application_element.getAttribute(ATTR_APP_VERSION));
 		if(version == null)
 			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_VERSION);
@@ -202,6 +203,11 @@ public class WebApplicationInitParams
 	public String getWebRootUrl()
 	{
 		return webRootUrl;
+	}
+	
+	public String getWebRootUrlSecure()
+	{
+		return webRootUrlSecure;
 	}
 
 	public String getVersion()
