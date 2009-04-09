@@ -44,43 +44,66 @@ public class RecurringOrderModule extends ResourceModule
 	private static final String SLOT_LOGGER_MODULE 		  	  = "logger-module";
 	private static final String SLOT_NOTIFICATION_MODULE 	  = "notification-module";
 	private static final String SLOT_PROMOTION_MODULE 	  	  = "promotion-module";
-	private static final String PARAM_BILLING_THREAD_INTERVAL = "billing-thread-interval";
 	
-	public static final int ORDER_STATUS_INIT 							= 0x0000;
-	public static final int ORDER_STATUS_OPEN 							= 0x0001;
-	public static final int ORDER_STATUS_CLOSED  						= 0x0002;
-	public static final int ORDER_STATUS_INITIAL_BILL_FAILED 			= 0x0004;
-	public static final int ORDER_STATUS_LAST_MONTHLY_BILL_FAILED 		= 0x0008;
-	public static final int ORDER_STATUS_NO_PREFERRED_BILLING_RECORD 	= 0x0010;
+	private static final String PARAM_BILLING_THREAD_INTERVAL   = "billing-thread-interval";	
+	private static final String PARAM_HAS_TRIAL_PERIOD		    = "has-trial-period";
+	private static final String PARAM_TRIAL_PERIOD			    = "trial-period";
+	private static final String PARAM_EXPIRED_TRIAL_REAP_PERIOD = "billing-thread-interval";
+	
+	
+	public static final int ORDER_STATUS_INIT 										 = 0x0000;
+	public static final int ORDER_STATUS_OPEN 										 = 0x0001;
+	public static final int ORDER_STATUS_CLOSED  									 = 0x0002;
+	public static final int ORDER_STATUS_INITIAL_BILL_FAILED 						 = 0x0004;
+	public static final int ORDER_STATUS_LAST_MONTHLY_BILL_FAILED 					 = 0x0008;
+	public static final int ORDER_STATUS_NO_PREFERRED_BILLING_RECORD 				 = 0x0010;
+	public static final int ORDER_STATUS_IN_TRIAL_PERIOD = 0x0011;
+	public static final int ORDER_STATUS_TRIAL_EXPIRED   = 0x0012;
 
-	protected UserModule user_module;
-	protected BillingModule billing_module;
-	protected IBillingGateway billing_gateway;
-	protected IEmailModule email_module;
-	protected LoggerModule logger_module;
+	protected UserModule 			   user_module;
+	protected BillingModule 		   billing_module;
+	protected IBillingGateway 		   billing_gateway;
+	protected IEmailModule 			   email_module;
+	protected LoggerModule 			   logger_module;
 	protected SystemNotificationModule notification_module;
-	protected PromotionModule promotion_module;
-	private long billing_thread_interval;
+	protected PromotionModule 		   promotion_module;
+	private long 					   billing_thread_interval;
+
+	private boolean				   	   has_trial_period;
+	private int					   	   trial_period_in_days;
+	private int					   	   expired_trial_reap_period_in_days;
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
 		/* see notes in super class...this is cheap inheritence */
 		super.setResourceEntityName(RECURRING_SKU_RESOURCE_ENTITY);
-		user_module = (UserModule)getSlot(SLOT_USER_MODULE);
+		user_module 			= (UserModule)getSlot(SLOT_USER_MODULE);
 		billing_module  		= (BillingModule)getSlot(SLOT_BILLING_MODULE);
 		billing_gateway 		= billing_module.getBillingGateway(); 
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
-		email_module 		= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
-		logger_module 		= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
-		notification_module = (SystemNotificationModule)getSlot(SLOT_NOTIFICATION_MODULE);
-		promotion_module = (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
+		email_module 			= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
+		logger_module 			= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
+		notification_module 	= (SystemNotificationModule)getSlot(SLOT_NOTIFICATION_MODULE);
+		promotion_module 		= (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
 	
+		String s_has_tp = GET_OPTIONAL_CONFIG_PARAM(PARAM_HAS_TRIAL_PERIOD, config);
+		if(("true").equals(s_has_tp))
+		{
+			has_trial_period 	 			  = true;
+			try{
+				trial_period_in_days 			  = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_TRIAL_PERIOD, config));
+				expired_trial_reap_period_in_days = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_EXPIRED_TRIAL_REAP_PERIOD, config));
+			}catch(NumberFormatException nfe)
+			{
+				throw new InitializationException("COME ON YOU NOOB.");
+			}
+		}
+		
 	}
 	
 	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
-
 		start_billing_thread();	
 	}
 
@@ -311,8 +334,8 @@ public class RecurringOrderModule extends ResourceModule
 	///////RECURRING ORDER///////////	
 	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
-		List<Entity> recurring_skus 	= (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKUS);
-		List<Entity> promotions = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
+		List<Entity> recurring_skus  = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_SKUS);
+		List<Entity> promotions 	 = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
 		
 		VALIDATE_TYPE_LIST(RECURRING_SKU_ENTITY, recurring_skus);
 		VALIDATE_TYPE_LIST(promotion_module.PROMOTION_INSTANCE_ENTITY, promotions);
@@ -348,7 +371,7 @@ public class RecurringOrderModule extends ResourceModule
 									  RECURRING_ORDER_FIELD_USER,user,
 									  RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_INIT,
 									  RECURRING_ORDER_FIELD_LAST_BILL_DATE,null,
-									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,new Date(),//TODO: set this somewhere in the past//
+									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,new Date(0L),//TODO: set this somewhere in the past//
 									  RECURRING_ORDER_FIELD_PROMOTIONS,promotions,
 									  RECURRING_ORDER_FIELD_RECURRING_UNIT,recurring_unit,
 									  RECURRING_ORDER_FIELD_RECURRING_PERIOD,recurring_period);
@@ -425,9 +448,10 @@ public class RecurringOrderModule extends ResourceModule
 		}
 		switch(status)
 		{
-			case ORDER_STATUS_INIT:
-				//TODO: log order created??
-			case ORDER_STATUS_INITIAL_BILL_FAILED:
+		case ORDER_STATUS_INIT:
+		case ORDER_STATUS_IN_TRIAL_PERIOD:	
+		case ORDER_STATUS_TRIAL_EXPIRED:	
+		case ORDER_STATUS_INITIAL_BILL_FAILED:
 				try{
 					do_initial_fee_billing(recurring_order,billing_record);
 				}catch(BillingGatewayException bge)
@@ -502,7 +526,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		int old_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
 		recurring_order =  UPDATE(recurring_order,
-						RECURRING_ORDER_FIELD_STATUS,status);
+								  RECURRING_ORDER_FIELD_STATUS,status);
 		
 		//log the status change//
 		switch(status)
@@ -790,6 +814,7 @@ public class RecurringOrderModule extends ResourceModule
 
 				MODULE_LOG( 1,"MONTHLY BILL OK FOR RECURRING ORDER "+recurring_order.getId());
 				
+				
 			}catch(PersistenceException pe)
 			{
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
@@ -797,6 +822,69 @@ public class RecurringOrderModule extends ResourceModule
 				break;
 			}
 
+		}
+		
+		//handle_trials();
+	}
+	
+	private void handle_trials()
+	{
+		Query q 				= null;
+		QueryResult result 		= null;
+
+		try{
+			q = new Query(RECURRING_ORDER_ENTITY);
+			q.idx(IDX_RECURRING_ORDER_BY_STATUS);
+			q.eq(ORDER_STATUS_IN_TRIAL_PERIOD);
+			result = QUERY(q);
+			MODULE_LOG( 1,result.size()+" records currently in trial state.");
+		}catch(PersistenceException pe1)
+		{
+			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+			return;
+		}
+
+		
+		List<Entity> in_trial_orders = result.getEntities();
+		Entity trial_order = null;
+		Date now = new Date();
+		for(int i = 0;i < in_trial_orders.size();i++)
+		{
+			try{
+				trial_order 			= in_trial_orders.get(i);
+
+				
+				
+				// if (now > create_date + trial_period)
+				// trial_order.setStatus(TRIAL_EXPIRED);
+				// send email 			 //
+				// set system message	 //
+				// 
+			}catch(Exception e)
+			{
+				ERROR(e);
+				MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+				break;
+			}
+		}
+	}
+	
+	
+	private void check_expired_trial(Date now,Entity trial_order) throws PersistenceException
+	{
+		
+		Date trial_create_date  =  (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
+		int trial_period_in_ms = trial_period_in_days * (1000 * 60 * 60 * 24); 
+		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
+		{
+			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);				
+			String additional_info = "Trial expired on: "+trial_create_date.getTime()+trial_period_in_ms;
+			send_trial_expired_email(trial_order, null);
+		}
+		else
+		{
+			return;
 		}
 	}
 	
@@ -815,6 +903,29 @@ public class RecurringOrderModule extends ResourceModule
 				template_data.put("additional_information",additional_info);
 			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
 			email_module.sendEmail(null, new String[]{user_email}, "Your monthly billing failed.", "billing-failed.fm", template_data);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			MODULE_LOG("EMAIL MODULE FAILED SENDING BILLING FAILED EMAIL TO USER "+user.getId()+" "+user_email);
+		}
+	}
+	
+	
+	private void send_trial_expired_email(Entity recurring_order,String additional_info)
+	{
+		
+		Entity user = null;
+		String user_email = null;
+		try{
+			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			Map<String,Object> template_data = new HashMap<String, Object>();
+			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+			if(additional_info == null)
+				template_data.put("additional_information","");
+			else
+				template_data.put("additional_information",additional_info);
+			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			email_module.sendEmail(null, new String[]{user_email}, "Your Postera Trial Period Has Ended.", "trial-expired.fm", template_data);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
