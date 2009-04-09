@@ -178,6 +178,16 @@ public abstract class Module
 		return is_initialized;
 	}
 	
+	private boolean is_initializing = false;
+	public void setInitializing(boolean b)
+	{
+		is_initializing = b;
+	}
+	public boolean isInitializing()
+	{
+		return is_initializing;
+	}
+	
 	private Map<String,Object> params;
 	public void setParams(Map<String,Object> params)
 	{
