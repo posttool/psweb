@@ -26,7 +26,7 @@ public class FreemarkerGateway
 	public static final String REQUEST_URL_KEY = "request_url";
 	public static final String REQUEST_PARAMS_KEY = "params";
 	public static final String WEB_URL_KEY = "web_url";
-	public static final String NOW_KEY = "now";
+	public static final String WEB_URL_SECURE_KEY = "web_url_secure";
 	public static final String MODULE_DATA_KEY = "data";
 	public static final String EXCEPTION_KEY = "exception";
 	public static final String EXCEPTION_STRING_KEY = "exceptionString";
@@ -140,7 +140,7 @@ public class FreemarkerGateway
 		data.put(REQUEST_PARAMS_KEY, params0);
 		data.put(REQUEST_URL_KEY, request_path);
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
-		data.put(NOW_KEY, new Date());
+		data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
 		//
 		return data;
 	}

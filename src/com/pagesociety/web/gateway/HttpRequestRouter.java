@@ -120,6 +120,7 @@ public class HttpRequestRouter extends HttpServlet
 		}
 		// STATIC
 		String requestPath = request.getRequestURI().substring(request.getContextPath().length());
+		String completeUrl = getUrl(request);
 		String mime_type = _servlet_config.getServletContext().getMimeType(requestPath);
 		if (mime_type != null)
 		{
@@ -148,11 +149,11 @@ public class HttpRequestRouter extends HttpServlet
 		// FORM
 		if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
 		{
-			form_gateway.doService(get_user_context_for_form(request, response), request, response);
+			form_gateway.doService(get_user_context(request, response), request, response);
 			return;
 		}
 		// MAPPED
-		String url_mapped_request = _web_application.getMapping(requestPath);
+		String url_mapped_request = _web_application.getMapping(completeUrl);
 		if (url_mapped_request != null)
 		{
 			RequestDispatcher dispatcher = request.getRequestDispatcher(url_mapped_request);
@@ -217,12 +218,44 @@ public class HttpRequestRouter extends HttpServlet
 //		return _web_application.getUserContext(HTTP, http_sess_id);
 //	}
 
-	private UserApplicationContext get_user_context_for_form(HttpServletRequest request,
-			HttpServletResponse response)
+	private String getUrl(HttpServletRequest req)
 	{
-		// the session id is not passed back with firefox w/ uploads from flash
-		// so we have to look for the parameter in the request instead of
-		// looking at the cookie
+        String scheme = req.getScheme();             // http
+        String serverName = req.getServerName();     // hostname.com
+        int serverPort = req.getServerPort();        // 80
+        String contextPath = req.getContextPath();   // /mywebapp
+        String servletPath = req.getServletPath();   // /servlet/MyServlet
+        String pathInfo = req.getPathInfo();         // /a/b;c=123
+        String queryString = req.getQueryString();          // d=789
+    
+        // Reconstruct original requesting URL
+        StringBuilder b = new StringBuilder();
+        b.append(scheme);
+        b.append("://");
+        b.append(serverName);
+        if (serverPort!=80)
+        {
+        	b.append(":");
+            b.append(serverPort);
+        }
+        b.append(contextPath);
+        b.append(servletPath);
+        if (pathInfo != null) 
+        {
+        	b.append(pathInfo);
+        }
+        if (queryString != null) 
+        {
+        	b.append("?");
+            b.append(queryString);
+        }
+        return b.toString();
+	}
+
+	
+	
+	private UserApplicationContext get_user_context(HttpServletRequest request, HttpServletResponse response)
+	{
 		String http_sess_id = null;
 		if (request.getParameter(GatewayConstants.SESSION_ID_KEY) != null)
 		{
@@ -234,11 +267,5 @@ public class HttpRequestRouter extends HttpServlet
 		}
 		
 		return _web_application.getUserContext(HTTP, http_sess_id);
-	}
-	
-	private UserApplicationContext get_user_context(HttpServletRequest request, HttpServletResponse response)
-	{
-	 String http_sess_id = request.getSession().getId();
-	 return _web_application.getUserContext(HTTP, http_sess_id);
 	}
 }
