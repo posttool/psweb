@@ -379,7 +379,7 @@ public class RecurringOrderModule extends ResourceModule
 		MODULE_LOG(0,"CREATED RECURRING ORDER "+recurring_order.getId()+" OK");
 		return recurring_order;
 	}
-	
+
 
 	@Export
 	public Entity DeleteRecurringOrder(UserApplicationContext uctx,long recurring_order_id) throws WebApplicationException,PersistenceException
@@ -853,14 +853,7 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			try{
 				trial_order 			= in_trial_orders.get(i);
-
-				
-				
-				// if (now > create_date + trial_period)
-				// trial_order.setStatus(TRIAL_EXPIRED);
-				// send email 			 //
-				// set system message	 //
-				// 
+				check_expired_trial(now, trial_order);
 			}catch(Exception e)
 			{
 				ERROR(e);
@@ -871,6 +864,44 @@ public class RecurringOrderModule extends ResourceModule
 	}
 	
 	
+	private void purge_expired_trial_users()
+	{
+		Query q 				= null;
+		QueryResult result 		= null;
+
+		try{
+			q = new Query(RECURRING_ORDER_ENTITY);
+			q.idx(IDX_RECURRING_ORDER_BY_STATUS);
+			q.eq(ORDER_STATUS_TRIAL_EXPIRED);
+			result = QUERY(q);
+			MODULE_LOG( 1,result.size()+" records currently in trial expired state.");
+		}catch(PersistenceException pe1)
+		{
+			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+			return;
+		}
+
+		
+		List<Entity> expired_trial_orders = result.getEntities();
+		Entity expired_trial_order = null;
+		Date now = new Date();
+		for(int i = 0;i < expired_trial_orders.size();i++)
+		{
+			try{
+				expired_trial_order 			= expired_trial_orders.get(i);
+				check_chuck_trial_user(now, expired_trial_order);
+			}catch(Exception e)
+			{
+				ERROR(e);
+				MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+				break;
+			}
+		}
+	}
+	
+	
+	
 	private void check_expired_trial(Date now,Entity trial_order) throws PersistenceException
 	{
 		
@@ -879,8 +910,10 @@ public class RecurringOrderModule extends ResourceModule
 		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);				
-			String additional_info = "Trial expired on: "+trial_create_date.getTime()+trial_period_in_ms;
-			send_trial_expired_email(trial_order, null);
+			String additional_info = "Trial expired on: "+new Date(trial_create_date.getTime()+trial_period_in_ms);
+			send_trial_expired_email(trial_order, additional_info);
+			Entity user = EXPAND((Entity)trial_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			MODULE_LOG( 2,"trial expired for user: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
 		}
 		else
 		{
@@ -888,9 +921,29 @@ public class RecurringOrderModule extends ResourceModule
 		}
 	}
 	
-	private void send_billing_failed_email(Entity recurring_order,String additional_info)
+	
+	private void check_chuck_trial_user(Date now,Entity trial_order) throws PersistenceException
 	{
 		
+		Date trial_create_date  		= (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
+		int trial_period_in_ms 			= trial_period_in_days * (1000 * 60 * 60 * 24); 
+		int expired_trial_clean_period 	= trial_period_in_ms + expired_trial_reap_period_in_days * (1000 * 60 * 60 * 24); 
+		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
+		{
+			Entity user = (Entity)trial_order.getAttribute(RECURRING_ORDER_FIELD_USER);
+			MODULE_LOG( 2,"reaping trial for user: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
+			user_module.deleteUser(user);
+			
+		}
+		else
+		{
+			return;
+		}
+
+	}
+	
+	private void send_billing_failed_email(Entity recurring_order,String additional_info)
+	{		
 		Entity user = null;
 		String user_email = null;
 		try{
@@ -978,7 +1031,21 @@ public class RecurringOrderModule extends ResourceModule
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_FAILED, "Order "+recurring_order.getId()+" failed monthly billing for the amount of "+amount+".", recurring_order);
 	}
 
-
+	
+	public int getTrialPeriodInDays()
+	{
+		return trial_period_in_days;
+	}
+	
+	public int getExpiredTrialReapPeriodInDays()
+	{
+		return expired_trial_reap_period_in_days;
+	}
+	
+	public BillingModule getBillingModule()
+	{
+		return billing_module;
+	}
 	
 	///BEGIN DDL STUFF
 	public static String RECURRING_SKU_ENTITY 			  		= "RecurringSKU";
