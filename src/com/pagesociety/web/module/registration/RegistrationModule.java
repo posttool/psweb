@@ -80,17 +80,20 @@ public class RegistrationModule extends WebStoreModule
 	
 	/// B E G I N      M O D U L E      F U N C T I O N S //////////
 	@Export(ParameterNames={"email", "username", "password"})
-	public Entity Register(UserApplicationContext uctx,String email,String username,String password,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
+	public Entity Register(UserApplicationContext uctx,String email,String username,String password) throws WebApplicationException,PersistenceException
 	{
-		Entity user = user_module.createPublicUser(null, email, password, username,xtra_event_context_params); 
-		/*creator is null. means system created this user */
-		if(!do_email_confirmation)
-		{
-			uctx.setUser(user);
-		}
-		else
-		{
+		Entity creator = (Entity)uctx.getUser();
+		Entity user = register(creator,email, username, password); 
+		uctx.setUser(user);
+		return user;
+	}
 	
+	public Entity register(Entity creator,String email,String username,String password,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
+	{
+		Entity user = user_module.createPublicUser(creator, email, password, username,xtra_event_context_params); 
+		/*creator is null. means system created this user */
+		if(do_email_confirmation)
+		{	
 			user_module.lockUser(user, LOCKED_PENDING_REGISTRATION, "Pending Registration");
 			String activation_token = com.pagesociety.util.RandomGUID.getGUID();
 			
@@ -107,7 +110,7 @@ public class RegistrationModule extends WebStoreModule
 			email_module.sendEmail(null, new String[]{email}, email_subject, email_template_name, template_data);
 		}
 		
-		return user;
+		return user;		
 	}
 	
 	@Export(ParameterNames={"token"})
