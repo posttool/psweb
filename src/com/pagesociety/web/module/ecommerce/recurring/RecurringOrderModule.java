@@ -48,7 +48,7 @@ public class RecurringOrderModule extends ResourceModule
 	private static final String PARAM_BILLING_THREAD_INTERVAL   = "billing-thread-interval";	
 	private static final String PARAM_HAS_TRIAL_PERIOD		    = "has-trial-period";
 	private static final String PARAM_TRIAL_PERIOD			    = "trial-period";
-	private static final String PARAM_EXPIRED_TRIAL_REAP_PERIOD = "billing-thread-interval";
+	private static final String PARAM_EXPIRED_TRIAL_REAP_PERIOD = "expired-trial-reap-period";
 	
 	
 	public static final int ORDER_STATUS_INIT 										 = 0x0000;
@@ -88,7 +88,7 @@ public class RecurringOrderModule extends ResourceModule
 		promotion_module 		= (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
 	
 		String s_has_tp = GET_OPTIONAL_CONFIG_PARAM(PARAM_HAS_TRIAL_PERIOD, config);
-		if(("true").equals(s_has_tp))
+		if(("yes").equals(s_has_tp))
 		{
 			has_trial_period 	 			  = true;
 			try{
@@ -824,7 +824,11 @@ public class RecurringOrderModule extends ResourceModule
 
 		}
 		
-		//handle_trials();
+		if(has_trial_period)
+		{
+			handle_trials();
+			purge_expired_trial_users();
+		}
 	}
 	
 	private void handle_trials()
@@ -861,6 +865,7 @@ public class RecurringOrderModule extends ResourceModule
 				break;
 			}
 		}
+		
 	}
 	
 	
