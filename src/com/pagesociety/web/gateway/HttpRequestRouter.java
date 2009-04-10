@@ -233,7 +233,7 @@ public class HttpRequestRouter extends HttpServlet
         b.append(scheme);
         b.append("://");
         b.append(serverName);
-        if (serverPort!=80)
+        if (serverPort != 80 && serverPort != 443)
         {
         	b.append(":");
             b.append(serverPort);
