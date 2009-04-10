@@ -80,9 +80,9 @@ public class RegistrationModule extends WebStoreModule
 	
 	/// B E G I N      M O D U L E      F U N C T I O N S //////////
 	@Export(ParameterNames={"email", "username", "password"})
-	public Entity Register(UserApplicationContext uctx,String email,String username,String password) throws WebApplicationException,PersistenceException
+	public Entity Register(UserApplicationContext uctx,String email,String username,String password,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
 	{
-		Entity user = user_module.createPublicUser(null, email, password, username); 
+		Entity user = user_module.createPublicUser(null, email, password, username,xtra_event_context_params); 
 		/*creator is null. means system created this user */
 		if(!do_email_confirmation)
 		{
