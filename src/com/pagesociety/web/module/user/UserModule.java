@@ -26,6 +26,7 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.GatewayConstants;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
+import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.util.Util;
 import com.pagesociety.web.module.util.Validator;
@@ -387,6 +388,8 @@ public class UserModule extends WebStoreModule
 	public Entity Logout(UserApplicationContext uctx) throws PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
+		if(!PermissionsModule.IS_LOGGED_IN(user))
+			return null;
 
 		DISPATCH_EVENT(EVENT_USER_LOGGED_OUT,
 					   USER_EVENT_USER,user,
