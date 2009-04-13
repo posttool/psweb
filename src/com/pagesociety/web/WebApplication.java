@@ -93,13 +93,23 @@ public abstract class WebApplication
 		return _module_instances.get(name);
 	}
 
+	private static ThreadLocal<UserApplicationContext> calling_user_context = new ThreadLocal<UserApplicationContext>();
+	public UserApplicationContext getCallingUserContext()
+	{
+		return calling_user_context.get();
+	}
+	
+	
 	public Object dispatch(ModuleRequest request) throws WebApplicationException,
 			Throwable
 	{
 		Module module = getModule(request.getModuleName());
 		if (module == null)
 			throw new WebApplicationException("WebApplication.dispatch MODULE " + request.getModuleName() + " DOES NOT EXIST");
-		Object return_value = ModuleRegistry.invoke(module, request.getMethodName(), request.getUserContext(), request.getArguments());
+		UserApplicationContext uctx = request.getUserContext();
+		calling_user_context.set(uctx);
+		Object return_value = ModuleRegistry.invoke(module, request.getMethodName(), uctx, request.getArguments());
+		calling_user_context.remove();
 		request.setResult(return_value);
 		return return_value;
 	}
