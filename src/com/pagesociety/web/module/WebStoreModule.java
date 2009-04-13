@@ -321,7 +321,7 @@ public  class WebStoreModule extends WebModule
 	public static Entity DELETE(PersistentStore store,Entity e) throws PersistenceException
 	{
 		store.deleteEntity(e);
-		e.setId(Entity.UNDEFINED);
+		//e.setId(Entity.UNDEFINED);
 		return e;
 	}
 	
