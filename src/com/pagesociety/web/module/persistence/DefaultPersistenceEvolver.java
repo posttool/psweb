@@ -19,6 +19,11 @@ import com.pagesociety.web.module.WebStoreModule;
 public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolutionProvider
 {
 
+	public String getName()
+	{
+		return "DefaultPersistenceEvolver";
+	}
+	
 	@Override
 	public void evolveIndexes(WebStoreModule.schema_receiver resolver, String entity_name,List<EntityIndex> existing_indices,List<EntityIndex> proposed_indices) throws SyncException
 	{
