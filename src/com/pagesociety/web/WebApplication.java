@@ -100,16 +100,20 @@ public abstract class WebApplication
 	}
 	
 	
-	public Object dispatch(ModuleRequest request) throws WebApplicationException,
-			Throwable
+	public Object dispatch(ModuleRequest request) throws WebApplicationException,Throwable
 	{
 		Module module = getModule(request.getModuleName());
 		if (module == null)
 			throw new WebApplicationException("WebApplication.dispatch MODULE " + request.getModuleName() + " DOES NOT EXIST");
 		UserApplicationContext uctx = request.getUserContext();
-		calling_user_context.set(uctx);
-		Object return_value = ModuleRegistry.invoke(module, request.getMethodName(), uctx, request.getArguments());
-		calling_user_context.remove();
+		Object return_value = null;
+		try{
+			calling_user_context.set(uctx);
+			return_value = ModuleRegistry.invoke(module, request.getMethodName(), uctx, request.getArguments());
+		}finally
+		{
+			calling_user_context.remove();
+		}
 		request.setResult(return_value);
 		return return_value;
 	}
