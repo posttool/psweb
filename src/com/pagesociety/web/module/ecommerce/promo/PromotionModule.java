@@ -437,6 +437,11 @@ public class PromotionModule extends WebStoreModule
 	public Entity GetCouponPromotionByPromoCode(UserApplicationContext uctx,String promo_code) throws WebApplicationException,PersistenceException
 	{
 		Entity user   = (Entity)uctx.getUser();
+		return getCouponPromotionByPromoCode(user, promo_code);
+	}
+	
+	public Entity getCouponPromotionByPromoCode(Entity creator,String promo_code) throws PersistenceException,WebApplicationException
+	{
 		if(promo_code == null)
 			throw new WebApplicationException("NEED TO PROVIDE NOT NULL PROMO CODE");
 		
@@ -458,12 +463,12 @@ public class PromotionModule extends WebStoreModule
 		if(number_times_has_been_used == number_times_can_be_used)
 				throw new WebApplicationException("PROMOCODE USED UP "+promo_code,ERROR_PROMO_CODE_USED_UP);
 		
-		Entity	promo_instance = createPromotionInstance((Entity)uctx.getUser(), promo_code,(Entity)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_PROMOTION));
+		Entity	promo_instance = createPromotionInstance(creator, promo_code,(Entity)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_PROMOTION));
 
 		UPDATE(coupon_promo,COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED,++number_times_has_been_used);
-		return promo_instance;
+		return promo_instance;		
+		
 	}
-	
 	
 	public Query getCouponPromotionByPromoCodeQ(String promo_code)
 	{

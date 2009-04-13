@@ -1052,6 +1052,11 @@ public class RecurringOrderModule extends ResourceModule
 		return billing_module;
 	}
 	
+	public boolean isConfigured()
+	{
+		return billing_module.isConfigured();
+	}
+	
 	///BEGIN DDL STUFF
 	public static String RECURRING_SKU_ENTITY 			  		= "RecurringSKU";
 	public static String RECURRING_SKU_FIELD_TITLE 			 	= "title";
