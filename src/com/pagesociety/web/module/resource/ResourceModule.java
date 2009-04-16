@@ -190,8 +190,9 @@ public class ResourceModule extends WebStoreModule
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
 		
-		path_provider.delete(path_token);
-		return DELETE(resource);
+		DELETE(resource);
+		path_provider.delete(path_token);			
+		return resource; 
 	}
 	
 	@Export(ParameterNames={"resource_id"})
