@@ -88,7 +88,7 @@ public class RecurringOrderModule extends ResourceModule
 		promotion_module 		= (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
 	
 		String s_has_tp = GET_OPTIONAL_CONFIG_PARAM(PARAM_HAS_TRIAL_PERIOD, config);
-		if(("yes").equals(s_has_tp))
+		if(("yes").equalsIgnoreCase(s_has_tp) || "true".equalsIgnoreCase(s_has_tp))
 		{
 			has_trial_period 	 			  = true;
 			try{
