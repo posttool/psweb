@@ -371,7 +371,7 @@ public class RecurringOrderModule extends ResourceModule
 									  RECURRING_ORDER_FIELD_USER,user,
 									  RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_INIT,
 									  RECURRING_ORDER_FIELD_LAST_BILL_DATE,null,
-									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,new Date(0L),//TODO: set this somewhere in the past//
+									  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,null,//new Date(0L),//TODO: set this somewhere in the past//
 									  RECURRING_ORDER_FIELD_PROMOTIONS,promotions,
 									  RECURRING_ORDER_FIELD_RECURRING_UNIT,recurring_unit,
 									  RECURRING_ORDER_FIELD_RECURRING_PERIOD,recurring_period);
