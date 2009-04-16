@@ -449,10 +449,11 @@ public class RecurringOrderModule extends ResourceModule
 		switch(status)
 		{
 		case ORDER_STATUS_INIT:
-		case ORDER_STATUS_IN_TRIAL_PERIOD:	
+		case ORDER_STATUS_IN_TRIAL_PERIOD:
 		case ORDER_STATUS_TRIAL_EXPIRED:	
 		case ORDER_STATUS_INITIAL_BILL_FAILED:
-				try{
+			recurring_order.setAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE, new Date());
+			try{
 					do_initial_fee_billing(recurring_order,billing_record);
 				}catch(BillingGatewayException bge)
 				{
