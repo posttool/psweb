@@ -90,7 +90,7 @@ public class RegistrationModule extends WebStoreModule
 		Entity user = register(creator,email, username, password); 
 		uctx.setUser(user);
 		DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_REGISTERED,
-			       REGISTRATION_EVENT_USER,user);
+			       	   REGISTRATION_EVENT_USER,user);
 		return user;
 	}
 	
