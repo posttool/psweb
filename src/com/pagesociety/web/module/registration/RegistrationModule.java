@@ -48,6 +48,10 @@ public class RegistrationModule extends WebStoreModule
 												" Check your email and activate your account "+
 												" and then try to login again.";
 	
+	public static final int REGISTRATION_EVENT_ACCOUNT_REGISTERED 		  = 0x200;
+	public static final int REGISTRATION_EVENT_ACCOUNT_ACTIVATED  		  = 0x202;
+	public static final String REGISTRATION_EVENT_USER 		  = "user";
+	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
@@ -85,6 +89,8 @@ public class RegistrationModule extends WebStoreModule
 		Entity creator = (Entity)uctx.getUser();
 		Entity user = register(creator,email, username, password); 
 		uctx.setUser(user);
+		DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_REGISTERED,
+			       REGISTRATION_EVENT_USER,user);
 		return user;
 	}
 	
@@ -129,6 +135,8 @@ public class RegistrationModule extends WebStoreModule
 		DELETE(activation_record);
 		// log them in//
 		uctx.setUser(user);
+		DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_ACTIVATED,
+			       	   REGISTRATION_EVENT_USER,user);
 		return user;
 	}
 	
