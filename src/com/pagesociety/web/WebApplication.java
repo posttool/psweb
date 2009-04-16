@@ -339,7 +339,7 @@ public abstract class WebApplication
 		}
 	}
 
-	public String getMapping(String url)
+	public Object[] getMapping(String url)
 	{
 		Matcher matcher = null;
 		int s = _config.getUrlMapInfoItems().size();
@@ -349,7 +349,10 @@ public abstract class WebApplication
 			matcher = url_map.matcher(url);
 			if (matcher.matches())
 			{
-				return matcher.replaceAll(url_map.getTemplatePath());
+				Object[] ret = new Object[2];
+				ret[0] = url_map;
+				ret[1] = matcher.replaceAll(url_map.getTemplatePath());
+				return ret;
 			}
 		}
 		return null;

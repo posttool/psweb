@@ -12,6 +12,8 @@ import org.w3c.dom.NodeList;
 public class UrlMapInitParams
 {
 	public static final String URL_KEY = "url";
+	public static final String SECURE_ATTRIBUTE_NAME = "secure";
+	public static final String SECURE_ATTRIBUTE_TRUE_VALUE = "true";
 	public static final String TEMPLATE_PATH_KEY = "template-path";
 	public static final String DATA_PROVIDER_KEY = "data-provider";
 	public static final String TYPE_ATTRIBUTE_KEY = "type";
@@ -28,11 +30,12 @@ public class UrlMapInitParams
 		for (int i = 0; i < url_mappings.getLength(); i++)
 		{
 			Element url_map = (Element) url_mappings.item(i);
+			String secure_value = url_map.getAttribute(SECURE_ATTRIBUTE_NAME);
+			boolean secure = secure_value.equals(SECURE_ATTRIBUTE_TRUE_VALUE);
 			String url = getParameterValue(URL_KEY, url_map);
 			String template_path = getParameterValue(TEMPLATE_PATH_KEY, url_map);
-			String data_provider = getParameterValue(DATA_PROVIDER_KEY, url_map);
 			String type = url_map.getAttribute(TYPE_ATTRIBUTE_KEY);
-			UrlMapInfo map = new UrlMapInfo(url, template_path, data_provider);
+			UrlMapInfo map = new UrlMapInfo(url, template_path, secure);
 			_url_map_info.add(map);
 			if (type.equals(TYPE_ATTRIBUTE_VALUE_ERROR))
 			{
@@ -80,15 +83,15 @@ public class UrlMapInitParams
 	{
 		private String url;
 		private String templatePath;
-		private String dataProvider;
+		private boolean secure;
 		private Pattern urlPattern;
 
-		public UrlMapInfo(String url, String templatePath, String dataProvider)
+		public UrlMapInfo(String url, String templatePath, boolean secure)
 		{
 			this.url = url;
 			this.urlPattern = Pattern.compile(url);
 			this.templatePath = templatePath;
-			this.dataProvider = dataProvider;
+			this.secure = secure;
 		}
 
 		public String getUrl()
@@ -101,9 +104,9 @@ public class UrlMapInitParams
 			return templatePath;
 		}
 
-		public String getDataProvider()
+		public boolean isSecure()
 		{
-			return dataProvider;
+			return secure;
 		}
 
 		public Matcher matcher(String s)
@@ -113,7 +116,7 @@ public class UrlMapInitParams
 
 		public String toString()
 		{
-			return "UrlMapInfo " + url + " " + templatePath + " " + dataProvider;
+			return "UrlMapInfo " + url + " " + templatePath + " " + secure;
 		}
 	}
 }
