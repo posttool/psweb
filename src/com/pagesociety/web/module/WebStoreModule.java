@@ -291,6 +291,15 @@ public  class WebStoreModule extends WebModule
 	{
 		if(!e.isLightReference())
 			return e;
+		if(e == null)
+			return null;
+		return GET(store,e.getType(),e.getId());
+	}
+	
+	public static Entity FORCE_EXPAND(PersistentStore store, Entity e) throws PersistenceException
+	{
+		if(e == null)
+			return null;
 		return GET(store,e.getType(),e.getId());
 	}
 
@@ -581,6 +590,11 @@ public  class WebStoreModule extends WebModule
 	public Entity EXPAND(Entity e) throws PersistenceException
 	{
 		return EXPAND(store,e);
+	}
+	
+	public Entity FORCE_EXPAND(Entity e) throws PersistenceException
+	{
+		return FORCE_EXPAND(store,e);
 	}
 	
 	public Entity GET( String entity_type,long entity_id) throws PersistenceException
