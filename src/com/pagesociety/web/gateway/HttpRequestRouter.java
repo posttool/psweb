@@ -142,6 +142,7 @@ public class HttpRequestRouter extends HttpServlet
 			}
 		}
 		UserApplicationContext uctx = get_user_context(request, response);
+		System.out.println("!!!!>>"+uctx.getId()+" "+completeUrl);
 		// FORM first, because sometimes it uses the ps_session_id and doesn't want the redirect to occur
 		if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
 		{
@@ -164,6 +165,12 @@ public class HttpRequestRouter extends HttpServlet
 		if (requestPath.endsWith(GatewayConstants.SUFFIX_JSON))
 		{
 			json_gateway.doService(uctx, request, response);
+			return;
+		}
+		//RAW
+		if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
+		{
+			raw_gateway.doService(uctx, request, response);
 			return;
 		}
 		// MAPPED
@@ -198,12 +205,7 @@ public class HttpRequestRouter extends HttpServlet
 				return;
 			}
 		}
-		//RAW
-		if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
-		{
-			raw_gateway.doService(uctx, request, response);
-			return;
-		}
+
 		// UNKNOWN
 		File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
 		static_gateway.serveFile(request_file, mime_type, request, response);
@@ -363,6 +365,7 @@ public class HttpRequestRouter extends HttpServlet
 				http_sess_id = RandomGUID.getGUID();
 			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
 			c.setMaxAge(SESSION_TIMEOUT);
+			c.setPath("/");
 			response.addCookie(c);
 		}
 		else 
