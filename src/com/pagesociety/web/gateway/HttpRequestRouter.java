@@ -106,6 +106,7 @@ public class HttpRequestRouter extends HttpServlet
 		}
 		catch (WebApplicationException e)
 		{
+			System.err.println("ERROR CALLER IP WAS: "+request.getRemoteAddr());
 			e.printStackTrace();
 			throw new ServletException(e);
 		}
@@ -142,7 +143,7 @@ public class HttpRequestRouter extends HttpServlet
 			}
 		}
 		UserApplicationContext uctx = get_user_context(request, response);
-		System.out.println("!!!!>>"+uctx.getId()+" "+completeUrl);
+		//System.out.println("!!!!>>"+uctx.getId()+" "+completeUrl);
 		// FORM first, because sometimes it uses the ps_session_id and doesn't want the redirect to occur
 		if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
 		{
