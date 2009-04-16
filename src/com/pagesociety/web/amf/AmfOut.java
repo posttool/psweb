@@ -287,7 +287,8 @@ public class AmfOut
 		if (mapping == null)
 		{
 			String message = "No ClassMapping registered for Java class " + object.getClass().getName();
-			throw new RuntimeException(message);
+			System.err.println("AmfOut ERROR :"+message);
+			return;
 		}
 		buffer.put(AmfType.OBJECT);
 		if (!writeObjectReference(object))

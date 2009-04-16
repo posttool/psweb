@@ -14,10 +14,7 @@ public class ErrorMessage
 	{
 	}
 	
-	public ErrorMessage(String message)
-	{
-		this.message = message;
-	}
+	
 
 	public ErrorMessage(Throwable exception)
 	{
@@ -27,13 +24,7 @@ public class ErrorMessage
 		this.exceptionType = exception.getClass().getName();
 	}
 
-	public ErrorMessage(String message, String exceptionType)
-	{
-		super();
-		this.message = message;
-		this.exception = null;
-		this.exceptionType = exceptionType;
-	}
+
 
 	public String getMessage()
 	{
@@ -43,6 +34,11 @@ public class ErrorMessage
 	public String getExceptionType()
 	{
 		return exceptionType;
+	}
+	
+	public Throwable getException()
+	{
+		return exception;
 	}
 
 	public String getStacktrace()
