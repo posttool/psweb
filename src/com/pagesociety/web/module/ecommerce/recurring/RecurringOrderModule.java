@@ -912,7 +912,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date trial_create_date  =  (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		int trial_period_in_ms = trial_period_in_days * (1000 * 60 * 60 * 24); 
+		int trial_period_in_ms = trial_period_in_days * (1000 * 60);//TODO: this iis now in minutes change back * 60 * 24); 
 		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);				
@@ -932,7 +932,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date trial_create_date  		= (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		int trial_period_in_ms 			= trial_period_in_days * (1000 * 60 * 60 * 24); 
+		int trial_period_in_ms 			= trial_period_in_days * (1000 * 60 );// TODO: right now this is in minutes * 60 * 24); 
 		int expired_trial_clean_period 	= trial_period_in_ms + expired_trial_reap_period_in_days * (1000 * 60);//TODO: right now in minutes * 60 * 24); 
 		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
 		{

@@ -27,7 +27,8 @@ public class WebApplicationInitParams
 	private static final String ATTR_APP_WEB_ROOT_URL  			= "web-root-url";
 	private static final String ATTR_APP_WEB_ROOT_URL_SECURE  	= "web-root-url-secure";
 	private static final String ATTR_APP_VERSION  				= "version";
-	
+	private static final String ATTR_APP_USER_CONTEXT_CLASS		= "user-application-context-class";
+	private static final String ATTR_APP_MODULE_DATA_DIRECTORY  = "module-data-directory";
 	//
 	private File configDir;
 	//
@@ -42,13 +43,17 @@ public class WebApplicationInitParams
 	private String webRootUrl;
 	private String webRootUrlSecure;
 	private String version;
+	private File   moduleDataDir;
+	private Class  userApplicationContextClass;
 	//
 	private ModuleInitParams modules;
 	private UrlMapInitParams urlMap;
 	private Properties		 deployment_properties;
+	
 
 	public WebApplicationInitParams(File config_dir) throws InitializationException
 	{
+
 		configDir 				= config_dir;
 		deployment_properties 		= new Properties();
 		File deployments_file 	= new File(configDir,DEPLOYMENT_PROPERTIES_FILE_NAME);
@@ -102,7 +107,35 @@ public class WebApplicationInitParams
 		version = expand_property(application_element.getAttribute(ATTR_APP_VERSION));
 		if(version == null)
 			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_VERSION);
+		
+		String userApplicationContextClassS = expand_property(application_element.getAttribute(ATTR_APP_USER_CONTEXT_CLASS));
+		if(userApplicationContextClassS == null)
+			userApplicationContextClassS = "com.pagesociety.web.UserApplicationContext";
+		try {
+			userApplicationContextClass = Class.forName(userApplicationContextClassS);
+		} catch (ClassNotFoundException e) {
+			throw new InitializationException("application.xml: Unable to find UserApplicationContext class "+userApplicationContextClassS);
+		}
+		if(!com.pagesociety.web.UserApplicationContext.class.isAssignableFrom(userApplicationContextClass))
+			throw new InitializationException("application.xml: user-application-context-class "+userApplicationContextClassS+" does not appear to extend com.pagesociety.web.UserApplicationContext");
+		
+		String moduleDataDirS = expand_property(application_element.getAttribute(ATTR_APP_MODULE_DATA_DIRECTORY));	
+		if(moduleDataDirS == null)
+			moduleDataDirS = configDir.getAbsolutePath()+File.separator+"module-data";
+		
+		moduleDataDir = new File(moduleDataDirS);
+		if(!moduleDataDir.exists())
+		{
+			try{	
 
+				moduleDataDir.mkdirs();
+			}catch(Exception e)
+			{
+				e.printStackTrace();
+				throw new InitializationException("application.xml: Problem creating module data base dir"+moduleDataDirS);
+			}
+		}
+		
 	}
 	/*
 	private String expand_property(String value) throws InitializationException
@@ -174,8 +207,10 @@ public class WebApplicationInitParams
 			}
 			
 		}
-		
-		return buf.toString();
+		if(buf.length() == 0)
+			return null;
+		else
+			return buf.toString();
 	}
 	
 	
@@ -215,6 +250,16 @@ public class WebApplicationInitParams
 		return version;
 	}
 
+	public Class getUserApplicationContextClass()
+	{
+		return userApplicationContextClass;
+	}
+	
+	public File getModuleDataDirectory()
+	{
+		return moduleDataDir;
+	}
+	
 	public List<ModuleInfo> getModuleInfo()
 	{
 		return modules.getInfo();

@@ -66,10 +66,17 @@ public abstract class WebApplication
 		}
 		else
 		{
-			user_context = new UserApplicationContext();
-			user_context.setId(sess_id);
-			sess_mgr.put(sess_id, user_context);
-			return (UserApplicationContext) sess_mgr.get(sess_id);
+			try{
+				user_context = (UserApplicationContext)_config.getUserApplicationContextClass().newInstance();
+				user_context.setId(sess_id);
+				sess_mgr.put(sess_id, user_context);
+				return (UserApplicationContext) sess_mgr.get(sess_id);
+			}catch(Exception e)
+			{
+				ERROR("SERIOUS BARF ",e);
+				return null;
+			}
+			
 		}
 	}
 

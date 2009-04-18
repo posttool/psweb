@@ -113,7 +113,7 @@ public abstract class WebModule extends Module
 	
 	protected  File GET_MODULE_DATA_DIRECTORY(WebApplication app)
 	{
-		File f =  new File(app.getConfig().getWebRootDir()+File.separator+".."+File.separator+"ModuleData"+File.separator+getName()+"Data");
+		File f =  new File(app.getConfig().getModuleDataDirectory(),getName()+"Data");
 		if(!f.exists())
 		{
 			INFO("CREATING DATA DIRECTORY FOR MODULE: "+getName()+"\n\t"+f.getAbsolutePath());

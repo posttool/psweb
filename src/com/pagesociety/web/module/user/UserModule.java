@@ -155,8 +155,8 @@ public class UserModule extends WebStoreModule
 			if(existing_user != null)
 				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
 		}
-		if(getUserByUsernameAndPassword(username,password) != null)
-			throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
+		//if(getUserByUsernameAndPassword(username,password) != null)
+		//	throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
 		
 		List<Integer> roles = new ArrayList<Integer>();
 		roles.add(USER_ROLE_USER);
@@ -338,10 +338,10 @@ public class UserModule extends WebStoreModule
 	{
 		
 		Entity user = null;
-		if(isValidEmail(email_or_username))
+		//if(isValidEmail(email_or_username))
 			user = loginViaEmail(email_or_username, password);
-		else
-			user = loginViaUsername(email_or_username, password);
+		//else
+		//	user = loginViaUsername(email_or_username, password);
 		
 		if(user.getAttribute(FIELD_LOCK).equals(LOCK_LOCKED))
 		{
@@ -363,9 +363,12 @@ public class UserModule extends WebStoreModule
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
 	{
+		//System.out.println("TRYING TO LOGIN WITH PASSWORD "+password);
 		Entity user = getUserByEmail(email);
+		//System.out.println("USER "+user+"\n"+email);
 		if(user == null)
 			throw new LoginFailedException("LOGIN FAILED");
+
 		if(user.getAttribute(FIELD_PASSWORD).equals(password))
 			return user;
 		throw new LoginFailedException("LOGIN FAILED");
@@ -395,6 +398,7 @@ public class UserModule extends WebStoreModule
 					   USER_EVENT_USER,user,
 					   USER_EVENT_USER_CONTEXT,uctx);
 		uctx.setUser(null);
+		
 		return UPDATE(user,
 				  FIELD_LAST_LOGOUT, new Date());
 	}
@@ -411,6 +415,13 @@ public class UserModule extends WebStoreModule
 	
 	public Entity deleteUser(Entity user)throws PersistenceException
 	{
+		System.out.println("!!! DELETEING USER "+user);
+		try{
+			throw new Exception();
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		long id = user.getId();
 		DELETE(user);
 		user.setId(id);
@@ -484,7 +495,8 @@ public class UserModule extends WebStoreModule
 	@Export
 	public Entity GetUser(UserApplicationContext uctx)
 	{
-		return (Entity)uctx.getUser();
+		Entity user = (Entity)uctx.getUser();
+		return user;
 	}
 	
 

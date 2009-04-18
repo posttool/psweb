@@ -146,7 +146,13 @@ public class ModuleMethod
 		if (ptypes.length != arguments.length)
 			return false;
 		
-		for(int i = 0;i < arguments.length ;i++)
+		if(!(arguments[0] instanceof UserApplicationContext))
+		{
+			System.err.println("BAD FIRST ARGUMENT FOR METHOD. NOT A USERAPPLICATIONCONTEXT COMPATIBLE CLASS");
+			return false;
+		}
+		
+		for(int i = 1;i < arguments.length ;i++)
 		{
 			Object arg = arguments[i];
 			if(arg == null)
@@ -155,7 +161,6 @@ public class ModuleMethod
 			{
 				System.out.println("NON COMPATIBLE CLASSES FOR METHOD SIG. "+arg.getClass().getSimpleName()+" "+ptypes[i].getSimpleName());
 				return false;
-		
 			}
 		}
 		return true;
@@ -163,7 +168,7 @@ public class ModuleMethod
 	
 	private static boolean compatible_classes(Class c1,Class c2)
 	{
-		if((c1 == c2) ||
+		if((c1 == c2) ||//TODO: i dont think we need the rest of these checks anymore
 				(c1 == Long.class 	 && c2 	== long.class) 	   ||
 				(c1 == Integer.class && c2 	== int.class) 	   ||
 				(c1 == ArrayList.class 	 && c2 	== List.class) ||
