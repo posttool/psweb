@@ -592,7 +592,16 @@ public class RecurringOrderModule extends ResourceModule
 		q.pageSize(page_size);
 		return PAGING_QUERY(q);
 	}
-	
+
+	public List<Entity> getRecurringOrdersByUser(Entity user) throws WebApplicationException,PersistenceException
+	{
+		Query q = new Query(RECURRING_ORDER_ENTITY);
+		q.idx(IDX_RECURRING_ORDER_BY_USER);
+		q.eq(user);
+		QueryResult result = QUERY(q);
+		return result.getEntities();
+	}
+
 	@Export
 	public PagingQueryResult GetTransactionHistoryByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
