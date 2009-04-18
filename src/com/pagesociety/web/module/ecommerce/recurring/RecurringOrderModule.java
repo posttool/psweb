@@ -945,6 +945,7 @@ public class RecurringOrderModule extends ResourceModule
 		int expired_trial_clean_period 	= trial_period_in_ms + expired_trial_reap_period_in_days * (1000 * 60);//TODO: right now in minutes * 60 * 24); 
 		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
 		{
+			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);				
 			Entity user = (Entity)trial_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 			MODULE_LOG( 2,"reaping trial for user: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
 			user_module.deleteUser(user);
