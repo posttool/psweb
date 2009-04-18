@@ -1,5 +1,6 @@
 package com.pagesociety.web.module.ecommerce.billing;
 
+import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
@@ -42,6 +43,7 @@ public class BillingModule extends WebStoreModule
 	
 	public static final int EVENT_BILLING_RECORD_CREATED = 0x1001;
 	public static final int EVENT_BILLING_RECORD_UPDATED = 0x1002;
+	public static final int EVENT_BILLING_RECORD_DELETED = 0x1003;
 	public static final String BILLING_EVENT_BILLING_RECORD = "billling_record";
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -256,7 +258,29 @@ public class BillingModule extends WebStoreModule
 	
 		return billing_record;
 	}
+
+	@Export
+	public Entity UpdateBillingRecord(UserApplicationContext uctx,
+									 	long billing_record_id)throws WebApplicationException,PersistenceException,BillingGatewayException
+	  {
+		Entity user = (Entity)uctx.getUser();
+		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
+		Entity target = (Entity)billing_record.getAttribute(FIELD_CREATOR);
+		GUARD(guard.canDeleteBillingRecord(user,target));
+		return deleteBillingRecord(billing_record);
+	  }
 	
+	public Entity deleteBillingRecord(Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
+	{
+		
+
+		DELETE(billing_record);
+		DISPATCH_EVENT(EVENT_BILLING_RECORD_DELETED,
+				   	   BILLING_EVENT_BILLING_RECORD,billing_record);
+		
+		return billing_record;
+	}
+		
 	
 	@Export
 	public PagingQueryResult GetBillingRecords(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
@@ -269,6 +293,14 @@ public class BillingModule extends WebStoreModule
 		q.offset(offset);
 		q.pageSize(page_size);
 		return PAGING_QUERY(q);
+	}
+	
+	public List<Entity> getBillingRecords(Entity user) throws WebApplicationException,PersistenceException
+	{	
+		Query q = new Query(BILLINGRECORD_ENTITY);
+		q.idx(IDX_BY_USER_BY_PREFERRED);
+		q.eq(q.list(user,Query.VAL_GLOB));
+		return QUERY(q).getEntities();
 	}
 	
 	@Export
