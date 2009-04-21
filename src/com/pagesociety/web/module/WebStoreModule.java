@@ -571,6 +571,23 @@ public  class WebStoreModule extends WebModule
 		return entities;		
 	}
 
+	public static void CREATE_QUEUE(PersistentStore store,String queuename,int rec_size,int recs_per_extent) throws PersistenceException
+	{
+		List<String> app_queues = store.listQueues();
+		if(app_queues.contains(queuename))
+			return;
+		store.createQueue(queuename,rec_size,recs_per_extent);	
+	}
+	
+	public static void DELETE_QUEUE(PersistentStore store,String queuename) throws PersistenceException
+	{
+		List<String> app_queues = store.listQueues();
+		if(app_queues.contains(queuename))
+			return;
+		store.deleteQueue(queuename);
+		
+	}
+	
 	/* convenience stuff for inheritors */
 	
 	public Entity NEW(String entity_type,Entity creator,Map<String,Object> atts) throws PersistenceException
@@ -1625,6 +1642,18 @@ public  class WebStoreModule extends WebModule
 		return proposed_indices;
 	}
 	
+
+	
+	public void CREATE_QUEUE(String queuename,int rec_size,int recs_per_extent) throws PersistenceException
+	{
+		CREATE_QUEUE(store,queuename, rec_size, recs_per_extent);
+	}
+	
+	public void DELETE_QUEUE(String queuename) throws PersistenceException
+	{
+		DELETE_QUEUE(queuename);
+	}
+	
 	private static boolean confirm(String message) throws InitializationException
 	{
 		String answer = null;
@@ -1649,4 +1678,7 @@ public  class WebStoreModule extends WebModule
 		}
 		return false;
 	}
+	
+	
+	
 }
