@@ -22,6 +22,7 @@ import javax.activation.MimetypesFileTypeMap;
 
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.transcode.ImageMagick;
 import com.pagesociety.util.FileInfo;
 import com.pagesociety.util.RandomGUID;
@@ -29,6 +30,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
+import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.S3.amazon.AWSAuthConnection;
 import com.pagesociety.web.module.S3.amazon.GetResponse;
 import com.pagesociety.web.module.S3.amazon.ListAllMyBucketsResponse;
@@ -39,13 +41,14 @@ import com.pagesociety.web.module.S3.amazon.Utils;
 import com.pagesociety.web.module.resource.IResourcePathProvider;
 
 
-public class PSS3PathProvider extends WebModule implements IResourcePathProvider
+public class PSS3PathProvider extends WebStoreModule implements IResourcePathProvider
 {
 	private static final String PARAM_S3_BUCKET			  		  = "s3-bucket";
 	private static final String PARAM_S3_API_KEY  				  = "s3-api-key";
 	private static final String PARAM_S3_SECRET_KEY  			  = "s3-secret-key";
 	private static final String PARAM_SCRATCH_DIRECTORY  		  = "scratch-directory";
 	private static final String PARAM_IMAGE_MAGICK_PATH   		  = "path-provider-image-magick-path";
+	private static final String S3_DELETE_QUEUE_NAME 			  = "s3-pp-delete-queue";
 	
 	protected String s3_bucket;
 	protected String s3_api_key;
@@ -58,6 +61,7 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
+		super.init(app, config);
 		s3_bucket	  = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_BUCKET, config);
 		s3_api_key    = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_API_KEY, config);
 		s3_secret_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_SECRET_KEY, config);
@@ -89,11 +93,25 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			image_magick_convert_cmd = image_magick_convert_cmd+".exe";
 		}
 		ImageMagick.setRuntimeExecPath(image_magick_convert_cmd);
+
 	}
 	
 	public void loadbang(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		start_scratch_directory_cleaner();
+		setup_delete_queue();
+		start_scratch_cleaner();
+		start_s3_delete_consumer();
+	}
+	
+	private void setup_delete_queue() throws InitializationException
+	{
+
+		try{
+			CREATE_QUEUE(S3_DELETE_QUEUE_NAME,128,64);
+		}catch(PersistenceException e)
+		{
+			throw new InitializationException("FAILED SETTING UP DELETE QUEUE ",e);
+		}
 	}
 	
 	private void init_bucket() throws InitializationException
@@ -135,27 +153,30 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 	/* deletes file pointed to by this token as well as all previews */
 	public void delete(String path_token) throws WebApplicationException
 	{
-		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
-		try {
-			String deletee_prefix = get_preview_file_prefix(path_token);
-			List<ListEntry>  delete_keys = list(deletee_prefix);
-			for(int i = 0;i < delete_keys.size();i++)
+		String deletee_prefix = get_preview_file_prefix(path_token);
+		List<ListEntry>  delete_keys = list(deletee_prefix);
+		for(int i = 0;i < delete_keys.size();i++)
+		{
+			String delete_key = delete_keys.get(i).key;
+			try{
+				store.enqueue(S3_DELETE_QUEUE_NAME, delete_key.getBytes(),true);
+			}catch(PersistenceException pe)
 			{
-				String delete_key = delete_keys.get(i).key;
-				System.out.println("DELETING "+delete_key+"FROM S3.");
-				Response r 		  =  conn.delete(s3_bucket, delete_key, null);
-				if(r.connection.getResponseCode() != r.connection.HTTP_NO_CONTENT)
-					throw new WebApplicationException("Failed S3 delete of "+s3_bucket+" "+path_token+" HTTP response code was "+r.connection.getResponseMessage());
+				//TODO: could sleep and retry here//
+				ERROR("FAILED ADDING "+delete_key+"TO S3 DELETE QUEUE.",pe);
 			}
-			
-		} catch (MalformedURLException e) {
-			ERROR(e);
-			throw new WebApplicationException("Malformed URL for S3 Delete: "+s3_bucket+" "+path_token);
-		} catch (IOException e) {
-			ERROR(e);
-			throw new WebApplicationException("IOError for S3 Delete: "+s3_bucket+" "+path_token);	
+			INFO("ADDED "+delete_key+"TO S3 DELETE QUEUE.");
+				
 		}
-
+		
+	}
+	
+	public void deleteFromS3(PSAWSAuthConnection conn,String path_token) throws MalformedURLException,IOException,WebApplicationException
+	{
+		Response r 		  =  conn.delete(s3_bucket, path_token, null);
+		if(r.connection.getResponseCode() != r.connection.HTTP_NO_CONTENT)
+			throw new WebApplicationException("Failed S3 delete of "+s3_bucket+" "+path_token+" HTTP response code was "+r.connection.getResponseMessage());		
+		INFO("DELETED "+path_token+" FROM S3.");
 	}
 	
 	public List<ListEntry> list(String prefix) throws WebApplicationException
@@ -249,11 +270,13 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 			Response pr = conn.streamingPut(s3_bucket, preview_key, pobj);
 			if(pr.connection.getResponseCode() != pr.connection.HTTP_OK)
 				throw new WebApplicationException("PROBLEM WRITNG PREVIEW TO S3 "+s3_bucket+" "+preview_key+" HTTP RESPONSE WAS "+pr.connection.getResponseCode());
+			
+			current_thumbnail_generators.remove(preview_key);
 			synchronized (lock) 
 			{			
 				lock.notifyAll();
 			}
-			current_thumbnail_generators.remove(preview_key);
+			
 			return base_s3_url+preview_key;
 		}catch(IOException ioe)
 		{
@@ -418,9 +441,9 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 		current_transfer_map.remove(path_token);
 	}
 
-	private static final int SCRATCH_CLEANER_INTERVAL   = (60 * 1000) * 15;//15 minutes...run every 15 minutes
-	private static final int SCRATCH_CLEANER_THRESHHOLD = (60 * 1000) * 60;//1 hour...delete ones older than this
-	private void start_scratch_directory_cleaner()
+	private static final int CLEANER_INTERVAL   		  = (60 * 1000) * 15;//15 minutes...run every 15 minutes
+	private static final int SCRATCH_DIRECTORY_THRESHHOLD = (60 * 1000) * 60;//1 hour...delete ones older than this
+	private void start_scratch_cleaner()
 	{
 		Thread t = new Thread()
 		{
@@ -430,7 +453,7 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 				{
 					try{
 						clean_scratch_directory();
-						Thread.sleep(SCRATCH_CLEANER_INTERVAL);
+						Thread.sleep(CLEANER_INTERVAL);
 					}catch(Exception e)
 					{
 						ERROR(e);
@@ -442,6 +465,28 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
 		t.start();
 	}
 
+	
+	private void start_s3_delete_consumer() 
+	{
+			Thread t = new Thread()
+			{
+
+				public void run()
+				{
+					PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
+					try{
+						String delete_key = new String(store.dequeue(S3_DELETE_QUEUE_NAME,true,true));
+						deleteFromS3(conn, delete_key);
+					}catch(Exception e)
+					{
+						ERROR(e);
+					}
+				}
+			};
+			t.setDaemon(true);
+			t.start();
+	}
+	
 	private void clean_scratch_directory()
 	{
 		do_clean_directory(new File(scratch_directory));
@@ -463,7 +508,7 @@ public class PSS3PathProvider extends WebModule implements IResourcePathProvider
  			}
  			else
  			{
- 				if(f.lastModified() + SCRATCH_CLEANER_THRESHHOLD < now )
+ 				if(f.lastModified() + SCRATCH_DIRECTORY_THRESHHOLD < now )
  					f.delete();
  				else//files are sorted with oldest first so we can break here//
  					break;
