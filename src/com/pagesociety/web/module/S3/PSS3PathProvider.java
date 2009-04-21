@@ -176,7 +176,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		Response r 		  =  conn.delete(s3_bucket, path_token, null);
 		if(r.connection.getResponseCode() != r.connection.HTTP_NO_CONTENT)
 			throw new WebApplicationException("Failed S3 delete of "+s3_bucket+" "+path_token+" HTTP response code was "+r.connection.getResponseMessage());		
-		INFO("DELETED "+path_token+" FROM S3.");
+		INFO("!!!!!!!!!!!!!!!!!!!!!!!!!!!DELETED "+path_token+" FROM S3.");
 	}
 	
 	public List<ListEntry> list(String prefix) throws WebApplicationException
@@ -473,15 +473,19 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 				public void run()
 				{
-					PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
-					try{
-						String delete_key = new String(store.dequeue(S3_DELETE_QUEUE_NAME,true,true));
-						deleteFromS3(conn, delete_key);
-					}catch(Exception e)
+					while(true)
 					{
-						ERROR(e);
+						PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
+						try{
+							String delete_key = new String(store.dequeue(S3_DELETE_QUEUE_NAME,true,true));
+							deleteFromS3(conn, delete_key);
+						}catch(Exception e)
+						{
+							ERROR(e);
+						}
 					}
 				}
+
 			};
 			t.setDaemon(true);
 			t.start();
