@@ -176,7 +176,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		Response r 		  =  conn.delete(s3_bucket, path_token, null);
 		if(r.connection.getResponseCode() != r.connection.HTTP_NO_CONTENT)
 			throw new WebApplicationException("Failed S3 delete of "+s3_bucket+" "+path_token+" HTTP response code was "+r.connection.getResponseMessage());		
-		INFO("!!!!!!!!!!!!!!!!!!!!!!!!!!!DELETED "+path_token+" FROM S3.");
+		INFO("!!!DELETED "+path_token+" FROM S3.");
 	}
 	
 	public List<ListEntry> list(String prefix) throws WebApplicationException
