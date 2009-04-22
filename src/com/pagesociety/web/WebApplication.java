@@ -465,4 +465,16 @@ public abstract class WebApplication
 		System.err.println("ERROR "+message);
 		e.printStackTrace();
 	}
+
+	public void applicationDestroyed()
+	{
+		System.out.println("APPLICATION "+_config.getName()+" IS ABOUT TO BE DESTROYED");
+		for(int i = 0;i < _module_list.size();i++)
+		{
+			Module m = _module_list.get(i);
+			m.onDestroy();
+		}
+	}
+	
+	
 }

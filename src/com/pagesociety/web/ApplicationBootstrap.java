@@ -65,5 +65,11 @@ public class ApplicationBootstrap extends HttpServlet
 		cfg.getServletContext().setAttribute(APPLICATION_ATTRIBUTE_NAME, application);
 		logger.info("Initialized servlet gateway with " + application);
 		logger.info("ServletGateway init complete");
+		
+	}
+	
+	public void destroy()
+	{
+		application.applicationDestroyed();
 	}
 }
