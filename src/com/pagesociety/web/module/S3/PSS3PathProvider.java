@@ -37,6 +37,7 @@ import com.pagesociety.web.module.S3.amazon.ListAllMyBucketsResponse;
 import com.pagesociety.web.module.S3.amazon.ListBucketResponse;
 import com.pagesociety.web.module.S3.amazon.ListEntry;
 import com.pagesociety.web.module.S3.amazon.Response;
+import com.pagesociety.web.module.S3.amazon.S3Object;
 import com.pagesociety.web.module.S3.amazon.Utils;
 import com.pagesociety.web.module.resource.IResourcePathProvider;
 
@@ -68,22 +69,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		s3_api_key    = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_API_KEY, config);
 		s3_secret_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_SECRET_KEY, config);
 		
-		 scratch_directory = GET_OPTIONAL_CONFIG_PARAM(PARAM_SCRATCH_DIRECTORY, config);
-		 if(scratch_directory == null)
-			 scratch_directory = new File(GET_MODULE_DATA_DIRECTORY(app),"scratch-dir").getAbsolutePath();
-		 try{
-			 File f = new File(scratch_directory);
-			 if(!f.exists())
-			 {
-				 INFO("CREATING SCRATCH DIRECTORY "+f.getAbsolutePath());
-				 f.mkdirs();
-			 }
-		 }catch(Exception e)
-		 {
-			 throw new InitializationException("PROBLEM CREATING SCRATCH DIRECTORY "+scratch_directory);
-		 }
-		 
+
+		init_scratch_directory(app, config);
 		init_bucket();
+		setup_crossdomain_file(app,config);
+		
 		image_magick_path = GET_REQUIRED_CONFIG_PARAM(PARAM_IMAGE_MAGICK_PATH, config);
 		base_s3_url   	  = "http://"+s3_bucket+".s3.amazonaws.com/";
 		
@@ -97,12 +87,53 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		ImageMagick.setRuntimeExecPath(image_magick_convert_cmd);
 
 	}
-	
+
 	public void loadbang(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		setup_delete_queue();
 		start_scratch_cleaner();
 		start_s3_delete_consumer();
+	}
+
+	public void init_scratch_directory(WebApplication app,Map<String,Object> config) throws InitializationException
+	{
+		 scratch_directory = GET_OPTIONAL_CONFIG_PARAM(PARAM_SCRATCH_DIRECTORY, config);
+		 if(scratch_directory == null)
+			 scratch_directory = new File(GET_MODULE_DATA_DIRECTORY(app),"scratch-dir").getAbsolutePath();
+		 try{
+			 File f = new File(scratch_directory);
+			 if(!f.exists())
+			 {
+				 INFO("CREATING SCRATCH DIRECTORY "+f.getAbsolutePath());
+				 f.mkdirs();
+			 }
+		 }catch(Exception e)
+		 {
+			 throw new InitializationException("PROBLEM CREATING SCRATCH DIRECTORY "+scratch_directory);
+		 }		
+	}
+
+	private void setup_crossdomain_file(WebApplication app,Map<String, Object> config) throws InitializationException
+	{
+		String crossdomain_file = 
+		"<cross-domain-policy>\n"+ 
+		"\t<allow-access-from domain=\"*\" />\n"+ 
+		"\t<site-control permitted-cross-domain-policies=\"all\"/>\n"+
+		"</cross-domain-policy>\n";
+		
+		try{
+			delete("crossdomain.xml");
+			File cross_domain_temp_file = new File(scratch_directory+File.separator+"crossdomain.xml");
+			FileOutputStream fos 		= new FileOutputStream(cross_domain_temp_file);
+			fos.write(crossdomain_file.getBytes());
+			fos.close();
+			putFile(cross_domain_temp_file);
+			INFO("PUT "+cross_domain_temp_file.getName()+" ON S3");
+		}catch(Exception e)
+		{
+			throw new InitializationException("FAILED SETTING UP CROSSDOMAIN FILE ",e);
+		}
+		
 	}
 	
 	private void setup_delete_queue() throws InitializationException
@@ -173,6 +204,34 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			}
 			INFO("ADDED "+delete_key+"TO S3 DELETE QUEUE.");
 				
+		}
+		
+	}
+	
+	public boolean fileExists(String path_token) throws WebApplicationException
+	{
+		PSAWSAuthConnection conn 	  = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
+		try{
+			return conn.checkKeyExists(s3_bucket, path_token);
+		}catch(Exception e)
+		{
+			throw new WebApplicationException("FAILED CHECKING IF "+path_token+" EXISTS.",e);
+		}
+	}
+	
+	public void putFile(File f) throws WebApplicationException
+	{
+		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
+		String filename = f.getName();
+		String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+		try{
+			PSS3Object pobj = new PSS3Object(new FileInputStream(f),f.length(),content_type,PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
+			Response pr = conn.streamingPut(s3_bucket, f.getName(), pobj);
+			if(pr.connection.getResponseCode() != pr.connection.HTTP_OK)
+				throw new WebApplicationException("PROBLEM WRITNG PREVIEW TO S3 "+s3_bucket+" "+filename+" HTTP RESPONSE WAS "+pr.connection.getResponseCode());	
+		}catch(Exception e)
+		{
+			throw new WebApplicationException("FAILED PUTTING "+filename+" TO S3");
 		}
 		
 	}
@@ -346,7 +405,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 			GetResponse r = conn.get(s3_bucket,path_token,null);
 			if(r.object == null)
-				throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
+				throw new WebApplicationException("TRYING TO GET FILE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
 			
 			File expanded_file = new File(scratch_directory,path_token);
 			FileOutputStream fos = new FileOutputStream(expanded_file);
@@ -425,7 +484,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	}
 
 	@Override
-	public void beginParse(String path_token) throws WebApplicationException {
+	public void beginParse(String path_token) throws WebApplicationException 
+	{
 		// TODO Auto-generated method stub
 		
 	}
