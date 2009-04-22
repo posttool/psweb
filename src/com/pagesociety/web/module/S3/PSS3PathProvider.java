@@ -127,7 +127,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			FileOutputStream fos 		= new FileOutputStream(cross_domain_temp_file);
 			fos.write(crossdomain_file.getBytes());
 			fos.close();
-			putFile(cross_domain_temp_file);
+			putFile(cross_domain_temp_file,"text/xml");
 			INFO("PUT "+cross_domain_temp_file.getName()+" ON S3");
 		}catch(Exception e)
 		{
@@ -151,7 +151,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	{
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 		try{
-		boolean bucket_exists = conn.checkBucketExists(s3_bucket);
+			boolean bucket_exists = conn.checkBucketExists(s3_bucket);
 		if(!bucket_exists)
 		{
 			INFO("...creating S3 bucket "+s3_bucket);
@@ -219,11 +219,13 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 	}
 	
-	public void putFile(File f) throws WebApplicationException
+	public void putFile(File f,String content_type) throws WebApplicationException
 	{
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 		String filename = f.getName();
-		String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+		if(content_type == null)
+			content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(f);
+		System.out.println("!!!!!!!!!!!!!!!!!!!!CONTENT TYPE IS "+content_type);
 		try{
 			PSS3Object pobj = new PSS3Object(new FileInputStream(f),f.length(),content_type,PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, f.getName(), pobj);
