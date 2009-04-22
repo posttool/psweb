@@ -225,7 +225,6 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		String filename = f.getName();
 		if(content_type == null)
 			content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(f);
-		System.out.println("!!!!!!!!!!!!!!!!!!!!CONTENT TYPE IS "+content_type);
 		try{
 			PSS3Object pobj = new PSS3Object(new FileInputStream(f),f.length(),content_type,PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, f.getName(), pobj);
