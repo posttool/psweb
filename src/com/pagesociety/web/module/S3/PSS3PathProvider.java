@@ -58,6 +58,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	
 	protected String image_magick_path;
 	protected String image_magick_convert_cmd;
+
+	protected static final Object DELETE_QUEUE_LOCK = new Object();
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
@@ -160,6 +162,10 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			String delete_key = delete_keys.get(i).key;
 			try{
 				store.enqueue(S3_DELETE_QUEUE_NAME, delete_key.getBytes(),true);
+				synchronized (DELETE_QUEUE_LOCK) 
+				{
+					DELETE_QUEUE_LOCK.notifyAll();
+				}
 			}catch(PersistenceException pe)
 			{
 				//TODO: could sleep and retry here//
@@ -443,6 +449,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	private static final int CLEANER_INTERVAL   		  = (60 * 1000) * 15;//15 minutes...run every 15 minutes
 	private static final int SCRATCH_DIRECTORY_THRESHHOLD = (60 * 1000) * 60;//1 hour...delete ones older than this
+
 	private void start_scratch_cleaner()
 	{
 		Thread t = new Thread()
@@ -466,20 +473,33 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	}
 
 	
+	private Thread delete_consumer_thread;
 	private void start_s3_delete_consumer() 
 	{
-			Thread t = new Thread()
+			delete_consumer_thread  = new Thread()
 			{
 
 				public void run()
 				{
+					PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 					while(true)
 					{
-						PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 						try{
-							String delete_key = new String(store.dequeue(S3_DELETE_QUEUE_NAME,true,true));
-							deleteFromS3(conn, delete_key);
-						}catch(Exception e)
+							byte[] delete_key_b = store.dequeue(S3_DELETE_QUEUE_NAME,true,false);
+							if(delete_key_b == null)
+							{
+								synchronized (DELETE_QUEUE_LOCK)
+								{
+									DELETE_QUEUE_LOCK.wait();
+								}
+							}
+							else
+							{
+								String delete_key = new String(delete_key_b);
+								deleteFromS3(conn, delete_key);
+							}
+						}
+						catch(Exception e)
 						{
 							ERROR(e);
 						}
@@ -487,8 +507,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				}
 
 			};
-			t.setDaemon(true);
-			t.start();
+			delete_consumer_thread.setDaemon(true);
+			delete_consumer_thread.start();
 	}
 	
 	private void clean_scratch_directory()
