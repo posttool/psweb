@@ -216,4 +216,10 @@ public abstract class Module
 	{
 		attributes.add(att);
 	}
+	
+	
+	public void onDestroy()
+	{
+		//do nothing by default
+	}
 }
