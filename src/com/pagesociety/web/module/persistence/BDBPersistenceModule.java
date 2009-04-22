@@ -196,5 +196,14 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		store.deleteBackup(fullbackup_token);
 	}
 
-	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		try {
+			store.close();
+		} catch (PersistenceException e) {
+			ERROR("FAILED CLOSING STORE "+store);
+			e.printStackTrace();
+		}
+	}
 }
