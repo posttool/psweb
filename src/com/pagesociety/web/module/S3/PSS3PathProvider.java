@@ -70,7 +70,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		
 		 scratch_directory = GET_OPTIONAL_CONFIG_PARAM(PARAM_SCRATCH_DIRECTORY, config);
 		 if(scratch_directory == null)
-			 scratch_directory = System.getProperty("java.io.tmpdir");
+			 scratch_directory = new File(GET_MODULE_DATA_DIRECTORY(app),"scratch-dir").getAbsolutePath();
 		 try{
 			 File f = new File(scratch_directory);
 			 if(!f.exists())
@@ -130,9 +130,9 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 
 		ListAllMyBucketsResponse my_buckets = conn.listAllMyBuckets(null);
-		INFO("FOLLOWING S3 BUCKETS ARE ASSOCIATED WITH YOUR AWS ACCOUNT:\n");
+		INFO("FOLLOWING S3 BUCKETS ARE ASSOCIATED WITH YOUR AWS ACCOUNT:");
 		for(int i = 0;i < my_buckets.entries.size();i++)
-			INFO("\t"+my_buckets.entries.get(i)+"\n");
+			INFO("\t"+my_buckets.entries.get(i));
 		}catch(Exception e)
 		{
 			ERROR(e);
