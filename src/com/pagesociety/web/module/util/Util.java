@@ -1,7 +1,12 @@
 package com.pagesociety.web.module.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.Adler32;
+import java.util.zip.CheckedInputStream;
 
 import com.pagesociety.util.RandomGUID;
 
@@ -36,5 +41,22 @@ public class Util
 	public static String getGUID()
 	{
 		return RandomGUID.getGUID();
+	}
+	
+	
+	public static long getFileChecksum(File f)
+	{
+		long checksum = -1;
+	    try {
+	        // Compute Adler-32 checksum
+	        CheckedInputStream cis = new CheckedInputStream(
+	            new FileInputStream(f), new Adler32());
+	        byte[] tempBuf = new byte[128];
+	        while (cis.read(tempBuf) >= 0) {
+	        }
+	        checksum = cis.getChecksum().getValue();
+	    } catch (IOException e) {
+	    }
+	    return checksum;
 	}
 }
