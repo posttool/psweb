@@ -58,7 +58,7 @@ public class ResourceModule extends WebStoreModule
 	
 	private File				 	upload_temp_dir;
 	private long				 	upload_max_file_size;
-	private IResourcePathProvider 	path_provider;
+	public    IResourcePathProvider 	path_provider;
 	protected IResourceGuard		 	guard;
 
 	/* look at the useage of this. this is a trempory work around to let
@@ -606,7 +606,7 @@ public class ResourceModule extends WebStoreModule
 		return resource;
 	}
 	
-	private Entity do_update_resource(MultipartForm upload,Entity resource,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
+	protected Entity do_update_resource(MultipartForm upload,Entity resource,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
 		//DONT NEED THIS ANYMORE SINCE THE STREAM SHOULD WRITE RIGHT OVER THE FILE
 		// path_provider.delete((String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN));
