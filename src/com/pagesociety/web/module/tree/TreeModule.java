@@ -535,6 +535,7 @@ public class TreeModule extends WebStoreModule
 			return;
 		else
 		{
+			parent = EXPAND(parent);
 			FILL_REF(parent, TREE_NODE_FIELD_DATA);
 			return_path.add(parent);
 			getPathToRoot(parent, return_path);
