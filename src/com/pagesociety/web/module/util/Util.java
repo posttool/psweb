@@ -47,6 +47,8 @@ public class Util
 	public static long getFileChecksum(File f)
 	{
 		long checksum = -1;
+		if (f==null)
+				return checksum;
 	    try {
 	        // Compute Adler-32 checksum
 	        CheckedInputStream cis = new CheckedInputStream(
