@@ -70,9 +70,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		s3_secret_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_SECRET_KEY, config);
 		
 
-		init_scratch_directory(app, config);
-		init_bucket();
-		setup_crossdomain_file(app,config);
+
+
 		
 		image_magick_path = GET_REQUIRED_CONFIG_PARAM(PARAM_IMAGE_MAGICK_PATH, config);
 		base_s3_url   	  = "http://"+s3_bucket+".s3.amazonaws.com/";
@@ -91,8 +90,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	public void loadbang(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		setup_delete_queue();
-		start_scratch_cleaner();
+		init_bucket();
+		init_scratch_directory(app, config);
+		setup_crossdomain_file(app,config);
 		start_s3_delete_consumer();
+		start_scratch_cleaner();
 	}
 
 	public void init_scratch_directory(WebApplication app,Map<String,Object> config) throws InitializationException
@@ -131,6 +133,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			INFO("PUT "+cross_domain_temp_file.getName()+" ON S3");
 		}catch(Exception e)
 		{
+			e.printStackTrace();
 			throw new InitializationException("FAILED SETTING UP CROSSDOMAIN FILE ",e);
 		}
 		
