@@ -18,6 +18,7 @@ import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.ApplicationBootstrap;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.config.UrlMapInitParams;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.exception.WebApplicationException;
 
@@ -180,12 +181,12 @@ public class HttpRequestRouter extends HttpServlet
 		{
 			UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
 			String path = (String)url_mapped_request[1];
-			if (url_map_info.isSecure() && !completeUrl.startsWith(_web_url_secure))
+			if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
 			{
 				response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
 				return;
 			}
-			else if (!url_map_info.isSecure() && !completeUrl.startsWith(_web_url))
+			else if (url_map_info.isSecure()==UrlMapInitParams.NOT_SECURE && !completeUrl.startsWith(_web_url))
 			{
 				response.sendRedirect( get_path(_web_url,getContextPathEtc(request),uctx) );
 				return;

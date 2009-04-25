@@ -14,11 +14,16 @@ public class UrlMapInitParams
 	public static final String URL_KEY = "url";
 	public static final String SECURE_ATTRIBUTE_NAME = "secure";
 	public static final String SECURE_ATTRIBUTE_TRUE_VALUE = "true";
+	public static final String SECURE_ATTRIBUTE_FALSE_VALUE = "false";
 	public static final String TEMPLATE_PATH_KEY = "template-path";
 	public static final String DATA_PROVIDER_KEY = "data-provider";
 	public static final String TYPE_ATTRIBUTE_KEY = "type";
 	public static final String TYPE_ATTRIBUTE_VALUE_ERROR = "error";
 	public static final String TYPE_ATTRIBUTE_VALUE_MAINTENANCE = "maintenance";
+	public static final int UNSPECIFIED_SECURITY = 0;
+	public static final int SECURE = 1;
+	public static final int NOT_SECURE = 2;
+
 	private List<UrlMapInfo> _url_map_info;
 	private UrlMapInfo _error;
 	private UrlMapInfo _maintenance;
@@ -32,10 +37,11 @@ public class UrlMapInitParams
 			Element url_map = (Element) url_mappings.item(i);
 			String secure_value = url_map.getAttribute(SECURE_ATTRIBUTE_NAME);
 			boolean secure = secure_value.equals(SECURE_ATTRIBUTE_TRUE_VALUE);
+			boolean not_secure = secure_value.equals(SECURE_ATTRIBUTE_FALSE_VALUE);
 			String url = getParameterValue(URL_KEY, url_map);
 			String template_path = getParameterValue(TEMPLATE_PATH_KEY, url_map);
 			String type = url_map.getAttribute(TYPE_ATTRIBUTE_KEY);
-			UrlMapInfo map = new UrlMapInfo(url, template_path, secure);
+			UrlMapInfo map = new UrlMapInfo(url, template_path, secure ? SECURE : not_secure ? NOT_SECURE : UNSPECIFIED_SECURITY);
 			_url_map_info.add(map);
 			if (type.equals(TYPE_ATTRIBUTE_VALUE_ERROR))
 			{
@@ -83,15 +89,15 @@ public class UrlMapInitParams
 	{
 		private String url;
 		private String templatePath;
-		private boolean secure;
+		private int secure;
 		private Pattern urlPattern;
 
-		public UrlMapInfo(String url, String templatePath, boolean secure)
+		public UrlMapInfo(String url, String templatePath, int security_type)
 		{
 			this.url = url;
 			this.urlPattern = Pattern.compile(url);
 			this.templatePath = templatePath;
-			this.secure = secure;
+			this.secure = security_type;
 		}
 
 		public String getUrl()
@@ -104,7 +110,7 @@ public class UrlMapInitParams
 			return templatePath;
 		}
 
-		public boolean isSecure()
+		public int isSecure()
 		{
 			return secure;
 		}
