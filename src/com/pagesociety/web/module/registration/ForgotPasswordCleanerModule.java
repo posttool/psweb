@@ -30,7 +30,8 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 	private int					forgot_password_prune_period;//hours
 	private int					forgot_password_expiration_threshold;
 	
-	
+	private Thread cleaner_thread;
+	private boolean cleaning;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
@@ -48,17 +49,22 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 	
 	//// E N D         M O D U L E       F U N C T I O N S //////////
 	
+	private Object CLEANING_LOCK = new Object();
 	private void start_cleaner()
 	{
-		Thread t = new Thread()
+		cleaning = true;
+		cleaner_thread = new Thread()
 		{
 			
 			public void run()
 			{
-				while(true)
+				while(cleaning)
 				{
 					try{
-						clean_unactivated_forgot_passwords();
+						synchronized (CLEANING_LOCK)
+						{
+							clean_unactivated_forgot_passwords();	
+						}
 					}catch(Exception e)
 					{
 						e.printStackTrace();
@@ -67,14 +73,13 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 						Thread.sleep(forgot_password_prune_period);//in hours
 					}catch(InterruptedException ie)
 					{
-						
-						ie.printStackTrace();
+							
 					}
 				}
 			}
 		};
-		t.setDaemon(true);
-		t.start();
+		cleaner_thread.setDaemon(true);
+		cleaner_thread.start();
 	}
 
 	
@@ -115,5 +120,16 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 	{
 		super.system_init(app, config);
 		//EVOLVE_IGNORE_INDEX(ForgotPasswordModule.OUTSTANDING_FORGOT_PASSWORD_ENTITY,INDEX_BY_DATE_CREATED);
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		synchronized (CLEANING_LOCK)
+		{
+			cleaning = false;
+			cleaner_thread.interrupt();			
+		}
+
 	}
 }

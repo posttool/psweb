@@ -35,6 +35,8 @@ public class RegistrationCleanerModule extends WebStoreModule
 	private int					registration_prune_period;//hours
 	private int					registration_expiration_threshold;//hours
 	
+	private Thread cleaner_thread;
+	private boolean cleaning;
 	
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -62,17 +64,22 @@ public class RegistrationCleanerModule extends WebStoreModule
 	
 	//// E N D       M O D U L E      F U N C T I O N S //////////
 	
+	private Object CLEAN_LOCK = new Object();
 	private void start_cleaner()
 	{
-		Thread t = new Thread()
+		cleaner_thread  = new Thread()
 		{
 			
 			public void run()
 			{
-				while(true)
+				while(cleaning)
 				{
 					try{
-						clean_unactivated_registrations();
+						synchronized (CLEAN_LOCK) 
+						{
+							clean_unactivated_registrations();							
+						}
+
 					}catch(Exception e)
 					{
 						e.printStackTrace();
@@ -81,13 +88,13 @@ public class RegistrationCleanerModule extends WebStoreModule
 						Thread.sleep(registration_prune_period);//in hours
 					}catch(InterruptedException ie)
 					{
-						ie.printStackTrace();
+						//ie.printStackTrace();
 					}
 				}
 			}
 		};
-		t.setDaemon(true);
-		t.start();
+		cleaner_thread.setDaemon(true);
+		cleaner_thread.start();
 	}
 
 	
@@ -130,11 +137,19 @@ public class RegistrationCleanerModule extends WebStoreModule
 		DEFINE_ENTITY_INDEX(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,INDEX_BY_DATE_CREATED, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,WebStoreModule.FIELD_DATE_CREATED);
 	}
 	
-	//NEED TO DO THIS EVOLVE IGNORE STUFF WHEN YOU ARE ADDING FIELDS OR INDEXES BEHIND THE SCENES
-	//COULD BE ADDRESSED FURTHER AT SOME POINT
 	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);
-		//EVOLVE_IGNORE_INDEX(RegistrationModule.OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY,INDEX_BY_DATE_CREATED);
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		synchronized (CLEAN_LOCK)
+		{
+			cleaning = false;
+			cleaner_thread.interrupt();			
+		}
+
 	}
 }
