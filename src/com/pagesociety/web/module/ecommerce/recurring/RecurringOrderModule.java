@@ -1050,7 +1050,13 @@ public class RecurringOrderModule extends ResourceModule
 			updateRecurringOrderStatus(failed_order, ORDER_STATUS_CLOSED);				
 			Entity user = (Entity)failed_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 			MODULE_LOG( 2,"reaping order.grace period for failed billing expired: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
-			user_module.deleteUser(user);
+			try{
+				user_module.deleteUser(user);
+			}catch(Exception e)
+			{
+				ERROR(e);
+				MODULE_LOG("FAILED CHUCKING USER IN check_chuck_billing_failed_user: "+user);
+			}
 		}
 		else
 		{
@@ -1165,8 +1171,13 @@ public class RecurringOrderModule extends ResourceModule
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);				
 			Entity user = (Entity)trial_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 			MODULE_LOG( 2,"reaping trial for user: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
-			user_module.deleteUser(user);
-			
+			try{
+				user_module.deleteUser(user);
+			}catch(Exception e)
+			{
+				ERROR(e);
+				MODULE_LOG("FAILED DELETING TRIAL USER in check_chuck_trial_user: "+user);
+			}
 		}
 		else
 		{
