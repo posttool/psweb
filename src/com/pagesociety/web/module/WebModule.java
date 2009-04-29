@@ -233,12 +233,12 @@ public abstract class WebModule extends Module
 	}
 	
 	
-	protected void DISPATCH_EVENT(int event_type,Object... event_context)
+	protected void DISPATCH_EVENT(int event_type,Object... event_context) throws WebApplicationException
 	{
 		dispatchEvent(new ModuleEvent(event_type,event_context));
 	}
 	
-	protected void DISPATCH_EVENT(int event_type,Map<String,Object> event_context)
+	protected void DISPATCH_EVENT(int event_type,Map<String,Object> event_context) throws WebApplicationException
 	{
 		dispatchEvent(new ModuleEvent(event_type,event_context));
 	}
