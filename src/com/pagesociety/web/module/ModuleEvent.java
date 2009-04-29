@@ -31,4 +31,10 @@ public class ModuleEvent
 	{
 		event_context.put(prop,val);
 	}
+	
+	
+	public String toString()
+	{
+		return "EVENT: "+type+"\nCONTEXT: "+event_context;
+	}
 }
