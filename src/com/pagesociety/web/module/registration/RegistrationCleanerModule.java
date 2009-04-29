@@ -119,7 +119,7 @@ public class RegistrationCleanerModule extends WebStoreModule
 				//System.out.println("ABOUT TO DELETE "+user);
 				user_module.deleteUser(user);
 				DELETE(old_record);
-			} catch (PersistenceException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
