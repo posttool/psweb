@@ -475,7 +475,7 @@ public class RecurringOrderModule extends ResourceModule
 					do_monthly_billing(recurring_order,billing_record);				
 				}catch(BillingGatewayException bge2)
 				{
-					log_order_monthly_bill_failed(recurring_order, bge2.getAmount());
+					log_order_billing_failed(recurring_order, bge2.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD);	
 					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
 					send_billing_failed_email(recurring_order, null);
@@ -492,7 +492,7 @@ public class RecurringOrderModule extends ResourceModule
 					do_catchup_billing(recurring_order,billing_record);
 				}catch(BillingGatewayException bge2)
 				{
-					log_order_monthly_bill_failed(recurring_order, bge2.getAmount());
+					log_order_billing_failed(recurring_order, bge2.getAmount());
 					updateRecurringOrderStatus(recurring_order, status);	
 					send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
 					send_billing_failed_email(recurring_order, "");
@@ -853,7 +853,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					ERROR(bge);
 					MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order+" "+order_user);
-					log_order_monthly_bill_failed(recurring_order, bge.getAmount());
+					log_order_billing_failed(recurring_order, bge.getAmount());
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD);	
 					//update the next billing date so we can keep track of how many times it failed//
 					Date now = new Date();
@@ -940,6 +940,7 @@ public class RecurringOrderModule extends ResourceModule
 						RECURRING_ORDER_FIELD_LAST_BILL_DATE,now,
 						RECURRING_ORDER_FIELD_NEXT_BILL_DATE,calculate_next_bill_date(recurring_order, now),
 					   RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,balance);
+				log_order_billing_failed(recurring_order, amount);
 				check_billing_failed_grace_period_expired(now, recurring_order);
 				
 			}catch(PersistenceException pe2)
@@ -1022,6 +1023,7 @@ public class RecurringOrderModule extends ResourceModule
 						RECURRING_ORDER_FIELD_LAST_BILL_DATE,now,
 						RECURRING_ORDER_FIELD_NEXT_BILL_DATE,calculate_next_bill_date(recurring_order, now),
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,balance);
+				log_order_billing_failed(recurring_order, amount);
 				check_chuck_billing_failed_user(now, recurring_order);
 				
 			}catch(PersistenceException pe2)
@@ -1277,7 +1279,7 @@ public class RecurringOrderModule extends ResourceModule
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for monthly fee of "+amount+".", recurring_order);
 	}
 	
-	private void log_order_monthly_bill_failed(Entity recurring_order,double amount) throws PersistenceException
+	private void log_order_billing_failed(Entity recurring_order,double amount) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_FAILED, "Order "+recurring_order.getId()+" failed monthly billing for the amount of "+amount+".", recurring_order);
 	}
