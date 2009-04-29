@@ -388,7 +388,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity Logout(UserApplicationContext uctx) throws PersistenceException
+	public Entity Logout(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
 		if(!PermissionsModule.IS_LOGGED_IN(user))
@@ -413,7 +413,7 @@ public class UserModule extends WebStoreModule
 		return deleteUser(target);
 	}
 	
-	public Entity deleteUser(Entity user)throws PersistenceException
+	public Entity deleteUser(Entity user)throws PersistenceException,WebApplicationException
 	{
 		System.out.println("!!! DELETEING USER "+user);
 		long id = user.getId();
