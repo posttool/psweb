@@ -623,6 +623,11 @@ public class RecurringOrderModule extends ResourceModule
 		return getTransactionHistoryByUser(target_user,offset,page_size);
 	}
 	
+	public List<Entity> getTransactionHistoryByUser(Entity user) throws PersistenceException
+	{
+		Query q = logger_module.getLogMessagesByUserQ(user);
+		return QUERY(q).getEntities();
+	}
 	
 	public PagingQueryResult getTransactionHistoryByUser(Entity user,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
@@ -632,6 +637,8 @@ public class RecurringOrderModule extends ResourceModule
 		q.orderBy(FIELD_LAST_MODIFIED, Query.DESC);
 		return PAGING_QUERY(q);
 	}
+	
+	
 	
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
