@@ -9,6 +9,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SlotException;
+import com.pagesociety.web.exception.WebApplicationException;
 
 
 public abstract class Module
@@ -153,7 +154,7 @@ public abstract class Module
 		_event_listeners.remove(listener);
 	}
 	
-	public void dispatchEvent(ModuleEvent e)
+	public void dispatchEvent(ModuleEvent e) throws WebApplicationException
 	{
 		int s = _event_listeners.size();
 		for(int i = 0;i < s;i++)
@@ -164,6 +165,7 @@ public abstract class Module
 			}catch(Exception ee)
 			{
 				getApplication().ERROR(ee);
+				throw new WebApplicationException("EVENT FAILED:",ee);
 			}
 		}
 	}
