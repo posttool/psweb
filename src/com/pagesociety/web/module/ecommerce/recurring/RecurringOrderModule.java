@@ -728,17 +728,24 @@ public class RecurringOrderModule extends ResourceModule
 		return c1.getTime();
 	}
 	
-	
+	Thread billing_thread;
+	private boolean billing_thread_running;
+	private Object BILLING_LOCK = new Object();
 	private void start_billing_thread()
 	{
-		Thread t = new Thread(){
+		billing_thread_running = true;
+		billing_thread = new Thread(){
 			public void run()
 			{
-				while(true)
+				while(billing_thread_running)
 				{
 					
 					MODULE_LOG(0,"\nSTARTING BILLING CYCLE.");
-					billing_thread_run();
+					synchronized (BILLING_LOCK)
+					{
+						billing_thread_run();	
+					}
+					
 					MODULE_LOG(0,"BILLING CYCLE COMPLETE.\n");
 					
 					
@@ -746,14 +753,14 @@ public class RecurringOrderModule extends ResourceModule
 						Thread.sleep(billing_thread_interval*1000);//TODO: right now this is in seconds
 					}catch(InterruptedException ie)
 					{
-						ie.printStackTrace();
+						//ie.printStackTrace();
 						continue;
 					}
 				}
 			}
 		};
-		t.setDaemon(true);
-		t.start();
+		billing_thread.setDaemon(true);
+		billing_thread.start();
 	}
 	
 	private void billing_thread_run()
@@ -1303,6 +1310,19 @@ public class RecurringOrderModule extends ResourceModule
 	public boolean isConfigured()
 	{
 		return billing_module.isConfigured();
+	}
+	
+
+	public void onDestroy()
+	{
+		super.onDestroy();
+		
+		synchronized (BILLING_LOCK) 
+		{
+			billing_thread_running = false;
+			billing_thread.interrupt();			
+		}
+
 	}
 	
 	///BEGIN DDL STUFF
