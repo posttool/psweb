@@ -539,11 +539,15 @@ public class RecurringOrderModule extends ResourceModule
 			case ORDER_STATUS_INIT:
 				break;
 			case ORDER_STATUS_OPEN:
-				MODULE_LOG("OPENED ORDER SUCCESSFULLY FOR USER:"+order_user);
+				MODULE_LOG("$+ OPENED ORDER SUCCESSFULLY FOR USER:"+order_user);
 				UPDATE(recurring_order,
 						RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS,null,
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,0.0);
 				log_order_opened(recurring_order);
+				if(old_status == ORDER_STATUS_INIT ||
+				   old_status == ORDER_STATUS_IN_TRIAL_PERIOD)
+					send_welcome_email(recurring_order,null);
+
 				break;
 			case ORDER_STATUS_CLOSED:
 				MODULE_LOG(0,"CLOSING RECURRING ORDER "+recurring_order.getId()+" FOR USER "+order_user);
@@ -1211,6 +1215,26 @@ public class RecurringOrderModule extends ResourceModule
 
 	}
 
+	private void send_welcome_email(Entity recurring_order,String additional_info)
+	{		
+		Entity user = null;
+		String user_email = null;
+		try{
+			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			Map<String,Object> template_data = new HashMap<String, Object>();
+			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+			if(additional_info == null)
+				template_data.put("additional_information","");
+			else
+				template_data.put("additional_information",additional_info);
+			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			email_module.sendEmail(null, new String[]{user_email}, "Welcome to Postera.com.", "welcome.fm", template_data);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			MODULE_LOG("EMAIL MODULE FAILED SENDING WELCOME EMAIL TO USER "+user.getId()+" "+user_email);
+		}
+	}
 	
 	private void send_billing_failed_email(Entity recurring_order,String additional_info)
 	{		
@@ -1251,7 +1275,7 @@ public class RecurringOrderModule extends ResourceModule
 		}catch(Exception e)
 		{
 			e.printStackTrace();
-			MODULE_LOG("EMAIL MODULE FAILED SENDING BILLING FAILED EMAIL TO USER "+user.getId()+" "+user_email);
+			MODULE_LOG("EMAIL MODULE FAILED SENDING BILLING FAILED GRACE PERIOD EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
 
@@ -1274,7 +1298,7 @@ public class RecurringOrderModule extends ResourceModule
 		}catch(Exception e)
 		{
 			e.printStackTrace();
-			MODULE_LOG("EMAIL MODULE FAILED SENDING BILLING FAILED EMAIL TO USER "+user.getId()+" "+user_email);
+			MODULE_LOG("EMAIL MODULE FAILED SENDING TRIAL EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
 	
