@@ -543,15 +543,23 @@ public class RecurringOrderModule extends ResourceModule
 				UPDATE(recurring_order,
 						RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS,null,
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,0.0);
-				log_order_opened(recurring_order);
+
 				if(old_status == ORDER_STATUS_INIT ||
 				   old_status == ORDER_STATUS_IN_TRIAL_PERIOD)
+				{
 					send_welcome_email(recurring_order,null);
-
+					log_order_opened(recurring_order,false);
+				}
+				else
+					log_order_opened(recurring_order,true);
 				break;
 			case ORDER_STATUS_CLOSED:
 				MODULE_LOG(0,"CLOSING RECURRING ORDER "+recurring_order.getId()+" FOR USER "+order_user);
 				log_order_closed(recurring_order);
+				if(old_status == ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED)
+					send_account_closed_due_to_grace_period_expired_email(recurring_order,null);
+				else if(old_status == ORDER_STATUS_OPEN)
+					send_account_closed_email(recurring_order, null);
 				break;
 			case ORDER_STATUS_NO_PREFERRED_BILLING_RECORD:
 				MODULE_LOG("NO PREFERRED BILLING RECORD FOR USER:"+order_user+" WHEN TRYING TO OPEN RECURRING ORDER "+recurring_order.getId());
@@ -1279,6 +1287,48 @@ public class RecurringOrderModule extends ResourceModule
 		}
 	}
 
+	public void send_account_closed_due_to_grace_period_expired_email(Entity recurring_order,String additional_info)
+	{
+		Entity user = null;
+		String user_email = null;
+		try{
+			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			Map<String,Object> template_data = new HashMap<String, Object>();
+			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+			template_data.put("billing_failed_genesis",String.valueOf(recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS)));
+			if(additional_info == null)
+				template_data.put("additional_information","");
+			else
+				template_data.put("additional_information",additional_info);
+			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			email_module.sendEmail(null, new String[]{user_email}, "Your Postera.com account has been closed.", "account-closed-grace-period-expired.fm", template_data);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			MODULE_LOG("EMAIL MODULE FAILED SENDING ACCOUNT CLOSED GRACE PERIOD EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
+		}
+	}
+	
+	public void send_account_closed_email(Entity recurring_order,String additional_info)
+	{
+		Entity user = null;
+		String user_email = null;
+		try{
+			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			Map<String,Object> template_data = new HashMap<String, Object>();
+			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+			if(additional_info == null)
+				template_data.put("additional_information","");
+			else
+				template_data.put("additional_information",additional_info);
+			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			email_module.sendEmail(null, new String[]{user_email}, "Your Postera.com account has been closed.", "account-closed.fm", template_data);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			MODULE_LOG("EMAIL MODULE FAILED SENDING ACCOUNT CLOSED GRACE PERIOD EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
+		}
+	}
 	
 	private void send_trial_expired_email(Entity recurring_order,String additional_info)
 	{
@@ -1313,9 +1363,14 @@ public class RecurringOrderModule extends ResourceModule
 	private static final int LOG_TRIAL_STARTED				= 0x80;	
 	private static final int LOG_TRIAL_EXPIRED	 			= 0x90;	
 
-	private void log_order_opened(Entity recurring_order) throws PersistenceException
+	private void log_order_opened(Entity recurring_order,boolean reopend) throws PersistenceException
 	{
-		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_OPENED, "Order "+recurring_order.getId()+" opened OK.", recurring_order);
+		String msg;
+		if(reopend)
+			msg = "reopened";
+		else
+			msg = "opened";
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_OPENED, "Order "+recurring_order.getId()+" "+msg+" OK.", recurring_order);
 	}
 	
 	private void log_order_suspended(Entity recurring_order,int old_status) throws PersistenceException
