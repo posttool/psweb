@@ -29,7 +29,7 @@ public class BillingModule extends WebStoreModule
 	//think any really do. they are not stored with the order//
 	private static final String SLOT_ENCRYPTION_MODULE  	 = "encryption-module"; 
 	private static final String SLOT_BILLING_GATEWAY_MODULE  = "billing-gateway"; 
-	private static final String SLOT_BILLING_GUARD_MODULE  		 = "billing-guard"; 
+	private static final String SLOT_BILLING_GUARD_MODULE  	 = "billing-guard"; 
 
 	IBillingGateway 	billing_gateway;
 	IBillingGuard   	guard;
@@ -112,11 +112,12 @@ public class BillingModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canCreateBillingRecord(user,user));
 		
+		exp_year = 			   validate_and_normalize_year(exp_year);
 		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,preferred);
 	
 	}
 	
-	public void validateBillingRecord(Entity billing_record) throws BillingGatewayException
+	public void validateBillingRecord(Entity billing_record) throws BillingGatewayException,WebApplicationException
 	{
 		   String first_name      = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME);
 		   String middle_initial  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL);
@@ -131,6 +132,7 @@ public class BillingModule extends WebStoreModule
 		   String cc_no  		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO);
 		   int exp_month          = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH);
 		   int exp_year           = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR);
+		   exp_year = 			   validate_and_normalize_year(exp_year);
 		   billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 	}
 	
@@ -169,6 +171,14 @@ public class BillingModule extends WebStoreModule
 	}
 			  
 	
+	private int validate_and_normalize_year(int year)  throws WebApplicationException
+	{	
+		System.out.println("YEAR IS "+year);
+		if(year < 2009)
+			throw new WebApplicationException("PLEASE PROVIDE A VALID FOUR DIGIT YEAR. e.g. 2011");
+		return year;
+	}
+
 	@Export
 	public Entity UpdateBillingRecord(UserApplicationContext uctx,Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
@@ -213,6 +223,7 @@ public class BillingModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		GUARD(guard.canUpdateBillingRecord(user,user));
 		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
+		exp_year 			  = validate_and_normalize_year(exp_year);
 		return updateBillingRecord(billing_record,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);
 	  }
 	
