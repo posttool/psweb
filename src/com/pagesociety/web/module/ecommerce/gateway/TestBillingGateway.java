@@ -87,11 +87,11 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 
 		
 	/* Transaction sales are submitted and immediately flagged for settlement.*/
-	private static int num_sales = 0;
+	
 	public BillingGatewayResponse doSale(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
-		num_sales++;			
-		if(num_sales % 4 == 0)
+		double d = Math.random();
+		if(d > 0.85)
 			throw new BillingGatewayException("FAILED BILLING BECAUSE YOU ARE IN THE CYCLE OF FAILURE.");
 
 		BillingGatewayResponse response = new BillingGatewayResponse();
