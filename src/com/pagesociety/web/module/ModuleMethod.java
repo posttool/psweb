@@ -159,7 +159,7 @@ public class ModuleMethod
 				continue;
 			if (!compatible_classes(arg.getClass(),ptypes[i]) && !compatible_classes(ptypes[i], arg.getClass()))
 			{
-				System.out.println("NON COMPATIBLE CLASSES FOR METHOD SIG. "+arg.getClass().getSimpleName()+" "+ptypes[i].getSimpleName());
+				System.out.println(method.getName()+" NON COMPATIBLE CLASSES FOR METHOD SIG. "+arg.getClass().getSimpleName()+" "+ptypes[i].getSimpleName());
 				return false;
 			}
 		}
