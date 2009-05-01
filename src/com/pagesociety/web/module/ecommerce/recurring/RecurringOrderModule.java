@@ -1299,12 +1299,21 @@ public class RecurringOrderModule extends ResourceModule
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for monthly fee of "+amount+".", recurring_order);
 	}
 	
+	private void log_order_catchup_bill_ok(Entity recurring_order,double amount) throws PersistenceException
+	{
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for fee of "+roundDouble(amount,2)+".", recurring_order);
+	}
+	
 	private void log_order_billing_failed(Entity recurring_order,double amount) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_FAILED, "Order "+recurring_order.getId()+" failed monthly billing for the amount of "+amount+".", recurring_order);
 	}
 
-	
+	public static final double roundDouble(double d, int places) {
+        return Math.round(d * Math.pow(10, (double) places)) / Math.pow(10,
+            (double) places);
+    }
+
 	public int getTrialPeriodInDays()
 	{
 		return trial_period_in_days;
