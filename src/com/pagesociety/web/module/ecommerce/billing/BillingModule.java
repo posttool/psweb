@@ -176,7 +176,6 @@ public class BillingModule extends WebStoreModule
 	
 	private int validate_and_normalize_year(int year)  throws WebApplicationException
 	{	
-		System.out.println("YEAR IS "+year);
 		if(year < 2009)
 			throw new WebApplicationException("PLEASE PROVIDE A VALID FOUR DIGIT YEAR. e.g. 2011");
 		return year;
