@@ -1461,7 +1461,12 @@ public class RecurringOrderModule extends ResourceModule
 			billing_thread_running = false;
 			billing_thread.interrupt();			
 		}
-
+		try{
+			billing_thread.join();
+		}catch(InterruptedException ie)
+		{
+			ie.printStackTrace();
+		}
 	}
 	
 	///BEGIN DDL STUFF

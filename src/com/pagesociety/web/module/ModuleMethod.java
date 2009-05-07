@@ -28,7 +28,7 @@ public class ModuleMethod
 	private String[] pnames;
 	private Class<?>[] exceptionTypes;
 	private Class<?> returnType;
-
+	private boolean transaction_protected;
 	
 
 	public void init(Method method, Export export) throws InitializationException
@@ -38,8 +38,14 @@ public class ModuleMethod
 		this.pnames = export.ParameterNames();
 		this.exceptionTypes = method.getExceptionTypes();
 		this.returnType = method.getReturnType();
-		
+
 		validate_parameter_types();
+	
+		TransactionProtect transaction_protect = method.getAnnotation(TransactionProtect.class);
+		if(transaction_protect != null)
+			setTransactionProtected(true);
+		else
+			setTransactionProtected(false);
 	}
 	
 
@@ -352,5 +358,16 @@ public class ModuleMethod
 				return true;
 		
 		return false;
+	}
+
+
+	public void setTransactionProtected(boolean b) 
+	{
+		transaction_protected = b;	
+	}
+	
+	public boolean isTransactionProtected() 
+	{
+		return transaction_protected;	
 	}
 }

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
+
 import com.pagesociety.web.exception.InitializationException;
 
 public class ModuleDefinition
@@ -44,11 +46,11 @@ public class ModuleDefinition
 		{
 
 			Export export = methods[i].getAnnotation(Export.class);
+
 			if (export != null)
 			{
 				ModuleMethod module_method = new ModuleMethod();
 				module_method.init(methods[i],export);
-
 				List<ModuleMethod> overloaded_methods = exported_method_map.get(module_method.getName());
 				if(overloaded_methods == null)
 				{

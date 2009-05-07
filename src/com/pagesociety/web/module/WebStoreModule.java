@@ -23,14 +23,12 @@ import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.SlotException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.persistence.DefaultPersistenceEvolver;
 import com.pagesociety.web.module.persistence.IEvolutionProvider;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
-public  class WebStoreModule extends WebModule
+public class WebStoreModule extends WebModule
 {
 
 	public static final String SLOT_STORE 			    = "store";
@@ -238,7 +236,11 @@ public  class WebStoreModule extends WebModule
 		e.setAttribute(FIELD_DATE_CREATED,now);
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
 		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
-		return store.saveEntity(e);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.saveEntity(e);
+		else
+			return store.saveEntity(tid,e);
 	}
 	
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Map<String,Object> entity_atts) throws PersistenceException
@@ -256,7 +258,11 @@ public  class WebStoreModule extends WebModule
 		e.setAttribute(FIELD_DATE_CREATED,now);
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
 		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
-		return store.saveEntity(e);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.saveEntity(e);
+		else
+			return store.saveEntity(tid,e);
 	}
 	
 	public static void set_attributes(Entity e,Object[] attribute_name_values)
@@ -284,7 +290,12 @@ public  class WebStoreModule extends WebModule
 		e.setAttribute(FIELD_CREATOR,creator);
 		e.setAttribute(FIELD_DATE_CREATED,now);
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
-		return store.saveEntity(e);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.saveEntity(e);
+		else
+			return store.saveEntity(tid,e);
+
 	}
 	
 	public static Entity EXPAND(PersistentStore store, Entity e) throws PersistenceException
@@ -305,7 +316,13 @@ public  class WebStoreModule extends WebModule
 
 	public static Entity GET(PersistentStore store, String entity_type,long entity_id) throws PersistenceException
 	{
-		Entity e = store.getEntityById(entity_type, entity_id);
+		Entity e;
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			e = store.getEntityById(entity_type, entity_id);
+		else
+			e = store.getEntityById(tid,entity_type, entity_id);
+
 		if(e == null)
 			throw new PersistenceException(entity_type+" INSTANCE WITH ID "+entity_id+" DOES NOT EXIST IN STORE.");
 		return e;	
@@ -314,6 +331,11 @@ public  class WebStoreModule extends WebModule
 	public static Entity GET_AND_MASK(PersistentStore store,String entity_type,long entity_id,Object...masked_fieldnames) throws PersistenceException,WebApplicationException
 	{
 		Entity e = store.getEntityById(entity_type, entity_id);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			e = store.getEntityById(entity_type, entity_id);
+		else
+			e = store.getEntityById(tid,entity_type, entity_id);
 		if(e == null)
 			throw new PersistenceException(entity_type+" INSTANCE WITH ID "+entity_id+" DOES NOT EXIST IN STORE.");
 		for(int i=0;i<masked_fieldnames.length;i++)
@@ -323,13 +345,18 @@ public  class WebStoreModule extends WebModule
 
 	public static Entity DELETE(PersistentStore store,String entity_type,long entity_id) throws PersistenceException,WebApplicationException
 	{
+		
 		Entity e = GET(store,entity_type,entity_id);
 		return DELETE(store,e);
 	}
 	
 	public static Entity DELETE(PersistentStore store,Entity e) throws PersistenceException
 	{
-		store.deleteEntity(e);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			store.deleteEntity(e);
+		else
+			store.deleteEntity(tid,e);
 		return e;
 	}
 	
@@ -342,7 +369,11 @@ public  class WebStoreModule extends WebModule
 	
 	public static Entity GET_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
-		store.fillReferenceField(instance,fieldname);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			store.fillReferenceField(instance,fieldname);
+		else
+			store.fillReferenceField(tid,instance, fieldname);
 		return (Entity)instance.getAttribute(fieldname);
 	}
 
@@ -354,13 +385,21 @@ public  class WebStoreModule extends WebModule
 	
 	public static List<Entity> GET_LIST_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
-		store.fillReferenceField(instance,fieldname);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			store.fillReferenceField(instance,fieldname);
+		else
+			store.fillReferenceField(tid,instance,fieldname);
 		return (List<Entity>)instance.getAttribute(fieldname);
 	}
 	
 	public static Entity FILL_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
-		store.fillReferenceField(instance,fieldname);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			store.fillReferenceField(instance,fieldname);
+		else
+			store.fillReferenceField(tid,instance,fieldname);
 		return (Entity)instance;
 	}
 	
@@ -371,9 +410,14 @@ public  class WebStoreModule extends WebModule
 		return instance;
 	}
 	
+	
 	public static Entity FILL_REFS(PersistentStore store,Entity instance) throws PersistenceException
 	{
-		store.fillReferenceFields(instance);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			store.fillReferenceFields(instance);
+		else
+			store.fillReferenceFields(tid,instance);
 		return (Entity)instance;
 	}
 	
@@ -394,7 +438,11 @@ public  class WebStoreModule extends WebModule
 		}
 		Date now = new Date();
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
-		return store.saveEntity(e);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.saveEntity(e);	
+		else
+			return store.saveEntity(tid,e);	
 	}
 
 	public static Entity UPDATE(PersistentStore store,Entity instance,Object... name_value_pairs) throws PersistenceException
@@ -405,7 +453,12 @@ public  class WebStoreModule extends WebModule
 		set_attributes(instance, name_value_pairs);
 		Date now = new Date();
 		instance.setAttribute(FIELD_LAST_MODIFIED,now);
-		return store.saveEntity(instance);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.saveEntity(instance);	
+		else
+			return store.saveEntity(tid,instance);	
+	
 	}
 
 	/*SAVE UPDATE */
@@ -416,13 +469,21 @@ public  class WebStoreModule extends WebModule
 
 		Date now = new Date();
 		instance.setAttribute(FIELD_LAST_MODIFIED,now);		
-		return store.saveEntity(instance);		
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.saveEntity(instance);	
+		else
+			return store.saveEntity(tid,instance);	
 	}
 
 	
 	public static QueryResult QUERY(PersistentStore store,Query q) throws PersistenceException
 	{
-		return store.executeQuery(q);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.executeQuery(q);
+		else
+			return store.executeQuery(tid,q);
 	}
 	
 	public static QueryResult QUERY_FILL(PersistentStore store,Query q) throws PersistenceException
@@ -473,7 +534,12 @@ public  class WebStoreModule extends WebModule
 	public static PagingQueryResult PAGING_QUERY(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY(store,q);
-		int total_count 	= store.count(q);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		int total_count = 0;
+		if(tid == null)
+			total_count 	= store.count(q);
+		else
+			total_count 	= store.count(tid,q);
 		return new PagingQueryResult(results.getEntities(),total_count,q.getOffset(),q.getPageSize());
 	}
 	
@@ -500,7 +566,11 @@ public  class WebStoreModule extends WebModule
 	
 	public static int COUNT(PersistentStore store,Query q) throws PersistenceException
 	{
-		return store.count(q);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.count(q);
+		else
+			return store.count(tid,q);
 	}
 
 	public static Entity ID_TO_ENTITY(PersistentStore store,String entity_type,Long id) throws WebApplicationException,PersistenceException
@@ -1678,5 +1748,67 @@ public  class WebStoreModule extends WebModule
 		return false;
 	}
 	
+	
+	//TRANSACTIONS///
+	private static ThreadLocal<List<Integer>> current_transaction_id_list = new ThreadLocal<List<Integer>>();
+	public void START_TRANSACTION() throws PersistenceException
+	{
+		START_TRANSACTION(store);
+	}
+	
+	public static void START_TRANSACTION(PersistentStore store) throws PersistenceException
+	{
+		List<Integer> current_tid_list = current_transaction_id_list.get();
+		if(current_tid_list == null)
+		{
+			current_tid_list = new ArrayList<Integer>(4);
+			current_transaction_id_list.set(current_tid_list);		
+		}
+		
+		if(current_tid_list.size()== 0)
+			current_tid_list.add(store.startTransaction());
+		else
+			current_tid_list.add(store.startTransaction(current_tid_list.get(current_tid_list.size()-1)));
+
+	}
+	
+	public void COMMIT_TRANSACTION() throws PersistenceException
+	{
+		COMMIT_TRANSACTION(store);
+	}
+	
+	public static void COMMIT_TRANSACTION(PersistentStore store) throws PersistenceException
+	{
+		List<Integer> current_tid_list = current_transaction_id_list.get();
+		int c_tid = current_tid_list.get(current_tid_list.size()-1);
+		store.commitTransaction(c_tid);
+		System.out.println("WEB STORE..attempting to commit "+c_tid);
+		current_tid_list.remove(current_tid_list.size()-1);
+	}
+	
+	public static Integer CURRENT_TRANSACTION_ID()
+	{
+		List<Integer> current_tid_list = current_transaction_id_list.get();
+		if(current_tid_list == null || current_tid_list.size() == 0)
+			return null;
+		
+		int s = current_tid_list.size();
+		int c_tid = current_tid_list.get(s-1);
+		return c_tid;
+	}
+		
+	public void ROLLBACK_TRANSACTION() throws PersistenceException
+	{
+		ROLLBACK_TRANSACTION(store);
+	}
+	
+	public static void ROLLBACK_TRANSACTION(PersistentStore store) throws PersistenceException
+	{
+		List<Integer> current_tid_list = current_transaction_id_list.get();
+		int c_tid = current_tid_list.get(current_tid_list.size()-1);
+		store.rollbackTransaction(c_tid);
+		System.out.println("WEB STORE..attempting to rollback "+c_tid);
+		current_tid_list.remove(current_tid_list.size()-1);
+	}
 	
 }

@@ -160,13 +160,7 @@ public abstract class Module
 		for(int i = 0;i < s;i++)
 		{
 			IEventListener l = _event_listeners.get(i);
-			try{
-				l.onEvent(this,e);
-			}catch(Exception ee)
-			{
-				getApplication().ERROR(ee);
-				throw new WebApplicationException("EVENT FAILED:",ee);
-			}
+			l.onEvent(this,e);
 		}
 	}
 

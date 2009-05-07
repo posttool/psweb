@@ -161,6 +161,7 @@ public class UserModule extends WebStoreModule
 		List<Integer> roles = new ArrayList<Integer>();
 		roles.add(USER_ROLE_USER);
 		
+
 		Entity user =  NEW(USER_ENTITY,
 						   creator,
 						   FIELD_USERNAME,username,
@@ -174,7 +175,10 @@ public class UserModule extends WebStoreModule
 			event_context.put((String)xtra_event_context_params[i], xtra_event_context_params[i+1]);
 
 		DISPATCH_EVENT(EVENT_USER_CREATED,event_context);
+
 		return user;
+
+
 	}
 
 	@Export(ParameterNames={"user_entity_id","email"})
@@ -416,12 +420,13 @@ public class UserModule extends WebStoreModule
 	public Entity deleteUser(Entity user)throws PersistenceException,WebApplicationException
 	{
 		System.out.println("!!! DELETEING USER "+user);
+
 		long id = user.getId();
 		DELETE(user);
 		user.setId(id);
 		DISPATCH_EVENT(EVENT_USER_DELETED, 
-					   USER_EVENT_USER,user);
-		user.setId(Entity.UNDEFINED);
+		        		USER_EVENT_USER,user);
+		//user.setId(Entity.UNDEFINED);
 		return user;
 	}
 	

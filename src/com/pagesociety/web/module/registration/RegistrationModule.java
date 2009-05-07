@@ -17,6 +17,7 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
+import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.user.UserModule;
@@ -83,7 +84,8 @@ public class RegistrationModule extends WebStoreModule
 	}
 	
 	/// B E G I N      M O D U L E      F U N C T I O N S //////////
-	@Export(ParameterNames={"email", "username", "password"})
+	@Export(ParameterNames={"email", "username", "password"}) 
+	@TransactionProtect
 	public Entity Register(UserApplicationContext uctx,String email,String username,String password) throws WebApplicationException,PersistenceException
 	{
 		Entity creator = (Entity)uctx.getUser();
@@ -115,28 +117,38 @@ public class RegistrationModule extends WebStoreModule
 			template_data.put("activate_account_url", activate_account_url);
 			email_module.sendEmail(null, new String[]{email}, email_subject, email_template_name, template_data);
 		}
-		
-		return user;		
+
+		return user;
+
 	}
 	
-	@Export(ParameterNames={"token"})
+	@Export(ParameterNames={"token"}) 
+	@TransactionProtect
 	public Entity ActivateUserAccount(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
 	{
-		Query q = new Query(OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY);
-		q.idx(INDEX_BY_ACTIVATION_TOKEN);
-		q.eq(token);
-		QueryResult result = QUERY(q);
-		if (result.size() == 0)
-			throw new WebApplicationException("BAD REGISTRATION TOKEN");
-		
-		Entity activation_record = result.getEntities().get(0);
-		Entity user = GET(UserModule.USER_ENTITY, (Long) activation_record.getAttribute(FIELD_ACTIVATION_UID));
-		user_module.unlockUser(user);
-		DELETE(activation_record);
-		// log them in//
-		uctx.setUser(user);
-		DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_ACTIVATED,
-			       	   REGISTRATION_EVENT_USER,user);
+		Entity user = null;
+		try{
+			Query q = new Query(OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY);
+			q.idx(INDEX_BY_ACTIVATION_TOKEN);
+			q.eq(token);
+			QueryResult result = QUERY(q);
+			if (result.size() == 0)
+				throw new WebApplicationException("BAD REGISTRATION TOKEN");
+			
+			Entity activation_record = result.getEntities().get(0);
+			user = GET(UserModule.USER_ENTITY, (Long) activation_record.getAttribute(FIELD_ACTIVATION_UID));
+			user_module.unlockUser(user);
+			DELETE(activation_record);
+			// log them in//
+			uctx.setUser(user);
+			DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_ACTIVATED,
+				       	   REGISTRATION_EVENT_USER,user);
+
+		}catch(Exception e)
+		{
+			uctx.setUser(null);
+			WAE(e);
+		}
 		return user;
 	}
 	

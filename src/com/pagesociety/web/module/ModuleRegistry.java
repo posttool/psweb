@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
@@ -146,7 +147,22 @@ public class ModuleRegistry
 			
 			throw new WebApplicationException("NO METHOD NAMED "+method_name+" EXISTS IN "+module.getName()+" WHICH CAN BE CALLED FOR ARGS -\n "+args_string);
 		}
-		return resolved_method.invoke(module,args_with_user);
+		if(resolved_method.isTransactionProtected())
+		{
+			PersistentStore store = ((WebStoreModule)module).store;
+			try{
+				WebStoreModule.START_TRANSACTION(store);
+				Object ret = resolved_method.invoke(module,args_with_user);
+				WebStoreModule.COMMIT_TRANSACTION(store);
+				return ret;
+			}catch(Throwable t)
+			{
+				WebStoreModule.ROLLBACK_TRANSACTION(store);
+				throw t;
+			}
+		}
+		else
+			return resolved_method.invoke(module,args_with_user);
 	}
 
 	public static ModuleDefinition getModuleDefinition(String module_name)

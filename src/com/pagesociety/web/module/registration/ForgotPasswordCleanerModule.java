@@ -129,7 +129,13 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 		{
 			cleaning = false;
 			cleaner_thread.interrupt();			
-		}
 
+		}
+		try{
+			cleaner_thread.join();
+		}catch(InterruptedException ie)
+		{
+			ie.printStackTrace();
+		}
 	}
 }

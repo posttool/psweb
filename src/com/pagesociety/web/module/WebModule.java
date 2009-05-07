@@ -96,6 +96,10 @@ public abstract class WebModule extends Module
 		_application.ERROR(getName()+": "+message,e);
 	}
 	
+	protected void WAE(Exception e) throws WebApplicationException
+	{
+		throw new WebApplicationException(e.getMessage(),e);
+	}
 
 	protected static void GUARD(boolean b) throws PermissionsException
 	{
@@ -321,4 +325,5 @@ public abstract class WebModule extends Module
     }
 	
 
+	
 }

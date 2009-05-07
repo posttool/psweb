@@ -91,6 +91,7 @@ public class HttpRequestRouter extends HttpServlet
 		}
 		catch (WebApplicationException e)
 		{
+			System.err.println("ERROR CALLER IP WAS: "+request.getRemoteAddr());
 			e.printStackTrace();
 			throw new ServletException(e);
 		}

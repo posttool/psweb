@@ -143,6 +143,8 @@ public class BillingModule extends WebStoreModule
 		
 		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
+
+
 		Entity billing_record =  NEW(BILLINGRECORD_ENTITY,
 				   					creator,
 				   					BILLINGRECORD_FIELD_FIRST_NAME,first_name,
@@ -160,14 +162,15 @@ public class BillingModule extends WebStoreModule
 				   					BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 				   					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 		
+
 		DISPATCH_EVENT(EVENT_BILLING_RECORD_CREATED,
 				   	   BILLING_EVENT_BILLING_RECORD,billing_record);
 		
 		if(preferred != null && preferred == true)
 			setPreferredBillingRecord(creator,billing_record);
-	
-	
+
 		return billing_record;
+	
 	}
 			  
 	
@@ -248,26 +251,36 @@ public class BillingModule extends WebStoreModule
 		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
 		
-		billing_record = UPDATE(billing_record,
-				BILLINGRECORD_FIELD_FIRST_NAME,first_name,
-				BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
-				BILLINGRECORD_FIELD_LAST_NAME,last_name,
-				BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
-				BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
-				BILLINGRECORD_FIELD_CITY,city,
-				BILLINGRECORD_FIELD_STATE,state,
-				BILLINGRECORD_FIELD_COUNTRY,country,
-				BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
-				BILLINGRECORD_FIELD_CC_TYPE,cc_type,
-				BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no),
-				BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
-				BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
-				BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
+		try
+		{
+			START_TRANSACTION();
+			billing_record = UPDATE(billing_record,
+					BILLINGRECORD_FIELD_FIRST_NAME,first_name,
+					BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
+					BILLINGRECORD_FIELD_LAST_NAME,last_name,
+					BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
+					BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
+					BILLINGRECORD_FIELD_CITY,city,
+					BILLINGRECORD_FIELD_STATE,state,
+					BILLINGRECORD_FIELD_COUNTRY,country,
+					BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
+					BILLINGRECORD_FIELD_CC_TYPE,cc_type,
+					BILLINGRECORD_FIELD_CC_NO,encryption_module.encryptString(cc_no),
+					BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
+					BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
+					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 	
-		DISPATCH_EVENT(EVENT_BILLING_RECORD_UPDATED,
-				       BILLING_EVENT_BILLING_RECORD,billing_record);
 	
-		return billing_record;
+			DISPATCH_EVENT(EVENT_BILLING_RECORD_UPDATED,
+			BILLING_EVENT_BILLING_RECORD,billing_record);
+			COMMIT_TRANSACTION();		
+			return billing_record;
+		}catch(Exception e)
+		{
+			ROLLBACK_TRANSACTION();
+			throw new WebApplicationException("BILLING RECORD UPDATED FAILED.",e);
+		}
+
 	}
 
 	@Export
@@ -282,9 +295,7 @@ public class BillingModule extends WebStoreModule
 	  }
 	
 	public Entity deleteBillingRecord(Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
-	{
-		
-
+	{		
 		DELETE(billing_record);
 		DISPATCH_EVENT(EVENT_BILLING_RECORD_DELETED,
 				   	   BILLING_EVENT_BILLING_RECORD,billing_record);
@@ -327,7 +338,6 @@ public class BillingModule extends WebStoreModule
 		Query q = new Query(BILLINGRECORD_ENTITY);
 		q.idx(IDX_BY_USER_BY_PREFERRED);
 		q.eq(q.list(user,true));
-		
 		QueryResult result = QUERY(q);
 		int n = result.size();
 		if(n == 0)
@@ -351,12 +361,15 @@ public class BillingModule extends WebStoreModule
 	
 	public Entity setPreferredBillingRecord(Entity user,Entity billing_record) throws WebApplicationException,PersistenceException
 	{
+		System.out.println("4");
 		Entity existing_preferred_billing_record = getPreferredBillingRecord(user);
+		System.out.println("5");
 		if(existing_preferred_billing_record != null)
 			UPDATE(existing_preferred_billing_record,BILLINGRECORD_FIELD_PREFERRED,false);
-		
+		System.out.println("6");
 		return UPDATE(billing_record,
 					  BILLINGRECORD_FIELD_PREFERRED,true);
+
 	}
 	
 	public IBillingGateway getBillingGateway()
