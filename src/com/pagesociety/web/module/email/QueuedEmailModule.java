@@ -170,20 +170,24 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	    }
 	    
 	}
-
+	
+	private Thread  email_thread;
+	private boolean running = false;
 	private void start_email_thread()
 	{
-		Thread t = new Thread()
+		running = true;
+		email_thread = new Thread()
 		{
 			public void run()
 			{
-				while(true)
+				while(running)
 				{
 					queue_obj qo = null;
 					try{
 						qo = email_queue.take();
-					}catch(InterruptedException ie){ie.printStackTrace();}
-
+					}catch(InterruptedException ie){}
+					if(!running)
+						break;
 					try{
 						do_send_mail(email_return_address, qo.to, qo.subject, qo.template_name, qo.template_data);
 					}catch(Exception e)
@@ -195,8 +199,8 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 				}
 			}
 		};
-		t.setDaemon(true);
-		t.start();
+		//t.setDaemon(true);
+		email_thread.start();
 	}
 	
 	class queue_obj
@@ -208,6 +212,12 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		public Map<String, Object> template_data;
 
 	}
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		running = false;
+		email_thread.interrupt();			
 
+	}
 
 }
