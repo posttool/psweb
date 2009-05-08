@@ -90,9 +90,9 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	
 	public BillingGatewayResponse doSale(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
-		double d = Math.random();
-		if(d > 0.85)
-			throw new BillingGatewayException("FAILED BILLING BECAUSE YOU ARE IN THE CYCLE OF FAILURE.");
+		//double d = Math.random();
+		//if(d > 0.85)
+		//	throw new BillingGatewayException("FAILED BILLING BECAUSE YOU ARE IN THE CYCLE OF FAILURE.");
 
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING SALE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
