@@ -126,6 +126,7 @@ public class RegistrationModule extends WebStoreModule
 	@TransactionProtect
 	public Entity ActivateUserAccount(UserApplicationContext uctx,String token) throws WebApplicationException,PersistenceException
 	{
+
 		Entity user = null;
 		try{
 			Query q = new Query(OUTSTANDING_REGISTRATION_CONFIRMATION_ENTITY);
@@ -137,6 +138,7 @@ public class RegistrationModule extends WebStoreModule
 			
 			Entity activation_record = result.getEntities().get(0);
 			user = GET(UserModule.USER_ENTITY, (Long) activation_record.getAttribute(FIELD_ACTIVATION_UID));
+			System.out.println("ACTIVATING USER "+user);
 			user_module.unlockUser(user);
 			DELETE(activation_record);
 			// log them in//
