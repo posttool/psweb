@@ -804,6 +804,7 @@ public class RecurringOrderModule extends ResourceModule
 					MODULE_LOG(0,"\nSTARTING BILLING CYCLE.");
 					synchronized (BILLING_LOCK)
 					{
+						System.out.println(getName()+" BILLING THREAD RUNNING.");
 						billing_thread_run();	
 					}
 					
