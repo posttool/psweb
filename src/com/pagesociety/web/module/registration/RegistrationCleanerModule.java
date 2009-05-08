@@ -84,6 +84,8 @@ public class RegistrationCleanerModule extends WebStoreModule
 					{
 						e.printStackTrace();
 					}
+					if(!cleaning)
+						break;
 					try{
 						Thread.sleep(registration_prune_period);//in hours
 					}catch(InterruptedException ie)
@@ -93,8 +95,9 @@ public class RegistrationCleanerModule extends WebStoreModule
 				}
 			}
 		};
-		cleaner_thread.setDaemon(true);
+		//cleaner_thread.setDaemon(true);
 		cleaner_thread.start();
+		INFO("REGISTRATION MODULE CLEANER THREAD EXITED");
 	}
 
 	

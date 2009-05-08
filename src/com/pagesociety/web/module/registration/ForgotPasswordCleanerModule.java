@@ -69,6 +69,8 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 					{
 						e.printStackTrace();
 					}
+					if(!cleaning)
+						break;
 					try{
 						Thread.sleep(forgot_password_prune_period);//in hours
 					}catch(InterruptedException ie)
@@ -78,7 +80,7 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 				}
 			}
 		};
-		cleaner_thread.setDaemon(true);
+		//cleaner_thread.setDaemon(true);
 		cleaner_thread.start();
 	}
 
@@ -129,13 +131,7 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 		{
 			cleaning = false;
 			cleaner_thread.interrupt();			
+		}
 
-		}
-		try{
-			cleaner_thread.join();
-		}catch(InterruptedException ie)
-		{
-			ie.printStackTrace();
-		}
 	}
 }
