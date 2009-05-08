@@ -1806,7 +1806,6 @@ public class WebStoreModule extends WebModule
 		List<Integer> current_tid_list = current_transaction_id_list.get();
 		int c_tid = current_tid_list.get(current_tid_list.size()-1);
 		store.rollbackTransaction(c_tid);
-		System.out.println("WEB STORE..attempting to rollback "+c_tid);
 		current_tid_list.remove(current_tid_list.size()-1);
 	}
 	
