@@ -77,6 +77,7 @@ public class RegistrationCleanerModule extends WebStoreModule
 					try{
 						synchronized (CLEAN_LOCK) 
 						{
+							System.out.println(getName()+" CLEANING UNACTIVATED REGISTRATIONS");
 							clean_unactivated_registrations();							
 						}
 
