@@ -2,6 +2,7 @@ package com.pagesociety.web;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -468,12 +469,20 @@ public abstract class WebApplication
 
 	public void applicationDestroyed()
 	{
+		
 		System.out.println("APPLICATION "+_config.getName()+" IS ABOUT TO BE DESTROYED");
+		System.out.println(new Date());
+		System.out.println("******************************************************************");
+		System.out.println();
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
 			m.onDestroy();
 		}
+		System.out.println("APPLICATION "+_config.getName()+" IS NOW DESTROYED");
+		System.out.println(new Date());
+		System.out.println("******************************************************************");
+		System.out.println();
 	}
 	
 	
