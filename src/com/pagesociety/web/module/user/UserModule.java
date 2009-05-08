@@ -330,6 +330,7 @@ public class UserModule extends WebStoreModule
 	
 	public Entity unlockUser(Entity user) throws PersistenceException
 	{
+		System.out.println("!!!!UNLOCKING USER "+user);
 		return UPDATE(user,
 				UserModule.FIELD_LOCK,LOCK_UNLOCKED,
 				UserModule.FIELD_LOCK_CODE,LOCK_CODE_UNLOCKED,
