@@ -63,6 +63,7 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 					try{
 						synchronized (CLEANING_LOCK)
 						{
+							System.out.println(getName()+" CLEANING FORGOT PASSWORDS");
 							clean_unactivated_forgot_passwords();	
 						}
 					}catch(Exception e)
