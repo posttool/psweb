@@ -197,6 +197,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 						e.printStackTrace();
 					}
 				}
+				System.out.println(getName()+" QUEUED EMAIL THREAD EXITED");
 			}
 		};
 		//t.setDaemon(true);
