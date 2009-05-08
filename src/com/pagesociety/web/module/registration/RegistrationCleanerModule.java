@@ -93,11 +93,13 @@ public class RegistrationCleanerModule extends WebStoreModule
 						//ie.printStackTrace();
 					}
 				}
+				System.out.println(getName()+" REGISTRATION MODULE CLEANER THREAD EXITED");
 			}
+			
 		};
 		//cleaner_thread.setDaemon(true);
 		cleaner_thread.start();
-		INFO("REGISTRATION MODULE CLEANER THREAD EXITED");
+
 	}
 
 	

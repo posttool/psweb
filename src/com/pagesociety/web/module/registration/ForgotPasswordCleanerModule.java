@@ -78,6 +78,7 @@ public class ForgotPasswordCleanerModule extends WebStoreModule
 							
 					}
 				}
+				System.out.println(getName()+" FORGOT PASSWORD CLEANER THREAD EXITED");
 			}
 		};
 		//cleaner_thread.setDaemon(true);
