@@ -809,7 +809,8 @@ public class RecurringOrderModule extends ResourceModule
 					
 					MODULE_LOG(0,"BILLING CYCLE COMPLETE.\n");
 					
-					
+					if(!billing_thread_running)
+						break;
 					try{
 						Thread.sleep(billing_thread_interval*1000*60);//TODO: right now this is in minutes
 					}catch(InterruptedException ie)
@@ -820,7 +821,7 @@ public class RecurringOrderModule extends ResourceModule
 				}
 			}
 		};
-		billing_thread.setDaemon(true);
+		//billing_thread.setDaemon(true);
 		billing_thread.start();
 	}
 
@@ -1461,12 +1462,7 @@ public class RecurringOrderModule extends ResourceModule
 			billing_thread_running = false;
 			billing_thread.interrupt();			
 		}
-		try{
-			billing_thread.join();
-		}catch(InterruptedException ie)
-		{
-			ie.printStackTrace();
-		}
+
 	}
 	
 	///BEGIN DDL STUFF
