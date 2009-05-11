@@ -103,6 +103,7 @@ public class HttpRequestRouter extends HttpServlet
 			throws IOException, ServletException
 	{
 		long t = System.currentTimeMillis();
+		logger.debug("POSTING " + request.getRequestURI() + " from " + request.getRemoteHost());
 		try
 		{
 			doService(request, response);
