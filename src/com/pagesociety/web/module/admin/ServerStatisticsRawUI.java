@@ -73,10 +73,17 @@ public class ServerStatisticsRawUI extends RawUIModule
 				TR_END(uctx);
 				TR_START(uctx);
 				TD(uctx, "max memory:");TD(uctx,get_max_memory(r));
-			TR_END(uctx);
+				TR_END(uctx);
+				TR_START(uctx);
+				TD(uctx, "num processors:");TD(uctx,get_num_processors(r));
+				TR_END(uctx);
+				TR_START(uctx);
+				TD(uctx, "num threads:");TD(uctx,get_num_threads(r));
+				TR_END(uctx);				
 			TABLE_END(uctx);
-			A(uctx,getName(),RAW_SUBMODE_DEFAULT,"Run Garbage Collector","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ]","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
 			DOCUMENT_END(uctx);
+			
 		}
 	}
 	
@@ -86,22 +93,33 @@ public class ServerStatisticsRawUI extends RawUIModule
 	   {
 	       float freeMemory = (float) r.freeMemory()/1024;
 	       Float freeMemoryF = new Float(freeMemory);
-	       return String.valueOf(freeMemoryF.intValue());
+	       return String.valueOf(freeMemoryF.intValue()+" K");
 	   }
 	   
 	   private String get_total_memory(Runtime r)
 	   {
 	       float totalMemory = (float) r.totalMemory()/1024;
 	       Float totalMemoryF = new Float(totalMemory);
-	       return String.valueOf(totalMemoryF.intValue());
+	       return String.valueOf(totalMemoryF.intValue()+" K");
 	   }
 	   
 	   private String get_max_memory(Runtime r)
 	   {
 	       float maxMemory = (float) r.maxMemory()/1024;
 	       Float maxMemoryF= new Float(maxMemory);
-	       return String.valueOf(maxMemoryF.intValue());
+	       return String.valueOf(maxMemoryF.intValue()+" K");
 	   }
+	   
+	   private String get_num_processors(Runtime r)
+	   {
+		   return String.valueOf(r.availableProcessors());
+	   }
+	   
+	   private String get_num_threads(Runtime r)
+	   {
+		   return String.valueOf(Thread.activeCount());
+	   }
+	   
 	    
 	   
 }
