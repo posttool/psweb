@@ -84,6 +84,7 @@ public class HttpRequestRouter extends HttpServlet
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException
 	{
+		logger.debug("GETTING " + request.getRequestURI() + " from " + request.getRemoteHost());
 		long t = System.currentTimeMillis();
 		try
 		{
