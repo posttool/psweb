@@ -119,7 +119,5 @@ public class ServerStatisticsRawUI extends RawUIModule
 	   {
 		   return String.valueOf(Thread.activeCount());
 	   }
-	   
 	    
-	   
 }
