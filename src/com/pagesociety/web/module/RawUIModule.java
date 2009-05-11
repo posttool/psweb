@@ -22,11 +22,17 @@ import com.pagesociety.web.module.util.Util;
 
 public class RawUIModule extends WebModule
 {
-	
+	private boolean secure;
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
+		setSecure(true);
 		declareSubmodes(app,config);
+	}
+	
+	public void setSecure(boolean b)
+	{
+		secure = b;
 	}
 	
 	@Export
@@ -558,7 +564,10 @@ public class RawUIModule extends WebModule
 	
 	protected String RAW_MODULE_ROOT()
 	{
-		return getApplication().getConfig().getWebRootUrl();
+		if(secure)
+			return getApplication().getConfig().getWebRootUrlSecure();
+		else
+			return getApplication().getConfig().getWebRootUrl();
 	}
 	
 	protected void DISPLAY_ERROR(UserApplicationContext uctx,Map<String,Object> params)
