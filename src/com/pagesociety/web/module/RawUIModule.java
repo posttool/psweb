@@ -605,7 +605,7 @@ public class RawUIModule extends WebModule
 	private static final String KEY_UI_MODULE_OUTPUT_BUF   		= "__ui_module_output__";
 	private static final String KEY_UI_MODULE_RAW_COMMUNIQUE   	= "__ui_module_raw_communique__";
 	private static final String KEY_UI_MODULE_SUBMODE_KEY   	= "submode";
-	private static final String KEY_UI_MODULE_INFO_KEY   		= "_info_";
+	protected static final String KEY_UI_MODULE_INFO_KEY   		= "_info_";
 	private static final String KEY_UI_MODULE_ERROR_KEY   		= "_error_";
 
 	
