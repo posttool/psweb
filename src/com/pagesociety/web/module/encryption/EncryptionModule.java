@@ -127,7 +127,7 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 		}
 		
 		if(phrase.length() < encryption_strength)
-			throw new WebApplicationException("ENCRYPTION STRENGTHS DONT MATCH IN MODULE SPECIFICATION AND WHAT IS ON DISK. ON DISK: "+v_encryption_strength+" IN MODULE: "+encryption_strength);
+			throw new WebApplicationException("PHRASE IS TOO SHORT. ENCRYPTION STRENGTH IS "+encryption_strength+" AND PHRASE LENGTH IS "+phrase.length());
 
 		set_secret_phrase(phrase);	
 		try{
