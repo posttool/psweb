@@ -21,6 +21,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
+import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.user.UserModule;
 
@@ -50,6 +51,7 @@ public class TreeModule extends WebStoreModule
 
 
 	@Export(ParameterNames={"name","root_class","root_id","root_data"})
+	@TransactionProtect
 	public Entity CreateTree(UserApplicationContext uctx,String name,String root_class,String root_id,Entity root_data) throws WebApplicationException,PersistenceException
 	{
 		
@@ -77,6 +79,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"tree_id","root_node"})
+	@TransactionProtect
 	public Entity UpdateTree(UserApplicationContext uctx,long tree_id,String name,Entity root_node) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -93,6 +96,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"parent_node_id","node_class","node_id","data"})
+	@TransactionProtect
 	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -102,6 +106,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"parent_node_id","parent_child_index","node_class","node_id","data"})
+	@TransactionProtect
 	public Entity CreateTreeNode(UserApplicationContext uctx,long parent_node_id,int parent_child_index, String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -141,6 +146,7 @@ public class TreeModule extends WebStoreModule
 	}
 
 	@Export(ParameterNames={"tree_node_id","node_class","node_id","data"})
+	@TransactionProtect
 	public Entity UpdateTreeNode(UserApplicationContext uctx,long tree_node_id,String node_class,String node_id,Entity data) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -159,6 +165,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"entity_node_id","new_parent_id","new_parent_child_index"})
+	@TransactionProtect
 	public Entity ReparentTreeNode(UserApplicationContext uctx,long entity_node_id,long new_parent_id,int new_parent_child_index) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -240,6 +247,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"entity_node_id"})
+	@TransactionProtect
 	public List<Entity> DeleteTreeNode(UserApplicationContext uctx,long entity_node_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	 = (Entity)uctx.getUser();
@@ -249,6 +257,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"tree_id"})
+	@TransactionProtect
 	public List<Entity> DeleteTree(UserApplicationContext uctx,long tree_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -320,6 +329,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"tree_id","new_tree_name"})
+	@TransactionProtect
 	public Entity CloneTree(UserApplicationContext uctx,long tree_id,String new_tree_name) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -357,6 +367,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export
+	@TransactionProtect
 	public List<Entity> GetTrees(UserApplicationContext uctx) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -365,6 +376,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"user_id"})
+	@TransactionProtect
 	public List<Entity> GetTreesForUser(UserApplicationContext uctx,long user_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user   = (Entity)uctx.getUser();
@@ -382,6 +394,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"user_id","name"})
+	@TransactionProtect
 	public Entity GetTreeForUserByName(UserApplicationContext uctx,long user_id,String name) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -394,6 +407,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"name"})
+	@TransactionProtect
 	public Entity GetTreeByName(UserApplicationContext uctx,String name) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -423,6 +437,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"tree_id","node_classname"})
+	@TransactionProtect
 	public List<Entity> GetTreeNodesByClass(UserApplicationContext uctx, long tree_id,String node_classname) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -442,6 +457,7 @@ public class TreeModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"tree_id","node_id"})
+	@TransactionProtect
 	public Entity GetTreeNodeById(UserApplicationContext uctx, long tree_id,String node_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -464,6 +480,7 @@ public class TreeModule extends WebStoreModule
 	
 	
 	@Export(ParameterNames={"node_id","subtree_fill_depth","data_ref_fill_depth"})
+	@TransactionProtect
 	public Entity FillNode(UserApplicationContext uctx,long node_id,int subtree_fill_depth,int data_ref_fill_depth) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
