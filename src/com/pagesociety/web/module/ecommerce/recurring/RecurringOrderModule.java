@@ -802,12 +802,13 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					
 					MODULE_LOG(0,"\nSTARTING BILLING CYCLE.");
+					System.out.println(getName()+" STARTING BILLING THREAD.");
 					synchronized (BILLING_LOCK)
 					{
 						System.out.println(getName()+" BILLING THREAD RUNNING.");
 						billing_thread_run();	
 					}
-					
+					System.out.println(getName()+" BILLING THREAD COMPLETE.");
 					MODULE_LOG(0,"BILLING CYCLE COMPLETE.\n");
 					
 					if(!billing_thread_running)
