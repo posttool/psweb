@@ -17,6 +17,7 @@ public interface IPersistenceProvider
 	public String 		doIncrementalBackup(String fullbackup_token) throws PersistenceException;
 	public void 		restoreFromBackup(String fullbackup_token) throws PersistenceException;
 	public void 		deleteBackup(String fullbackup_token) throws PersistenceException;
+	public String       getStatistics();
 
 
 	

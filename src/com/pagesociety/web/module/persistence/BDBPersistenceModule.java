@@ -196,6 +196,12 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		store.deleteBackup(fullbackup_token);
 	}
 
+	public String getStatistics()
+	{
+		return ((BDBStore)store).getStatistics();
+	}
+	
+	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
