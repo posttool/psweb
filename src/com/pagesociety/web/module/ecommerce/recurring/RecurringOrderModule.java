@@ -934,7 +934,7 @@ public class RecurringOrderModule extends ResourceModule
 				System.out.println("\tAFTER  PROMOTIONS ORDER AMOUNT \n"+amount_after_promotions);
 				
 				
-				COMMIT_TRANSACTION();
+
 			}catch(PersistenceException pe)
 			{
 				try{
@@ -957,6 +957,13 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			handle_trials();
 			purge_expired_trial_users();
+		}
+
+		try{
+			COMMIT_TRANSACTION();
+		}catch(PersistenceException pe5)
+		{
+			ERROR("FAILED COMMITING TRANSACTION "+pe5);
 		}
 	}
 	
