@@ -334,6 +334,19 @@ public class RawUIModule extends WebModule
 	{
 		buf.append("<P/>\n");
 	}
+
+	protected void PRE(UserApplicationContext uctx,String text,int size)
+	{
+		PRE(get_user_buf(uctx),text);
+	}
+	
+	protected void PRE(StringBuilder buf,String text)
+	{
+		buf.append("<PRE>\n");
+		buf.append(text);
+		buf.append("</PRE>\n");
+	}
+
 	
 	protected void A(UserApplicationContext uctx,String module_name,int submode,String text,Object... params)
 	{
