@@ -862,6 +862,14 @@ public class RecurringOrderModule extends ResourceModule
 		QueryResult result 		= null;
 
 		try{
+			START_TRANSACTION();
+		}catch(PersistenceException pe)
+		{
+			ERROR("FAILED STARTING TRANSACTION IN BILLING THREAD");
+			pe.printStackTrace();
+		}
+		try{
+
 			Date now = new Date();
 			q = new Query(RECURRING_ORDER_ENTITY);
 			q.idx(IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE);
@@ -871,6 +879,13 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG( 1,result.size()+" records to bill.");
 		}catch(PersistenceException pe1)
 		{
+			try{
+				ROLLBACK_TRANSACTION();
+			}catch(PersistenceException p2)
+			{
+				ERROR("FAILED ROLLING BACK TRANSACTION",p2);
+			}
+			
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
@@ -904,18 +919,31 @@ public class RecurringOrderModule extends ResourceModule
 				try{
 					amount_after_promotions = get_order_amount_with_promotions_applied(recurring_order);
 					do_regular_billing(order_user,recurring_order, billing_record,amount_after_promotions);
-				}catch(Exception e)
+				}
+				catch(PersistenceException pe4)
+				{
+					throw pe4;
+				}
+				catch(Exception e)
 				{
 					ERROR(e);
 					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD);	
 					continue;
 				}
+
 				System.out.println("\tAFTER  PROMOTIONS ORDER AMOUNT \n"+amount_after_promotions);
 				
 				
-				
+				COMMIT_TRANSACTION();
 			}catch(PersistenceException pe)
 			{
+				try{
+					ROLLBACK_TRANSACTION();
+				}catch(PersistenceException pe3)
+				{
+					ERROR("FAILED ROLLING BACK TXN "+pe3);
+				}
+				
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
 				break;
