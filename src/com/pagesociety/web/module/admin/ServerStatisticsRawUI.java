@@ -2,6 +2,7 @@ package com.pagesociety.web.module.admin;
 
 import java.util.Map;
 
+import com.pagesociety.bdb.BDBStore;
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
@@ -9,20 +10,25 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.LoginFailedException;
 import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.RawUIModule;
+import com.pagesociety.web.module.persistence.BDBPersistenceModule;
+import com.pagesociety.web.module.persistence.IPersistenceProvider;
 import com.pagesociety.web.module.util.Util;
 
 public class ServerStatisticsRawUI extends RawUIModule
 {
-
+	public String SLOT_STORE = "store";
+	
+	private IPersistenceProvider store;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
-
+		store = (IPersistenceProvider)getSlot(SLOT_STORE);
 	}
 
 	protected void defineSlots()
 	{
 		super.defineSlots();
+		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
 	}
 	
 
@@ -64,6 +70,7 @@ public class ServerStatisticsRawUI extends RawUIModule
 			DISPLAY_ERROR(uctx,params);
 			DISPLAY_INFO(uctx,params);
 			P(uctx);
+			StringBuilder buf = get_user_buf(uctx);
 			TABLE_START(uctx, 0, 400);
 				TR_START(uctx);
 				TD(uctx, "free memory:");TD(uctx,get_free_memory(r));
@@ -79,9 +86,15 @@ public class ServerStatisticsRawUI extends RawUIModule
 				TR_END(uctx);
 				TR_START(uctx);
 				TD(uctx, "num threads:");TD(uctx,get_num_threads(r));
-				TR_END(uctx);				
+				TR_END(uctx);
 			TABLE_END(uctx);
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ]","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
+			P(uctx);
+			SPAN(uctx,"<PRE>"+store.getStatistics()+"</PRE>",10);
+					
+							
+			P(uctx);
+		
 			DOCUMENT_END(uctx);
 			
 		}
