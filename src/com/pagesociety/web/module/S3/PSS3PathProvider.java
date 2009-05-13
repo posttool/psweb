@@ -336,7 +336,13 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		
 			File preview = new File(scratch_directory,preview_key);
 			preview.getParentFile().mkdirs();
-			create_preview(original_file,preview,width,height);
+			try{
+				create_preview(original_file,preview,width,height);
+			}catch(Exception e)
+			{
+				lock.notifyAll();
+				WAE(e);
+			}
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
 			PSS3Object pobj = new PSS3Object(new FileInputStream(preview),preview.length(),content_type,PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, preview_key, pobj);
