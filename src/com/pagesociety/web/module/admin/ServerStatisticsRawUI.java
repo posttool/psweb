@@ -94,7 +94,8 @@ public class ServerStatisticsRawUI extends RawUIModule
 					
 							
 			P(uctx);
-		
+			//reload every 1 second//
+			JS_TIMED_REDIRECT(uctx,getName(),RAW_SUBMODE_DEFAULT,3000);
 			DOCUMENT_END(uctx);
 			
 		}
