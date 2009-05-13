@@ -340,7 +340,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				create_preview(original_file,preview,width,height);
 			}catch(Exception e)
 			{
-				lock.notifyAll();
+				current_thumbnail_generators.remove(preview_key);
+				synchronized (lock) 
+				{			
+					lock.notifyAll();
+				}
 				WAE(e);
 			}
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
