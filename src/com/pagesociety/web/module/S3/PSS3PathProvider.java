@@ -278,8 +278,10 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	private ConcurrentHashMap<String,Object> current_thumbnail_generators = new ConcurrentHashMap<String, Object>();
 	public String getPreviewUrl(String path_token,int width,int height)	throws WebApplicationException
 	{
+		INFO("GETTING PREVIEW URL FOR "+path_token+" AT "+width+" "+height);
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 		String preview_key 			  =  get_preview_file_relative_path(path_token, width, height);
+		INFO("PREVIEW KEY IS "+preview_key);
 		//TODO lock on preview_key ..... need to do this.
 		//
 		//
@@ -299,9 +301,10 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				try{
 					synchronized (lock)
 					{
+						INFO("WAITING IN PREVIEW");
 						lock.wait();	
 					}
-					
+					INFO("NOT WAITING ANYMORE");
 					boolean resized_now_exists 		  = conn.checkKeyExists(s3_bucket, preview_key);
 					if(resized_now_exists)
 						return base_s3_url+preview_key;
@@ -346,6 +349,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				lock.notifyAll();
 			}
 			
+			INFO("EXITING GET PREVIEW URL "+base_s3_url+preview_key);
 			return base_s3_url+preview_key;
 		}catch(IOException ioe)
 		{
