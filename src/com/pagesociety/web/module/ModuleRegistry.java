@@ -47,7 +47,7 @@ public class ModuleRegistry
 	public static void init(WebApplication app_context)
 	{
 //		_app_config = app_context;
-		open_exception_log_file();
+		//open_exception_log_file();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -164,17 +164,17 @@ public class ModuleRegistry
 			{
 				if(pe.getErrorCode() != PersistenceException.UNABLE_TO_START_TRANSACTION)
 					WebStoreModule.ROLLBACK_TRANSACTION(store);
-				exc_os.println("SID: "+user_context.getId());
-				exc_os.println(Thread.currentThread().getName());
-				pe.printStackTrace(exc_os);
+				//exc_os.println("SID: "+user_context.getId());
+				//exc_os.println(Thread.currentThread().getName());
+				//pe.printStackTrace(exc_os);
 				throw pe;
 			}
 			catch(Throwable t)
 			{
 				WebStoreModule.ROLLBACK_TRANSACTION(store);
-				exc_os.println("SID: "+user_context.getId());
-				exc_os.println(Thread.currentThread().getName());
-				t.printStackTrace(exc_os);
+				//exc_os.println("SID: "+user_context.getId());
+				//exc_os.println(Thread.currentThread().getName());
+				//t.printStackTrace(exc_os);
 				throw t;
 			}
 		}
@@ -182,19 +182,19 @@ public class ModuleRegistry
 			return resolved_method.invoke(module,args_with_user);
 	}
 	
-	private static String EXCEPTION_LOG_FILE = "C:/eclipse_workspace/PosteraServer/EXCEPTION_LOG.TXT";
-	private static PrintStream exc_os;
-	private static void open_exception_log_file()
-	{
-		File f = new File(EXCEPTION_LOG_FILE);
-		try{
-			exc_os = new PrintStream(new FileOutputStream(f));
-			
-		}catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
+	//private static String EXCEPTION_LOG_FILE = "C:/eclipse_workspace/PosteraServer/EXCEPTION_LOG.TXT";
+	//private static PrintStream exc_os;
+	//private static void open_exception_log_file()
+	//{
+	//	File f = new File(EXCEPTION_LOG_FILE);
+	//	try{
+	//		exc_os = new PrintStream(new FileOutputStream(f));
+	//		
+	//	}catch(Exception e)
+	//	{
+	//		e.printStackTrace();
+	//	}
+	//}
 	
 
 	
