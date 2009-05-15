@@ -113,11 +113,14 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	{
 		try{
 			System.out.println("STORE SUPPORTS FULL BACKUP: "+store.supportsFullBackup());
-			System.out.println("STORE SUPPORTS BACKUP: "+store.supportsFullBackup());
-			System.out.println("CURRENT BACKUPS: ");
-			String[] backup_identifiers = store.getBackupIdentifiers();
-			for(int i = 0;i < backup_identifiers.length;i++)
-				System.out.println("\t"+backup_identifiers[i]);
+			System.out.println("STORE SUPPORTS INCREMENTAL: "+store.supportsIncrementalBackup());
+			if(store.supportsFullBackup())
+			{
+				System.out.println("CURRENT BACKUPS: ");
+				String[] backup_identifiers = store.getBackupIdentifiers();
+				for(int i = 0;i < backup_identifiers.length;i++)
+					System.out.println("\t"+backup_identifiers[i]);
+			}
 		}catch(PersistenceException pe)
 		{
 			pe.printStackTrace();
