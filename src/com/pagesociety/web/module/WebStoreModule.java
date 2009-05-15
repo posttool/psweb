@@ -1101,11 +1101,11 @@ public class WebStoreModule extends WebModule
 			{
 				if(pe.getErrorCode() == PersistenceException.ENTITY_DOES_NOT_EXIST)
 					return e;
+				throw pe;
 			}
 			return dd;
 		}catch(Exception ee)
 		{
-			ee.printStackTrace();
 			throw new PersistenceException("BARFED IN DELETE DEEP "+ee.getMessage());
 		}
 	}

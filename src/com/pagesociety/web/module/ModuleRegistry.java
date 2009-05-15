@@ -1,5 +1,8 @@
 package com.pagesociety.web.module;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
@@ -43,6 +47,7 @@ public class ModuleRegistry
 	public static void init(WebApplication app_context)
 	{
 //		_app_config = app_context;
+		open_exception_log_file();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -155,16 +160,44 @@ public class ModuleRegistry
 				Object ret = resolved_method.invoke(module,args_with_user);
 				WebStoreModule.COMMIT_TRANSACTION(store);
 				return ret;
-			}catch(Throwable t)
+			}catch(PersistenceException pe)
+			{
+				if(pe.getErrorCode() != PersistenceException.UNABLE_TO_START_TRANSACTION)
+					WebStoreModule.ROLLBACK_TRANSACTION(store);
+				exc_os.println("SID: "+user_context.getId());
+				exc_os.println(Thread.currentThread().getName());
+				pe.printStackTrace(exc_os);
+				throw pe;
+			}
+			catch(Throwable t)
 			{
 				WebStoreModule.ROLLBACK_TRANSACTION(store);
+				exc_os.println("SID: "+user_context.getId());
+				exc_os.println(Thread.currentThread().getName());
+				t.printStackTrace(exc_os);
 				throw t;
 			}
 		}
 		else
 			return resolved_method.invoke(module,args_with_user);
 	}
+	
+	private static String EXCEPTION_LOG_FILE = "C:/eclipse_workspace/PosteraServer/EXCEPTION_LOG.TXT";
+	private static PrintStream exc_os;
+	private static void open_exception_log_file()
+	{
+		File f = new File(EXCEPTION_LOG_FILE);
+		try{
+			exc_os = new PrintStream(new FileOutputStream(f));
+			
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 
+	
 	public static ModuleDefinition getModuleDefinition(String module_name)
 	{
 		return MODULES.get(module_name);
