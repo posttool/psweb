@@ -130,7 +130,7 @@ public class TreeModule extends WebStoreModule
 								TREE_NODE_FIELD_PARENT_NODE,parent_node,
 								TREE_NODE_FIELD_CHILDREN,new ArrayList<Entity>(),
 								TREE_NODE_FIELD_DATA,data);
-		//by default tree nodes are prepended to the parents list of children. 
+		
 		//we use Integer.MAX_VALUE to mean create and place last.
 		if(parent_node != null && parent_child_index != Integer.MAX_VALUE )
 		{
@@ -140,8 +140,10 @@ public class TreeModule extends WebStoreModule
 			{
 				//this will never happen..ha ha famous last words//
 				ERROR(e);
+				throw new PersistenceException(e.getMessage());
 			}
 		}
+		
 		return new_node;
 	}
 
@@ -202,7 +204,6 @@ public class TreeModule extends WebStoreModule
 		{
 			int original_idx = children.indexOf(tree_node);
 
-			
 			children.add(new_parent_idx,tree_node);
 			if(new_parent_idx < original_idx)
 				children.remove(original_idx+1);
@@ -218,6 +219,7 @@ public class TreeModule extends WebStoreModule
 		//TODO:even though the reference is changed here we still need to set the attribute so that
 		// it is dirty. could ovveride list at some point and have it automagically mark it
 		//dirty but not now fer sure !
+
 		UPDATE(new_parent,
 			   TREE_NODE_FIELD_CHILDREN, children);
 		
@@ -318,7 +320,6 @@ public class TreeModule extends WebStoreModule
 			applyTreeFunctor(node, df);
 		}catch(Exception e)
 		{
-			e.printStackTrace();
 			throw new PersistenceException("PROBLEM DELETEING ENTITY "+e.getMessage()+" NODE WAS "+node,e);
 		}
 		List<Entity> deletees = (List<Entity>)df.getReturnObject();
@@ -360,7 +361,6 @@ public class TreeModule extends WebStoreModule
 			applyTreeFunctor(node, cf);
 		}catch(Exception e)
 		{
-			e.printStackTrace();
 			throw new PersistenceException("PROBLEM CLONING TREE "+e.getMessage(),e);
 		}
 		return (Entity)cf.getReturnObject();
@@ -483,6 +483,7 @@ public class TreeModule extends WebStoreModule
 	@TransactionProtect
 	public Entity FillNode(UserApplicationContext uctx,long node_id,int subtree_fill_depth,int data_ref_fill_depth) throws WebApplicationException,PersistenceException
 	{
+
 		Entity user = (Entity)uctx.getUser();
 		Entity node = GET(TREE_NODE_ENTITY,node_id);
 		GUARD(guard.canFillNode(user,node,subtree_fill_depth,data_ref_fill_depth));
@@ -492,6 +493,10 @@ public class TreeModule extends WebStoreModule
 	
 	public void fillNode(Entity node,int subtree_fill_depth,int data_ref_fill_depth) throws WebApplicationException,PersistenceException
 	{
+		if(node == null)
+		{
+			System.out.println("!!!!!!!!!!NULL NODE WAS PASSED IN");
+		}
 		do_fill_node(node,0,subtree_fill_depth,data_ref_fill_depth);
 	}
 	
@@ -499,7 +504,19 @@ public class TreeModule extends WebStoreModule
 	{
 		if(cc == subtree_fill_depth)
 			return;
-		
+		if(node == null)
+		{
+			
+			System.out.println("!!!!!!!!!!!!!!!!!!!NODE IS NULL MAN IN DO FILL NODE");
+			System.out.println(Thread.currentThread().getName());
+			try{
+				throw new Exception();
+			}catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			System.exit(0);
+		}
 		FILL_REFS(node);
 		List<Entity> child_nodes = (List<Entity>)node.getAttribute(TREE_NODE_FIELD_CHILDREN);
 		int s = child_nodes.size();
@@ -739,7 +756,7 @@ public class TreeModule extends WebStoreModule
 		
 		public void apply(Entity entity_node) throws Exception
 		{
-			//System.out.println("DELETEING NODE: "+entity_node);
+			//System.out.println("DELETEING TREE NODE: "+entity_node);
 			if(delete_data)
 			{
 				Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
