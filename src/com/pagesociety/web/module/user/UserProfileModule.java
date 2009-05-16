@@ -29,7 +29,7 @@ import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 public class UserProfileModule extends WebStoreModule implements IEventListener
 {
 	protected static final String SLOT_USER_PROFILE_GUARD = "user-profile-guard"; 
-	protected static final String SLOT_USER_MODULE 				 = "user-module"; 
+	protected static final String SLOT_USER_MODULE 		  = "user-module"; 
 	
 	/*this module needs to be after modules containing any entites you are referring to 
 	as commentable in application.xml. this is just due to the way the app is bootstrapped 
@@ -38,7 +38,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	
 
 	protected IUserProfileGuard	 	guard;
-	protected UserModule user_module;
+	protected UserModule 			user_module;
 	
 	public static final int EVENT_USER_PROFILE_CREATED    = 0x21;
 	public static final int EVENT_USER_PROFILE_UPDATED    = 0x22;
@@ -52,16 +52,26 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	public static final String USER_PROFILE_EVENT_UNFLAGGING_USER     		    = "unflagging_user";
 
 	protected List<FieldDefinition> profile_fields;
-
+	protected String user_profile_entity_name = null;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
 		guard				 = (IUserProfileGuard)getSlot(SLOT_USER_PROFILE_GUARD);
 		user_module 		 = (UserModule)getSlot(SLOT_USER_MODULE);
 		user_module.addEventListener(this);
+		user_profile_entity_name = USER_PROFILE_ENTITY;
 		System.out.println(getName()+"PROFILE FIELDS ARE "+profile_fields);
 	}
 	
+	public void setUserProfileEntityName(String name)
+	{
+		user_profile_entity_name = name;
+	}
+	
+	public String getUserProfileEntityName()
+	{
+		return user_profile_entity_name;
+	}
 	
 	protected void defineSlots()
 	{
@@ -75,10 +85,10 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 	
-	public Entity createUserProfile(Entity creator,Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
+	protected Entity createUserProfile(Entity creator,Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		
-		Entity profile =  NEW(USER_PROFILE_ENTITY,
+		Entity profile =  NEW(user_profile_entity_name,
 				   			 creator,
 				   			 profile_data);
 	
@@ -92,7 +102,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	@Export(ParameterNames={"user_profile"})
 	public Entity UpdateUserProfile(UserApplicationContext uctx,Entity user_profile) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		VALIDATE_TYPE(USER_PROFILE_ENTITY, user_profile);
+		VALIDATE_TYPE(user_profile_entity_name, user_profile);
 		VALIDATE_EXISTING_INSTANCE(user_profile);
 		Map<String,Object> atts = new HashMap<String, Object>();
 		for(int i = 0;i < profile_fields.size();i++)
@@ -114,7 +124,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 								Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity user_profile_entity = GET(USER_PROFILE_ENTITY,user_profile_id);
+		Entity user_profile_entity = GET(user_profile_entity_name,user_profile_id);
 		GUARD(guard.canUpdateProfile(user,user_profile_entity));
 		
 		return updateUserProfile(user_profile_entity,profile_data);
@@ -123,7 +133,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	
 
 	
-	public Entity updateUserProfile(Entity profile_entity,
+	protected Entity updateUserProfile(Entity profile_entity,
 			  						Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		System.out.println("PROFILE DATA IS "+profile_data);
@@ -152,7 +162,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	}
 
 	
-	private Entity deleteUserProfile(Entity user_profile) throws PersistenceException,WebApplicationException
+	protected Entity deleteUserProfile(Entity user_profile) throws PersistenceException,WebApplicationException
 	{
 		long b4_delete_id = user_profile.getId();
 		DELETE(user_profile);
@@ -164,10 +174,10 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	}
 	
 	@Export(ParameterNames={"user_profile_id"})
-	private Entity FlagComment(UserApplicationContext uctx, long user_profile_id) throws PersistenceException,WebApplicationException
+	public Entity FlagUserProfile(UserApplicationContext uctx, long user_profile_id) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity user_profile = GET(USER_PROFILE_ENTITY,user_profile_id);
+		Entity user_profile = GET(user_profile_entity_name,user_profile_id);
 		if((Integer)user_profile.getAttribute(USER_PROFILE_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_FLAGGED)
 			return user_profile;
 		GUARD(guard.canFlagUserProfile(user,user_profile));
@@ -175,7 +185,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	}
 
 	
-	private Entity flagUserProfile(Entity flagging_user,Entity user_profile) throws PersistenceException,WebApplicationException
+	protected Entity flagUserProfile(Entity flagging_user,Entity user_profile) throws PersistenceException,WebApplicationException
 	{
 		List<Entity> flagging_users = (List<Entity>)user_profile.getAttribute(USER_PROFILE_FIELD_FLAGGING_USERS);
 		flagging_users.add(flagging_user);
@@ -191,10 +201,10 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	}
 	
 	@Export(ParameterNames={"user_profile_id"})
-	public Entity UnflagComment(UserApplicationContext uctx, long user_profile_id) throws PersistenceException,WebApplicationException
+	public Entity UnflagUserProfile(UserApplicationContext uctx, long user_profile_id) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity user_profile = GET(USER_PROFILE_ENTITY,user_profile_id);
+		Entity user_profile = GET(user_profile_entity_name,user_profile_id);
 		if((Integer)user_profile.getAttribute(USER_PROFILE_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_NOT_FLAGGED)
 			return user_profile;
 		GUARD(guard.canUnflagProfile(user,user_profile));
@@ -228,7 +238,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 
 	public Entity getUserProfile(Entity user) throws PersistenceException,WebApplicationException
 	{
-		Query q = new Query(USER_PROFILE_ENTITY);
+		Query q = new Query(user_profile_entity_name);
 		q.idx(IDX_BY_CREATOR);
 		q.eq(user);
 		
@@ -258,34 +268,53 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 
 	public Query getFlaggedUserProfilesQ(int flagged_status)
 	{
-		Query q = new Query(USER_PROFILE_ENTITY);
+		Query q = new Query(user_profile_entity_name);
 		q.idx(IDX_BY_CREATOR);
 		q.eq(flagged_status);
 		return q;
 	}
 	
-	public void onEvent(Module src, ModuleEvent e) 
+	public Entity getProfileByLinkId(String link_id) throws WebApplicationException,PersistenceException
+	{
+		QueryResult r = QUERY(getProfileByLinkIdQ(link_id));
+		if(r.size() == 0)
+			return null;
+		else if(r.size() == 1)
+			return r.getEntities().get(0);
+		
+		throw new WebApplicationException("MULTIPLE PROFILES GOTTEN FOR LINK ID "+link_id);
+			
+	}
+
+	public Query getProfileByLinkIdQ(String link_id)
+	{
+		Query q = new Query(user_profile_entity_name);
+		q.idx(IDX_BY_LINK_ID);
+		q.eq(link_id);
+		return q;
+	}
+	
+	public void onEvent(Module src, ModuleEvent e) throws WebApplicationException
 	{
 		Map<String,Object> default_profile_data = new HashMap<String, Object>();
+
 		try{
 			Entity user;
 			switch(e.type)
 			{
-			
-			case UserModule.EVENT_USER_CREATED:
-				user = (Entity)e.getProperty(UserModule.USER_EVENT_USER);
-				createUserProfile(user, default_profile_data);
-				break;
-			case UserModule.EVENT_USER_DELETED:
-				user = (Entity)e.getProperty(UserModule.USER_EVENT_USER);
-				deleteUserProfile(getUserProfile(user));
-				break;
+				case UserModule.EVENT_USER_CREATED:
+					user = (Entity)e.getProperty(UserModule.USER_EVENT_USER);
+					createUserProfile(user, default_profile_data);
+					break;
+				case UserModule.EVENT_USER_DELETED:
+					user = (Entity)e.getProperty(UserModule.USER_EVENT_USER);
+					deleteUserProfile(getUserProfile(user));
+					break;
 			}
-		}catch(Exception ee)//this should be thrown and handled by user module in this case
-		{				   //onEvent should throw Exception
-			ERROR(ee);
+		}catch(Exception ee)
+		{
+			WAE(ee);
 		}
-		
 	}	
 	
 	
@@ -295,8 +324,9 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 
 	
 	public static final String USER_PROFILE_ENTITY 				  = "UserProfile";
-	public static String USER_PROFILE_FIELD_FLAGGED_STATUS  = "flagged_status";
+	public static String USER_PROFILE_FIELD_FLAGGED_STATUS  	  = "flagged_status";
 	public static String USER_PROFILE_FIELD_FLAGGING_USERS  	  = "flagging_users";
+	public static String USER_PROFILE_FIELD_LINK_ID		       	  = "link_id";
 	
 	private static final int FLAGGED_STATUS_NOT_FLAGGED = 0x00;
 	private static final int FLAGGED_STATUS_FLAGGED 	= 0x10;
@@ -305,20 +335,23 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	{
 		String[] field_delarations = GET_REQUIRED_LIST_PARAM(PARAM_PROFILE_FIELDS, config);
 		profile_fields			   = UNFLATTEN_FIELD_DEFINITIONS(FROM_STRING_LIST,(Object[])field_delarations);
-		EntityDefinition d = DEFINE_ENTITY(USER_PROFILE_ENTITY,profile_fields,
+		EntityDefinition d = DEFINE_ENTITY(user_profile_entity_name,profile_fields,
 				USER_PROFILE_FIELD_FLAGGED_STATUS,Types.TYPE_INT,FLAGGED_STATUS_NOT_FLAGGED,
-				USER_PROFILE_FIELD_FLAGGING_USERS,Types.TYPE_REFERENCE|Types.TYPE_ARRAY,UserModule.USER_ENTITY, new ArrayList<Entity>());
+				USER_PROFILE_FIELD_FLAGGING_USERS,Types.TYPE_REFERENCE|Types.TYPE_ARRAY,UserModule.USER_ENTITY, new ArrayList<Entity>(),
+				USER_PROFILE_FIELD_LINK_ID,Types.TYPE_STRING,null);
 	}
 	
 	public static final String IDX_BY_CREATOR 		 = "byCreator";
 	public static final String IDX_BY_FLAGGED_STATUS = "byFlaggedStatus";
+	public static final String IDX_BY_LINK_ID		 = "byLinkId";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDICES
 		(
-			USER_PROFILE_ENTITY,
+			user_profile_entity_name,
 			ENTITY_INDEX(IDX_BY_CREATOR, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,FIELD_CREATOR),
-			ENTITY_INDEX(IDX_BY_FLAGGED_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,USER_PROFILE_FIELD_FLAGGED_STATUS)
+			ENTITY_INDEX(IDX_BY_FLAGGED_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,USER_PROFILE_FIELD_FLAGGED_STATUS),
+			ENTITY_INDEX(IDX_BY_LINK_ID, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,USER_PROFILE_FIELD_LINK_ID)
 		);
 	}
 

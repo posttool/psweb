@@ -48,6 +48,7 @@ public class UserModule extends WebStoreModule
 	public static final int EVENT_USER_LOGGED_IN  	 = 0x1002;
 	public static final int EVENT_USER_LOGGED_OUT 	 = 0x1004;
 	public static final int EVENT_USER_DELETED 	 	 = 0x1008;
+	public static final int EVENT_USER_ROLES_UPDATED = 0x1010;
 	
 	public static final String USER_EVENT_USER = "user";
 	public static final String USER_EVENT_USER_CONTEXT = "user-context";
@@ -266,10 +267,13 @@ public class UserModule extends WebStoreModule
 		return updated_user;
 	}
 	
-	public Entity addRole(Entity user,int role) throws PersistenceException
+	public Entity addRole(Entity user,int role) throws PersistenceException,WebApplicationException
 	{
 		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
 		roles.add(role);
+		
+		DISPATCH_EVENT(EVENT_USER_ROLES_UPDATED,
+				   USER_EVENT_USER, user);
 		return UPDATE(user,
 				  	  UserModule.FIELD_ROLES,roles);						
 	}
@@ -286,12 +290,21 @@ public class UserModule extends WebStoreModule
 		return updated_user;
 	}
 	
-	public Entity removeRole(Entity user,int role) throws PersistenceException
+	public Entity removeRole(Entity user,int role) throws PersistenceException,WebApplicationException
 	{
 		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
 		roles.remove(role);
+		DISPATCH_EVENT(EVENT_USER_ROLES_UPDATED,
+				   USER_EVENT_USER, user);
 		return UPDATE(user,
 			  UserModule.FIELD_ROLES,roles);			
+	}
+	
+	
+	public boolean isRole(Entity user,int role) throws PersistenceException
+	{
+		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
+		return roles.contains(role);
 	}
 	
 	@Export(ParameterNames={"user_entity_id","lock_code","notes"})
@@ -360,7 +373,7 @@ public class UserModule extends WebStoreModule
 
 		uctx.setUser(user);
 		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
-						   USER_EVENT_USER, user);
+				   USER_EVENT_USER, user);
 		return UPDATE(user,
 					  FIELD_LAST_LOGIN, new Date());
 				
