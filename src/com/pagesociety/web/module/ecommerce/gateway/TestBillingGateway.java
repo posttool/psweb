@@ -44,16 +44,24 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 		if(Validator.isEmptyOrNull(cc_no))
 			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
 
-		if(cc_no.length() < 16)
-			throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+
+		
 		
 		switch(cc_type)
 		{
 			case BillingModule.CC_TYPE_VISA:
 			case BillingModule.CC_TYPE_MASTERCARD:
-			case BillingModule.CC_TYPE_AMEX:
 			case BillingModule.CC_TYPE_DISCOVER:
+				if(cc_no.length() < 16 && cc_no.length() != 13)
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+				break;
 			case BillingModule.CC_TYPE_DINERS:
+				if(cc_no.length() < 14)
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+				break;
+			case BillingModule.CC_TYPE_AMEX:
+				if(cc_no.length() < 15)
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
 				break;
 			default:
 					throw new BillingGatewayException("BAD CREDIT CARD TYPE"); 
