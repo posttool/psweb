@@ -163,7 +163,9 @@ public class ModuleRegistry
 			}catch(PersistenceException pe)
 			{
 				if(pe.getErrorCode() != PersistenceException.UNABLE_TO_START_TRANSACTION)
-					WebStoreModule.ROLLBACK_TRANSACTION(store);
+					WebStoreModule.ROLLBACK_ALL_ACTIVE_TRANSACTIONS(store);	
+				
+				
 				//exc_os.println("SID: "+user_context.getId());
 				//exc_os.println(Thread.currentThread().getName());
 				//pe.printStackTrace(exc_os);
