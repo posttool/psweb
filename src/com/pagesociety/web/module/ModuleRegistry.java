@@ -171,7 +171,7 @@ public class ModuleRegistry
 			}
 			catch(Throwable t)
 			{
-				WebStoreModule.ROLLBACK_TRANSACTION(store);
+				WebStoreModule.ROLLBACK_ALL_ACTIVE_TRANSACTIONS(store);
 				//exc_os.println("SID: "+user_context.getId());
 				//exc_os.println(Thread.currentThread().getName());
 				//t.printStackTrace(exc_os);

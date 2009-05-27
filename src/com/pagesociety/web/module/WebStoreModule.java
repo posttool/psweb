@@ -1809,4 +1809,16 @@ public class WebStoreModule extends WebModule
 		current_tid_list.remove(current_tid_list.size()-1);
 	}
 	
+	protected static void ROLLBACK_ALL_ACTIVE_TRANSACTIONS(PersistentStore store) throws PersistenceException
+	{
+		List<Integer> current_tid_list = current_transaction_id_list.get();
+		int c_tid_idx = current_tid_list.size() - 1;
+		while(c_tid_idx > -1)
+		{
+			store.rollbackTransaction(current_tid_list.get(c_tid_idx));
+			current_tid_list.remove(c_tid_idx);
+			c_tid_idx = current_tid_list.size() - 1;
+		}		
+	}
+	
 }
