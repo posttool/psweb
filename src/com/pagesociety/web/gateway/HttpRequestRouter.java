@@ -360,29 +360,27 @@ public class HttpRequestRouter extends HttpServlet
 				}
 			}
 		}
+		//when we are switching domains and for upload we pass jessionid in request paramters//
 		if (request.getParameter(GatewayConstants.SESSION_ID_KEY) != null)
+			http_sess_id = set_session_cookie(response,request.getParameter(GatewayConstants.SESSION_ID_KEY));
+		else
 		{
-			http_sess_id = request.getParameter(GatewayConstants.SESSION_ID_KEY);
-		}
-		if (cookie==null)
-		{
-			if (http_sess_id==null)
-				http_sess_id = RandomGUID.getGUID();
-			Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_sess_id);
-			c.setMaxAge(SESSION_TIMEOUT);
-			c.setPath("/");
-			response.addCookie(c);
-		}
-		else 
-		{
-			if (http_sess_id!=null)
-			{
-				cookie.setValue(http_sess_id);
-				response.addCookie(cookie);
-			}
-			else
+			if (cookie==null)
+				http_sess_id = set_session_cookie(response,null);
+			else 
 				http_sess_id = cookie.getValue();
 		}
 		return _web_application.getUserContext(HTTP, http_sess_id);
+	}
+	
+	private String set_session_cookie(HttpServletResponse response,String http_session_id)
+	{
+		if(http_session_id == null)
+			http_session_id = RandomGUID.getGUID();
+		Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_session_id);
+		c.setMaxAge(-1);
+		c.setPath("/");
+		response.addCookie(c);
+		return http_session_id;
 	}
 }
