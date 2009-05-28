@@ -74,7 +74,7 @@ public abstract class WebApplication
 				return (UserApplicationContext) sess_mgr.get(sess_id);
 			}catch(Exception e)
 			{
-				ERROR("SERIOUS BARF ",e);
+				ERROR("!!!!SERIOUS BARF GETTING SESSION ",e);
 				return null;
 			}
 			

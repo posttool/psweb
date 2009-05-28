@@ -14,7 +14,7 @@ public class SessionManager
 		_session_map = new ConcurrentHashMap<String, ExpiringObject>();
 		start_reaper();
 	}
-
+	//5 minutes
 	private static long REAP_INTERVAL = 1000 * 60 * 5;
 
 	private void start_reaper()
@@ -30,8 +30,9 @@ public class SessionManager
 					while (iter.hasNext())
 					{
 						ExpiringObject eo = _session_map.get(iter.next());
-						if (eo.time + sessionTimeoutPeriod < now)
+						if(eo.time + sessionTimeoutPeriod < now)
 						{
+							System.out.println("SESSION REAPER IS REMOVING "+eo);
 							iter.remove();
 						}
 					}
