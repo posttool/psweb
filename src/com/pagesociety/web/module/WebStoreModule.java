@@ -1054,7 +1054,7 @@ public class WebStoreModule extends WebModule
 	{
 		if(e == null)
 			return null;
-
+		e = EXPAND(store,e);
 		try{
 			List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
 			for(int i = 0;i < ref_fields.size();i++)
@@ -1069,7 +1069,7 @@ public class WebStoreModule extends WebModule
 					int s = vals.size();
 					for(int j = 0;j <s;j++)
 					{
-						Entity val = vals.get(i);
+						Entity val = vals.get(j);
 						int delete_behavior = f.exec(e, ref_fieldname, val);
 						switch(delete_behavior)
 						{
@@ -1106,6 +1106,7 @@ public class WebStoreModule extends WebModule
 			return dd;
 		}catch(Exception ee)
 		{
+			ee.printStackTrace();
 			throw new PersistenceException("BARFED IN DELETE DEEP "+ee.getMessage());
 		}
 	}
