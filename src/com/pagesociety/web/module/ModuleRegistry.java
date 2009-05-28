@@ -16,6 +16,7 @@ import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
 import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.upload.MultipartForm;
 
@@ -156,10 +157,19 @@ public class ModuleRegistry
 		{
 			PersistentStore store = ((WebStoreModule)module).store;
 			try{
-				WebStoreModule.START_TRANSACTION(store);
-				Object ret = resolved_method.invoke(module,args_with_user);
-				WebStoreModule.COMMIT_TRANSACTION(store);
-				return ret;
+				try{
+					WebStoreModule.START_TRANSACTION(store);
+					Object ret = resolved_method.invoke(module,args_with_user);
+					WebStoreModule.COMMIT_TRANSACTION(store);
+					return ret;
+				}catch(PermissionsException ppe)
+				{
+					System.out.println("!!! CAUGHT PERMISSIONS EXCEPTION");
+					UserApplicationContext uctx = (UserApplicationContext)args_with_user[0];
+					System.out.println("USER APP CONTEXT IS "+uctx);
+					System.out.println("USER IS "+uctx.getUser());
+					throw ppe;
+				}
 			}catch(PersistenceException pe)
 			{
 				if(pe.getErrorCode() != PersistenceException.UNABLE_TO_START_TRANSACTION)
