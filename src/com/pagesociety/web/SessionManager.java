@@ -32,7 +32,6 @@ public class SessionManager
 						ExpiringObject eo = _session_map.get(iter.next());
 						if(eo.time + sessionTimeoutPeriod < now)
 						{
-							System.out.println("!!!!SESSION REAPER IS REMOVING "+((UserApplicationContext)eo.object).getUser());
 							iter.remove();
 						}
 					}
