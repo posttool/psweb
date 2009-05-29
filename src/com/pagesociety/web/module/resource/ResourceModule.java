@@ -87,6 +87,7 @@ public class ResourceModule extends WebStoreModule
 	
 	protected void setResourceEntityName(String name)
 	{
+		System.out.println("SETTING RESOURCE ENTITY NAME TO "+name);
 		resource_entity_name = name;
 	}
 	
@@ -674,7 +675,7 @@ public class ResourceModule extends WebStoreModule
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY(RESOURCE_ENTITY,
+		DEFINE_ENTITY(resource_entity_name,
 					  RESOURCE_FIELD_CONTENT_TYPE,	Types.TYPE_STRING,null, 
 					  RESOURCE_FIELD_SIMPLE_TYPE,	Types.TYPE_STRING,null, 
 					  RESOURCE_FIELD_FILENAME,		Types.TYPE_STRING,null,
