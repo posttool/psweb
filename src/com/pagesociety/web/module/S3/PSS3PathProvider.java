@@ -60,11 +60,12 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	protected String image_magick_path;
 	protected String image_magick_convert_cmd;
 
-	protected static final Object DELETE_QUEUE_LOCK = new Object();
+	protected Object DELETE_QUEUE_LOCK;;
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
+		DELETE_QUEUE_LOCK = new Object();
 		s3_bucket	  = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_BUCKET, config);
 		s3_api_key    = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_API_KEY, config);
 		s3_secret_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_SECRET_KEY, config);
@@ -117,26 +118,27 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	private void setup_crossdomain_file(WebApplication app,Map<String, Object> config) throws InitializationException
 	{
-		String crossdomain_file = 
-		"<cross-domain-policy>\n"+ 
-		"\t<allow-access-from domain=\"*\" />\n"+ 
-		"\t<site-control permitted-cross-domain-policies=\"all\"/>\n"+
-		"</cross-domain-policy>\n";
-		
 		try{
-			delete("crossdomain.xml");
-			File cross_domain_temp_file = new File(scratch_directory+File.separator+"crossdomain.xml");
-			FileOutputStream fos 		= new FileOutputStream(cross_domain_temp_file);
-			fos.write(crossdomain_file.getBytes());
-			fos.close();
-			putFile(cross_domain_temp_file,"text/xml");
-			INFO("PUT "+cross_domain_temp_file.getName()+" ON S3");
+			if(!fileExists("crossdomain.xml"))
+			{
+				String crossdomain_file = 
+				"<cross-domain-policy>\n"+ 
+				"\t<allow-access-from domain=\"*\" />\n"+ 
+				"\t<site-control permitted-cross-domain-policies=\"all\"/>\n"+
+				"</cross-domain-policy>\n";
+		
+				File cross_domain_temp_file = new File(scratch_directory+File.separator+"crossdomain.xml");
+				FileOutputStream fos 		= new FileOutputStream(cross_domain_temp_file);
+				fos.write(crossdomain_file.getBytes());
+				fos.close();
+				putFile(cross_domain_temp_file,"text/xml");
+				INFO("PUT "+cross_domain_temp_file.getName()+" ON S3");
+			}
 		}catch(Exception e)
 		{
 			e.printStackTrace();
 			throw new InitializationException("FAILED SETTING UP CROSSDOMAIN FILE ",e);
 		}
-		
 	}
 	
 	private void setup_delete_queue() throws InitializationException
