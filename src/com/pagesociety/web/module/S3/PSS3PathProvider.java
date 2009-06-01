@@ -281,13 +281,10 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	public String getPreviewUrl(String path_token,int width,int height)	throws WebApplicationException
 	{
 		INFO("GETTING PREVIEW URL FOR "+path_token+" AT "+width+" "+height);
-		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
-		String preview_key 			  =  get_preview_file_relative_path(path_token, width, height);
+		PSAWSAuthConnection conn 	= new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
+		String preview_key 			= get_preview_file_relative_path(path_token, width, height);
 		INFO("PREVIEW KEY IS "+preview_key);
-		//TODO lock on preview_key ..... need to do this.
-		//
-		//
-		//
+		Object lock = null;
 		try{
 			boolean resized_exists 		  = conn.checkKeyExists(s3_bucket, preview_key);
 			if(resized_exists)
@@ -297,7 +294,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			}
 			
 
-			Object lock = current_thumbnail_generators.putIfAbsent(preview_key, new Object());
+			lock = current_thumbnail_generators.putIfAbsent(preview_key, new Object());
 			if(lock != null)
 			{
 				try{
@@ -310,8 +307,12 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 					boolean resized_now_exists 		  = conn.checkKeyExists(s3_bucket, preview_key);
 					if(resized_now_exists)
 						return base_s3_url+preview_key;
-					throw new WebApplicationException("WAITING FOR RESOURCE TO BE RESIZED "+s3_bucket+" "+path_token+" BUT IT STILL DOESN'T EXIST");
-				}catch (InterruptedException e) {}
+					else
+						throw new Exception("WAITING FOR RESOURCE TO BE RESIZED "+s3_bucket+" "+path_token+" BUT IT STILL DOESN'T EXIST");
+				}catch (Exception e) 
+				{
+					WAE(e);					
+				}
 			
 			}
 			else
@@ -353,8 +354,14 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			PSS3Object pobj = new PSS3Object(new FileInputStream(preview),preview.length(),content_type,PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, preview_key, pobj);
 			if(pr.connection.getResponseCode() != pr.connection.HTTP_OK)
-				throw new WebApplicationException("PROBLEM WRITNG PREVIEW TO S3 "+s3_bucket+" "+preview_key+" HTTP RESPONSE WAS "+pr.connection.getResponseCode());
-			
+			{
+				current_thumbnail_generators.remove(preview_key);
+				synchronized (lock) 
+				{			
+					lock.notifyAll();
+				}	
+				throw new WebApplicationException("PROBLEM WRITING PREVIEW TO S3 "+s3_bucket+" "+preview_key+" HTTP RESPONSE WAS "+pr.connection.getResponseCode());
+			}
 			current_thumbnail_generators.remove(preview_key);
 			synchronized (lock) 
 			{			
@@ -365,6 +372,15 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			return base_s3_url+preview_key;
 		}catch(IOException ioe)
 		{
+			if(lock != null)
+			{
+				if(preview_key != null)
+					current_thumbnail_generators.remove(preview_key);
+				synchronized (lock) 
+				{			
+					lock.notifyAll();
+				}	
+			}
 			ERROR(ioe);
 			throw new WebApplicationException("IO ERROR IN S3 GEN PREVIEW. SEE LOGS. "+ioe.getMessage());
 		}
