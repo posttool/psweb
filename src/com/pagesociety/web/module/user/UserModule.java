@@ -113,8 +113,11 @@ public class UserModule extends WebStoreModule
 				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
 		}
 		
-		if(getUserByUsernameAndPassword(username,password) != null)
-			throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
+		//System.out.println("USERNAME IS "+username);
+		//System.out.println("PASSWORD IS "+password);
+		//NOTE: this is only if we want people to be able to log in by username//
+		//if(getUserByUsernameAndPassword(username,password) != null)
+		//	throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
 		
 		Entity user =  NEW(USER_ENTITY,
 					creator,
