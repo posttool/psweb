@@ -652,6 +652,7 @@ public class ResourceModule extends WebStoreModule
 			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), f.length(), path_token);
 		}catch(Exception e)
 		{
+			ERROR(e);
 			throw new WebApplicationException("PROBLEM ADDING RESOURCE FROM FILE");
 		}
 		

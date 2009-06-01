@@ -85,6 +85,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	{
 		String guid = RandomGUID.getGUID();
 		StringBuilder path = new StringBuilder();
+		path.append(user.getId());
+		path.append(C_SLASH);
 		byte[] b = guid.getBytes();
 		for(int i = 0;i < depth;i++)
 		{
