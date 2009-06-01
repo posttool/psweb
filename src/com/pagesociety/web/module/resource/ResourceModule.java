@@ -14,6 +14,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -35,6 +36,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.upload.MultipartForm;
@@ -244,6 +246,39 @@ public class ResourceModule extends WebStoreModule
 	
 	}
 	 
+	//@Export 
+	public void TestPreviewConcurrency(UserApplicationContext uctx,RawCommunique c) throws WebApplicationException,PersistenceException
+	{
+		System.out.println("TESTING 1 2 3");
+		final Entity resource = GET("Resource",1);
+		System.out.println("RESOURCE IS: "+resource);
+		final int w = (int)((new Random().nextDouble()*100))+100;
+		final int h = 350;
+		
+		Thread[] tt = new Thread[16];
+		for(int i = 0;i < 16;i++)
+		{
+			tt[i] = new Thread("TEST THREAD-"+i)
+			{
+				public void run()
+				{
+					try{
+						getResourcePreviewUrlWithDim(resource, w, h);
+					}catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+					System.out.println(Thread.currentThread().getName()+" FINISHED");
+				}
+			};
+		}
+		
+		for(int i = 0;i < 16;i++)
+		{
+			tt[i].start();
+		}
+	}
+	
 	public String getResourcePreviewUrlWithDim(Entity resource,int w,int h) throws WebApplicationException
 	{
 		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
@@ -415,7 +450,10 @@ public class ResourceModule extends WebStoreModule
 		OutputStream[] outs=null;
 		boolean bulk_upload = false;
 		File tmp_zip_file = null;
-		if(ext != null && ext.toLowerCase().equals("zip"))
+		//DONT NEED THIS ANYMORE UNLESS WE WANT BULK UPLOAD FROM ZIP OF RESOURCES//
+		//probably need a paramter treat-zips-as-bulk-uploads
+		
+		if(false)//ext != null && ext.toLowerCase().equals("zip"))
 		{
 			if(update)
 			{
@@ -589,6 +627,37 @@ public class ResourceModule extends WebStoreModule
 		}	
 	}
 
+	public Entity createResource(Entity creator,File f, boolean delete) throws WebApplicationException,PersistenceException
+	{
+		try{
+			String filename = f.getName();
+			String path_token 	   = path_provider.getPathToken(creator, filename);
+			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, f.length()) ;
+		
+			byte[] buf = new byte[4096];
+			FileInputStream fis = new FileInputStream(f);
+			
+			int l = 0;
+			while((l = fis.read(buf)) != -1)
+			{
+				for(int i = 0;i < os.length;i++)
+					os[i].write(buf,0,l);
+			}
+			for(int i = 0;i < os.length;i++)
+				os[i].close();
+			if(delete)
+				f.delete();
+			
+			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), f.length(), path_token);
+		}catch(Exception e)
+		{
+			throw new WebApplicationException("PROBLEM ADDING RESOURCE FROM FILE");
+		}
+		
+	}
+	
+	
 	protected Entity do_add_resource(MultipartForm upload,Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
 
