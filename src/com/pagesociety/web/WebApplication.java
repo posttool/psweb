@@ -106,7 +106,11 @@ public abstract class WebApplication
 	{
 		return calling_user_context.get();
 	}
-	
+
+	public void setCallingUserContext(UserApplicationContext uctx)
+	{
+		calling_user_context.set(uctx);
+	}
 	
 	public Object dispatch(ModuleRequest request) throws WebApplicationException,Throwable
 	{
