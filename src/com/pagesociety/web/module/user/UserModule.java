@@ -597,7 +597,6 @@ public class UserModule extends WebStoreModule
 			
 			List<Integer> admin_roles = new ArrayList<Integer>();
 			admin_roles.add(USER_ROLE_WHEEL);
-			admin_roles.add(USER_ROLE_USER);
 			
 			try{
 				createPrivilegedUser(null,admin_email,Util.stringToHexEncodedMD5(admin_password),"admin",admin_roles);
