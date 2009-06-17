@@ -19,21 +19,24 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import com.pagesociety.persistence.Entity;
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
+import com.pagesociety.web.module.permissions.PermissionEvaluator;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 
 
 
 public abstract class WebModule extends Module
 {
+	public static final String SLOT_PERMISSIONS_MODULE  = "permissions-module";
+	protected PermissionsModule permissions;
 	
-	public List<Class<?>> ADD_DEPENDENCY(Class<?> c)
-	{
-		super.dependencies().add(c);
-		return dependencies();
-	}
 	
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
@@ -43,9 +46,27 @@ public abstract class WebModule extends Module
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
+		permissions = (PermissionsModule)getSlot(SLOT_PERMISSIONS_MODULE);
+		exportPermissions();
 	}
 	
+	
+	protected void defineSlots()
+	{
+		super.defineSlots();
+		DEFINE_SLOT(SLOT_PERMISSIONS_MODULE, PermissionsModule.class, false,getApplication().getDefaultPermissionsModule());	
+	}
 
+	protected void exportPermissions()
+	{
+		//do nothing by default//
+	}
+	
+	protected void EXPORT_PERMISSION(String permission_id)
+	{
+		permissions.definePermission(getName(), permission_id);
+	}
+	
 	protected void DEFINE_SLOT(String slot_name,Class<?> slot_type,boolean required)
 	{
 		super.defineSlot(slot_name, slot_type, required);
@@ -101,6 +122,20 @@ public abstract class WebModule extends Module
 		throw new WebApplicationException(e.getMessage(),e);
 	}
 
+	protected String GUARD_INSTANCE = "instance";
+	protected String GUARD_TYPE		= "entity_type";
+	protected String GUARD_USER		= "user";
+	protected void GUARD(Entity user,String permission_id,Object... flattened_context) throws PermissionsException,PersistenceException
+	{
+		Map<String,Object> context = new HashMap<String, Object>();
+		for(int i = 0;i < flattened_context.length;i+=2)
+			context.put((String)flattened_context[i], flattened_context[i+1]);
+		
+		boolean b = permissions.checkPermission(user, getName(), permission_id, context);
+		if(!b)
+			throw new PermissionsException("NO PERMISSION");
+	}
+	
 	protected static void GUARD(boolean b) throws PermissionsException
 	{
 		try{

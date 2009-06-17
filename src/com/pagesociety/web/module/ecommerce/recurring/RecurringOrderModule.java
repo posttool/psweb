@@ -23,7 +23,6 @@ import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.ecommerce.billing.BillingModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
@@ -31,6 +30,7 @@ import com.pagesociety.web.module.ecommerce.promo.PromotionModule;
 import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.logger.LoggerModule;
 import com.pagesociety.web.module.notification.SystemNotificationModule;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.resource.ResourceModule;
 import com.pagesociety.web.module.user.UserModule;
 
@@ -154,6 +154,36 @@ public class RecurringOrderModule extends ResourceModule
 	}
 	
 
+	
+	public static final String CAN_CREATE_RECURRING_SKU			= "CAN_CREATE_RECURRING_SKU";
+	public static final String CAN_READ_RECURRING_SKU 			= "CAN_READ_RECURRING_SKU";
+	public static final String CAN_UPDATE_RECURRING_SKU 	    = "CAN_UPDATE_RECURRING_SKU";
+	public static final String CAN_DELETE_RECURRING_SKU 		= "CAN_DELETE_RECURRING_SKU";
+	public static final String CAN_BROWSE_RECURRING_SKUS 	    = "CAN_BROWSE_RECURRING_SKUS";
+	
+	public static final String CAN_CREATE_RECURRING_ORDER		= "CAN_CREATE_RECURRING_ORDER";
+	public static final String CAN_READ_RECURRING_ORDER			= "CAN_READ_RECURRING_ORDER";
+	public static final String CAN_UPDATE_RECURRING_ORDER 	    = "CAN_UPDATE_RECURRING_ORDER";
+	public static final String CAN_DELETE_RECURRING_ORDER		= "CAN_DELETE_RECURRING_ORDER";
+	public static final String CAN_BROWSE_RECURRING_ORDERS 	    = "CAN_BROWSE_RECURRING_ORDERS";
+	public static final String CAN_BROWSE_RECURRING_ORDERS_BY_USER = "CAN_BROWSE_RECURRING_ORDERS_BY_USER";
+	
+	
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_RECURRING_SKU);
+		EXPORT_PERMISSION(CAN_READ_RECURRING_SKU);
+		EXPORT_PERMISSION(CAN_UPDATE_RECURRING_SKU);
+		EXPORT_PERMISSION(CAN_DELETE_RECURRING_SKU);
+		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_SKUS);
+		EXPORT_PERMISSION(CAN_CREATE_RECURRING_ORDER); 
+		EXPORT_PERMISSION(CAN_READ_RECURRING_ORDER); 	
+		EXPORT_PERMISSION(CAN_UPDATE_RECURRING_ORDER); 
+		EXPORT_PERMISSION(CAN_DELETE_RECURRING_ORDER); 
+		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_ORDERS);
+
+	}
+	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
 	
@@ -169,10 +199,10 @@ public class RecurringOrderModule extends ResourceModule
 	public PagingQueryResult GetAllRecurringSKUs(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION");
+		GUARD(user,CAN_BROWSE_RECURRING_SKUS);
+		PagingQueryResult result =  getRecurringSKUs(offset, page_size,Query.VAL_GLOB,null);
 		
-		return getRecurringSKUs(offset, page_size,Query.VAL_GLOB,null);
+		return result;
 	}
 	
 	public PagingQueryResult getRecurringSKUs(int offset,int page_size,Object state,String order_by) throws PersistenceException
@@ -243,10 +273,6 @@ public class RecurringOrderModule extends ResourceModule
 	public Entity CreateRecurringSKU(UserApplicationContext uctx,String product_name,String product_description,double initial_fee,double  product_price,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
-		
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION");
-		
 		Entity user_data 	= null;
 		if(user_data_type  != null)
 			user_data = GET(user_data_type,user_data_id);
@@ -254,7 +280,16 @@ public class RecurringOrderModule extends ResourceModule
 		Entity recurring_sku_resource = null;
 		if(recurring_sku_resource_id != 0)//0 for a ref pointer means null//
 			recurring_sku_resource = GET(RECURRING_SKU_ENTITY,recurring_sku_resource_id);
-			
+		GUARD(user,CAN_CREATE_RECURRING_SKU,GUARD_TYPE, RECURRING_SKU_ENTITY, 
+											RECURRING_SKU_FIELD_TITLE,product_name,
+											RECURRING_SKU_FIELD_DESCRIPTION,product_description,
+											RECURRING_SKU_FIELD_INITIAL_FEE,initial_fee,
+											RECURRING_SKU_FIELD_RECURRING_PRICE,product_price,
+											RECURRING_SKU_FIELD_CATALOG_NUMBER,catalog_no,
+											RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
+											RECURRING_SKU_FIELD_USER_DATA,user_data,
+											RECURRING_SKU_FIELD_CATALOG_STATE,catalog_state);
+		
 		return createRecurringSKU(user,product_name, product_description,initial_fee,product_price,catalog_no,recurring_sku_resource,user_data,catalog_state);
 	}
 	
@@ -316,9 +351,6 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
 
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION");
-		
 		Entity user_data 	= null;
 		if(user_data_type  != null)
 			user_data = GET(user_data_type,user_data_id);
@@ -326,6 +358,14 @@ public class RecurringOrderModule extends ResourceModule
 		Entity recurring_sku_resource = null;
 		if(recurring_sku_resource_id != 0)//0 for a ref pointer means null//
 			recurring_sku_resource = GET(RECURRING_SKU_ENTITY,recurring_sku_resource_id);
+		GUARD(user,CAN_UPDATE_RECURRING_SKU,GUARD_INSTANCE, recurring_sku, 
+											RECURRING_SKU_FIELD_TITLE,product_name,
+											RECURRING_SKU_FIELD_DESCRIPTION,product_description,
+											RECURRING_SKU_FIELD_RECURRING_PRICE,product_price,
+											RECURRING_SKU_FIELD_CATALOG_NUMBER,catalog_no,
+											RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
+											RECURRING_SKU_FIELD_USER_DATA,user_data,
+											RECURRING_SKU_FIELD_CATALOG_STATE,catalog_state);
 		
 		return updateRecurringSKU(recurring_sku,product_name, product_description, product_price,catalog_no, recurring_sku_resource,user_data,catalog_state);
 	}
@@ -352,9 +392,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION");
-
+		GUARD(user,CAN_DELETE_RECURRING_SKU,GUARD_INSTANCE, recurring_sku);
 		return deleteRecurringSKU(recurring_sku);		
 	}
 	
@@ -386,13 +424,16 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user 	   = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(target_user_id);
 		
-		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
-			throw new PermissionsException("NO PERMISSION");
-
 		List <Entity>skus 		= IDS_TO_ENTITIES(RECURRING_SKU_ENTITY,recurring_sku_ids);
 		List<Entity> promotions = IDS_TO_ENTITIES(promotion_module.PROMOTION_INSTANCE_ENTITY, promotion_ids);
 		
-	
+		GUARD(user,CAN_CREATE_RECURRING_ORDER,GUARD_TYPE,RECURRING_ORDER_ENTITY,
+												  RECURRING_ORDER_FIELD_SKUS,skus,
+												  RECURRING_ORDER_FIELD_USER,user,
+												  RECURRING_ORDER_FIELD_PROMOTIONS,promotions,
+												  RECURRING_ORDER_FIELD_RECURRING_UNIT,recurring_unit,
+												  RECURRING_ORDER_FIELD_RECURRING_PERIOD,recurring_period);
+													
 		return createRecurringOrder(user,target_user,recurring_unit,recurring_period,skus,promotions);
 
 	}
@@ -422,9 +463,7 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user 	   = (Entity)uctx.getUser();
 		Entity recurring_order = GET(RECURRING_ORDER_ENTITY,recurring_order_id);
 		
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION");
-	
+		GUARD(user, CAN_DELETE_RECURRING_ORDER, recurring_order);
 		return deleteRecurringOrder(recurring_order);
 	}
 	
@@ -516,9 +555,8 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user 	   		= (Entity)uctx.getUser();
 		Entity recurring_order 	= GET(RECURRING_ORDER_ENTITY,recurring_order_id);
 		
-		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_CREATOR(store,user, recurring_order))
-			throw new PermissionsException("NO PERMISSION");
-	
+		GUARD(user, CAN_UPDATE_RECURRING_ORDER,GUARD_INSTANCE,recurring_order,
+											 	RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_CLOSED);
 		return closeRecurringOrder(recurring_order);
 	}
 	
@@ -631,10 +669,9 @@ public class RecurringOrderModule extends ResourceModule
 	public PagingQueryResult GetRecurringOrdersByStatus(UserApplicationContext uctx,int status,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION");
-	
-		return getRecurringOrdersByStatus(status, page_size, offset);
+		GUARD(user, CAN_BROWSE_RECURRING_ORDERS);
+		PagingQueryResult result =  getRecurringOrdersByStatus(status, page_size, offset);
+		return result;
 	}
 	
 	public PagingQueryResult getRecurringOrdersByStatus(int status,int page_size,int offset) throws WebApplicationException,PersistenceException
@@ -652,12 +689,10 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(user_id);
-
+		GUARD(user,CAN_BROWSE_RECURRING_ORDERS_BY_USER, GUARD_USER,user);
+		PagingQueryResult result =  getRecurringOrdersByUser(target_user,offset,page_size);
 		
-		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
-			throw new PermissionsException("NO PERMISSION");
-			
-		return getRecurringOrdersByUser(target_user,offset,page_size);
+		return result;
 	}
 	
 	
@@ -686,8 +721,6 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(user_id);
 		
-		if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, target_user))
-			throw new PermissionsException("NO PERMISSION");
 			
 		return getTransactionHistoryByUser(target_user,offset,page_size);
 	}

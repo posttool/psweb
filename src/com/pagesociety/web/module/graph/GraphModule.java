@@ -27,21 +27,15 @@ import com.pagesociety.web.module.user.UserModule;
 
 public class GraphModule extends WebStoreModule 
 {
-	private static final String SLOT_GUARD = "graph-guard";
-	private IGraphGuard guard;
-
-
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
-		guard = (IGraphGuard)getSlot(SLOT_GUARD);
 	}
 	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_GUARD,IGraphGuard.class,false,DefaultGraphGuard.class);
 	}	
 	
 
@@ -65,9 +59,24 @@ public class GraphModule extends WebStoreModule
 		return (Entity)e.getAttribute(GRAPH_VERTEX_FIELD_GRAPH);
 	}
 
+	public static final String CAN_CREATE_GRAPH 		  = "CAN_CREATE_GRAPH";
+	public static final String CAN_READ_GRAPH 			  = "CAN_READ_GRAPH";
+	public static final String CAN_UPDATE_GRAPH 	 		  = "CAN_EDIT_GRAPH";
+	public static final String CAN_DELETE_GRAPH 		  = "CAN_DELETE_GRAPH";
+	public static final String CAN_BROWSE_GRAPHS		  = "CAN_BROWSE_GRAPHS";
+	public static final String CAN_BROWSE_GRAPHS_FOR_USER = "CAN_BROWSE_GRAPHS_FOR_USER";
+
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_GRAPH);
+		EXPORT_PERMISSION(CAN_READ_GRAPH);
+		EXPORT_PERMISSION(CAN_UPDATE_GRAPH);
+		EXPORT_PERMISSION(CAN_DELETE_GRAPH);
+		EXPORT_PERMISSION(CAN_BROWSE_GRAPHS);
+		EXPORT_PERMISSION(CAN_BROWSE_GRAPHS_FOR_USER);
+	}
+	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-
-
 	@Export
 	public Entity CreateGraph(UserApplicationContext uctx,String name,int type) throws WebApplicationException,PersistenceException
 	{
@@ -75,7 +84,10 @@ public class GraphModule extends WebStoreModule
 		Entity t = getGraphForUserByName(user,name);
 		if(t != null)
 			throw new WebApplicationException("GRAPH NAMED "+name+" ALREADY EXISTS FOR USER "+user.getId());
-		GUARD(guard.canCreateGraph(user));
+		GUARD(user, CAN_CREATE_GRAPH,GUARD_TYPE,GRAPH_ENTITY,
+													 FIELD_CREATOR,user,
+													 GRAPH_FIELD_NAME,name,
+													 GRAPH_EDGE_FIELD_TYPE,type);
 		return createGraph(user,name,type);
 	}
 	
@@ -101,7 +113,8 @@ public class GraphModule extends WebStoreModule
 			throw new WebApplicationException("GRAPH NAMED "+name+" ALREADY EXISTS FOR USER "+user.getId());
 		
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canUpdateGraph(user,graph,name));
+		GUARD(user, CAN_UPDATE_GRAPH,GUARD_INSTANCE,graph,
+									GRAPH_FIELD_NAME,name);
 		return updateGraph(graph,name);
 	}
 	
@@ -117,8 +130,7 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canDeleteGraph(user,graph));
-		
+		GUARD(user, CAN_DELETE_GRAPH,GUARD_INSTANCE,graph);
 		
 		return deleteGraph(graph);
 	}
@@ -136,7 +148,7 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canCreateVertex(user,graph,vertice_class,vertice_id,data));
+		GUARD(user, CAN_UPDATE_GRAPH,GUARD_INSTANCE,graph);
 		return createVertex(user,graph,vertice_class,vertice_id,data);
 	}
 	
@@ -158,8 +170,10 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user      = (Entity)uctx.getUser();
 		Entity vertex   = GET(GRAPH_VERTEX_ENTITY,graph_vertice_id);
+		Entity graph    = GET_GRAPH(vertex);
 	
-		GUARD(guard.canUpdateVertex(user,vertex,vertice_class,vertice_id,data));
+		GUARD(user,CAN_UPDATE_GRAPH,GUARD_INSTANCE,graph);
+		
 		return updateVertex(vertex,vertice_class,vertice_id,data);
 	}
 
@@ -176,7 +190,9 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity vertex   = GET(GRAPH_VERTEX_ENTITY,vertice_id);
-		GUARD(guard.canDeleteVertex(user,vertex));
+		Entity graph    = GET_GRAPH(vertex);
+		GUARD(user,CAN_UPDATE_GRAPH,
+				   GUARD_INSTANCE,graph);
 		return deleteVertex(vertex);
 	}
 	public List<Entity> deleteVertex(Entity vertex)
@@ -191,7 +207,8 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canCreateEdge(user,graph));
+		GUARD(user, CAN_UPDATE_GRAPH,
+					GUARD_INSTANCE,graph);
 		return createEdge(user,graph,vertice1,vertice2,data);
 	}
 	
@@ -256,7 +273,7 @@ public class GraphModule extends WebStoreModule
 			default:
 				throw new WebApplicationException("UNKNOWN GRAPH TYPE "+GET_GRAPH_TYPE(graph),ERROR_BAD_GRAPH_TYPE);
 		}
-		GUARD(guard.canDeleteEdge(user,graph,edge));
+		GUARD(user, CAN_UPDATE_GRAPH, GUARD_INSTANCE,graph);
 		return deleteEdge(edge);
 	}
 	
@@ -275,16 +292,18 @@ public class GraphModule extends WebStoreModule
 			data = GET(data_type,data_id);
 		Entity edge = null;
 		
+		Entity v1 = GET(GRAPH_VERTEX_ENTITY,vertice1_id);
+		Entity v2 = GET(GRAPH_VERTEX_ENTITY,vertice2_id);
 		switch(GET_GRAPH_TYPE(graph))
 		{
 			case GRAPH_TYPE_DIRECTED:
-				
-				GUARD(guard.canUpdateEdge(user,graph,edge));
-				return updateDirectedEdge(edge, GET(GRAPH_VERTEX_ENTITY,vertice1_id),GET(GRAPH_VERTEX_ENTITY,vertice2_id),data);
+				edge = GET(GRAPH_DIRECTED_EDGE_ENTITY,graph_edge_id);
+				GUARD(user, CAN_UPDATE_GRAPH,GUARD_INSTANCE,graph);
+				return updateDirectedEdge(edge, v1,v2,data);
 			case GRAPH_TYPE_UNDIRECTED:
 				edge = GET(GRAPH_UNDIRECTED_EDGE_ENTITY,graph_edge_id);
-				GUARD(guard.canUpdateEdge(user,graph,edge));
-				return updateUndirectedEdge(GET(GRAPH_UNDIRECTED_EDGE_ENTITY,graph_edge_id), GET(GRAPH_VERTEX_ENTITY,vertice1_id),GET(GRAPH_VERTEX_ENTITY,vertice2_id),data);
+				GUARD(user, CAN_UPDATE_GRAPH,GUARD_INSTANCE,graph);
+				return updateUndirectedEdge(GET(GRAPH_UNDIRECTED_EDGE_ENTITY,graph_edge_id), v1,v2,data);
 			default:
 				throw new WebApplicationException("UNKNOWN GRAPH TYPE "+GET_GRAPH_TYPE(graph),ERROR_BAD_GRAPH_TYPE);
 		}
@@ -334,7 +353,7 @@ public class GraphModule extends WebStoreModule
 	public PagingQueryResult GetUserGraphs(UserApplicationContext uctx,int offset,int page_size,String order_by) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetGraphsForUser(user,user));
+		GUARD(user,CAN_BROWSE_GRAPHS_FOR_USER,GUARD_USER,user);
 		Query q = getGraphsByUserByNameQ(user, Query.VAL_GLOB);
 		q.offset(offset);
 		q.pageSize(page_size);
@@ -348,7 +367,7 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user   = (Entity)uctx.getUser();
 		Entity target = GET(UserModule.USER_ENTITY,user_id);//is this bad??..should user module be a slot?
-		GUARD(guard.canGetGraphsForUser(user,target));
+		GUARD(user,CAN_BROWSE_GRAPHS_FOR_USER,GUARD_USER,target);
 		Query q = getGraphsByUserByNameQ(target,Query.VAL_GLOB);
 		q.offset(offset);
 		q.pageSize(page_size);
@@ -363,8 +382,7 @@ public class GraphModule extends WebStoreModule
 		Entity user   = (Entity)uctx.getUser();
 		Entity target = GET(UserModule.USER_ENTITY,user_id);//is this bad??..should user module be a slot?
 		Entity graph  = getGraphForUserByName(target,name);
-		GUARD(guard.canGetGraph(user,graph));		
-		
+		GUARD(user, CAN_READ_GRAPH, GUARD_INSTANCE,graph);		
 		if(graph == null)
 			return null;
 		return graph;
@@ -397,9 +415,9 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = getGraphForUserByName(user,name);
+		GUARD(user, CAN_READ_GRAPH,GUARD_INSTANCE,graph);
 		if(graph == null)
 			return null;
-		GUARD(guard.canGetGraph(user,graph));
 		return graph;
 	}
 	
@@ -413,7 +431,7 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canGetGraphVertices(user,graph));
+		GUARD(user, CAN_READ_GRAPH,GUARD_INSTANCE,graph);
 		Query q = getGraphVerticesByClassQ(graph, Query.VAL_GLOB);
 		q.offset(offset);
 		q.pageSize(page_size);
@@ -427,7 +445,7 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canGetGraphVerticesByClass(user,graph,vertice_classname));
+		GUARD(user, CAN_READ_GRAPH,GUARD_INSTANCE,graph);
 		Query q = getGraphVerticesByClassQ(graph, vertice_classname);
 		q.offset(offset);
 		q.pageSize(page_size);
@@ -449,7 +467,7 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity graph = GET(GRAPH_ENTITY,graph_id);
-		GUARD(guard.canGetGraphVertexById(user,vertex_id));
+		GUARD(user, CAN_READ_GRAPH,GUARD_INSTANCE,graph);
 		return getGraphVertexById(graph,vertex_id);
 		
 	}
@@ -472,7 +490,8 @@ public class GraphModule extends WebStoreModule
 	{
 		Entity user    = (Entity)uctx.getUser();
 		Entity vertex = GET(GRAPH_VERTEX_ENTITY,vertex_id);
-		GUARD(guard.canFillVerticeData(user,vertex,data_ref_fill_depth));
+		Entity graph = GET_GRAPH(vertex);
+		GUARD(user,CAN_READ_GRAPH,GUARD_INSTANCE,graph);
 		do_fill_data((Entity)vertex.getAttribute(GRAPH_VERTEX_FIELD_DATA),0,data_ref_fill_depth);
 		return vertex;
 	}

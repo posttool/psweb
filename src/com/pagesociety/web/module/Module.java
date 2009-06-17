@@ -41,6 +41,7 @@ public abstract class Module
 
 	}
 
+	
 	public void setup_slots() throws InitializationException
 	{
 		defineSlots(); 
@@ -78,6 +79,7 @@ public abstract class Module
 		_application = null;
 		_config = null;
 	}
+
 
 /* slot stuff */
 	protected void defineSlots()

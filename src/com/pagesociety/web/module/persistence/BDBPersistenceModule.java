@@ -21,9 +21,9 @@ import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 
 public class BDBPersistenceModule extends WebModule implements IPersistenceProvider
 {
@@ -33,7 +33,9 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	
 	private PersistentStore    store;
 	private IEvolutionProvider evolution_provider;
-
+	
+	public static final String CAN_DO_BACKUP  = "CAN_DO_BACKUP";
+	public static final String CAN_DO_RESTORE = "CAN_DO_RESTORE";
 
 	public void system_init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -79,7 +81,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		ModuleDefinition default_evolution_provider_def = ModuleRegistry.register(getName()+" DEFAULT_EVOLUTION_PROVIDER", DefaultPersistenceEvolver.class);
 		//THIS SHIT SHOULD BE WRAPPED UP IN A MACRO NEXT TIME WE DO SOMEHTINNG LIKE THIS
 		Map<String,Object> evo_params = new HashMap<String, Object>();
-		Module evo_module = ModuleRegistry.instantiate(default_evolution_provider_def,evo_params);
+		Module evo_module = ModuleRegistry.instantiate(app,default_evolution_provider_def,evo_params);
 		try{
 			((WebStoreModule)evo_module).setSlot(WebStoreModule.SLOT_STORE,this);
 			((WebModule)evo_module).system_init(app,evo_module.getParams());
@@ -132,8 +134,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public List<String> GetBackupIdentifiers(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION.");	
+		GUARD(user,CAN_DO_BACKUP);
 		return getBackupIdentifiers();
 	}
 	
@@ -146,8 +147,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public String DoFullBackup(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION.");	
+		GUARD(user,CAN_DO_BACKUP);
 		return doFullBackup();
 	}
 	
@@ -160,8 +160,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public String DoIncrementalBackup(UserApplicationContext uctx,String fullbackup_token) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION.");	
+		GUARD(user,CAN_DO_BACKUP);
 		return doIncrementalBackup(fullbackup_token);
 	}
 	
@@ -174,8 +173,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public void RestoreFromBackup(UserApplicationContext uctx,String fullbackup_token) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION.");	
+		GUARD(user,CAN_DO_RESTORE);
 		restoreFromBackup(fullbackup_token);
 	}
 	
@@ -189,8 +187,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public void DeleteBackup(UserApplicationContext uctx,String fullbackup_token) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new PermissionsException("NO PERMISSION.");	
+		GUARD(user,CAN_DO_BACKUP);
 		deleteBackup(fullbackup_token);
 	}
 	

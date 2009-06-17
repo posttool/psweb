@@ -29,10 +29,9 @@ public class BillingModule extends WebStoreModule
 	//think any really do. they are not stored with the order//
 	private static final String SLOT_ENCRYPTION_MODULE  	 = "encryption-module"; 
 	private static final String SLOT_BILLING_GATEWAY_MODULE  = "billing-gateway"; 
-	private static final String SLOT_BILLING_GUARD_MODULE  	 = "billing-guard"; 
+
 
 	IBillingGateway 	billing_gateway;
-	IBillingGuard   	guard;
 	IEncryptionModule   encryption_module;
 	
 	public static final int CC_TYPE_VISA 	   = 0x01;
@@ -50,7 +49,6 @@ public class BillingModule extends WebStoreModule
 	{
 		super.init(app,config);
 		billing_gateway 	= (IBillingGateway)getSlot(SLOT_BILLING_GATEWAY_MODULE);
-		guard				= (IBillingGuard)getSlot(SLOT_BILLING_GUARD_MODULE);
 		encryption_module 	= (IEncryptionModule)getSlot(SLOT_ENCRYPTION_MODULE);
 	}
 
@@ -59,8 +57,25 @@ public class BillingModule extends WebStoreModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_BILLING_GATEWAY_MODULE,IBillingGateway.class,true);
 		DEFINE_SLOT(SLOT_ENCRYPTION_MODULE,IEncryptionModule.class,true);
-		DEFINE_SLOT(SLOT_BILLING_GUARD_MODULE,IBillingGuard.class,false,DefaultBillingGuard.class);
 	
+	}
+	
+	public static final String CAN_CREATE_BILLING_RECORD   		   = "CAN_CREATE_BILLING_RECORD";
+	public static final String CAN_READ_BILLING_RECORD     		   = "CAN_READ_BILLING_RECORD";
+	public static final String CAN_UPDATE_BILLING_RECORD   		   = "CAN_UPDATE_BILLING_RECORD";
+	public static final String CAN_DELETE_BILLING_RECORD   		   = "CAN_DELETE_BILLING_RECORD";
+	public static final String CAN_BROWSE_BILLING_RECORDS  		   = "CAN_BROWSE_BILLING_RECORDS";
+	public static final String CAN_BROWSE_BILLING_RECORDS_BY_USER  = "CAN_BROWSE_BILLING_RECORDS_BY_USER";
+	public static final String CAN_SET_PREFERRED_BILLING_RECORD    = "CAN_SET_PREFERRED_BILLING_RECORD";
+
+	protected void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_BILLING_RECORD);
+		EXPORT_PERMISSION(CAN_READ_BILLING_RECORD);
+		EXPORT_PERMISSION(CAN_UPDATE_BILLING_RECORD);
+		EXPORT_PERMISSION(CAN_DELETE_BILLING_RECORD);
+		EXPORT_PERMISSION(CAN_BROWSE_BILLING_RECORDS);
+		EXPORT_PERMISSION(CAN_BROWSE_BILLING_RECORDS_BY_USER);
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
@@ -94,25 +109,38 @@ public class BillingModule extends WebStoreModule
 	
 	@Export
 	public Entity CreateBillingRecord(UserApplicationContext uctx,
-									  String first_name,
-									  String middle_initial,
-									  String last_name,
-									  String add_1,
-									  String add_2,
-									  String city,
-									  String state,									  
-									  String country,
-									  String postal_code,
-									  int cc_type,
-									  String cc_no,
-									  int exp_month,
-									  int exp_year,
+			  String first_name,
+			  String middle_initial,
+			  String last_name,
+			  String add_1,
+			  String add_2,
+			  String city,
+			  String state,									  
+			  String country,
+			  String postal_code,
+			  int cc_type,
+			  String cc_no,
+			  int exp_month,
+			  int exp_year,
 									  Boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canCreateBillingRecord(user,user));
+		GUARD(user, CAN_CREATE_BILLING_RECORD,GUARD_TYPE,BILLINGRECORD_ENTITY,
+				 								BILLINGRECORD_FIELD_FIRST_NAME, first_name,
+				 								BILLINGRECORD_FIELD_MIDDLE_INITIAL, middle_initial,
+				 								BILLINGRECORD_FIELD_LAST_NAME, last_name,
+				 								BILLINGRECORD_FIELD_ADDRESS_LINE_1, add_1,
+				 								BILLINGRECORD_FIELD_ADDRESS_LINE_2, add_2,
+				 								BILLINGRECORD_FIELD_CITY, city,
+				 								BILLINGRECORD_FIELD_STATE, state,									  
+				 								BILLINGRECORD_FIELD_COUNTRY, country,
+				 								BILLINGRECORD_FIELD_POSTAL_CODE, postal_code,
+				 								BILLINGRECORD_FIELD_CC_TYPE,cc_type,
+				 								BILLINGRECORD_FIELD_CC_NO, cc_no,
+				 								BILLINGRECORD_FIELD_EXP_MONTH, exp_month,
+				 								BILLINGRECORD_FIELD_EXP_YEAR, exp_year);
 		
-		exp_year = 			   validate_and_normalize_year(exp_year);
+		exp_year = validate_and_normalize_year(exp_year);
 		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,preferred);
 	
 	}
@@ -147,7 +175,7 @@ public class BillingModule extends WebStoreModule
 
 		Entity billing_record =  NEW(BILLINGRECORD_ENTITY,
 				   					creator,
-				   					BILLINGRECORD_FIELD_FIRST_NAME,first_name,
+									BILLINGRECORD_FIELD_FIRST_NAME,first_name,
 				   					BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
 				   					BILLINGRECORD_FIELD_LAST_NAME,last_name,
 				   					BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
@@ -223,8 +251,23 @@ public class BillingModule extends WebStoreModule
 	  {
 		
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canUpdateBillingRecord(user,user));
+
+		
 		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
+		GUARD(user,CAN_UPDATE_BILLING_RECORD,GUARD_INSTANCE,billing_record,		
+											BILLINGRECORD_FIELD_FIRST_NAME,first_name,
+											BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
+											BILLINGRECORD_FIELD_LAST_NAME,last_name,
+											BILLINGRECORD_FIELD_ADDRESS_LINE_1,add_1,
+											BILLINGRECORD_FIELD_ADDRESS_LINE_2,add_2,
+											BILLINGRECORD_FIELD_CITY,city,
+											BILLINGRECORD_FIELD_STATE,state,
+											BILLINGRECORD_FIELD_COUNTRY,country,
+											BILLINGRECORD_FIELD_POSTAL_CODE,postal_code,
+											BILLINGRECORD_FIELD_CC_TYPE,cc_type,
+											BILLINGRECORD_FIELD_CC_NO,cc_no,
+											BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
+											BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 		exp_year 			  = validate_and_normalize_year(exp_year);
 		return updateBillingRecord(billing_record,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year);
 	  }
@@ -288,8 +331,7 @@ public class BillingModule extends WebStoreModule
 	  {
 		Entity user = (Entity)uctx.getUser();
 		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
-		Entity target = (Entity)billing_record.getAttribute(FIELD_CREATOR);
-		GUARD(guard.canDeleteBillingRecord(user,target));
+		GUARD(user,CAN_DELETE_BILLING_RECORD,GUARD_INSTANCE,billing_record);
 		return deleteBillingRecord(billing_record);
 	  }
 	
@@ -307,13 +349,14 @@ public class BillingModule extends WebStoreModule
 	public PagingQueryResult GetBillingRecords(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetBillingRecords(user,user));		
 		Query q = new Query(BILLINGRECORD_ENTITY);
 		q.idx(IDX_BY_USER_BY_PREFERRED);
 		q.eq(q.list(user,Query.VAL_GLOB));
 		q.offset(offset);
 		q.pageSize(page_size);
-		return PAGING_QUERY(q);
+		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER,user);
+		PagingQueryResult result = PAGING_QUERY(q);		
+		return result;
 	}
 	
 	public List<Entity> getBillingRecords(Entity user) throws WebApplicationException,PersistenceException
@@ -328,8 +371,9 @@ public class BillingModule extends WebStoreModule
 	public Entity GetPreferredBillingRecord(UserApplicationContext uctx) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetBillingRecords(user,user));		
-		return getPreferredBillingRecord(user);
+		Entity billing_record = getPreferredBillingRecord(user);
+		GUARD(user, CAN_READ_BILLING_RECORD,user);
+		return billing_record;
 	}
 	
 	public Entity getPreferredBillingRecord(Entity user)throws PersistenceException
@@ -351,21 +395,17 @@ public class BillingModule extends WebStoreModule
 	public Entity SetPreferredBillingRecord(UserApplicationContext uctx,long billing_record_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
+		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id); 	
 		
-		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id); 
-		
-		GUARD(guard.canUpdateBillingRecord(user,user));
+		GUARD(user,CAN_UPDATE_BILLING_RECORD,GUARD_INSTANCE,billing_record);
 		return setPreferredBillingRecord(user,billing_record);
 	}
 	
 	public Entity setPreferredBillingRecord(Entity user,Entity billing_record) throws WebApplicationException,PersistenceException
 	{
-		System.out.println("4");
 		Entity existing_preferred_billing_record = getPreferredBillingRecord(user);
-		System.out.println("5");
 		if(existing_preferred_billing_record != null)
 			UPDATE(existing_preferred_billing_record,BILLINGRECORD_FIELD_PREFERRED,false);
-		System.out.println("6");
 		return UPDATE(billing_record,
 					  BILLINGRECORD_FIELD_PREFERRED,true);
 

@@ -26,12 +26,10 @@ import com.pagesociety.web.template.FreemarkerRenderer;
 
 public class EmailModule extends WebModule implements IEmailModule 
 {	
-	private static final String SLOT_EMAIL_GUARD				 = "email-guard";
 	private static final String PARAM_SMTP_SERVER 	 	  		 = "smtp-server";
 	private static final String PARAM_EMAIL_TEMPLATE_DIR  		 = "email-template-dir";
 	private static final String PARAM_EMAIL_RETURN_ADDRESS	     = "email-return-address";
 	
-	protected IEmailGuard guard;
 	protected String smtp_server;
 	protected String email_template_dir;
 	protected String email_return_address;
@@ -46,21 +44,26 @@ public class EmailModule extends WebModule implements IEmailModule
 		email_template_dir   = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_DIR, config);
 		email_return_address = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_RETURN_ADDRESS, config);
 		fm_renderer 		 = new FreemarkerRenderer(email_template_dir);
-		guard = (IEmailGuard)getSlot(SLOT_EMAIL_GUARD);
+
 	}
 
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_EMAIL_GUARD,IEmailGuard.class,false,DefaultEmailGuard.class);
 	}
-
+	
+	//MODULE ACTIONS//
+	public static final String CAN_SEND_EMAIL = "CAN_SEND_EMAIL";
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_SEND_EMAIL);
+	}
 	@Export
 	public void SendEmail(UserApplicationContext uctx,String from, List<String> to, String subject,
 			String template_name, Map<String, Object> template_data) throws PersistenceException,WebApplicationException 
 	{ 
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canSendEmail(user));
+		GUARD(user,CAN_SEND_EMAIL);
 		String[] s_to = new String[to.size()];
 		s_to = to.toArray(s_to);
 		sendEmail(from, s_to, subject, template_name, template_data);

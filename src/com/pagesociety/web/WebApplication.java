@@ -24,6 +24,8 @@ import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.Module.SlotDescriptor;
+import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 
 
 public abstract class WebApplication
@@ -33,7 +35,7 @@ public abstract class WebApplication
 	private Map<String, Module> 		 _module_instances;
 	private List<Module> 				 _module_list;
 	private SessionNameSpaceManager 	 _sess_name_space_mgr;
-
+	private PermissionsModule			_default_permissions_module;
 
 	public WebApplication() throws InitializationException
 	{
@@ -41,9 +43,14 @@ public abstract class WebApplication
 		_module_instances 		= new HashMap<String, Module>();
 		_module_list 			= new ArrayList<Module>();
 		_sess_name_space_mgr 	= new SessionNameSpaceManager();
-
+		_default_permissions_module = new DefaultPermissionsModule();
 	}
 
+	public PermissionsModule getDefaultPermissionsModule()
+	{
+		return _default_permissions_module;
+	}
+	
 	public void init(WebApplicationInitParams config) throws InitializationException
 	{
 
@@ -191,7 +198,7 @@ public abstract class WebApplication
 			String module_classname   	= m.getClassName();
 			
 			ModuleDefinition def = ModuleRegistry.register(module_name,module_classname);
-			Module module = ModuleRegistry.instantiate(def,m.getProps());
+			Module module = ModuleRegistry.instantiate(this,def,m.getProps());
 
 			_module_instances.put(module_name, module);
 			_module_list.add(module);

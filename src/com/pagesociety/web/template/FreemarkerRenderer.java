@@ -18,7 +18,7 @@ public class FreemarkerRenderer
 	/**
 	 * Logger for this class
 	 */
-	private static final Logger logger = Logger.getLogger(FreemarkerRenderer.class);
+	//private static final Logger logger = Logger.getLogger(FreemarkerRenderer.class);
 
 	private  String _template_root;
 	private  Configuration _cfg;
@@ -30,7 +30,7 @@ public class FreemarkerRenderer
 
 	public void init(String template_root)
 	{
-		logger.debug("FreemarkerRenderer - initialized with " + template_root);
+		//logger.debug("FreemarkerRenderer - initialized with " + template_root);
 		_template_root = template_root;
 		_cfg = new Configuration();
 		try
@@ -41,8 +41,8 @@ public class FreemarkerRenderer
 		}
 		catch (IOException e)
 		{
-			logger.error("init(String) - ERROR!!! FreemarkerRenderer.init: CAN NOT FIND DIRECTORY " + template_root, e);
-			logger.error("init(String)", e);
+			System.err.println("init(String) - ERROR!!! FreemarkerRenderer.init: CAN NOT FIND DIRECTORY " + template_root);
+			e.printStackTrace();
 		}
 		_cfg.setObjectWrapper(new DefaultObjectWrapper());
 	}

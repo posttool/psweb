@@ -26,13 +26,12 @@ import com.pagesociety.web.template.FreemarkerRenderer;
 
 public class QueuedEmailModule extends WebModule implements IEmailModule 
 {	
-	private static final String SLOT_EMAIL_GUARD				 = "email-guard";
+
 	private static final String PARAM_SMTP_SERVER 	 	  		 = "smtp-server";
 	private static final String PARAM_EMAIL_TEMPLATE_DIR  		 = "email-template-dir";
 	private static final String PARAM_EMAIL_RETURN_ADDRESS	     = "email-return-address";
 	private static final String PARAM_EMAIL_QUEUE_SIZE		     = "email-queue-size";
 	
-	protected IEmailGuard guard;
 	protected String smtp_server;
 	protected String email_template_dir;
 	protected String email_return_address;
@@ -55,7 +54,6 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 			f.mkdirs();
 		
 		fm_renderer 		 = new FreemarkerRenderer(email_template_dir);
-		guard = (IEmailGuard)getSlot(SLOT_EMAIL_GUARD);
 		
 		if(config.get(PARAM_EMAIL_QUEUE_SIZE) != null)
 			email_queue_size = Integer.parseInt((String)config.get(PARAM_EMAIL_QUEUE_SIZE));
@@ -72,15 +70,21 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_EMAIL_GUARD,IEmailGuard.class,false,DefaultEmailGuard.class);
 	}
 
+	//permissions
+	public static final String CAN_SEND_EMAIL =  "CAN_SEND_EMAIL";
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_SEND_EMAIL);
+	}
+	
 	@Export
 	public void SendEmail(UserApplicationContext uctx,String from, List<String> to, String subject,
 			String template_name, Map<String, Object> template_data)
 			throws PersistenceException,WebApplicationException {
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canSendEmail(user));
+		GUARD(user, CAN_SEND_EMAIL);
 		String[] s_to = new String[to.size()];
 		s_to = to.toArray(s_to);
 		sendEmail(from, s_to, subject, template_name, template_data);

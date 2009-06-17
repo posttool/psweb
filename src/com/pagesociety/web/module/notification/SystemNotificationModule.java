@@ -15,8 +15,9 @@ import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.permissions.PermissionEvaluator;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.user.UserModule;
 
 public class SystemNotificationModule extends WebStoreModule 
@@ -28,7 +29,16 @@ public class SystemNotificationModule extends WebStoreModule
 	public static final int NOTIFICATION_LEVEL_ALERT 		= 0x01;
 	public static final int NOTIFICATION_LEVEL_INFO  		= 0x02;
 	
-	
+	public static final String CAN_CREATE_NOTIFICATION_FOR_USER  = "CAN_CREATE_NOTIFICATION_FOR_USER";
+	public static final String CAN_CREATE_ALERT_FOR_USER		 = "CAN_CREATE_ALERT_FOR_USER";
+	public static final String CAN_CREATE_GLOBAL_NOTIFICATION	 = "CAN_CREATE_GLOBAL_NOTIFICATION";
+	public static final String CAN_CREATE_GLOBAL_ALERT			 = "CAN_CREATE_GLOBAL_ALERT";
+	public static final String CAN_DELETE_USER_NOTIFICATION	 	 = "CAN_DELETE_USER_NOTIFICATION";
+	public static final String CAN_DELETE_USER_ALERT 			 = "CAN_DELETE_USER_ALERT";
+	public static final String CAN_DELETE_GLOBAL_NOTIFICATION	 = "CAN_DELETE_GLOBAL_NOTIFICATION";
+	public static final String CAN_DELETE_GLOBAL_ALERT 		 	 = "CAN_DELETE_GLOBAL_ALERT";
+
+
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -45,8 +55,7 @@ public class SystemNotificationModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = GET(UserModule.USER_ENTITY,user_id);
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+		GUARD(user, CAN_CREATE_NOTIFICATION_FOR_USER, GUARD_INSTANCE,target_user);
 		return createInfoNotificationForUser(user, target_user, notification_text);
 	}
 	
@@ -60,8 +69,7 @@ public class SystemNotificationModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = GET(UserModule.USER_ENTITY,user_id);
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+		GUARD(user, CAN_CREATE_ALERT_FOR_USER, GUARD_USER,target_user);
 		return createAlertNotificationForUser(user, target_user, notification_text);
 	}
 	
@@ -84,8 +92,7 @@ public class SystemNotificationModule extends WebStoreModule
 	public Entity CreateGlobalInfoNotification(UserApplicationContext uctx,String notification_text) throws WebApplicationException,PersistenceException 
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+		GUARD(user, CAN_CREATE_GLOBAL_NOTIFICATION);
 		return createGlobalInfoNotification(user, notification_text);
 	}
 	
@@ -98,8 +105,7 @@ public class SystemNotificationModule extends WebStoreModule
 	public Entity CreateGlobalAlertNotification(UserApplicationContext uctx,String notification_text) throws WebApplicationException,PersistenceException 
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
-			throw new WebApplicationException("NO PERMISSION");
+		GUARD(user, CAN_CREATE_GLOBAL_ALERT);
 		return createGlobalAlertNotification(user, notification_text);	
 	}
 	
@@ -121,20 +127,25 @@ public class SystemNotificationModule extends WebStoreModule
 	@Export
 	public Entity DeleteNotification(UserApplicationContext uctx,long notification_id) throws WebApplicationException,PersistenceException
 	{
-		Entity user = (Entity)uctx.getUser();
-		Entity notification = GET(SYSTEM_NOTIFICATION_ENTITY,notification_id);
-		int notification_type = (Integer)notification.getAttribute(SYSTEM_NOTIFICATION_FIELD_TYPE);
-		Entity notification_user = (Entity)notification.getAttribute(SYSTEM_NOTIFICATION_FIELD_USER);
+		Entity user 				= (Entity)uctx.getUser();
+		Entity notification 		= GET(SYSTEM_NOTIFICATION_ENTITY,notification_id);
+		int notification_type 		= (Integer)notification.getAttribute(SYSTEM_NOTIFICATION_FIELD_TYPE);
+		int level 					= (Integer)notification.getAttribute(SYSTEM_NOTIFICATION_FIELD_LEVEL);
+		Entity notification_user 	= (Entity)notification.getAttribute(SYSTEM_NOTIFICATION_FIELD_USER);
 		
 		switch(notification_type)
 		{
 			case NOTIFICATION_TYPE_USER:
-				if(!PermissionsModule.IS_ADMIN(user) && !PermissionsModule.IS_SAME(user, notification_user))
-					throw new PermissionsException("NO PERMISSION");
+				if(level == NOTIFICATION_LEVEL_INFO)
+					GUARD(user, CAN_DELETE_USER_NOTIFICATION,GUARD_INSTANCE,notification_user);
+				if(level == NOTIFICATION_LEVEL_ALERT)
+					GUARD(user, CAN_DELETE_USER_ALERT,GUARD_INSTANCE,notification_user);
 				break;
 			case NOTIFICATION_TYPE_GLOBAL:
-				if(!PermissionsModule.IS_ADMIN(user))
-					throw new PermissionsException("NO PERMISSION");
+				if(level == NOTIFICATION_LEVEL_INFO)
+					GUARD(user, CAN_DELETE_GLOBAL_NOTIFICATION);
+				if(level == NOTIFICATION_LEVEL_ALERT)
+					GUARD(user, CAN_DELETE_GLOBAL_ALERT);
 				break;
 			default:
 				throw new WebApplicationException("UNKNOWN NOTIFICATION TYPE");
@@ -151,10 +162,7 @@ public class SystemNotificationModule extends WebStoreModule
 	@Export
 	public PagingQueryResult GetUserNotifications(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
-		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_LOGGED_IN(user))
-			throw new PermissionsException("NO PERMISSION");
-		
+		Entity user = (Entity)uctx.getUser();	
 		Query q = getUserNotificationsQ(user);
 		q.offset(offset);
 		q.pageSize(page_size);
@@ -174,9 +182,8 @@ public class SystemNotificationModule extends WebStoreModule
 	public PagingQueryResult GetGlobalNotifications(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_LOGGED_IN(user))
-			throw new PermissionsException("NO PERMISSION");
-		
+		if(!PermissionEvaluator.IS_LOGGED_IN(user))
+			throw new PermissionsException("NO PERMISSION");		
 		Query q = getGlobalNotificationsQ();
 		q.offset(offset);
 		q.pageSize(page_size);

@@ -89,14 +89,9 @@ MEM m = new MEM((Long)user_promotion_instance.getAttribute(PROMOTION_INSTANCE_FI
 public class PromotionModule extends WebStoreModule 
 {
 
-	private static final String SLOT_PROMOTION_GUARD  		 = "promotion-guard"; 
-	IPromotionGuard   	guard;
-
-		
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
-		guard				= (IPromotionGuard)getSlot(SLOT_PROMOTION_GUARD);
 
 		
 	}
@@ -139,8 +134,42 @@ public class PromotionModule extends WebStoreModule
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_PROMOTION_GUARD,IPromotionGuard.class,false,DefaultPromotionGuard.class);
 	
+	}
+	
+	public static final String CAN_CREATE_PROMOTION 			= "CAN_CREATE_PROMOTION";
+	public static final String CAN_READ_PROMOTION 				= "CAN_READ_PROMOTION";
+	public static final String CAN_UPDATE_PROMOTION 			= "CAN_UPDATE_PROMOTION";
+	public static final String CAN_DELETE_PROMOTION 			= "CAN_DELETE_PROMOTION";
+	public static final String CAN_BROWSE_PROMOTIONS 			= "CAN_BROWSE_PROMOTIONS";
+	public static final String CAN_CREATE_GLOBAL_PROMOTION 		= "CAN_CREATE_GLOBAL_PROMOTION";
+	public static final String CAN_READ_GLOBAL_PROMOTION 		= "CAN_READ_GLOBAL_PROMOTION";
+	public static final String CAN_UPDATE_GLOBAL_PROMOTION 		= "CAN_UPDATE_GLOBAL_PROMOTION";
+	public static final String CAN_DELETE_GLOBAL_PROMOTION 		= "CAN_DELETE_GLOBAL_PROMOTION";
+	public static final String CAN_BROWSE_GLOBAL_PROMOTIONS 	= "CAN_BROWSE_GLOBAL_PROMOTIONS";
+	public static final String CAN_CREATE_COUPON_PROMOTION 		= "CAN_CREATE_COUPON_PROMOTION";
+	public static final String CAN_READ_COUPON_PROMOTION 		= "CAN_READ_COUPON_PROMOTION";
+	public static final String CAN_UPDATE_COUPON_PROMOTION 		= "CAN_UPDATE_COUPON_PROMOTION";
+	public static final String CAN_DELETE_COUPON_PROMOTION 		= "CAN_DELETE_COUPON_PROMOTION";
+	public static final String CAN_BROWSE_COUPON_PROMOTIONS 	= "CAN_BROWSE_COUPON_PROMOTIONS";
+	
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_PROMOTION);
+		EXPORT_PERMISSION(CAN_READ_PROMOTION);
+		EXPORT_PERMISSION(CAN_UPDATE_PROMOTION);
+		EXPORT_PERMISSION(CAN_DELETE_PROMOTION);
+		EXPORT_PERMISSION(CAN_BROWSE_PROMOTIONS);
+		EXPORT_PERMISSION(CAN_CREATE_GLOBAL_PROMOTION); 
+		EXPORT_PERMISSION(CAN_READ_GLOBAL_PROMOTION); 	
+		EXPORT_PERMISSION(CAN_UPDATE_GLOBAL_PROMOTION); 
+		EXPORT_PERMISSION(CAN_DELETE_GLOBAL_PROMOTION); 
+		EXPORT_PERMISSION(CAN_BROWSE_GLOBAL_PROMOTIONS);
+		EXPORT_PERMISSION(CAN_CREATE_COUPON_PROMOTION); 
+		EXPORT_PERMISSION(CAN_READ_COUPON_PROMOTION); 	
+		EXPORT_PERMISSION(CAN_UPDATE_COUPON_PROMOTION); 
+		EXPORT_PERMISSION(CAN_DELETE_COUPON_PROMOTION); 
+		EXPORT_PERMISSION(CAN_BROWSE_COUPON_PROMOTIONS);
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
@@ -176,7 +205,10 @@ public class PromotionModule extends WebStoreModule
 							      String program) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canCreatePromotion(user));
+		GUARD(user, CAN_CREATE_PROMOTION,GUARD_TYPE, PROMOTION_ENTITY,
+										 PROMOTION_FIELD_TITLE,title,
+										 PROMOTION_FIELD_DESCRIPTION,description,
+										 PROMOTION_FIELD_PROGRAM,program);
 
 		return createPromotion(user,title,description,program);
 
@@ -222,7 +254,11 @@ public class PromotionModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity promotion = GET(PROMOTION_ENTITY,promotion_id);
-		GUARD(guard.canUpdatePromotion(user,promotion));
+		GUARD(user,CAN_UPDATE_PROMOTION,GUARD_INSTANCE,promotion,
+				PROMOTION_FIELD_TITLE,title,
+				PROMOTION_FIELD_DESCRIPTION,description,
+				PROMOTION_FIELD_PROGRAM,program);
+		
 		long gr1 = (Long)promotion.getAttribute(PROMOTION_FIELD_GR1);
 		long gr2 = (Long)promotion.getAttribute(PROMOTION_FIELD_GR2);
 
@@ -248,7 +284,11 @@ public class PromotionModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity promotion = GET(PROMOTION_ENTITY,promotion_id);
-		GUARD(guard.canUpdatePromotion(user, promotion));
+		GUARD(user,CAN_UPDATE_PROMOTION,GUARD_INSTANCE,promotion,
+				PROMOTION_FIELD_GR1,gr1,
+				PROMOTION_FIELD_GR2,gr2);
+		
+				
 		
 		return UPDATE(promotion,
 					PROMOTION_FIELD_GR1,gr1,
@@ -264,7 +304,7 @@ public class PromotionModule extends WebStoreModule
 	{
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity promotion = GET(PROMOTION_ENTITY,promotion_id);	
-		GUARD(guard.canDeletePromotion(user, promotion));
+		GUARD(user,CAN_DELETE_PROMOTION,GUARD_INSTANCE, promotion);
 		return deletePromotion(promotion);	
 	}
 	
@@ -311,7 +351,11 @@ public class PromotionModule extends WebStoreModule
 									   	Date expiration_date) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canCreateCouponPromotion(user));		
+		GUARD(user,CAN_CREATE_COUPON_PROMOTION,GUARD_TYPE, COUPON_PROMOTION_ENTITY,
+												COUPON_PROMOTION_FIELD_PROMO_CODE,promotion_code,
+												COUPON_PROMOTION_FIELD_PROMOTION,
+												COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED,num_times_code_can_be_used,
+												COUPON_PROMOTION_FIELD_EXPIRATION_DATE,expiration_date);		
 		return createCouponPromotion(user,promotion_code,num_times_code_can_be_used,promotion,expiration_date);
 	
 	}
@@ -343,7 +387,9 @@ public class PromotionModule extends WebStoreModule
 	{		
 		Entity user = (Entity)uctx.getUser();
 		Entity coupon_promotion = GET(COUPON_PROMOTION_ENTITY,coupon_promotion_id);
-		GUARD(guard.canUpdateCouponPromotion(user,coupon_promotion));
+		GUARD(user,CAN_UPDATE_COUPON_PROMOTION,GUARD_INSTANCE,coupon_promotion,
+												COUPON_PROMOTION_FIELD_EXPIRATION_DATE,expiration_date);
+	
 		return setCouponPromotionExpirationDate(coupon_promotion, expiration_date);
 
 	}
@@ -359,7 +405,7 @@ public class PromotionModule extends WebStoreModule
 	{
 		Entity user 	 		= (Entity)uctx.getUser();
 		Entity coupon_promotion = GET(COUPON_PROMOTION_ENTITY,coupon_promotion_id);	
-		GUARD(guard.canDeleteCouponPromotion(user, coupon_promotion));
+		GUARD(user,CAN_DELETE_COUPON_PROMOTION, coupon_promotion);
 		return deleteCouponPromotion(coupon_promotion);	
 	}
 	
@@ -372,24 +418,28 @@ public class PromotionModule extends WebStoreModule
 	public PagingQueryResult GetPromotions(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetPromotions(user));		
+
 		Query q = getPromotionsQ();
 		q.offset(offset);
 		q.pageSize(page_size);
 		q.orderBy(FIELD_DATE_CREATED,Query.DESC);
-		return PAGING_QUERY(q);	
+		GUARD(user, CAN_BROWSE_PROMOTIONS);
+		PagingQueryResult result = PAGING_QUERY(q);	
+
+		return result;
 	}
 	
 	@Export
 	public PagingQueryResult GetCouponPromotions(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetCouponPromotions(user));		
 		Query q = getCouponPromotionsQ();
 		q.offset(offset);
 		q.pageSize(page_size);
 		q.orderBy(FIELD_DATE_CREATED,Query.DESC);
-		return PAGING_QUERY(q);
+		GUARD(user, CAN_BROWSE_COUPON_PROMOTIONS);
+		PagingQueryResult result = PAGING_QUERY(q);	
+		return result;
 	}
 	
 		
@@ -505,8 +555,10 @@ public class PromotionModule extends WebStoreModule
 									   	int active) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-
-		GUARD(guard.canCreateGlobalPromotion(user));
+		GUARD(user,CAN_CREATE_GLOBAL_PROMOTION, GUARD_TYPE,GLOBAL_PROMOTION_ENTITY,
+												GLOBAL_PROMOTION_FIELD_PROMOTION,promotion,
+												GLOBAL_PROMOTION_FIELD_ACTIVE,active
+												);
 		
 		return createGlobalPromotionInstance(user,promotion,active);
 	
@@ -526,7 +578,8 @@ public class PromotionModule extends WebStoreModule
 	{		
 		Entity user = (Entity)uctx.getUser();
 		Entity global_promotion = GET(GLOBAL_PROMOTION_ENTITY,global_promotion_id);
-		GUARD(guard.canUpdateGlobalPromotion(user,global_promotion));
+		GUARD(user,CAN_UPDATE_GLOBAL_PROMOTION,GUARD_INSTANCE,global_promotion,
+				GLOBAL_PROMOTION_FIELD_ACTIVE,GLOBAL_PROMOTION_STATE_ACTIVE);
 		return setGlobalPromotionState(global_promotion,GLOBAL_PROMOTION_STATE_ACTIVE);
 
 	}
@@ -536,7 +589,9 @@ public class PromotionModule extends WebStoreModule
 	{		
 		Entity user = (Entity)uctx.getUser();
 		Entity global_promotion = GET(GLOBAL_PROMOTION_ENTITY,global_promotion_id);	
-		GUARD(guard.canUpdateGlobalPromotion(user,global_promotion));
+		GUARD(user,CAN_UPDATE_GLOBAL_PROMOTION,GUARD_INSTANCE,global_promotion,
+				GLOBAL_PROMOTION_FIELD_ACTIVE,GLOBAL_PROMOTION_STATE_ACTIVE);
+
 		return setGlobalPromotionState(global_promotion,GLOBAL_PROMOTION_STATE_INACTIVE);
 
 	}
@@ -552,7 +607,7 @@ public class PromotionModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity global_promotion = GET(GLOBAL_PROMOTION_ENTITY,global_promotion_id);
-		GUARD(guard.canDeleteGlobalPromotion(user,global_promotion));
+		GUARD(user,CAN_DELETE_GLOBAL_PROMOTION,GUARD_INSTANCE,global_promotion);
 		return deleteGlobalPromotion(global_promotion);	
 	}
 	
@@ -601,13 +656,15 @@ public class PromotionModule extends WebStoreModule
 	public PagingQueryResult GetGlobalPromotions(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-
-		GUARD(guard.canGetGlobalPromotions(user));		
+		GUARD(user,CAN_BROWSE_GLOBAL_PROMOTIONS);
+		
 		Query q = getGlobalPromotionsByStateQ(null);
 		q.offset(offset);
 		q.pageSize(page_size);
 		q.orderBy(FIELD_DATE_CREATED,Query.DESC);
-		return PAGING_QUERY(q);
+		PagingQueryResult result =  PAGING_QUERY(q);
+
+		return result;
 	}
 	
 	public List<Entity> getActiveGlobalPromotions() throws PersistenceException

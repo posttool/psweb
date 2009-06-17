@@ -26,8 +26,10 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.GatewayConstants;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
-import com.pagesociety.web.module.PermissionsModule;
+import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.permissions.PermissionEvaluator;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.util.Util;
 import com.pagesociety.web.module.util.Validator;
 
@@ -54,8 +56,8 @@ public class UserModule extends WebStoreModule
 	public static final String USER_EVENT_USER_CONTEXT = "user-context";
 	
 	public static final int USER_ROLE_WHEEL 				 = 0x1000;
-	public static final int USER_ROLE_USER	 				 = 0x0001;
-	private IUserGuard guard;
+	public static final int USER_ROLE_SYSTEM_USER	 		 = 0x0001;
+
 	private boolean enforce_unique_username = false;
 	
 
@@ -63,7 +65,6 @@ public class UserModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
-		guard		= (IUserGuard)getSlot(SLOT_USER_GUARD);
 		String euu = GET_OPTIONAL_CONFIG_PARAM(PARAM_ENFORCE_UNIQUE_USERNAME, config);
 		if(euu != null && !euu.equals("false"))
 			enforce_unique_username = true;
@@ -85,15 +86,41 @@ public class UserModule extends WebStoreModule
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_USER_GUARD,IUserGuard.class,false,DefaultUserGuard.class);
+	}
+
+	public static final String CAN_CREATE_PRIVILEGED_USER  = "CAN_CREATE_PRIVILEGED_USER";
+	public static final String CAN_CREATE_PUBLIC_USER 	   = "CAN_CREATE_PUBLIC_USER";
+	public static final String CAN_EDIT_USER 	  		   = "CAN_EDIT_USER";
+	public static final String CAN_DELETE_USER 	  	   	   = "CAN_DELETE_USER";
+	public static final String CAN_ADD_ROLE 	  		   = "CAN_ADD_ROLE";
+	public static final String CAN_REMOVE_ROLE 	  	   	   = "CAN_REMOVE_ROLE";
+	public static final String CAN_LOCK_USER	  	  	   = "CAN_LOCK_USER";
+	public static final String CAN_UNLOCK_USER	  	   	   = "CAN_UNLOCK_USER";
+	public static final String CAN_BROWSE_USERS_BY_ROLE    = "CAN_BROWSE_USERS_BY_ROLE";
+	public static final String CAN_BROWSE_LOCKED_USERS     = "CAN_BROWSE_LOCKED_USERS";
+	
+	protected void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_PRIVILEGED_USER);
+		EXPORT_PERMISSION(CAN_CREATE_PUBLIC_USER);
+		EXPORT_PERMISSION(CAN_EDIT_USER);
+		EXPORT_PERMISSION(CAN_DELETE_USER);
+		EXPORT_PERMISSION(CAN_ADD_ROLE);
+		EXPORT_PERMISSION(CAN_REMOVE_ROLE);
+		EXPORT_PERMISSION(CAN_LOCK_USER);
+		EXPORT_PERMISSION(CAN_UNLOCK_USER);
+		EXPORT_PERMISSION(CAN_BROWSE_USERS_BY_ROLE);
+		EXPORT_PERMISSION(CAN_BROWSE_LOCKED_USERS);
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
+	
+	@TransactionProtect
 	@Export(ParameterNames={"email","password","username","role"})
 	public Entity CreatePrivilegedUser(UserApplicationContext uctx,String email,String password,String username,int role) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canCreatePrivilegedUser(user, role));
+		GUARD(user, CAN_CREATE_PRIVILEGED_USER, "role",role);
 		
 		List<Integer> roles = new ArrayList<Integer>();
 		roles.add(role);
@@ -140,7 +167,7 @@ public class UserModule extends WebStoreModule
 	public Entity CreatePublicUser(UserApplicationContext ctx,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)ctx.getUser();
-		GUARD(guard.canCreatePublicUser(user));
+		GUARD(user,CAN_CREATE_PUBLIC_USER);
 		return createPublicUser(user, email, password, username);
 	}
 	
@@ -163,7 +190,7 @@ public class UserModule extends WebStoreModule
 		//	throw new WebApplicationException("BAD PASSWORD",ERROR_BAD_PASSWORD);
 		
 		List<Integer> roles = new ArrayList<Integer>();
-		roles.add(USER_ROLE_USER);
+		roles.add(USER_ROLE_SYSTEM_USER);
 		
 
 		Entity user =  NEW(USER_ENTITY,
@@ -190,7 +217,7 @@ public class UserModule extends WebStoreModule
 	{
 		Entity editor    = (Entity)uctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
-		GUARD(guard.canUpdateField(editor,target,FIELD_EMAIL,email));					
+		GUARD(editor,CAN_EDIT_USER,GUARD_USER,target);
 		Entity updated_user =  updateEmail(target, email);
 		if(editor.equals(target))
 			uctx.setUser(updated_user);
@@ -212,7 +239,7 @@ public class UserModule extends WebStoreModule
 	{
 		Entity editor    = (Entity)uctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
-		GUARD(guard.canUpdateField(editor,target,FIELD_USERNAME,username));
+		GUARD(editor,CAN_EDIT_USER,GUARD_USER,target);
 		Entity updated_user =  updateUserName(target, username);
 		if(editor.equals(target))
 			uctx.setUser(updated_user);
@@ -237,8 +264,7 @@ public class UserModule extends WebStoreModule
 	{
 		Entity editor    = (Entity)uctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
-	
-		GUARD(guard.canUpdateField(editor,target,FIELD_PASSWORD,new_password));
+		GUARD(editor,CAN_EDIT_USER,GUARD_USER,target);
 		
 		if(editor.equals(target))
 		{
@@ -263,7 +289,9 @@ public class UserModule extends WebStoreModule
 	{
 		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
-		GUARD(guard.canAddRole(editor,target,role));
+		GUARD(editor,CAN_ADD_ROLE,
+					 GUARD_USER,target,
+					 "role",role);
 		Entity updated_user =  addRole(target, role);
 		if(editor.equals(target))
 			ctx.setUser(updated_user);
@@ -274,6 +302,7 @@ public class UserModule extends WebStoreModule
 	{
 		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
 		roles.add(role);
+		
 		
 		DISPATCH_EVENT(EVENT_USER_ROLES_UPDATED,
 				   USER_EVENT_USER, user);
@@ -286,7 +315,10 @@ public class UserModule extends WebStoreModule
 	{
 		Entity editor    = (Entity)ctx.getUser();
 		Entity target    = GET(USER_ENTITY,user_entity_id);
-		GUARD(guard.canRemoveRole(editor,target,role));
+		GUARD(editor,CAN_REMOVE_ROLE,
+				     GUARD_USER,target,
+				     "role",role);
+
 		Entity updated_user =  removeRole(target, role);
 		if(editor.equals(target))
 			ctx.setUser(updated_user);
@@ -318,7 +350,7 @@ public class UserModule extends WebStoreModule
 		int lock = (Integer)target.getAttribute(FIELD_LOCK);
 		if(lock == LOCK_LOCKED)
 			return target;
-		GUARD(guard.canLockUser(editor,lock_code));
+		GUARD(editor, CAN_LOCK_USER, GUARD_USER,target);
 		return lockUser(target, lock_code,notes);
 	}
 	
@@ -340,7 +372,7 @@ public class UserModule extends WebStoreModule
 		if(lock != LOCK_LOCKED)
 			return target;
 		int old_lock_code = (Integer)target.getAttribute(FIELD_LOCK_CODE); 
-		GUARD(guard.canUnlockUser(editor,old_lock_code));
+		GUARD(editor, CAN_UNLOCK_USER, GUARD_USER,target);
 		return unlockUser(target);
 	}
 	
@@ -412,7 +444,7 @@ public class UserModule extends WebStoreModule
 	public Entity Logout(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_LOGGED_IN(user))
+		if(!PermissionEvaluator.IS_LOGGED_IN(user))
 			return null;
 
 		DISPATCH_EVENT(EVENT_USER_LOGGED_OUT,
@@ -430,7 +462,8 @@ public class UserModule extends WebStoreModule
 		Entity editor     = (Entity)uctx.getUser();
 		Entity target     = GET(USER_ENTITY,user_id);
 
-		GUARD(guard.canDeleteUser(editor,target));
+		GUARD(editor, CAN_DELETE_USER, 
+					  GUARD_USER,target);
 		return deleteUser(target);
 	}
 	
@@ -451,7 +484,7 @@ public class UserModule extends WebStoreModule
 	public PagingQueryResult GetUsersByRole(UserApplicationContext uctx,int role,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetUsersByRole(user));
+		GUARD(user, CAN_BROWSE_USERS_BY_ROLE, "role",role);
 		return getUsersByRole(role, offset, page_size);
 	}
 	
@@ -471,7 +504,7 @@ public class UserModule extends WebStoreModule
 	public PagingQueryResult GetLockedUsers(UserApplicationContext uctx,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetLockedUsers(user));
+		GUARD(user, CAN_BROWSE_LOCKED_USERS);
 		return getLockedUsers(offset,page_size);
 		
 	}
@@ -489,7 +522,7 @@ public class UserModule extends WebStoreModule
 	public PagingQueryResult GetLockedUsersByLockCode(UserApplicationContext uctx,int lock_code,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetLockedUsers(user));
+		GUARD(user, CAN_BROWSE_LOCKED_USERS);
 		return getLockedUsersByLockCode(lock_code,offset,page_size);
 	}
 	

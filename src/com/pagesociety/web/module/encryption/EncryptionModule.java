@@ -26,9 +26,9 @@ import com.pagesociety.web.exception.LoginFailedException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.RawUIModule;
 import com.pagesociety.web.module.WebModule;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.user.UserModule;
 import com.pagesociety.web.module.util.Util;
 
@@ -152,13 +152,21 @@ public class EncryptionModule extends WebModule implements IEncryptionModule
 		return encryption_strength;
 	}
 	
-
+	public static final String CAN_ENCRYPT_STRING = "CAN_ENCRYPT_STRING";
 	
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_ENCRYPT_STRING);
+	}
 //////////////MODULE FUNCTIONS/////////////////////////////////////////////////
+	
+	
+	
 	@Export
 	public String EncryptString(UserApplicationContext uctx,String s) throws PersistenceException,WebApplicationException 
 	{ 
-		return null;
+		GUARD((Entity)uctx.getUser(), CAN_ENCRYPT_STRING);
+		return encryptString(s);
 	}
 	
 	public String encryptString(String s) throws WebApplicationException

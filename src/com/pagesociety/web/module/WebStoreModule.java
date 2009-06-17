@@ -25,6 +25,8 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.persistence.IEvolutionProvider;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
@@ -32,9 +34,11 @@ public class WebStoreModule extends WebModule
 {
 
 	public static final String SLOT_STORE 			    = "store";
+	
+	
 	protected PersistentStore store;
 	protected List<EntityDefinition> associated_entity_definitions;
-	
+
 	
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
@@ -73,6 +77,7 @@ public class WebStoreModule extends WebModule
 		}
 		r.setWebStoreModuleContext(null);
 		store = store_provider.getStore();
+	
 
 	}
 
@@ -80,6 +85,7 @@ public class WebStoreModule extends WebModule
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
+		
 	}	
 	
 	

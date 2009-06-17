@@ -8,8 +8,9 @@ import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.LoginFailedException;
-import com.pagesociety.web.module.PermissionsModule;
 import com.pagesociety.web.module.RawUIModule;
+import com.pagesociety.web.module.permissions.PermissionEvaluator;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.persistence.BDBPersistenceModule;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 import com.pagesociety.web.module.util.Util;
@@ -52,7 +53,7 @@ public class ServerStatisticsRawUI extends RawUIModule
 	{
 		
 		Entity user = (Entity)uctx.getUser();
-		if(!PermissionsModule.IS_ADMIN(user))
+		if(!PermissionEvaluator.IS_ADMIN(user))
 		{
 			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Statistics module requires login.");
 		}

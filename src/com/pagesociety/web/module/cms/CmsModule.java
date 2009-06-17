@@ -16,36 +16,56 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
+import com.pagesociety.web.module.permissions.PermissionEvaluator;
+import com.pagesociety.web.module.permissions.PermissionsModule;
 
 
 
 public class CmsModule extends WebStoreModule 
 {	
 	
-	private static final String SLOT_CMS_GUARD = "cms-guard"; 
-	private ICmsGuard guard;
+	private static final String SLOT_PERMISSIONS_MODULE = "permissions-module"; 
+	private PermissionsModule permissions;
+	
+	public static final String CAN_READ_SCHEMA   = "CAN_READ_SCHEMA";
+	public static final String CAN_CREATE_ENTITY = "CAN_CREATE_ENTITY";
+	public static final String CAN_READ_ENTITY   = "CAN_READ_ENTITY";
+	public static final String CAN_UPDATE_ENTITY = "CAN_UPDATE_ENTITY";
+	public static final String CAN_DELETE_ENTITY = "CAN_DELETE_ENTITY";
+	public static final String CAN_BROWSE_ENTITY = "CAN_BROWSE_ENTITY";
+	
+	protected void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_READ_SCHEMA);
+		EXPORT_PERMISSION(CAN_CREATE_ENTITY);
+		EXPORT_PERMISSION(CAN_READ_ENTITY);
+		EXPORT_PERMISSION(CAN_UPDATE_ENTITY);
+		EXPORT_PERMISSION(CAN_DELETE_ENTITY);
+		EXPORT_PERMISSION(CAN_BROWSE_ENTITY);
+	}
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
-		guard		= (ICmsGuard)getSlot(SLOT_CMS_GUARD);
+		permissions		= (PermissionsModule)getSlot(SLOT_PERMISSIONS_MODULE);
 	}
 
 	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_CMS_GUARD,ICmsGuard.class,false,DefaultCmsGuard.class);
+		DEFINE_SLOT(SLOT_PERMISSIONS_MODULE,DefaultPermissionsModule.class,false,DefaultPermissionsModule.class);
 	}
 	
 	@Export
 	public List<EntityDefinition> GetEntityDefinitions(UserApplicationContext ctx) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)ctx.getUser();
-		GUARD(guard.canGetEntityDefinitions(user));
-		
+		GUARD(user,CAN_READ_SCHEMA);		
 		return getEntityDefinitions();
 	}
+	
 	public List<EntityDefinition> getEntityDefinitions() throws PersistenceException
 	{
 		return store.getEntityDefinitions();
@@ -55,9 +75,9 @@ public class CmsModule extends WebStoreModule
 	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,String entity_type,String order_by_attribute,boolean asc,int offset, int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)ctx.getUser();
-		GUARD(guard.canBrowseEntities(user, entity_type));
-		
-		return browseEntities(entity_type, order_by_attribute, asc, offset, page_size);
+		GUARD(user,CAN_BROWSE_ENTITY,"entity_type",entity_type);
+		PagingQueryResult result =  browseEntities(entity_type, order_by_attribute, asc, offset, page_size);
+		return result;
 	}
 	
 	public PagingQueryResult browseEntities(String entity_type,String order_by_attribute,boolean asc,int offset, int page_size) throws PersistenceException
@@ -74,12 +94,11 @@ public class CmsModule extends WebStoreModule
 	}
 	
 	
-	@Export(ParameterNames={"e"})
+	@Export(ParameterNames={"entity"})
 	public Entity CreateEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
 	{
 		Entity creator = (Entity)uctx.getUser();
-
-		GUARD(guard.canCreateEntity(creator, e));
+		GUARD(creator,CAN_CREATE_ENTITY,"type",e.getType(),"instance",e);
 		return createEntity(creator, e);
 	}
 	
@@ -92,9 +111,9 @@ public class CmsModule extends WebStoreModule
 	@Export(ParameterNames={"e"})
 	public Entity UpdateEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
 	{
-		Entity editor = (Entity)uctx.getUser();
-		
-		GUARD(guard.canUpdateEntity(editor, e));
+		Entity editor 			 = (Entity)uctx.getUser();
+		Entity existing_instance = GET(e.getType(),e.getId());
+		GUARD(editor,CAN_UPDATE_ENTITY,"type",e.getType(),"instance",existing_instance);
 		return updateEntity(e);
 	}
 	
@@ -103,13 +122,12 @@ public class CmsModule extends WebStoreModule
 		return SAVE_ENTITY(e);
 	}
 	
-	@Export(ParameterNames={"e"})
+	@Export(ParameterNames={"entity"})
 	public Entity DeleteEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
 	{
 		Entity deleter = (Entity)uctx.getUser();
-		GUARD(guard.canDeleteEntity(deleter, e));
-		/* call to delete provider slot here */
-		return deleteEntity( e);	
+		GUARD(deleter,CAN_DELETE_ENTITY,"type",e.getType(),"instance", e);
+		return deleteEntity(e);	
 	}
 	
 	public Entity deleteEntity(Entity e) throws PersistenceException
@@ -122,7 +140,7 @@ public class CmsModule extends WebStoreModule
 	{
 		Entity getter = (Entity)uctx.getUser();
 		Entity e = GET(entity_type,entity_id);
-		GUARD(guard.canGetEntity(getter,e));
+		GUARD(getter,CAN_READ_ENTITY,"entity_type",entity_type,"instance",e);
 		return FILL_REFS(e);
 	}
 	

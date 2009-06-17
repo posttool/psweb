@@ -56,12 +56,11 @@ public class ResourceModule extends WebStoreModule
 	private static final String FORM_ELEMENT_RESOURCE_ID = "resource_id";
 
 	protected String SLOT_PATH_PROVIDER = "resource-path-provider";
-	protected String SLOT_GUARD		  = "resource-guard";
 	
 	private File				 	upload_temp_dir;
 	private long				 	upload_max_file_size;
 	public    IResourcePathProvider 	path_provider;
-	protected IResourceGuard		 	guard;
+
 
 	/* look at the useage of this. this is a trempory work around to let
 	 * other modules subclass this and not have to rewrite the multipart methods
@@ -75,7 +74,6 @@ public class ResourceModule extends WebStoreModule
 	{
 		super.init(app,config);	
 		path_provider = (IResourcePathProvider)getSlot(SLOT_PATH_PROVIDER);
-		guard		  = (IResourceGuard)getSlot(SLOT_GUARD);
 		resource_entity_name = RESOURCE_ENTITY;
 		set_parameters(config);
 	}
@@ -84,7 +82,6 @@ public class ResourceModule extends WebStoreModule
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_PATH_PROVIDER,IResourcePathProvider.class,true);
-		DEFINE_SLOT(SLOT_GUARD,IResourceGuard.class,false,DefaultResourceGuard.class);
 	}	
 	
 	protected void setResourceEntityName(String name)
@@ -126,6 +123,22 @@ public class ResourceModule extends WebStoreModule
 		}
 	}
 
+	public static final String CAN_CREATE_RESOURCE   = "CAN_CREATE_RESOURCE";
+	public static final String CAN_READ_RESOURCE 	 = "CAN_READ_RESOURCE";
+	public static final String CAN_UPDATE_RESOURCE 	 = "CAN_UPDATE_RESOURCE";
+	public static final String CAN_DELETE_RESOURCE   = "CAN_DELETE_RESOURCE";
+	public static final String CAN_GET_RESOURCE_URL  = "CAN_GET_RESOURCE_URL";
+	
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_RESOURCE); 
+		EXPORT_PERMISSION(CAN_READ_RESOURCE); 	
+		EXPORT_PERMISSION(CAN_UPDATE_RESOURCE); 
+		EXPORT_PERMISSION(CAN_DELETE_RESOURCE);  
+		EXPORT_PERMISSION(CAN_GET_RESOURCE_URL); 
+
+	}
+	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
 
@@ -135,7 +148,7 @@ public class ResourceModule extends WebStoreModule
 	{	
 		Entity user = (Entity)uctx.getUser();
 		try{
-			GUARD(guard.canCreateResource(user));
+			GUARD(user, CAN_CREATE_RESOURCE,GUARD_TYPE,resource_entity_name);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
@@ -163,7 +176,8 @@ public class ResourceModule extends WebStoreModule
 		update_resource = GET(resource_entity_name,resource_id);
 		
 		try{
-			GUARD(guard.canUpdateResource(user,update_resource));
+			GUARD(user, CAN_UPDATE_RESOURCE, 
+						GUARD_INSTANCE,update_resource);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
@@ -179,7 +193,8 @@ public class ResourceModule extends WebStoreModule
 		//check to make sure it exists//
 		Entity user = (Entity)uctx.getUser();
 		Entity resource = GET(resource_entity_name,resource_id);
-		GUARD(guard.canDeleteResource(user,resource));
+		GUARD(user,CAN_DELETE_RESOURCE,
+				   GUARD_INSTANCE,resource);
 		return deleteResource(resource);
 	}
 	
@@ -204,7 +219,8 @@ public class ResourceModule extends WebStoreModule
 		//check to make sure it exists//
 		Entity user = (Entity)uctx.getUser();
 		Entity resource = GET(resource_entity_name,resource_id);
-		GUARD(guard.canGetResourceURL(user,resource));
+		GUARD(user, CAN_GET_RESOURCE_URL,
+				  GUARD_INSTANCE,resource);
 		return getResourceURL(resource);
 	}
 	
@@ -229,7 +245,8 @@ public class ResourceModule extends WebStoreModule
 		for (int i=0; i<s; i++)
 		{
 			Entity resource = GET(resource_entity_name,resources.get(i).getId());
-			GUARD(guard.canGetResourceURL(user,resource));
+			GUARD(user, CAN_GET_RESOURCE_URL,
+					  GUARD_INSTANCE,resource);
 			urls.add( getResourceURL(resource));
 		}
 		return urls;
@@ -241,7 +258,8 @@ public class ResourceModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity resource = GET(resource_entity_name,resource_id);
-		GUARD(guard.canGetResourceURL(user,resource));
+		GUARD(user, CAN_GET_RESOURCE_URL,
+				 GUARD_INSTANCE,resource);
 		return getResourcePreviewUrlWithDim( resource, w, h);
 	
 	}
@@ -313,7 +331,8 @@ public class ResourceModule extends WebStoreModule
 		for (int i=0; i<s; i++)
 		{
 			Entity resource = GET(resource_entity_name,resources.get(i).getId());
-			GUARD(guard.canGetResourceURL(user, resource));
+			GUARD(user, CAN_GET_RESOURCE_URL,
+					  GUARD_INSTANCE,resource);
 			urls.add( getResourcePreviewUrlWithDim(resource, w, h));
 		}
 		return urls;
@@ -325,7 +344,7 @@ public class ResourceModule extends WebStoreModule
 		//System.out.println("GET PROGRESS SESSION ID IS "+uctx.getId());
 		check_exceptions(uctx);
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetUploadProgress(user,channel_name));
+		GUARD(user, CAN_CREATE_RESOURCE,GUARD_TYPE,resource_entity_name);
 		
 		Map<String,MultipartForm> channel_upload_map = (Map<String,MultipartForm>)uctx.getProperty(KEY_CURRENT_UPLOAD_MAP);
 		if(channel_upload_map == null)
@@ -350,7 +369,7 @@ public class ResourceModule extends WebStoreModule
 	{
 		check_exceptions(ctx);
 		Entity user = (Entity)ctx.getUser();
-		GUARD(guard.canGetUploadProgress(user,channel_name));
+		GUARD(user, CAN_CREATE_RESOURCE,GUARD_TYPE,resource_entity_name);
 		
 		Map<String,MultipartForm> channel_upload_map = (Map<String,MultipartForm>)ctx.getProperty(KEY_CURRENT_UPLOAD_MAP);
 		if(channel_upload_map == null)
@@ -378,7 +397,8 @@ public class ResourceModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity resource = GET(resource_entity_name,resource_id);	 
-		GUARD(guard.canGetResource(user,resource));
+		GUARD(user, CAN_READ_RESOURCE,
+					GUARD_INSTANCE,resource);
 		return resource;
 	}
 	

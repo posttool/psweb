@@ -29,7 +29,7 @@ public class CommentModule extends WebStoreModule
 {
 
 	protected static final String SLOT_COMMENT_RATING_MODULE  	= "comment-rating-module"; 
-	protected static final String SLOT_COMMENT_GUARD_MODULE		= "comment-guard"; 
+
 	
 	/*this module needs to be after modules containing any entites you are referring to 
 	as commentable in application.xml. this is just due to the way the app is bootstrapped 
@@ -37,7 +37,6 @@ public class CommentModule extends WebStoreModule
 	private static final String PARAM_COMMENTABLE_ENTITIES 		= "commentable-entities";
 	
 	protected ICommentRatingModule 	rating_module;
-	protected ICommentGuard		 	guard;
 	protected String[] commentable_entities;
 	
 	public static final int EVENT_COMMENT_CREATED    = 0x21;
@@ -45,6 +44,13 @@ public class CommentModule extends WebStoreModule
 	public static final int EVENT_COMMENT_DELETED    = 0x23;
 	public static final int EVENT_COMMENT_FLAGGED    = 0x24;
 	public static final int EVENT_COMMENT_UNFLAGGED  = 0x25;
+	
+	
+
+	
+	public static final int SYSTEM_ACTION_GET_FLAGGED_COMMENTS 	= 0x1001;
+	public static final int SYSTEM_ACTION_FLAG_COMMENT	   		= 0x1002;
+	public static final int SYSTEM_ACTION_UNFLAG_COMMENT 	   	= 0x1003;
 	
 	public static final String COMMENT_EVENT_COMMENT 	   		= "comment";
 	public static final String COMMENT_EVENT_FLAGGING_USER      = "flagging_user";
@@ -55,14 +61,32 @@ public class CommentModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
-		guard				 = (ICommentGuard)getSlot(SLOT_COMMENT_GUARD_MODULE);
 	}
 	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_COMMENT_GUARD_MODULE,ICommentGuard.class,false,DefaultCommentGuard.class);
 		DEFINE_SLOT(SLOT_COMMENT_RATING_MODULE,ICommentRatingModule.class,false,null);
+	}
+
+	public static final String CAN_CREATE_COMMENT  = "CAN_CREATE_COMMENT";
+	public static final String CAN_READ_COMMENT    = "CAN_READ_COMMENT";
+	public static final String CAN_UPDATE_COMMENT  = "CAN_UPDATE_COMMENT";
+	public static final String CAN_DELETE_COMMENT  = "CAN_DELETE_COMMENT";
+	public static final String CAN_BROWSE_COMMENTS = "CAN_BROWSE_COMMENTS";
+	public static final String CAN_BROWSE_FLAGGED_COMMENTS = "CAN_BROWSE_FLAGGED_COMMENTS";
+	public static final String CAN_FLAG_COMMENT 		   = "CAN_BROWSE_FLAG_COMMENT";
+	public static final String CAN_UNFLAG_COMMENT 		   = "CAN_BROWSE_UNFLAG_COMMENT";
+	protected void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_COMMENT);
+		EXPORT_PERMISSION(CAN_READ_COMMENT);
+		EXPORT_PERMISSION(CAN_UPDATE_COMMENT);
+		EXPORT_PERMISSION(CAN_DELETE_COMMENT);
+		EXPORT_PERMISSION(CAN_BROWSE_COMMENTS);
+		EXPORT_PERMISSION(CAN_BROWSE_FLAGGED_COMMENTS);
+		EXPORT_PERMISSION(CAN_FLAG_COMMENT);
+		EXPORT_PERMISSION(CAN_UNFLAG_COMMENT);
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
@@ -113,7 +137,10 @@ public class CommentModule extends WebStoreModule
 			throw new WebApplicationException("CANT CREATE COMMENT ON "+target.getType()+" IT IS NOT LISTED AS A COMMENTABLE ENTITY");
 		}		
 
-		GUARD(guard.canCreateComment(user,target));
+		GUARD(user,CAN_CREATE_COMMENT, COMMENT_FIELD_TITLE,title,
+									   COMMENT_FIELD_COMMENT,comment,
+									   COMMENT_FIELD_TARGET,target);
+		
 		return createComment(user,title,comment,target,rating_data);
 	
 	}
@@ -190,7 +217,9 @@ public class CommentModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity comment_entity = GET(COMMENT_ENTITY,comment_id);
-		GUARD(guard.canUpdateComment(user,comment_entity));
+		GUARD(user,CAN_UPDATE_COMMENT,user, GUARD_INSTANCE,comment_entity,
+											COMMENT_FIELD_TITLE,title,
+											COMMENT_FIELD_COMMENT,comment);
 		
 		return updateComment(comment_entity,title,comment,rating_data);
 	
@@ -254,7 +283,7 @@ public class CommentModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity comment = GET(COMMENT_ENTITY,comment_id);
-		GUARD(guard.canDeleteComment(user,comment));
+		GUARD(user,CAN_DELETE_COMMENT,GUARD_INSTANCE,comment);
 		return deleteComment(comment);
 	}
 
@@ -294,7 +323,7 @@ public class CommentModule extends WebStoreModule
 		Entity comment = GET(COMMENT_ENTITY,comment_id);
 		if((Integer)comment.getAttribute(COMMENT_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_FLAGGED)
 			return comment;
-		GUARD(guard.canFlagComment(user,comment));
+		GUARD(user, CAN_FLAG_COMMENT,GUARD_INSTANCE,comment);
 		return flagComment(user,comment);
 	}
 
@@ -321,7 +350,7 @@ public class CommentModule extends WebStoreModule
 		Entity comment = GET(COMMENT_ENTITY,comment_id);
 		if((Integer)comment.getAttribute(COMMENT_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_NOT_FLAGGED)
 			return comment;
-		GUARD(guard.canUnflagComment(user,comment));
+		GUARD(user,CAN_UNFLAG_COMMENT,GUARD_INSTANCE,comment);
 		return unflagComment(user,comment);
 	}
 
@@ -346,18 +375,21 @@ public class CommentModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target = GET(entity_type,entity_id);
-		GUARD(guard.canGetComments(user,target));		
+
 		Query q = getCommentsForTargetQ(target);
 		q.offset(offset);
 		q.pageSize(page_size);
-		return PAGING_QUERY(q);
+		GUARD(user,CAN_BROWSE_COMMENTS);		
+		PagingQueryResult result =  PAGING_QUERY(q);
+		return result;
 	}
+
 
 	@Export(ParameterNames={"offset","page_size"})
 	public PagingQueryResult GetFlaggedComments(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetFlaggedComments(user));		
+		GUARD(user,CAN_BROWSE_FLAGGED_COMMENTS);
 		//GUARD(guard.canGetBillingRecords(user,user));		
 		Query q = getFlaggedCommentsQ(FLAGGED_STATUS_FLAGGED);
 		q.offset(offset);

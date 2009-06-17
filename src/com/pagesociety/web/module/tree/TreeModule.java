@@ -29,7 +29,6 @@ import com.pagesociety.web.module.user.UserModule;
 public class TreeModule extends WebStoreModule 
 {
 	private static final String SLOT_GUARD = "tree-guard";
-	private ITreeGuard guard;
 
 	private static final String ROOT_NODE_CLASS 	 = "root_node_class";
 	private static final String ROOT_NODE_ID		 = "root_node_id";
@@ -38,17 +37,33 @@ public class TreeModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
-		guard = (ITreeGuard)getSlot(SLOT_GUARD);
 	}
 	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_GUARD,ITreeGuard.class,false,DefaultTreeGuard.class);
 	}	
+
+	public static final String CAN_CREATE_TREE 		 	 = "CAN_CREATE_TREE";
+	public static final String CAN_EDIT_TREE 			 = "CAN_EDIT_TREE";
+	public static final String CAN_DELETE_TREE 		 	 = "CAN_DELETE_TREE";
+	public static final String CAN_READ_TREE 			 = "CAN_READ_TREE";
+	public static final String CAN_CLONE_TREE  		 	 = "CAN_CLONE_TREE";
+	public static final String CAN_READ_TREES_FOR_USER   = "CAN_READ_TREES_FOR_USER";
+	
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_TREE);
+		EXPORT_PERMISSION(CAN_EDIT_TREE);
+		EXPORT_PERMISSION(CAN_DELETE_TREE);
+		EXPORT_PERMISSION(CAN_READ_TREE);
+		EXPORT_PERMISSION(CAN_CLONE_TREE);
+		EXPORT_PERMISSION(CAN_READ_TREES_FOR_USER);
+	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
+	
 
 	@Export(ParameterNames={"name","root_class","root_id","root_data"})
 	@TransactionProtect
@@ -59,7 +74,7 @@ public class TreeModule extends WebStoreModule
 		Entity t = getTreeForUserByName(user,name);
 		if(t != null)
 			throw new WebApplicationException("TREE NAMED "+name+" ALREADY EXISTS FOR USER "+user.getId());
-		GUARD(guard.canCreateTree(user));
+		GUARD(user, CAN_CREATE_TREE,GUARD_TYPE,TREE_ENTITY);
 		return createTree(user,name,root_class,root_id,root_data);
 	}
 	
@@ -84,7 +99,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
-		GUARD(guard.canUpdateTree(user,tree,name,root_node));
+		GUARD(user, CAN_EDIT_TREE,
+					GUARD_INSTANCE,tree);
 		return updateTree(tree,name,root_node);
 	}
 	
@@ -101,7 +117,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
-		GUARD(guard.canCreateTreeNode(user,parent_node,node_class,node_id,data));
+		Entity tree        = (Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE);
+		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 		return createTreeNode(user,parent_node,node_class,node_id,data);
 	}
 	
@@ -111,7 +128,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
-		GUARD(guard.canCreateTreeNode(user,parent_node,node_class,node_id,data));
+		Entity tree        = (Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE);
+		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 		return createTreeNode(user,parent_node,parent_child_index,node_class,node_id,data);
 	}
 	
@@ -153,9 +171,9 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,tree_node_id);
-	
-		GUARD(guard.canUpdateTreeNode(user,tree_node,node_class,node_id,data));
-		return updateTreeNode(tree_node,node_class,node_id,data);
+		Entity tree        = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
+			return updateTreeNode(tree_node,node_class,node_id,data);
 	}
 
 	public Entity updateTreeNode(Entity node,String node_class,String node_id,Entity data) throws PersistenceException
@@ -173,10 +191,15 @@ public class TreeModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
 		Entity parent_node = GET(TREE_NODE_ENTITY,new_parent_id);
+		Entity orig_tree = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity dest_tree = (Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE);
 
 		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
 			throw new WebApplicationException("CANT REPARENT A ROOT TREE NODE");
-		GUARD(guard.canReparentTreeNode(user,tree_node,parent_node));
+	
+		GUARD(user, CAN_EDIT_TREE,GUARD_INSTANCE,orig_tree);
+		GUARD(user, CAN_EDIT_TREE,GUARD_INSTANCE,dest_tree);
+
 		return reparentTreeNode(tree_node,parent_node,new_parent_child_index);
 	}
 	
@@ -233,7 +256,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
-		GUARD(guard.canGetAncestors(user,tree_node));
+		Entity tree      = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		GUARD(user, CAN_READ_TREE, GUARD_INSTANCE,tree);
 		return getAncestors(tree_node,new ArrayList<Entity>() );
 	}
 
@@ -254,7 +278,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
-		GUARD(guard.canDeleteTreeNode(user,tree_node));
+		Entity tree      = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 		return deleteSubTree(tree_node);
 	}
 	
@@ -264,7 +289,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
-		GUARD(guard.canDeleteTree(user,tree));
+		GUARD(user, CAN_DELETE_TREE, GUARD_INSTANCE,tree);
 		return deleteTree(tree);
 	}
 	
@@ -335,7 +360,9 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
-		GUARD(guard.canCloneTree(user,tree));
+		GUARD(user, CAN_CREATE_TREE);
+		GUARD(user, CAN_READ_TREE, GUARD_INSTANCE,tree);
+
 		return cloneTree(tree,new_tree_name);
 	}
 	
@@ -371,7 +398,8 @@ public class TreeModule extends WebStoreModule
 	public List<Entity> GetTrees(UserApplicationContext uctx) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetTreesForUser(user,user));
+		GUARD(user, CAN_READ_TREES_FOR_USER,
+									GUARD_USER,user);
 		return getTrees(user);
 	}
 	
@@ -381,7 +409,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user   = (Entity)uctx.getUser();
 		Entity target = GET(UserModule.USER_ENTITY,user_id);//is this bad??..should user module be a slot?
-		GUARD(guard.canGetTreesForUser(user,target));
+		GUARD(user, CAN_READ_TREES_FOR_USER,
+							 GUARD_USER,target);
 		return getTrees(user);
 	}
 	
@@ -397,12 +426,13 @@ public class TreeModule extends WebStoreModule
 	@TransactionProtect
 	public Entity GetTreeForUserByName(UserApplicationContext uctx,long user_id,String name) throws WebApplicationException,PersistenceException
 	{
-		Entity user = (Entity)uctx.getUser();
-		Entity target = GET(UserModule.USER_ENTITY,user_id);//is this bad??..should user module be a slot?
-		Entity tree = getTreeForUserByName(target,name);
+		Entity user 	= (Entity)uctx.getUser();
+		Entity target 	= GET(UserModule.USER_ENTITY,user_id);//is this bad??..should user module be a slot?
+		Entity tree 	= getTreeForUserByName(target,name);
 		if(tree == null)
 			return null;
-		GUARD(guard.canGetTree(user,tree));
+		GUARD(user, CAN_READ_TREE,
+					GUARD_INSTANCE,tree);
 		return tree;
 	}
 	
@@ -414,7 +444,8 @@ public class TreeModule extends WebStoreModule
 		Entity tree = getTreeForUserByName(user,name);
 		if(tree == null)
 			return null;
-		GUARD(guard.canGetTree(user,tree));
+		GUARD(user, CAN_READ_TREE,
+					GUARD_INSTANCE,tree);
 		return tree;
 	}
 	
@@ -442,7 +473,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
-		GUARD(guard.canGetTreeNodesByClass(user,node_classname));
+		GUARD(user, CAN_READ_TREE, GUARD_INSTANCE,tree);
 		return getTreeNodesByClass(tree,node_classname);
 		
 	}
@@ -462,7 +493,8 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree = GET(TREE_ENTITY,tree_id);
-		GUARD(guard.canGetTreeNodeById(user,node_id));
+		GUARD(user, CAN_READ_TREE,
+					GUARD_INSTANCE,tree);
 		return getTreeNodeById(tree,node_id);
 		
 	}
@@ -486,7 +518,9 @@ public class TreeModule extends WebStoreModule
 
 		Entity user = (Entity)uctx.getUser();
 		Entity node = GET(TREE_NODE_ENTITY,node_id);
-		GUARD(guard.canFillNode(user,node,subtree_fill_depth,data_ref_fill_depth));
+		Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
+		GUARD(user, CAN_READ_TREE,
+					GUARD_INSTANCE, tree);
 		fillNode(node, subtree_fill_depth, data_ref_fill_depth);
 		return node;
 	}

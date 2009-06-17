@@ -23,6 +23,7 @@ import com.pagesociety.web.module.IEventListener;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleEvent;
 import com.pagesociety.web.module.PagingQueryResult;
+import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 
@@ -37,7 +38,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	private static final String PARAM_PROFILE_FIELDS = "profile-fields";
 	
 
-	protected IUserProfileGuard	 	guard;
+
 	protected UserModule 			user_module;
 	
 	public static final int EVENT_USER_PROFILE_CREATED    = 0x21;
@@ -56,7 +57,6 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
-		guard				 = (IUserProfileGuard)getSlot(SLOT_USER_PROFILE_GUARD);
 		user_module 		 = (UserModule)getSlot(SLOT_USER_MODULE);
 		user_module.addEventListener(this);
 		user_profile_entity_name = USER_PROFILE_ENTITY;
@@ -76,14 +76,32 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_USER_PROFILE_GUARD,IUserProfileGuard.class,false,DefaultUserProfileGuard.class);
 		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true,null);
 	}
 
 	//TODO:defineParameters() would be better than just hoping they are there and throwing exception.
 	//it would be more interesting with more parameter types as well//
+	public static final String CAN_CREATE_PROFILE 				= "CAN_CREATE_PROFILE";
+	public static final String CAN_EDIT_PROFILE 				= "CAN_EDIT_PROFILE";
+	public static final String CAN_DELETE_PROFILE  				= "CAN_DELETE_PROFILE";
+	public static final String CAN_FLAG_PROFILE 				= "CAN_FLAG_PROFILE";
+	public static final String CAN_UNFLAG_PROFILE  				= "CAN_UNFLAG_PROFILE";
+	public static final String CAN_GET_USER_PROFILE_FOR_USER  	= "CAN_GET_USER_PROFILE_FOR_USER";
+	public static final String CAN_GET_FLAGGED_PROFILES  		= "CAN_GET_FLAGGED_PROFILE";
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
+
+
+	@TransactionProtect
+	@Export
+	protected Entity createUserProfile(UserApplicationContext uctx,Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
+	{
+		Entity user = (Entity)uctx.getUser();
+		GUARD(user, CAN_CREATE_PROFILE,GUARD_TYPE,USER_PROFILE_ENTITY);
+		return createUserProfile(user, profile_data);
+	}
+			  
+
 	
 	protected Entity createUserProfile(Entity creator,Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
@@ -125,7 +143,8 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity user_profile_entity = GET(user_profile_entity_name,user_profile_id);
-		GUARD(guard.canUpdateProfile(user,user_profile_entity));
+		GUARD(user, CAN_EDIT_PROFILE, 
+					GUARD_INSTANCE,user_profile_entity);
 		
 		return updateUserProfile(user_profile_entity,profile_data);
 	
@@ -136,7 +155,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	protected Entity updateUserProfile(Entity profile_entity,
 			  						Map<String,Object> profile_data) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
-		System.out.println("PROFILE DATA IS "+profile_data);
+
 		profile_entity = UPDATE(profile_entity,
 								profile_data);
 	
@@ -157,7 +176,8 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity user_profile = GET(USER_PROFILE_ENTITY,user_profile_id);
-		GUARD(guard.canDeleteUserProfile(user,user_profile));
+		GUARD(user, CAN_DELETE_PROFILE,
+					GUARD_INSTANCE,user_profile);
 		return deleteUserProfile(user_profile);
 	}
 
@@ -180,7 +200,9 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 		Entity user_profile = GET(user_profile_entity_name,user_profile_id);
 		if((Integer)user_profile.getAttribute(USER_PROFILE_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_FLAGGED)
 			return user_profile;
-		GUARD(guard.canFlagUserProfile(user,user_profile));
+		GUARD(user, CAN_FLAG_PROFILE, 
+					GUARD_INSTANCE,user_profile);
+		
 		return flagUserProfile(user,user_profile);
 	}
 
@@ -207,7 +229,9 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 		Entity user_profile = GET(user_profile_entity_name,user_profile_id);
 		if((Integer)user_profile.getAttribute(USER_PROFILE_FIELD_FLAGGED_STATUS) == FLAGGED_STATUS_NOT_FLAGGED)
 			return user_profile;
-		GUARD(guard.canUnflagProfile(user,user_profile));
+		GUARD(user, CAN_UNFLAG_PROFILE, 
+					GUARD_INSTANCE,user_profile);
+
 		return unflagUserProfile(user,user_profile);
 	}
 
@@ -232,7 +256,8 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	{
 		Entity user 		= (Entity)uctx.getUser();
 		Entity profile_user = GET(UserModule.USER_ENTITY,user_id);
-		GUARD(guard.canGetUserProfile(user,profile_user));		
+		GUARD(user, CAN_GET_USER_PROFILE_FOR_USER, 
+					GUARD_INSTANCE,profile_user);
 		return getUserProfile(profile_user);
 	}
 
@@ -257,7 +282,7 @@ public class UserProfileModule extends WebStoreModule implements IEventListener
 	public PagingQueryResult GetFlaggedUserProfiles(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		GUARD(guard.canGetFlaggedUserProfiles(user));		
+		GUARD(user, CAN_GET_FLAGGED_PROFILES);		
 		//GUARD(guard.canGetBillingRecords(user,user));		
 		Query q = getFlaggedUserProfilesQ(FLAGGED_STATUS_FLAGGED);
 		q.offset(offset);

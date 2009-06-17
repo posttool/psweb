@@ -91,13 +91,14 @@ public class ModuleRegistry
 		return MODULE_LIST;
 	}
 
-	public static Module instantiate(ModuleDefinition module_def, Map<String,Object> params) throws InitializationException
+	public static Module instantiate(WebApplication app,ModuleDefinition module_def, Map<String,Object> params) throws InitializationException
 	{
 
 		try
 		{
 			Module module = module_def.newInstance();
 			module.setName(module_def.getName());
+			module._application = app;
 			//module.setName(module_info.getName());
 			//module.setModuleInfo(module_info);
 			module.setParams(params);
