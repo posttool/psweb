@@ -164,17 +164,17 @@ public class UserModule extends WebStoreModule
 	}
 	
 	@Export(ParameterNames={"email","password", "username"})  
-	public Entity CreatePublicUser(UserApplicationContext ctx,String email,String password,String username) throws PersistenceException,WebApplicationException
+	public Entity CreateSystemUser(UserApplicationContext ctx,String email,String password,String username) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)ctx.getUser();
 		GUARD(user,CAN_CREATE_PUBLIC_USER);
-		return createPublicUser(user, email, password, username);
+		return createSystemUser(user, email, password, username);
 	}
 	
 	public static final int ERROR_USER_EMAIL_EXISTS = 0x20001;
 	public static final int ERROR_USER_USERNAME_EXISTS = 0x20002;
 	public static final int ERROR_BAD_PASSWORD = 0x20003;
-	public Entity createPublicUser(Entity creator,String email,String password,String username,Object... xtra_event_context_params) throws PersistenceException,WebApplicationException
+	public Entity createSystemUser(Entity creator,String email,String password,String username,Object... xtra_event_context_params) throws PersistenceException,WebApplicationException
 	{
 		Entity existing_user = getUserByEmail(email);
 		if(existing_user != null)
