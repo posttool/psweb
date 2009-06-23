@@ -13,10 +13,10 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/json.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/log4j-1.2.9.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mina-core-1.1.2.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/activation.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/bcprov-jdk16-141.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-fileupload-1.2.1.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/activation.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mail.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/bcprov-jdk16-141.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-3.2-FINAL-20081019.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PSPersistence"/>
 	<classpathentry kind="output" path="build/classes"/>
