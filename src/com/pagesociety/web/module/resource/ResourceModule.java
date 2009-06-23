@@ -74,7 +74,11 @@ public class ResourceModule extends WebStoreModule
 	{
 		super.init(app,config);	
 		path_provider = (IResourcePathProvider)getSlot(SLOT_PATH_PROVIDER);
-		resource_entity_name = RESOURCE_ENTITY;
+		//this may have been set by some one extending the class//
+		//it needs to happen before init so that it is set when define
+		// entities is called etc...//
+		if(resource_entity_name == null)
+			resource_entity_name = RESOURCE_ENTITY;
 		set_parameters(config);
 	}
 
@@ -121,6 +125,8 @@ public class ResourceModule extends WebStoreModule
 				throw new InitializationException(PARAM_UPLOAD_MAX_FILE_SIZE+" MUST BE SPECIFIED AS AN INTEGER. NUMBER OF BYTES.");
 			}
 		}
+	
+	
 	}
 
 	public static final String CAN_CREATE_RESOURCE   = "CAN_CREATE_RESOURCE";
