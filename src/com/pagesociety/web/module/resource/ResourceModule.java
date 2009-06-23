@@ -72,13 +72,13 @@ public class ResourceModule extends WebStoreModule
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
+		if(resource_entity_name == null)
+			resource_entity_name = RESOURCE_ENTITY;
 		super.init(app,config);	
 		path_provider = (IResourcePathProvider)getSlot(SLOT_PATH_PROVIDER);
 		//this may have been set by some one extending the class//
 		//it needs to happen before init so that it is set when define
 		// entities is called etc...//
-		if(resource_entity_name == null)
-			resource_entity_name = RESOURCE_ENTITY;
 		set_parameters(config);
 	}
 
