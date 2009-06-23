@@ -77,6 +77,8 @@ public class DefaultPermissionsModule extends PermissionsModule
 	private void do_namespace_glob(int role, String namespace,PermissionEvaluator pf) 
 	{
 		List<String> pids = module_permission_map.get(namespace);
+		if(pids == null)
+			return;
 		int s = pids.size();
 		for(int i = 0;i < s;i++)
 		{
