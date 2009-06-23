@@ -891,6 +891,7 @@ public class WebStoreModule extends WebModule
 	}
 	public EntityDefinition DEFINE_ENTITY(String entity_name,Object...args) throws PersistenceException,InitializationException
 	{
+		System.out.println("DEFINING "+entity_name);
 		EntityDefinition d = DEFINE_ENTITY(store,entity_name,args);
 		associated_entity_definitions.add(d);
 		return d;

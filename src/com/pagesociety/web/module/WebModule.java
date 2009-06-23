@@ -41,13 +41,13 @@ public abstract class WebModule extends Module
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);
+		permissions = (PermissionsModule)getSlot(SLOT_PERMISSIONS_MODULE);
+		exportPermissions();		
 	}
 	
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
-		permissions = (PermissionsModule)getSlot(SLOT_PERMISSIONS_MODULE);
-		exportPermissions();
 	}
 	
 	
