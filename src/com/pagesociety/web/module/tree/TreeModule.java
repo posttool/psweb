@@ -117,7 +117,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
-		Entity tree        = (Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity tree        = EXPAND((Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE));
 		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 		return createTreeNode(user,parent_node,node_class,node_id,data);
 	}
@@ -128,7 +128,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity parent_node = GET(TREE_NODE_ENTITY,parent_node_id);
-		Entity tree        = (Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity tree        = EXPAND((Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE));
 		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 		return createTreeNode(user,parent_node,parent_child_index,node_class,node_id,data);
 	}
@@ -171,7 +171,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,tree_node_id);
-		Entity tree        = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity tree        = EXPAND((Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE));
 		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 			return updateTreeNode(tree_node,node_class,node_id,data);
 	}
@@ -191,8 +191,8 @@ public class TreeModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
 		Entity parent_node = GET(TREE_NODE_ENTITY,new_parent_id);
-		Entity orig_tree = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
-		Entity dest_tree = (Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity orig_tree = EXPAND((Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE));
+		Entity dest_tree = EXPAND((Entity)parent_node.getAttribute(TREE_NODE_FIELD_TREE));
 
 		if(tree_node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
 			throw new WebApplicationException("CANT REPARENT A ROOT TREE NODE");
@@ -256,7 +256,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
-		Entity tree      = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity tree      = EXPAND((Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE));
 		GUARD(user, CAN_READ_TREE, GUARD_INSTANCE,tree);
 		return getAncestors(tree_node,new ArrayList<Entity>() );
 	}
@@ -278,7 +278,7 @@ public class TreeModule extends WebStoreModule
 	{
 		Entity user 	 = (Entity)uctx.getUser();
 		Entity tree_node = GET(TREE_NODE_ENTITY,entity_node_id);
-		Entity tree      = (Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity tree      = EXPAND((Entity)tree_node.getAttribute(TREE_NODE_FIELD_TREE));
 		GUARD(user, CAN_EDIT_TREE, GUARD_INSTANCE,tree);
 		return deleteSubTree(tree_node);
 	}
@@ -518,7 +518,7 @@ public class TreeModule extends WebStoreModule
 
 		Entity user = (Entity)uctx.getUser();
 		Entity node = GET(TREE_NODE_ENTITY,node_id);
-		Entity tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
+		Entity tree = EXPAND((Entity)node.getAttribute(TREE_NODE_FIELD_TREE));
 		GUARD(user, CAN_READ_TREE,
 					GUARD_INSTANCE, tree);
 		fillNode(node, subtree_fill_depth, data_ref_fill_depth);
