@@ -109,8 +109,10 @@ public class DefaultPermissionsModule extends PermissionsModule
 
 	public boolean checkPermission(Entity user,String namespace,String permission_id,Map<String,Object> context) throws PersistenceException
 	{
-		List<Integer> roles = (List<Integer>)user.getAttribute(UserModule.FIELD_ROLES);
-		if(user == null || roles == null || roles.size() == 0)
+		List<Integer> roles;
+		if(user == null 
+		|| (roles = (List<Integer>)user.getAttribute(UserModule.FIELD_ROLES)) == null 
+		|| roles.size() == 0)
 		{
 			try{
 				PermissionEvaluator pf = role_module_perm_pf_map.get(ROLE_PUBLIC).get(namespace).get(permission_id);
