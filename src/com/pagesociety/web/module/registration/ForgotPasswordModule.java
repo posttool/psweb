@@ -2,8 +2,7 @@ package com.pagesociety.web.module.registration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
@@ -14,7 +13,6 @@ import com.pagesociety.persistence.Types;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.WebStoreModule;
