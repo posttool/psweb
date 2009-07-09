@@ -103,6 +103,13 @@ public class PromotionModule extends WebStoreModule
 
 	//return true could mean dont delete me but it isnt hooked up currently
 	//inital_fee and price takes care of both recurring and non recurring promotions//
+	//TODO:
+	//this is bad right now.
+	//orders need to be refactored to have line items instead of skus
+	//we would never want to accidentally set a sku price to zero for everyone!!!!
+	//this could easily happen if skus were cached!!!
+	//talk to david.
+	
 	private static final String ALWAYS_FREE_PROGRAM =
 		"var skus = order.getAttribute('skus');\n"+
 		"for(var i=0;i < skus.size();i++)\n"+

@@ -440,7 +440,7 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public Entity createRecurringOrder(Entity creator,Entity user,int recurring_unit,int recurring_period,List<Entity> skus,List<Entity> promotions) throws PersistenceException
 	{
-
+		
 		Entity recurring_order =  NEW(RECURRING_ORDER_ENTITY,
 									  creator,
 									  RECURRING_ORDER_FIELD_SKUS,skus,
