@@ -718,6 +718,22 @@ public class PromotionModule extends WebStoreModule
 		}
 		return applied_promotions;
 	}
+	
+	public void applyPromotion(Entity order,Entity promotion) throws WebApplicationException
+	{
+
+		if(promotion == null)
+			return;
+		
+			try{
+				Boolean ret = (Boolean)apply_promotion(order, promotion);
+
+			}catch(Exception e)
+			{
+				throw new WebApplicationException("FAILED APPLYING PROMOTION "+promotion.getId());
+			}
+
+	}
 
 	public static final String PROMO_PROGRAM_WRAPPER_HEADER = "function apply_promotion(order){\nwith(P){\n";
 	public static final String PROMO_PROGRAM_WRAPPER_FOOTER = "\n}\n}\n";
