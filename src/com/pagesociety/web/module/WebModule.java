@@ -359,6 +359,16 @@ public abstract class WebModule extends Module
 		}
     }
 	
+	
+	//just another name for a Map<String,Object> useful for talking to action script
+	public class OBJECT extends HashMap<String,Object>
+	{
+		public OBJECT(Object... args)
+		{
+			for(int i = 0;i < args.length;i+=2)
+				put((String)args[i],args[i+1]);			
+		}
+	}
 
 	
 }
