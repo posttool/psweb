@@ -354,7 +354,7 @@ public class BillingModule extends WebStoreModule
 		q.eq(q.list(user,Query.VAL_GLOB));
 		q.offset(offset);
 		q.pageSize(page_size);
-		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER,user);
+		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER, GUARD_USER,user);
 		PagingQueryResult result = PAGING_QUERY(q);		
 		return result;
 	}
@@ -372,7 +372,7 @@ public class BillingModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity billing_record = getPreferredBillingRecord(user);
-		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER,user);
+		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER, GUARD_USER, user);
 		return billing_record;
 	}
 	
