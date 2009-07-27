@@ -173,8 +173,9 @@ public class RecurringOrderModule extends ResourceModule
 	public static final String CAN_BROWSE_RECURRING_ORDERS_BY_USER = "CAN_BROWSE_RECURRING_ORDERS_BY_USER";
 	
 	
-	public void exportPermissions()
+	protected  void exportPermissions()
 	{
+		super.exportPermissions();
 		EXPORT_PERMISSION(CAN_CREATE_RECURRING_SKU);
 		EXPORT_PERMISSION(CAN_READ_RECURRING_SKU);
 		EXPORT_PERMISSION(CAN_UPDATE_RECURRING_SKU);
@@ -186,7 +187,6 @@ public class RecurringOrderModule extends ResourceModule
 		EXPORT_PERMISSION(CAN_DELETE_RECURRING_ORDER); 
 		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_ORDERS);
 		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_ORDERS_BY_USER);
-
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////

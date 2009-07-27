@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
+
 
 
 import com.pagesociety.persistence.Entity;
@@ -129,15 +131,27 @@ public class DefaultPermissionsModule extends PermissionsModule
 		for(int i = 0;i < roles.size();i++)
 		{
 			int role = roles.get(i);
-			try{
-				PermissionEvaluator pf = role_module_perm_pf_map.get(role).get(namespace).get(permission_id);
-				
-				if(pf.exec(user, namespace,permission_id, context))
-					return true;
-			}catch(NullPointerException npe)
+			Map<String, Map<String, PermissionEvaluator>> perms_for_role = role_module_perm_pf_map.get(role);
+			if (perms_for_role==null)
 			{
+				System.out.println("No permissions for role: "+role);
 				continue;
-			}			
+			}
+			Map<String, PermissionEvaluator> perm_for_ns = perms_for_role.get(namespace);
+			if (perms_for_role==null)
+			{
+				System.out.println("No permissions for role: "+role+" namespace: "+namespace);
+				continue;
+			}
+			PermissionEvaluator pf = perm_for_ns.get(permission_id);
+			if (pf==null)
+			{
+				System.out.println("No permissions for role: "+role+" namespace: "+namespace+" permission_id: "+permission_id);
+				continue;
+			}
+			if(pf.exec(user, namespace,permission_id, context))
+				return true;
+					
 		}
 		
 		return false;	
