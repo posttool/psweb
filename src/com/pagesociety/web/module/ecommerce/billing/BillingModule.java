@@ -61,7 +61,7 @@ public class BillingModule extends WebStoreModule
 	}
 	
 	public static final String CAN_CREATE_BILLING_RECORD   		   = "CAN_CREATE_BILLING_RECORD";
-	public static final String CAN_READ_BILLING_RECORD     		   = "CAN_READ_BILLING_RECORD";
+//	public static final String CAN_READ_BILLING_RECORD     		   = "CAN_READ_BILLING_RECORD";
 	public static final String CAN_UPDATE_BILLING_RECORD   		   = "CAN_UPDATE_BILLING_RECORD";
 	public static final String CAN_DELETE_BILLING_RECORD   		   = "CAN_DELETE_BILLING_RECORD";
 	public static final String CAN_BROWSE_BILLING_RECORDS  		   = "CAN_BROWSE_BILLING_RECORDS";
@@ -71,7 +71,7 @@ public class BillingModule extends WebStoreModule
 	protected void exportPermissions()
 	{
 		EXPORT_PERMISSION(CAN_CREATE_BILLING_RECORD);
-		EXPORT_PERMISSION(CAN_READ_BILLING_RECORD);
+//		EXPORT_PERMISSION(CAN_READ_BILLING_RECORD);
 		EXPORT_PERMISSION(CAN_UPDATE_BILLING_RECORD);
 		EXPORT_PERMISSION(CAN_DELETE_BILLING_RECORD);
 		EXPORT_PERMISSION(CAN_BROWSE_BILLING_RECORDS);
@@ -372,7 +372,7 @@ public class BillingModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity billing_record = getPreferredBillingRecord(user);
-		GUARD(user, CAN_READ_BILLING_RECORD,user);
+		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER,user);
 		return billing_record;
 	}
 	
