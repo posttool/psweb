@@ -135,7 +135,7 @@ public class ResourceModule extends WebStoreModule
 	public static final String CAN_DELETE_RESOURCE   = "CAN_DELETE_RESOURCE";
 	public static final String CAN_GET_RESOURCE_URL  = "CAN_GET_RESOURCE_URL";
 	
-	public void exportPermissions()
+	protected void exportPermissions()
 	{
 		EXPORT_PERMISSION(CAN_CREATE_RESOURCE); 
 		EXPORT_PERMISSION(CAN_READ_RESOURCE); 	
