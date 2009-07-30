@@ -134,7 +134,7 @@ public class DefaultPermissionsModule extends PermissionsModule
 				continue;
 			}
 			Map<String, PermissionEvaluator> perm_for_ns = perms_for_role.get(namespace);
-			if (perms_for_role==null)
+			if (perm_for_ns==null)
 			{
 				System.out.println("No permissions for role: "+role+" namespace: "+namespace);
 				continue;
