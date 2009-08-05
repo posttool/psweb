@@ -581,7 +581,7 @@ public class TreeModule extends WebStoreModule
 				c++;
 				List<Entity> l = (List<Entity>)data.getAttribute(ref_field_name);
 				if(l == null)
-					return;
+					continue;
 				for(int ii = 0;ii < l.size();ii++)
 					do_fill_data(l.get(ii),c,d);
 
