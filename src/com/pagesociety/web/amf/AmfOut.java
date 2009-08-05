@@ -85,9 +85,21 @@ public class AmfOut
 		{
 			writeAMFObject(new AmfLong((Long)value));
 		}
-		else if (value instanceof Number)
+		else if (value instanceof Integer)
 		{
-			writeAMFIntOrNumber((Number) value);
+			Integer i = (Integer) value;
+			if (i.intValue()<MAX_INT)
+				writeAMFInt(i.intValue());
+			else
+				writeAMFNumber(i.doubleValue());
+		}
+		else if (value instanceof Double)
+		{
+			writeAMFObject(new AmfDouble((Double)value));
+		}
+		else if (value instanceof Float)
+		{
+			writeAMFObject(new AmfFloat((Float)value));
 		}
 		else if (value instanceof byte[])
 		{

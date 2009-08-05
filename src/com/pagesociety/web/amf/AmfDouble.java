@@ -1,26 +1,25 @@
 package com.pagesociety.web.amf;
 
-public class AmfLong
+public class AmfDouble
 {
-
 	private String _v;
 
-	public AmfLong()
+	public AmfDouble()
 	{
 	}
 	
-	public AmfLong(Long v)
+	public AmfDouble(Double v)
 	{
-		_v = Long.toString(v);
+		_v = Double.toString(v);
 	}
 
-	public Long longValue()
+	public Double doubleValue()
 	{
 		try {
-		return Long.parseLong(_v);
+		return Double.parseDouble(_v);
 		} catch (Exception e)
 		{
-			return -1L;
+			return -1D;
 		}
 	}
 
@@ -34,5 +33,4 @@ public class AmfLong
 		_v = v;
 	}
 	
-
 }

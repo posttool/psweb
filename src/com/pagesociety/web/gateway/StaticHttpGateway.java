@@ -29,7 +29,7 @@ public class StaticHttpGateway
 	// add this to make it download
 	// response.setHeader("Content-disposition", "attachment; filename=" + f.getName());
 
-	public static void serveFile(File file, String mimeType, HttpServletRequest request,
+	public void serveFile(File file, String mimeType, HttpServletRequest request,
 			HttpServletResponse response) throws IOException, ServletException
 	{
 		if (!file.exists())

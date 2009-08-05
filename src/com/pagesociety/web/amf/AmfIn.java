@@ -271,6 +271,20 @@ public class AmfIn
 				result = l.longValue();
 				addObjectReference(result);
 			}
+			else if (result instanceof AmfDouble)
+			{
+				AmfDouble l = (AmfDouble) result;
+				class_in.readObject(this, l);
+				result = l.doubleValue();
+				addObjectReference(result);
+			}
+			else if (result instanceof AmfFloat)
+			{
+				AmfFloat l = (AmfFloat) result;
+				class_in.readObject(this, l);
+				result = l.floatValue();
+				addObjectReference(result);
+			}
 			else
 			{
 				// add it to the reference pool before deserializing
