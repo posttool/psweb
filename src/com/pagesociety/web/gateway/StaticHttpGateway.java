@@ -33,9 +33,16 @@ public class StaticHttpGateway
 			HttpServletResponse response) throws IOException, ServletException
 	{
 		if (!file.exists())
-			throw new IOException("NO SUCH RESOURCE " + file.getName());
+		{
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}	
 		if (file.isDirectory())
-			throw new IOException("DIRECTORY LISTING DISABLED");
+		{
+			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
+			
 		long lastMod = file.lastModified() / 1000 * 1000;
 		long ifModSinc = request.getDateHeader(REQUEST_DATE_HEADER_IF_MOD_SINCE);
 		if (lastMod <= ifModSinc)

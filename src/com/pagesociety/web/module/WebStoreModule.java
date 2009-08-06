@@ -416,7 +416,76 @@ public class WebStoreModule extends WebModule
 		return instance;
 	}
 	
+//do_fill_deep(store,e,0,MAX_INT,FILL(dsfs, sfsf, gdgd, sdgsdg), MASK(password, email))
+	public static final String[] EMPTY_STRING_ARRAY = new String[0];
+	public static final String[] FILL_ALL_FIELDS    = EMPTY_STRING_ARRAY;
+	public static String[] MASK(String... fieldnames)
+	{
+		return fieldnames;
+	}
 	
+	public static String[] FILL(String... fieldnames)
+	{
+		return fieldnames;
+	}
+	
+	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d) throws PersistenceException
+	{
+		do_fill_deep(store, e, c, d, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY);
+	}
+	
+	public static void do_fill_deep(PersistentStore store,Entity e,int c, int d,String... fill_fields) throws PersistenceException
+	{
+		do_fill_deep(store, e, c, d, fill_fields, EMPTY_STRING_ARRAY);
+	}
+	
+	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	{
+		if(e == null || c == d)
+			return;
+
+		EntityDefinition def = store.getEntityDefinition(e.getType());		
+		String[] fields_to_fill;
+		if(fill_fields.length == 0)
+		{	//fill all ref fields//
+			List<FieldDefinition> r_fields = def.getReferenceFields();
+			fields_to_fill = new String[r_fields.size()];
+			for(int ii = 0;ii < fields_to_fill.length;ii++)
+				fields_to_fill[ii] = r_fields.get(ii).getName();
+		}
+		else
+			fields_to_fill = fill_fields;
+		
+		for(int i = 0;i < fields_to_fill.length ;i++)
+		{
+			String ref_field_name = fields_to_fill[i];
+			FieldDefinition fd    = def.getField(ref_field_name);
+			
+			if(fd == null)//this can hapen when you use the explict fill since all fieldnames will not be in all entities
+				continue;
+
+			FILL_REF(store,e,ref_field_name);
+
+			if(fd.isArray())
+			{
+				c++;
+
+				List<Entity> l = (List<Entity>)e.getAttribute(ref_field_name);
+				if(l == null)
+					continue;
+				for(int ii = 0;ii < l.size();ii++)
+					do_fill_deep(store,l.get(ii),c,d,fill_fields);
+
+			}
+			else
+			{
+				
+				Entity val = (Entity)e.getAttribute(ref_field_name);
+				do_fill_deep(store,val, ++c, d,fill_fields);
+			}
+		}
+	}
+
 	public static Entity FILL_REFS(PersistentStore store,Entity instance) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -505,6 +574,47 @@ public class WebStoreModule extends WebModule
 		return results;
 	}
 	
+	public static QueryResult QUERY_FILL_DEEP(PersistentStore store,Query q) throws PersistenceException
+	{
+		QueryResult results =  QUERY(store,q);
+		List<Entity> entities = results.getEntities();
+		int s = results.size();
+		for(int i = 0; i < s;i++)
+		{
+			Entity e = entities.get(i);
+			do_fill_deep(store, e,0,Integer.MAX_VALUE);
+		}
+		return results;
+	}
+	
+	public static QueryResult QUERY_FILL_DEEP(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
+	{
+		QueryResult results =  QUERY(store,q);
+		List<Entity> entities = results.getEntities();
+		int s = results.size();
+		for(int i = 0; i < s;i++)
+		{
+			Entity e = entities.get(i);
+			do_fill_deep(store, e,0,Integer.MAX_VALUE,fill_fields);
+		}
+		return results;
+	}
+	
+	public static QueryResult QUERY_FILL_DEEP_AND_MASK(PersistentStore store,Query q,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	{
+		QueryResult results =  QUERY(store,q);
+		List<Entity> entities = results.getEntities();
+		int s = results.size();
+		for(int i = 0; i < s;i++)
+		{
+			Entity e = entities.get(i);
+			do_fill_deep(store, e,0,Integer.MAX_VALUE,fill_fields,mask_fields);
+		}
+		return results;
+	}
+	
+
+	
 	public static QueryResult QUERY_FILL(PersistentStore store,Query q,String... fill_fieldnames) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -527,15 +637,12 @@ public class WebStoreModule extends WebModule
 		{
 			Entity e = entities.get(i);
 			FILL_REFS(store,e);
-			for(int ii=0;ii <mask_fields.length;ii+=2)
-			{
-				Entity ref = (Entity)e.getAttribute(mask_fields[ii]);
-				if(ref != null)
-					ref.getAttributes().put(mask_fields[ii+1],null);
-			}
+			for(int ii=0;ii <mask_fields.length;ii++)
+				e.getAttributes().put(mask_fields[ii],null);
 		}
 		return results;
 	}
+	
 	
 	public static PagingQueryResult PAGING_QUERY(PersistentStore store,Query q) throws PersistenceException
 	{
@@ -556,6 +663,13 @@ public class WebStoreModule extends WebModule
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
+	public static PagingQueryResult PAGING_QUERY_FILL_DEEP(PersistentStore store,Query q) throws PersistenceException
+	{
+		QueryResult results = QUERY_FILL_DEEP(store,q);
+		int total_count = store.count(q);
+		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
+	}
+	
 	public static PagingQueryResult PAGING_QUERY_FILL(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL(store,q,fill_fields);
@@ -563,9 +677,22 @@ public class WebStoreModule extends WebModule
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
+	public static PagingQueryResult PAGING_QUERY_FILL_DEEP(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
+	{
+		QueryResult results = QUERY_FILL_DEEP(store,q,fill_fields);
+		int total_count = store.count(q);
+		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
+	}
+	
 	public static PagingQueryResult PAGING_QUERY_FILL_AND_MASK(PersistentStore store,Query q,String... args) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_AND_MASK(store,q);
+		int total_count = store.count(q);
+		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
+	}
+	public static PagingQueryResult PAGING_QUERY_FILL_DEEP_AND_MASK(PersistentStore store,Query q,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	{
+		QueryResult results = QUERY_FILL_DEEP_AND_MASK(store,q,fill_fields,mask_fields);
 		int total_count = store.count(q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
@@ -776,14 +903,29 @@ public class WebStoreModule extends WebModule
 		return QUERY_FILL(store, q);
 	}
 	
+	public QueryResult QUERY_FILL_DEEP(Query q) throws PersistenceException
+	{
+		return QUERY_FILL_DEEP(store, q);
+	}
+	
 	public QueryResult QUERY_FILL(Query q,String... fill_fieldnames) throws PersistenceException
 	{
 		return QUERY_FILL(store,q, fill_fieldnames);
 	}
 	
+	public QueryResult QUERY_FILL_DEEP(Query q,String... fill_fieldnames) throws PersistenceException
+	{
+		return QUERY_FILL_DEEP(store,q, fill_fieldnames);
+	}
+	
 	public QueryResult QUERY_FILL_AND_MASK(Query q,String... mask_fields) throws PersistenceException
 	{
 		return QUERY_FILL_AND_MASK(store, q, mask_fields);
+	}
+	
+	public QueryResult QUERY_FILL_DEEP_AND_MASK(Query q,String[] fill_fieldnames,String[] mask_fieldnames) throws PersistenceException
+	{
+		return QUERY_FILL_DEEP_AND_MASK(store,q, fill_fieldnames,mask_fieldnames);
 	}
 	
 	public PagingQueryResult PAGING_QUERY(Query q) throws PersistenceException
@@ -796,7 +938,17 @@ public class WebStoreModule extends WebModule
 		return PAGING_QUERY_FILL(store, q);
 	}
 	
+	public PagingQueryResult PAGING_QUERY_FILL_DEEP(Query q) throws PersistenceException
+	{
+		return PAGING_QUERY_FILL_DEEP(store, q);
+	}
+	
 	public PagingQueryResult PAGING_QUERY_FILL(Query q,String... fill_fields) throws PersistenceException
+	{
+		return PAGING_QUERY_FILL(store, q, fill_fields);
+	}
+	
+	public PagingQueryResult PAGING_QUERY_FILL_DEEP(Query q,String... fill_fields) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL(store, q, fill_fields);
 	}
@@ -804,6 +956,11 @@ public class WebStoreModule extends WebModule
 	public PagingQueryResult PAGING_QUERY_FILL_AND_MASK(Query q,String... mask_fields) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL_AND_MASK(store, q, mask_fields);
+	}
+	
+	public PagingQueryResult PAGING_QUERY_FILL_DEEP_AND_MASK(Query q,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	{
+		return PAGING_QUERY_FILL_DEEP_AND_MASK(store, q,fill_fields,mask_fields);
 	}
 	
 	public int COUNT(Query q) throws PersistenceException
