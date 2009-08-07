@@ -43,7 +43,14 @@ public class RawGateway
 		{
 			throw new WebApplicationException("RAW GATEWAY ERROR", e);
 		}
+		try{
 		PrintWriter out = response.getWriter();
 		out.close();
+		}catch(IllegalStateException ise)
+		{
+			//this happens if someone accesses the outputstream directly such as in the case
+			//of streaming files.
+		}
+		
 	}
 }
