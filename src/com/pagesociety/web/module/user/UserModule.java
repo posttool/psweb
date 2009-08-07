@@ -268,8 +268,10 @@ public class UserModule extends WebStoreModule
 		
 		if(editor.equals(target))
 		{
-			if(!target.getAttribute(FIELD_PASSWORD).equals(old_password))
-				throw new PermissionsException("BAD OLD PASSWORD");
+			// AS LONG AS THE PERSON IS LOGGED IN, THEY GET TO UPDATE THE PASSWORD
+			// THIS IS FOR THE CASE OF WHEN THEY HAVE BEEN AUTHENTICATED BY THE LOST PASSWORD SYSTEM
+//			if(!target.getAttribute(FIELD_PASSWORD).equals(old_password))
+//				throw new PermissionsException("BAD OLD PASSWORD");
 		}
 		
 		Entity updated_user =  updatePassword(target, new_password);
