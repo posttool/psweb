@@ -233,6 +233,11 @@ public class UserModule extends WebStoreModule
 				  FIELD_EMAIL,email);					
 	}
 	
+	@Export 
+	public boolean EmailExists(UserApplicationContext uctx,String email) throws PersistenceException,WebApplicationException
+	{
+		return (getUserByEmail(email) != null);
+	}
 	
 	@Export(ParameterNames={"user_entity_id","username"})
 	public Entity UpdateUserName(UserApplicationContext uctx,long user_entity_id,String username) throws PersistenceException,WebApplicationException
