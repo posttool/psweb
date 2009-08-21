@@ -37,6 +37,7 @@ public abstract class WebModule extends Module
 	public static final String SLOT_PERMISSIONS_MODULE  = "permissions-module";
 	protected PermissionsModule permissions;
 	
+	public List<?> EMPTY_LIST = new ArrayList<Object>();
 	
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
