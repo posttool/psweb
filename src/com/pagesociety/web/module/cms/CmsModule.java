@@ -1,12 +1,17 @@
 package com.pagesociety.web.module.cms;
 
-
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityDefinition;
+import com.pagesociety.persistence.EntityIndex;
+import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.web.UserApplicationContext;
@@ -17,24 +22,19 @@ import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
-import com.pagesociety.web.module.permissions.PermissionEvaluator;
 import com.pagesociety.web.module.permissions.PermissionsModule;
 
-
-
-public class CmsModule extends WebStoreModule 
-{	
-	
-	private static final String SLOT_PERMISSIONS_MODULE = "permissions-module"; 
+public class CmsModule extends WebStoreModule
+{
+	private static final String SLOT_PERMISSIONS_MODULE = "permissions-module";
 	private PermissionsModule permissions;
-	
-	public static final String CAN_READ_SCHEMA   = "CAN_READ_SCHEMA";
+	public static final String CAN_READ_SCHEMA = "CAN_READ_SCHEMA";
 	public static final String CAN_CREATE_ENTITY = "CAN_CREATE_ENTITY";
-	public static final String CAN_READ_ENTITY   = "CAN_READ_ENTITY";
+	public static final String CAN_READ_ENTITY = "CAN_READ_ENTITY";
 	public static final String CAN_UPDATE_ENTITY = "CAN_UPDATE_ENTITY";
 	public static final String CAN_DELETE_ENTITY = "CAN_DELETE_ENTITY";
 	public static final String CAN_BROWSE_ENTITY = "CAN_BROWSE_ENTITY";
-	
+
 	protected void exportPermissions()
 	{
 		EXPORT_PERMISSION(CAN_READ_SCHEMA);
@@ -44,110 +44,293 @@ public class CmsModule extends WebStoreModule
 		EXPORT_PERMISSION(CAN_DELETE_ENTITY);
 		EXPORT_PERMISSION(CAN_BROWSE_ENTITY);
 	}
-	
-	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
+
+	public void init(WebApplication app, Map<String, Object> config)
+			throws InitializationException
 	{
-		super.init(app,config);	
-		permissions		= (PermissionsModule)getSlot(SLOT_PERMISSIONS_MODULE);
+		super.init(app, config);
+		permissions = (PermissionsModule) getSlot(SLOT_PERMISSIONS_MODULE);
 	}
 
-	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_PERMISSIONS_MODULE,DefaultPermissionsModule.class,false,DefaultPermissionsModule.class);
+		DEFINE_SLOT(SLOT_PERMISSIONS_MODULE, DefaultPermissionsModule.class, false, DefaultPermissionsModule.class);
 	}
-	
+
 	@Export
-	public List<EntityDefinition> GetEntityDefinitions(UserApplicationContext ctx) throws WebApplicationException,PersistenceException
+	public List<EntityDefinition> GetEntityDefinitions(UserApplicationContext ctx)
+			throws WebApplicationException, PersistenceException
 	{
-		Entity user = (Entity)ctx.getUser();
-		GUARD(user,CAN_READ_SCHEMA);		
+		Entity user = (Entity) ctx.getUser();
+		GUARD(user, CAN_READ_SCHEMA);
 		return getEntityDefinitions();
 	}
-	
+
 	public List<EntityDefinition> getEntityDefinitions() throws PersistenceException
 	{
 		return store.getEntityDefinitions();
 	}
-	
-	@Export(ParameterNames={"entity_type","order_by_attribute","asc","offset","page_size"})
-	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,String entity_type,String order_by_attribute,boolean asc,int offset, int page_size) throws WebApplicationException,PersistenceException
+
+	@Export
+	public List<EntityIndex> GetEntityIndices(UserApplicationContext ctx, String entity)
+			throws WebApplicationException, PersistenceException
 	{
-		Entity user = (Entity)ctx.getUser();
-		GUARD(user,CAN_BROWSE_ENTITY,"entity_type",entity_type);
-		PagingQueryResult result =  browseEntities(entity_type, order_by_attribute, asc, offset, page_size);
+		Entity user = (Entity) ctx.getUser();
+		GUARD(user, CAN_READ_SCHEMA);
+		return getEntityIndices(entity);
+	}
+
+	@Export
+	public Map<String, List<EntityIndex>> GetEntityIndices(UserApplicationContext ctx)
+			throws WebApplicationException, PersistenceException
+	{
+		Entity user = (Entity) ctx.getUser();
+		GUARD(user, CAN_READ_SCHEMA);
+		Map<String, List<EntityIndex>> indices = new HashMap<String, List<EntityIndex>>();
+		List<EntityDefinition> defs = store.getEntityDefinitions();
+		int s = defs.size();
+		for (int i = 0; i < s; i++)
+		{
+			String entity = defs.get(i).getName();
+			indices.put(entity, store.getEntityIndices(entity));
+		}
+		return indices;
+	}
+
+	public List<EntityIndex> getEntityIndices(String entity) throws PersistenceException
+	{
+		return store.getEntityIndices(entity);
+	}
+
+	@Export(ParameterNames = { "entity_type", "index_info", "order_by_attribute", "asc",
+			"offset", "page_size" })
+	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
+			String entity_type, List<Object> query, String order_by_attribute,
+			boolean asc, int offset, int page_size) throws WebApplicationException,
+			PersistenceException
+	{
+		Entity user = (Entity) ctx.getUser();
+		GUARD(user, CAN_BROWSE_ENTITY, "entity_type", entity_type);
+		PagingQueryResult result = browseEntities(entity_type, query, order_by_attribute, asc, offset, page_size);
 		return result;
 	}
-	
-	public PagingQueryResult browseEntities(String entity_type,String order_by_attribute,boolean asc,int offset, int page_size) throws PersistenceException
+
+	private PagingQueryResult browseEntities(String entity_type, List<Object> query,
+			String order_by_attribute, boolean asc, int offset, int page_size)
+			throws PersistenceException
+	{
+		Query q = new Query(entity_type);
+		int s = query.size();
+		int c = 0;
+		while (c < s)
+		{
+			String index_name = (String) query.get(c);
+			q.idx(index_name);
+			c++;
+			int code = (Integer) query.get(c);
+			c++;
+			Object val = query.get(c);
+			c++;
+			Object bottom_val = null;
+			Object top_val = null;
+			switch (code)
+			{
+			case Query.BETWEEN_ITER_TYPE:
+			case Query.BETWEEN_INCLUSIVE_ASC:
+			case Query.BETWEEN_EXCLUSIVE_ASC:
+			case Query.BETWEEN_START_INCLUSIVE_ASC:
+			case Query.BETWEEN_END_INCLUSIVE_ASC:
+			case Query.BETWEEN_INCLUSIVE_DESC:
+			case Query.BETWEEN_EXCLUSIVE_DESC:
+			case Query.BETWEEN_START_INCLUSIVE_DESC:
+			case Query.BETWEEN_END_INCLUSIVE_DESC:
+				bottom_val = val;
+				top_val = query.get(c);
+				c++;
+				break;
+			}
+			switch (code)
+			{
+			case 996:
+				q.startIntersection();
+				break;
+			case 997:
+				q.endIntersection();
+				break;
+			case 998:
+				q.startUnion();
+				break;
+			case 999:
+				q.endUnion();
+				break;
+			case Query.EQ:
+				q.eq(val);
+				break;
+			case Query.GT:
+				q.gt(val);
+				break;
+			case Query.GTE:
+				q.gte(val);
+				break;
+			case Query.LT:
+				q.lt(val);
+				break;
+			case Query.LTE:
+				q.lte(val);
+				break;
+			case Query.STARTSWITH:
+				q.startsWith(val);
+				break;
+			case Query.IS_ANY_OF:
+				q.isAnyOf((List<?>) val);
+				break;
+			case Query.BETWEEN_ITER_TYPE:
+				q.between(bottom_val, top_val);
+				break;
+			case Query.BETWEEN_INCLUSIVE_ASC:
+				q.betweenStartInclusive(bottom_val, top_val);
+				break;
+			case Query.BETWEEN_EXCLUSIVE_ASC:
+				q.betweenExclusive(bottom_val, top_val);
+				break;
+			case Query.BETWEEN_START_INCLUSIVE_ASC:
+				q.betweenStartInclusive(bottom_val, top_val);
+				break;
+			case Query.BETWEEN_END_INCLUSIVE_ASC:
+				q.betweenEndInclusive(bottom_val, top_val);
+				break;
+			case Query.BETWEEN_INCLUSIVE_DESC:
+				q.betweenStartInclusiveDesc(bottom_val, top_val);
+				break;
+			case Query.BETWEEN_EXCLUSIVE_DESC:
+				q.betweenExclusiveDesc(top_val, bottom_val);
+				break;
+			case Query.BETWEEN_START_INCLUSIVE_DESC:
+				q.betweenStartInclusiveDesc(top_val, bottom_val);
+				break;
+			case Query.BETWEEN_END_INCLUSIVE_DESC:
+				q.betweenEndInclusiveDesc(top_val, bottom_val);
+				break;
+			case Query.SET_CONTAINS_ALL:
+				q.setContainsAll((List<?>) val);
+				break;
+			case Query.SET_CONTAINS_ANY:
+				q.setContainsAny((List<?>) val);
+				break;
+			case Query.FREETEXT_CONTAINS_PHRASE:
+				EntityIndex index = store.getEntityIndex(entity_type, index_name);
+				String[] vals = ((String) val).split(" ");
+				if (index.getType() == EntityIndex.TYPE_FREETEXT_INDEX)
+				{
+					q.textContainsAny(Arrays.asList(vals));
+				}
+				else
+				{
+					List<FieldDefinition> fields = index.getFields();
+					int fs = fields.size();
+					List<Object> field_args = new ArrayList<Object>(fs);
+					for (int i = 0; i < fs; i++)
+					{
+						FieldDefinition fd = fields.get(i);
+						field_args.add(fd.getName());
+					}
+					q.textContainsAny(q.list(field_args, Arrays.asList(vals)));
+				}
+			}
+		}
+		q.offset(offset);
+		q.pageSize(page_size);
+		if (order_by_attribute != null)
+			q.orderBy(order_by_attribute, asc ? Query.ASC : Query.DESC);
+		q.cacheResults(false);
+		return PAGING_QUERY_FILL(q);
+	}
+
+	@Export(ParameterNames = { "entity_type", "order_by_attribute", "asc", "offset",
+			"page_size" })
+	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
+			String entity_type, String order_by_attribute, boolean asc, int offset,
+			int page_size) throws WebApplicationException, PersistenceException
+	{
+		Entity user = (Entity) ctx.getUser();
+		GUARD(user, CAN_BROWSE_ENTITY, "entity_type", entity_type);
+		PagingQueryResult result = browseEntities(entity_type, order_by_attribute, asc, offset, page_size);
+		return result;
+	}
+
+	public PagingQueryResult browseEntities(String entity_type,
+			String order_by_attribute, boolean asc, int offset, int page_size)
+			throws PersistenceException
 	{
 		Query q = new Query(entity_type);
 		q.idx(Query.PRIMARY_IDX);
 		q.eq(Query.VAL_GLOB);
 		q.offset(offset);
 		q.pageSize(page_size);
-		if (order_by_attribute!=null)
-			q.orderBy(order_by_attribute,asc?Query.ASC:Query.DESC);
+		if (order_by_attribute != null)
+			q.orderBy(order_by_attribute, asc ? Query.ASC : Query.DESC);
 		q.cacheResults(false);
-		return PAGING_QUERY(q);
+		return PAGING_QUERY_FILL(q);
 	}
-	
-	
-	@Export(ParameterNames={"entity"})
-	public Entity CreateEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
+
+	@Export(ParameterNames = { "entity" })
+	public Entity CreateEntity(UserApplicationContext uctx, Entity e)
+			throws WebApplicationException, PersistenceException
 	{
-		Entity creator = (Entity)uctx.getUser();
-		GUARD(creator,CAN_CREATE_ENTITY,"type",e.getType(),"instance",e);
+		Entity creator = (Entity) uctx.getUser();
+		GUARD(creator, CAN_CREATE_ENTITY, "type", e.getType(), "instance", e);
 		return createEntity(creator, e);
 	}
-	
-	public Entity createEntity(Entity creator,Entity e) throws PersistenceException
+
+	public Entity createEntity(Entity creator, Entity e) throws PersistenceException
 	{
 		return CREATE_ENTITY(creator, e);
 	}
-	
-	
-	@Export(ParameterNames={"e"})
-	public Entity UpdateEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
+
+	@Export(ParameterNames = { "e" })
+	public Entity UpdateEntity(UserApplicationContext uctx, Entity e)
+			throws WebApplicationException, PersistenceException
 	{
-		Entity editor 			 = (Entity)uctx.getUser();
-		Entity existing_instance = GET(e.getType(),e.getId());
-		GUARD(editor,CAN_UPDATE_ENTITY,"type",e.getType(),"instance",existing_instance);
+		Entity editor = (Entity) uctx.getUser();
+		Entity existing_instance = GET(e.getType(), e.getId());
+		GUARD(editor, CAN_UPDATE_ENTITY, "type", e.getType(), "instance", existing_instance);
 		return updateEntity(e);
 	}
-	
+
 	public Entity updateEntity(Entity e) throws PersistenceException
 	{
 		return SAVE_ENTITY(e);
 	}
-	
-	@Export(ParameterNames={"entity"})
-	public Entity DeleteEntity(UserApplicationContext uctx,Entity e) throws WebApplicationException, PersistenceException
+
+	@Export(ParameterNames = { "entity" })
+	public Entity DeleteEntity(UserApplicationContext uctx, Entity e)
+			throws WebApplicationException, PersistenceException
 	{
-		Entity deleter = (Entity)uctx.getUser();
-		GUARD(deleter,CAN_DELETE_ENTITY,"type",e.getType(),"instance", e);
-		return deleteEntity(e);	
+		Entity deleter = (Entity) uctx.getUser();
+		GUARD(deleter, CAN_DELETE_ENTITY, "type", e.getType(), "instance", e);
+		return deleteEntity(e);
 	}
-	
+
 	public Entity deleteEntity(Entity e) throws PersistenceException
 	{
 		return DELETE(e);
 	}
-		
-	@Export(ParameterNames={"entity_type","entity_id"})
-	public Entity GetEntityById(UserApplicationContext uctx,String entity_type,long entity_id) throws WebApplicationException, PersistenceException
+
+	@Export(ParameterNames = { "entity_type", "entity_id" })
+	public Entity GetEntityById(UserApplicationContext uctx, String entity_type,
+			long entity_id) throws WebApplicationException, PersistenceException
 	{
-		Entity getter = (Entity)uctx.getUser();
-		Entity e = GET(entity_type,entity_id);
-		GUARD(getter,CAN_READ_ENTITY,"entity_type",entity_type,"instance",e);
+		Entity getter = (Entity) uctx.getUser();
+		Entity e = GET(entity_type, entity_id);
+		GUARD(getter, CAN_READ_ENTITY, "entity_type", entity_type, "instance", e);
 		return FILL_REFS(e);
 	}
-	
-	public Entity getEntityById(String entity_type,long entity_id) throws PersistenceException,WebApplicationException
+
+	public Entity getEntityById(String entity_type, long entity_id)
+			throws PersistenceException, WebApplicationException
 	{
 		Entity e = FILL_REFS(GET(entity_type, entity_id));
-		return e;		
+		return e;
 	}
-
 }
