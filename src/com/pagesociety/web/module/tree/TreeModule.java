@@ -499,6 +499,7 @@ public class TreeModule extends WebStoreModule
 		
 	}
 	
+	
 	public Entity getTreeNodeById(Entity tree,String node_id) throws PersistenceException
 	{
 		Query q = new Query(TREE_NODE_ENTITY);
