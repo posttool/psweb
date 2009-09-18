@@ -194,21 +194,27 @@ public class HttpRequestRouter extends HttpServlet
 				response.sendRedirect( get_path(_web_url,getContextPathEtc(request),uctx) );
 				return;
 			}
+//TODO
+//this might work, but it might match make everything forward forever, too!
+//can't use the dispatcher here...
+//			else if (!is_freemarker_path(requestPath))
+//			{
+//				RequestDispatcher dispatcher = request.getRequestDispatcher(path);
+//				dispatcher.forward(request, response);
+//				return;
+//			}
+// mapped stuff only goes to to fhtml and html ...
+
 			else
 			{
-				RequestDispatcher dispatcher = request.getRequestDispatcher(path);
-				dispatcher.forward(request, response);
-				return;
+				requestPath = path;
 			}
 		}
 		// FREEMARKER
-		for (int i = 0; i < GatewayConstants.SUFFIXES_FREEMARKER.length; i++)
+		if (is_freemarker_path(requestPath))
 		{
-			if (requestPath.endsWith(GatewayConstants.SUFFIXES_FREEMARKER[i]))
-			{
-				freemarker_gateway.doService(uctx, requestPath, request, response);
-				return;
-			}
+			freemarker_gateway.doService(uctx, requestPath, request, response);
+			return;
 		}
 
 		// UNKNOWN
@@ -217,6 +223,16 @@ public class HttpRequestRouter extends HttpServlet
 		return;
 	}
 
+	private boolean is_freemarker_path(String path)
+	{
+		for (int i = 0; i < GatewayConstants.SUFFIXES_FREEMARKER.length; i++)
+		{
+			if (path.endsWith(GatewayConstants.SUFFIXES_FREEMARKER[i]))
+				return true;
+		}
+		return false;
+
+	}
 	
 	private String get_path(String root, String path, UserApplicationContext uctx)
 	{
