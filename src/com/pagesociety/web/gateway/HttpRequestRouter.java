@@ -196,18 +196,11 @@ public class HttpRequestRouter extends HttpServlet
 			}
 //TODO
 //this might work, but it might match make everything forward forever, too!
-//can't use the dispatcher here...
-//			else if (!is_freemarker_path(requestPath))
-//			{
-//				RequestDispatcher dispatcher = request.getRequestDispatcher(path);
-//				dispatcher.forward(request, response);
-//				return;
-//			}
-// mapped stuff only goes to to fhtml and html ...
-
-			else
+			else 
 			{
-				requestPath = path;
+				RequestDispatcher dispatcher = request.getRequestDispatcher(path);
+				dispatcher.forward(request, response);
+				return;
 			}
 		}
 		// FREEMARKER
