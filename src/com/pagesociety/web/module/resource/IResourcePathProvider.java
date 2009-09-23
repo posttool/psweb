@@ -12,6 +12,7 @@ public interface IResourcePathProvider
 
 	public String getPathToken(Entity user,String filename) throws WebApplicationException;
 	public void delete(String path_token) throws WebApplicationException;
+	public void deletePreviews(String path_token) throws WebApplicationException;
 	public String getUrl(String path_token) throws WebApplicationException;
 	public String getPreviewUrl(String path_token,int width,int height) throws WebApplicationException;
 	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_length) throws WebApplicationException;
@@ -19,6 +20,6 @@ public interface IResourcePathProvider
 	public File getFile(String path_token) throws WebApplicationException;
 	public void beginParse(String path_token) throws WebApplicationException;
 	public void endParse(String path_token) throws WebApplicationException;
-
+	
 	
 }

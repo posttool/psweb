@@ -131,7 +131,33 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 				ff[i].delete();
 		}
 	}
+
 	
+	public void deletePreviews(String path_token) throws WebApplicationException
+	{
+		File f = new File(base_dir,path_token);
+		if(!f.exists())
+			throw new WebApplicationException("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
+		
+		/* delete file and all generated previews */
+		String filename = f.getName();
+		int dot_idx = filename.lastIndexOf('.');
+		String trimmed_filename=filename;
+		if(dot_idx != -1)
+			trimmed_filename = filename.substring(0,dot_idx);
+
+		File parent_dir = f.getParentFile();
+		File[] ff = parent_dir.listFiles();
+		for(int i =0;i < ff.length;i++)
+		{
+			if(ff[i].equals(f))
+				continue;
+			
+			if(ff[i].getName().startsWith(trimmed_filename))
+				ff[i].delete();
+		}
+	}
+
 	public String getUrl(String path_token)	throws WebApplicationException
 	{
 		StringBuilder buf = new StringBuilder();
