@@ -212,6 +212,36 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 		
 	}
+
+	/* deletes file pointed to by this token as well as all previews */
+	public void deletePreviews(String path_token) throws WebApplicationException
+	{
+		String deletee_prefix = get_preview_file_prefix(path_token);
+		List<ListEntry>  delete_keys = list(deletee_prefix);
+		for(int i = 0;i < delete_keys.size();i++)
+		{
+			
+			String delete_key = delete_keys.get(i).key;
+			if(delete_key.equals(path_token))
+				continue;
+			
+			try{
+				store.enqueue(S3_DELETE_QUEUE_NAME, delete_key.getBytes(),true);
+				synchronized (DELETE_QUEUE_LOCK) 
+				{
+					DELETE_QUEUE_LOCK.notifyAll();
+				}
+			}catch(PersistenceException pe)
+			{
+				//TODO: could sleep and retry here//
+				ERROR("FAILED ADDING "+delete_key+"TO S3 DELETE QUEUE.",pe);
+			}
+			INFO("ADDED "+delete_key+"TO S3 DELETE QUEUE.");
+				
+		}
+		
+	}
+
 	
 	public boolean fileExists(String path_token) throws WebApplicationException
 	{
