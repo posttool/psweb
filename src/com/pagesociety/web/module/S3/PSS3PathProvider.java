@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
@@ -239,7 +240,21 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			INFO("ADDED "+delete_key+"TO S3 DELETE QUEUE.");
 				
 		}
-		
+	}
+	
+	public List<String> listPreviews(String path_token) throws WebApplicationException
+	{
+		List<String> s = new ArrayList<String>();
+		String delete_prefix = get_preview_file_prefix(path_token);
+		List<ListEntry>  delete_keys = list(delete_prefix);
+		for(int i = 0;i < delete_keys.size();i++)
+		{
+			String delete_key = delete_keys.get(i).key;
+			if(delete_key.equals(path_token))
+				continue;
+			s.add(delete_key);
+		}
+		return s;
 	}
 
 	
@@ -282,13 +297,18 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	
 	public List<ListEntry> list(String prefix) throws WebApplicationException
 	{
+		return list(prefix,null,null);
+	}
+	
+	public List<ListEntry> list(String prefix, String marker, Integer max_keys) throws WebApplicationException
+	{
 		if(prefix.equals("*"))
 			prefix = null;
 		
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key); 
 		try {
-			ListBucketResponse r =  conn.listBucket(s3_bucket, prefix, null, null, null);
-			if(r.connection.getResponseCode() != r.connection.HTTP_OK)
+			ListBucketResponse r =  conn.listBucket(s3_bucket, prefix, marker, max_keys, null);
+			if(r.connection.getResponseCode() != HttpURLConnection.HTTP_OK)
 				throw new WebApplicationException("Failed S3 LIST of "+s3_bucket+" HTTP response code was "+r.connection.getResponseMessage());
 			return r.entries;
 		} catch (MalformedURLException e) {
@@ -297,7 +317,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		} catch (IOException e) {
 			ERROR(e);
 			throw new WebApplicationException("IOError for S3 LIST: "+s3_bucket);	
-		}		
+		}
 		
 	}
 	
@@ -474,6 +494,9 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				throw new WebApplicationException("TRYING TO GET FILE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
 			
 			File expanded_file = new File(scratch_directory,path_token);
+			// with path?
+			expanded_file.getParentFile().mkdirs();
+			// TODO toph? the problem occurs when c
 			FileOutputStream fos = new FileOutputStream(expanded_file);
 			fos.write(r.object.data);
 			fos.flush();
@@ -501,7 +524,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			case FileInfo.SIMPLE_TYPE_SWF:
 				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_VIDEO:
-				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+				throw new WebApplicationException("VIDEO PREVIEW NOT SUPPORTED YET");
 			case FileInfo.SIMPLE_TYPE_AUDIO:
 				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
 			default:

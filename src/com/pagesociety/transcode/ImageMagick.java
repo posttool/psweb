@@ -18,6 +18,7 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	
 	private int width;
 	private int height;
+	private int quality = 78;
 	private boolean gray;
 
 	public ImageMagick(File input, File output)
@@ -31,6 +32,11 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		this.height = height;
 	}
 
+	public void setQuality(int q)
+	{
+		this.quality = q;
+	}
+	
 	public void setGrayScale(boolean b)
 	{
 		this.gray = b;
@@ -41,7 +47,7 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		String[] cmds = new String[] { EXEC_PATH, // convert
 				input.getAbsolutePath(), // input
 				"-resize", width + "x" + height + ">", // -resize
-				"-quality", "86", // -quality
+				"-quality", String.valueOf(quality), // -quality
 				"-colorspace", gray ? "Gray" : "RGB", // -colorspace
 				output.getAbsolutePath() };
 		CmdWork w = new CmdWork(this, cmds);

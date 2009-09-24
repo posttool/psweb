@@ -737,6 +737,7 @@ public class WebStoreModule extends WebModule
 			try {
 				entity = GET(store,entity_type,id);
 			} catch (PersistenceException e) {
+				e.printStackTrace();
 				continue;
 			}
 			if(entities.contains(entity))

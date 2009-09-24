@@ -1,22 +1,14 @@
 package com.pagesociety.web.module.resource;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-
-import javax.imageio.ImageIO;
-
-import org.apache.commons.io.FileUtils;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.transcode.ImageMagick;
@@ -156,6 +148,33 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 			if(ff[i].getName().startsWith(trimmed_filename))
 				ff[i].delete();
 		}
+	}
+	
+	public List<String> listPreviews(String path_token) throws WebApplicationException
+	{
+		List<String> s = new ArrayList<String>();
+		File f = new File(base_dir,path_token);
+		if(!f.exists())
+			throw new WebApplicationException("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
+		
+		/* delete file and all generated previews */
+		String filename = f.getName();
+		int dot_idx = filename.lastIndexOf('.');
+		String trimmed_filename=filename;
+		if(dot_idx != -1)
+			trimmed_filename = filename.substring(0,dot_idx);
+
+		File parent_dir = f.getParentFile();
+		File[] ff = parent_dir.listFiles();
+		for(int i =0;i < ff.length;i++)
+		{
+			if(ff[i].equals(f))
+				continue;
+			
+			if(ff[i].getName().startsWith(trimmed_filename))
+				s.add(ff[i].getName());
+		}
+		return s;
 	}
 
 	public String getUrl(String path_token)	throws WebApplicationException
