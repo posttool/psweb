@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -45,8 +46,11 @@ public class StaticHttpGateway
 			
 		long lastMod = file.lastModified() / 1000 * 1000;
 		long ifModSinc = request.getDateHeader(REQUEST_DATE_HEADER_IF_MOD_SINCE);
+		//System.out.println("IF MOD SINCE "+new Date(ifModSinc));
+		//System.out.println(file.getAbsolutePath()+" LAST MOD "+new Date(lastMod));
 		if (lastMod <= ifModSinc)
 		{
+
 			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
 			return;
 		}
