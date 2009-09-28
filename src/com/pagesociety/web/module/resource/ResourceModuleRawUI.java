@@ -45,6 +45,7 @@ public class ResourceModuleRawUI extends RawUIModule
 	private IPersistenceProvider store;
 	private IResourcePathProvider path_provider;
 	private String resource_entity_name;
+	private File s3_backup_dir;
 
 	public void init(WebApplication app, Map<String, Object> config)
 			throws InitializationException
@@ -54,6 +55,7 @@ public class ResourceModuleRawUI extends RawUIModule
 		super.init(app, config);
 		store = (IPersistenceProvider) getSlot(SLOT_STORE);
 		path_provider = (IResourcePathProvider) getSlot(SLOT_PATH_PROVIDER);
+		s3_backup_dir = new File(GET_MODULE_DATA_DIRECTORY(app), "s3");
 	}
 
 	protected void defineSlots()
@@ -466,11 +468,7 @@ public class ResourceModuleRawUI extends RawUIModule
 			int pagesize = 20;
 			int i = Math.max(s3.processed.size() - pagesize, 0);
 			int s = s3.processed.size();
-			if (i != 0)
-			{
-				SPAN(uctx, "backups 0-" + i + " omitted ...", 10);
-				BR(uctx);
-			}
+			
 			for (; i < s; i++)
 			{
 				SPAN(uctx, "... backing up " + s3.processed.get(i), 10);
@@ -499,7 +497,7 @@ public class ResourceModuleRawUI extends RawUIModule
 		public Timer timer;
 		public int phase = 0;
 		public int offset = 0;
-		public int pagesize = 5;
+		public int pagesize = 15;
 		public int total = -1;
 		public File root_dir;
 		public ArrayList<String> processed;
@@ -511,21 +509,33 @@ public class ResourceModuleRawUI extends RawUIModule
 			total = s3.s3list.size();
 			processed = new ArrayList<String>();
 			timer = new Timer();
-			timer.schedule(this, 0, 1000);
+			timer.schedule(this, 0, 250);
 		}
 
 		public void next() throws PersistenceException, WebApplicationException,
 				IOException
 		{
+			System.out.println(">HERE");
 			for (int i = offset; i < offset + pagesize; i++)
 			{
 				String key = s3.s3list.get(i);
-				File f = s3.s3pp.getFile(key);
-				// File d = new File(root_dir, f.getName());
-				// d.getParentFile().mkdirs();
-				// FileUtils.copyFile(f, d);
-				processed.add(f.getName());
-				System.out.println("s3_backup " + f);
+				File dest_file = new File(s3_backup_dir, key);
+				System.out.println("  i="+i+" key="+key+" exists="+dest_file.exists());
+				if (!dest_file.exists())
+				{
+					File f = s3.s3pp.getFile(key);
+					if (f==null)
+					{
+						System.out.println("CANT DOWNLOAD... cause i am out of memory");
+					}
+					FileUtils.copyFile(f, dest_file);
+					processed.add(f.getName());
+					System.out.println("s3_backup " + dest_file);
+				}
+				else
+				{
+					processed.add("["+key+"]");
+				}
 			}
 			offset += pagesize;
 			if (offset >= total)
