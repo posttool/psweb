@@ -1172,8 +1172,8 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date failed_genesis  			= (Date)failed_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
-		int grace_period_in_ms 			= billing_failed_grace_period_in_days * (1000 * 60 *60 * 24);// TODO: right now this is in minutes * 60 * 24); 
-		int failed_billing_clean_period = grace_period_in_ms + billing_failed_grace_period_expired_reap_period_in_days * (1000 * 60 * 60 * 24);//TODO: right now in minutes * 60 * 24); 
+		int grace_period_in_ms 			= billing_failed_grace_period_in_days * (1000 * 60 *60 * 24);
+		int failed_billing_clean_period = grace_period_in_ms + billing_failed_grace_period_expired_reap_period_in_days * (1000 * 60 * 60 * 24);
 		if(now.getTime() > failed_genesis.getTime()+failed_billing_clean_period)
 		{
 			updateRecurringOrderStatus(failed_order, ORDER_STATUS_CLOSED);				
@@ -1274,7 +1274,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date trial_create_date  =  (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		int trial_period_in_ms = trial_period_in_days * (1000 * 60*60*24);//TODO: this iis now in minutes change back * 60 * 24); 
+		int trial_period_in_ms = trial_period_in_days * (1000 * 60*60*24);
 		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);				
@@ -1293,8 +1293,8 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date trial_create_date  		= (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		int trial_period_in_ms 			= trial_period_in_days * (1000 * 60 *60*24);// TODO: right now this is in minutes * 60 * 24); 
-		int expired_trial_clean_period 	= trial_period_in_ms + expired_trial_reap_period_in_days * (1000 * 60*60*24);//TODO: right now in minutes * 60 * 24); 
+		int trial_period_in_ms 			= trial_period_in_days * (1000 * 60 *60*24);
+		int expired_trial_clean_period 	= trial_period_in_ms + expired_trial_reap_period_in_days * (1000 * 60*60*24);
 		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);				
