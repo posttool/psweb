@@ -105,7 +105,9 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	/* deletes file pointed to by this token as well as all previews */
 	public void delete(String path_token) throws WebApplicationException
 	{
+		
 		File f = new File(base_dir,path_token);
+	
 		if(!f.exists())
 			throw new WebApplicationException("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
 		
@@ -120,7 +122,14 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		for(int i =0;i < ff.length;i++)
 		{
 			if(ff[i].getName().startsWith(filename))
+			{
 				ff[i].delete();
+				continue;
+			}
+			// FIX ME ///
+			//	IF IT IS THE FILENAME ITSELF OR IF IT IS A PREVIEW  //
+			//	DO THE DELETE										//
+			//	OTHERWISE LEAVE IT ALONE							//
 		}
 	}
 
@@ -144,7 +153,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		{
 			if(ff[i].equals(f))
 				continue;
-			
+			//SAME HERE LOOK AT THIS//
 			if(ff[i].getName().startsWith(trimmed_filename))
 				ff[i].delete();
 		}
@@ -174,6 +183,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 			if(ff[i].getName().startsWith(trimmed_filename))
 				s.add(ff[i].getName());
 		}
+		
+		//SAME HERE//
 		return s;
 	}
 
@@ -214,7 +225,6 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_length) throws WebApplicationException
 	{
 		File f = new File(base_dir,path_token);
-		System.out.println("PATH PROVIDER PROVIDING OUTPUT STREAM TO "+f.getAbsolutePath());
 		try{
 			return new OutputStream[]{new FileOutputStream(f)};
 		}catch(FileNotFoundException fnf)
