@@ -44,16 +44,16 @@ public class StaticHttpGateway
 			return;
 		}
 			
-		long lastMod = file.lastModified() / 1000 * 1000;
+		long lastMod   = file.lastModified() / 1000 * 1000;
 		long ifModSinc = request.getDateHeader(REQUEST_DATE_HEADER_IF_MOD_SINCE);
 		//System.out.println("IF MOD SINCE "+new Date(ifModSinc));
 		//System.out.println(file.getAbsolutePath()+" LAST MOD "+new Date(lastMod));
 		if (lastMod <= ifModSinc)
 		{
-
 			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
 			return;
 		}
+		
 		response.setContentType(mimeType);
 		response.setContentLength((int) file.length());
 		response.setDateHeader(RESPONSE_DATE_HEADER_LAST_MOD, lastMod);
