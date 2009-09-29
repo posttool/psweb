@@ -57,6 +57,7 @@ public class Util
 	        while (cis.read(tempBuf) >= 0) {
 	        }
 	        checksum = cis.getChecksum().getValue();
+	        cis.close();
 	    } catch (IOException e) {
 	    }
 	    return checksum;
