@@ -379,7 +379,14 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				System.out.println("DIDNT FIND " + path_token + " IN SCRATCH DIRECTORY. GOING TO AMAZON FOR ORIGINAL.");
 				GetResponse r = conn.get(s3_bucket, path_token, null);
 				if (r.object == null)
+				{					
+					current_thumbnail_generators.remove(preview_key);
+					synchronized (lock)
+					{
+						lock.notifyAll();
+					}
 					throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE " + s3_bucket + " " + path_token + " BUT IT DOESNT SEEM TO EXIST.");
+				}
 				original_file.getParentFile().mkdirs();
 				FileOutputStream fos = new FileOutputStream(original_file);
 				fos.write(r.object.data);
