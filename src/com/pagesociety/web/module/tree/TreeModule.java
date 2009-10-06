@@ -672,6 +672,9 @@ public class TreeModule extends WebStoreModule
 			
 			parent_map = new HashMap<Long, Entity>();
 			Entity creator = (Entity)root_node.getAttribute(FIELD_CREATOR);
+			String node_id  = (String)root_node.getAttribute(TREE_NODE_FIELD_ID);
+			String node_class  = (String)root_node.getAttribute(TREE_NODE_FIELD_CLASS);
+			String node_metadata  = (String)root_node.getAttribute(TREE_NODE_FIELD_METADATA);
 			cloned_tree = createTree(creator, new_tree_name, (String)root_node.getAttribute(TREE_NODE_FIELD_CLASS), (String)root_node.getAttribute(TREE_NODE_FIELD_ID), (Entity)root_node.getAttribute(TREE_NODE_FIELD_DATA));
 			Entity cloned_root_node = (Entity)cloned_tree.getAttribute(TREE_FIELD_ROOT_NODE);
 			if(clone_data)
@@ -697,6 +700,10 @@ public class TreeModule extends WebStoreModule
 				}
 				//System.out.println("CLONED DATA IS "+cloned_data);
 				cloned_root_node.setAttribute(TREE_NODE_FIELD_DATA,cloned_data);
+				cloned_root_node.setAttribute(TREE_NODE_FIELD_ID,node_id);
+				cloned_root_node.setAttribute(TREE_NODE_FIELD_CLASS,node_class);
+				cloned_root_node.setAttribute(TREE_NODE_FIELD_METADATA,node_metadata);
+				
 				SAVE_ENTITY(cloned_root_node);
 			}			
 			original_root_node = root_node;
