@@ -43,12 +43,12 @@ import com.pagesociety.web.module.resource.IResourcePathProvider;
 
 public class PSS3PathProvider extends WebStoreModule implements IResourcePathProvider
 {
-	private static final String PARAM_S3_BUCKET = "s3-bucket";
-	private static final String PARAM_S3_API_KEY = "s3-api-key";
-	private static final String PARAM_S3_SECRET_KEY = "s3-secret-key";
-	private static final String PARAM_SCRATCH_DIRECTORY = "scratch-directory";
-	private static final String PARAM_IMAGE_MAGICK_PATH = "path-provider-image-magick-path";
-	private static final String S3_DELETE_QUEUE_NAME = "s3-pp-delete-queue";
+	public static final String PARAM_S3_BUCKET = "s3-bucket";
+	public static final String PARAM_S3_API_KEY = "s3-api-key";
+	public static final String PARAM_S3_SECRET_KEY = "s3-secret-key";
+	public static final String PARAM_SCRATCH_DIRECTORY = "scratch-directory";
+	public static final String PARAM_IMAGE_MAGICK_PATH = "path-provider-image-magick-path";
+	public static final String S3_DELETE_QUEUE_NAME = "s3-pp-delete-queue";
 	protected String s3_bucket;
 	protected String s3_api_key;
 	protected String s3_secret_key;

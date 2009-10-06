@@ -129,6 +129,13 @@ public class ResourceModuleRawUI extends RawUIModule
 			A_GET(uctx, getName(), SM_BACKUP_S3, "[ BACKUP S3 ]");
 			BR(uctx);
 		}
+		P(uctx);
+		P(uctx);
+		if (path_provider instanceof PSS3PathProvider)
+		{
+			PSS3PathProvider pss3pp = (PSS3PathProvider) path_provider;
+			SPAN(uctx, "S3PathProvider: "+pss3pp.getParams().get(PSS3PathProvider.PARAM_S3_BUCKET), 18);
+		}
 	}
 
 	public void delete_previews_all(UserApplicationContext uctx,
