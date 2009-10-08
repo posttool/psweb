@@ -295,7 +295,17 @@ public class CmsModule extends WebStoreModule
 		Entity editor = (Entity) uctx.getUser();
 		Entity existing_instance = GET(e.getType(), e.getId());
 		GUARD(editor, CAN_UPDATE_ENTITY, "type", e.getType(), "instance", existing_instance);
+		validate_update(e);
 		return updateEntity(e);
+	}
+	
+	private void validate_update(Entity e) throws WebApplicationException
+	{
+		List<String> dirty_fields = e.getDirtyAttributes();
+		int s = dirty_fields.size();
+		for(int i = 0;i < s;i++)
+			if(dirty_fields.get(i) == null)
+				throw new WebApplicationException("DIRTY FIELDS CONTAINS A NULL STRING FOR A FIELDNAME");
 	}
 
 	public Entity updateEntity(Entity e) throws PersistenceException
