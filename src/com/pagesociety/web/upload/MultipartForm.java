@@ -283,14 +283,12 @@ public class MultipartForm
 	
 	public void cancel() throws IOException
 	{
-		if (this.request==null)
-			return;
-		
+		setState(CANCELLED);
+
 		HttpServletRequest request = this.request.get();
 		if(request == null)
 			return;
 
-		setState(CANCELLED);
 		request.getInputStream().close();
 		request = null;	
 	}
