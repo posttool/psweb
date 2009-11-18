@@ -415,7 +415,7 @@ public class ResourceModule extends WebStoreModule
 			channel_upload.cancel();
 		}catch(IOException e)
 		{
-			throw new WebApplicationException("COULDN'T CANCEL");
+			//throw new WebApplicationException("COULDN'T CANCEL");
 		}
 		channel_upload_map.remove(KEY_CURRENT_UPLOAD_MAP);
 		return ret;
@@ -469,7 +469,7 @@ public class ResourceModule extends WebStoreModule
 		}
 		
 		MultipartForm current_upload = current_upload_map.get(channel_name);
-		if(current_upload != null && !current_upload.isComplete())
+		if(current_upload != null && !current_upload.isComplete() && !current_upload.isCancelled())
 		{
 		
 			Exception e = new WebApplicationException("CURRENT UPLOAD IN CHANNEL "+channel_name+" IS NOT FINISHED. CANCEL EXISITING UPLOAD FIRST.");
