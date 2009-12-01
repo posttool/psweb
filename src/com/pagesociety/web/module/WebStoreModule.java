@@ -697,6 +697,12 @@ public class WebStoreModule extends WebModule
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
+	public static Entity FILL_DEEP_AND_MASK(PersistentStore store,Entity e,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	{
+		do_fill_deep(store,e,0,Integer.MAX_VALUE,fill_fields,mask_fields);
+		return e;
+	}
+	
 	public static int COUNT(PersistentStore store,Query q) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -963,6 +969,12 @@ public class WebStoreModule extends WebModule
 	{
 		return PAGING_QUERY_FILL_DEEP_AND_MASK(store, q,fill_fields,mask_fields);
 	}
+
+	public Entity FILL_DEEP_AND_MASK(Entity e,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	{
+		return FILL_DEEP_AND_MASK(store, e,fill_fields,mask_fields);
+	}
+
 	
 	public int COUNT(Query q) throws PersistenceException
 	{
