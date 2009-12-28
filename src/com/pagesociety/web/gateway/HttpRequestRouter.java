@@ -179,6 +179,7 @@ public class HttpRequestRouter extends HttpServlet
 			return;
 		}
 		// MAPPED
+
 		Object[] url_mapped_request = _web_application.getMapping(completeUrl);
 		if (url_mapped_request != null)
 		{
