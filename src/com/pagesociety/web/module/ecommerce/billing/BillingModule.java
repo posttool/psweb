@@ -12,7 +12,6 @@ import com.pagesociety.persistence.Types;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
@@ -197,7 +196,7 @@ public class BillingModule extends WebStoreModule
 		if(preferred != null && preferred == true)
 			setPreferredBillingRecord(creator,billing_record);
 
-		return billing_record;
+ 		return billing_record;
 	
 	}
 			  
