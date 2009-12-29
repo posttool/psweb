@@ -96,7 +96,16 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			DISPLAY_ERROR(uctx,params);
 			DISPLAY_INFO(uctx,params);
 			P(uctx);
-			SPAN(uctx,"OK THIS IS WHERE WE ARE GONNA CREATE A NEW CAMPAIGN.");
+			FORM_START(uctx,getName(),RAW_SUBMODE_CREATE_CAMPAIGN,"do_submit",true);
+				TABLE_START(uctx, 0, 400);
+					TR_START(uctx);
+					TD(uctx, "Title:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "campaign_title",30,"");TD_END(uctx);
+					TR_END(uctx);
+					TR_START(uctx);
+					TD(uctx, "Email List:");TD_START(uctx);FORM_TEXTAREA_FIELD(uctx, "campaign_emails",30,10);TD_END(uctx);
+					TR_END(uctx);
+				TABLE_END(uctx);
+			FORM_END(uctx);
 			A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Cancel ]");
 			DOCUMENT_END(uctx);
 			
