@@ -434,7 +434,19 @@ public class RawUIModule extends WebModule
 	{
 		buf.append("<TD>"+data+"</TD>\n");		
 	}
+
+	protected void TD_LINK(UserApplicationContext uctx,String module_name,int submode,String text,Object... params)
+	{
+		TD_LINK(get_user_buf(uctx),module_name,submode,text,params);
+	}
 	
+	protected void TD_LINK(StringBuilder buf,String module_name,int submode,String text,Object... params)
+	{
+		buf.append("<TD>");	
+		A(buf,module_name,submode,text,params);
+		buf.append("</TD>");
+	}
+
 	protected void TD_START(UserApplicationContext uctx)
 	{
 		TD_START(get_user_buf(uctx));
