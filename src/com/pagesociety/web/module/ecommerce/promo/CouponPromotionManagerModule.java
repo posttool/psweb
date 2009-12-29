@@ -1,25 +1,18 @@
-package com.pagesociety.web.module.ecommerce.billing;
+package com.pagesociety.web.module.ecommerce.promo;
 
 import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
-import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
-import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.Export;
-import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
-import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
 import com.pagesociety.web.module.email.IEmailModule;
-import com.pagesociety.web.module.encryption.IEncryptionModule;
 
 
 public class CouponPromotionManagerModule extends WebStoreModule 
@@ -51,7 +44,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 	}
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-	public Entity createCouponPromotion(Entity creator,String title,long promotion_id,int expr_in_months,List<String> email_list)
+	public Entity createCouponPromotionCampaign(Entity creator,String title,long promotion_id,int expr_in_months,List<String> email_list) throws PersistenceException
 	{
 		Entity promotion = GET(PromotionModule.PROMOTION_ENTITY,promotion_id);
 		Entity cp = NEW(COUPON_PROMOTION_CAMPAIGN_ENTITY,
@@ -60,14 +53,40 @@ public class CouponPromotionManagerModule extends WebStoreModule
 						COUPON_PROMOTION_CAMPAIGN_PROMOTION,promotion,
 						COUPON_PROMOTION_CAMPAIGN_EXPIRES_NUM_MO,expr_in_months,
 						COUPON_PROMOTION_CAMPAIGN_EMAIL_LIST,email_list);
-		return cp;
+		return cp; 
 	}
 	
-	public Entity deleteCouponPromotion(long coupon_promotion_campaign_id) throws PersistenceException,WebApplicationException
+	public Entity deleteCouponPromotionCampaign(long coupon_promotion_campaign_id) throws PersistenceException,WebApplicationException
 	{
 		Entity cp = GET(COUPON_PROMOTION_CAMPAIGN_ENTITY,coupon_promotion_campaign_id);
-		DELETE(cp);
+		return DELETE(cp);
 	}
+	
+	public List<Entity> getCouponPromotionCampaigns() throws PersistenceException
+	{
+		Query q = new Query(COUPON_PROMOTION_CAMPAIGN_ENTITY);
+		q.idx(Query.PRIMARY_IDX);
+		q.eq(Query.VAL_GLOB);
+		q.orderBy(FIELD_LAST_MODIFIED,Query.DESC);
+		QueryResult results = QUERY(q);
+		return results.getEntities();
+	}
+
+	public List<Entity> getExistingCouponPromotions() throws PersistenceException
+	{
+		Query q = new Query(PromotionModule.PROMOTION_ENTITY);
+		q.idx(Query.PRIMARY_IDX);
+		q.eq(Query.VAL_GLOB);
+		q.orderBy(FIELD_LAST_MODIFIED,Query.DESC);
+		QueryResult results = QUERY(q);
+		return results.getEntities();
+	}
+	
+	public Entity createPromotion(Entity creator,String title,String description,String program) throws PersistenceException,WebApplicationException
+	{
+		return promotion_module.createPromotion(creator, title, description, program);	
+	}
+	
 	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		

@@ -528,6 +528,20 @@ public class PromotionModule extends WebStoreModule
 		return q;
 	}
 	
+	public Entity lookupCouponPromotionByPromoCode(String promo_code) throws PersistenceException,WebApplicationException
+	{
+		Query q = getCouponPromotionByPromoCodeQ(promo_code);
+		QueryResult result = QUERY(q);
+		if(result.size() == 0)
+			throw new WebApplicationException("BAD PROMO CODE",ERROR_BAD_PROMO_CODE);
+		if(result.size() > 1)
+			INFO("MULTIPLE PROMOTIONS ["+result.getEntities()+"] FOR SINGLE PROMO CODE "+promo_code+" DATA INTEGRITY ISSUE.");
+		 
+		Entity coupon_promo = result.getEntities().get(0);
+		return coupon_promo;
+		
+	}
+	
 	//////////////////////////////////////////////////////////////////////////////////
 	//GLOBAL PROMOTION
 	@Export
