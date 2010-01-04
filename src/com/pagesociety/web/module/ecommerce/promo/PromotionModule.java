@@ -104,7 +104,7 @@ public class PromotionModule extends WebStoreModule
 	//return true could mean dont delete me but it isnt hooked up currently
 	//inital_fee and price takes care of both recurring and non recurring promotions//
 	public static final String ALWAYS_FREE_PROGRAM =
-		"var skus = order.getAttribute('line_items');\n"+
+		"var line_items = order.getAttribute('line_items');\n"+
 		"for(var i=0;i < line_items.size();i++)\n"+
 		"{\n"+
 		"  var line_item = P.EXPAND(line_items.get(i));\n"+
@@ -112,6 +112,17 @@ public class PromotionModule extends WebStoreModule
 		"  line_item.setAttribute('price',0.0);\n"+
 		"}\n"+
 		"return true;\n";
+	
+	public static final String TWENTY_FIVE_PERCENT_OFF_PROGRAM =
+		"var line_items = order.getAttribute('line_items');\n"+
+		"for(var i=0;i < line_items.size();i++)\n"+
+		"{\n"+
+			"var line_item = P.EXPAND(line_items.get(i));\n"+
+			"var price = line_item.getAttribute('price');\n"+
+			"line_item.setAttribute('price',0.25 * price);\n"+
+		"}\n"+
+		"return true;";
+	
 
 	
 	private void init_free_for_life_promotion() throws InitializationException
@@ -122,6 +133,8 @@ public class PromotionModule extends WebStoreModule
 		{
 			free_for_life_promotion = createPromotion(null, "Free For Life","This promotion always makes everything free.",ALWAYS_FREE_PROGRAM);
 			INFO("CREATED FREE FOR LIFE PROMOTIONS PROGRAM: \n"+ALWAYS_FREE_PROGRAM);
+			createPromotion(null, "25 PERCENT OFF","This promotion always gives 25% off.",TWENTY_FIVE_PERCENT_OFF_PROGRAM);
+			INFO("CREATED 25% OFF PROMOTIONS PROGRAM: \n"+ALWAYS_FREE_PROGRAM);
 		}
 		}catch(Exception e)
 		{
