@@ -107,7 +107,7 @@ public class PromotionModule extends WebStoreModule
 		"var skus = order.getAttribute('line_items');\n"+
 		"for(var i=0;i < line_items.size();i++)\n"+
 		"{\n"+
-		"  var line_item = EXPAND(line_items.get(i));\n"+
+		"  var line_item = P.EXPAND(line_items.get(i));\n"+
 		"  line_item.setAttribute('initial_fee',0.0);\n"+
 		"  line_item.setAttribute('price',0.0);\n"+
 		"}\n"+
@@ -742,8 +742,8 @@ public class PromotionModule extends WebStoreModule
 
 	}
 
-	public static final String PROMO_PROGRAM_WRAPPER_HEADER = "function apply_promotion(order){\nwith(P){\n";
-	public static final String PROMO_PROGRAM_WRAPPER_FOOTER = "\n}\n}\n";
+	public static final String PROMO_PROGRAM_WRAPPER_HEADER = "function apply_promotion(order){\n";
+	public static final String PROMO_PROGRAM_WRAPPER_FOOTER = "\n}\n";
 	public static final String JS_ENGINE_NAME = "JavaScript";
 	private void validate_promotion_source(String promotion_name,String source) throws WebApplicationException
 	{
