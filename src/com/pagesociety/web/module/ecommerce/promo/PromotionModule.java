@@ -119,7 +119,7 @@ public class PromotionModule extends WebStoreModule
 		"{\n"+
 			"var line_item = P.EXPAND(line_items.get(i));\n"+
 			"var price = line_item.getAttribute('price');\n"+
-			"line_item.setAttribute('price',0.25 * price);\n"+
+			"line_item.setAttribute('price',price - (0.25 * price));\n"+
 		"}\n"+
 		"return true;";
 	
