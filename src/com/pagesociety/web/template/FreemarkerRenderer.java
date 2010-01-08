@@ -73,4 +73,10 @@ public class FreemarkerRenderer
 	{
 		return _template_root;
 	}
+	
+	
+	public boolean templateExists(String template_name)
+	{
+		return new File(_template_root,template_name).exists();
+	}
 }
