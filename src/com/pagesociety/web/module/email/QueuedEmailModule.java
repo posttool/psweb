@@ -280,7 +280,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 					if(!running)
 						break;
 					try{
-						System.out.println(getName()+" SENDING MAIL "+qo.to+" "+qo.subject+" "+qo.template_name);
+						System.out.println(getName()+" SENDING MAIL "+qo.to[0]+" "+qo.subject+" "+qo.template_name);
 						do_send_mail(qo.from, qo.to, qo.subject, qo.template_name, qo.template_data);
 
 					}catch(Exception e)
