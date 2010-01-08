@@ -282,13 +282,20 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 					try{
 						System.out.println(getName()+" SENDING MAIL");
 						do_send_mail(qo.from, qo.to, qo.subject, qo.template_name, qo.template_data);
-						Thread.sleep(1000);//600 emails an hour/ 60 a minute/ 1 a second
+
 					}catch(Exception e)
 					{
 						//TODO:nothing we can really do here
 						//maybe put it back on the queue
 						e.printStackTrace();
 					}
+					try{
+						Thread.sleep(1000);//600 emails an hour/ 60 a minute/ 1 a second
+					}catch(InterruptedException ie)
+					{
+						
+					}
+				
 				}
 				System.out.println(getName()+" QUEUED EMAIL THREAD EXITED");
 			}
