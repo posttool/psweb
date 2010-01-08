@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -68,14 +69,24 @@ public class RawUIModule extends WebModule
 	
 	protected void DOCUMENT_START(UserApplicationContext uctx,String title,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
 	{
-		DOCUMENT_START(get_user_buf(uctx), title, bgcolor, font_family, font_color, font_size, link_color, link_hover_color);
+		DOCUMENT_START(get_user_buf(uctx), title, bgcolor, font_family, font_color, font_size,font_size, link_color, link_hover_color);
+	}
+	
+	protected void DOCUMENT_START(UserApplicationContext uctx,String title,String bgcolor,String font_family,String font_color,int font_size,int table_font_size,String link_color,String link_hover_color)
+	{
+		DOCUMENT_START(get_user_buf(uctx), title, bgcolor, font_family, font_color, font_size,table_font_size, link_color, link_hover_color);
 	}
 	
 	protected void DOCUMENT_START(StringBuilder buf,String title,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
 	{
+		DOCUMENT_START(buf, title, bgcolor, font_family, font_color, font_size,font_size, link_color, link_hover_color);
+	}
+	
+	protected void DOCUMENT_START(StringBuilder buf,String title,String bgcolor,String font_family,String font_color,int font_size,int table_font_size,String link_color,String link_hover_color)
+	{
 		HTML_START(buf);
 		HEAD_START(buf,title);
-		STYLE(buf,bgcolor,font_family,font_color,font_size,link_color,link_hover_color);
+		STYLE(buf,bgcolor,font_family,font_color,font_size,table_font_size,link_color,link_hover_color);
 		HEAD_END(buf);
 		BODY_START(buf, bgcolor, font_family, font_color, font_size);
 		
@@ -130,17 +141,21 @@ public class RawUIModule extends WebModule
 	
 	protected void STYLE(UserApplicationContext uctx,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
 	{
-		STYLE(get_user_buf(uctx), bgcolor, font_family, font_color, font_size, link_color, link_hover_color);
+		STYLE(get_user_buf(uctx), bgcolor, font_family, font_color, font_size, font_size,link_color, link_hover_color);
 	}
 	
-	protected void STYLE(StringBuilder buf,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
+	protected void STYLE(StringBuilder buf,String bgcolor,String font_family,String font_color,int font_size,int table_font_size,String link_color,String link_hover_color)
 	{
+		
 		buf.append("<STYLE>\n");
 		buf.append("body { background-color:"+bgcolor+";font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(font_size)+"px;}\n");
 		buf.append("a{text-decoration:none;}");
 		buf.append("a:link { color:"+link_color+";}\n");
 		buf.append("a:visited { color:"+link_color+";}\n");
-		buf.append("a:hover { background-color:"+link_hover_color+";font-weight:bold;}\n");
+		buf.append("a:hover { background-color:"+link_hover_color+";font-weight:bold;}\n");	
+		buf.append("th,td { font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(table_font_size)+"px;}\n");
+	
+		
 		buf.append("</STYLE>\n");
 		
 	}
@@ -255,6 +270,24 @@ public class RawUIModule extends WebModule
 		buf.append("<INPUT TYPE='text' name='"+name+"' size='"+size+"' value='"+((default_val == null)?"":default_val)+"'/>\n");
 	}
 	
+	protected void FORM_TEXTAREA_FIELD(UserApplicationContext uctx,String name,int cols,int rows)
+	{
+		FORM_TEXTAREA_FIELD(get_user_buf(uctx), name, cols,rows,null);
+	}
+	
+	protected void FORM_TEXTAREA_FIELD(UserApplicationContext uctx,String name,int cols,int rows,String default_value)
+	{
+		FORM_TEXTAREA_FIELD(get_user_buf(uctx), name, cols,rows,default_value);
+	}
+	
+	protected void FORM_TEXTAREA_FIELD(StringBuilder buf,String name,int cols,int rows,String default_value)
+	{
+		if(default_value == null)
+			buf.append("<TEXTAREA name='"+name+"' cols='"+cols+"' rows='"+rows+"'></TEXTAREA>\n");
+		else
+			buf.append("<TEXTAREA name='"+name+"' cols='"+cols+"' rows='"+rows+"' >"+default_value+"</TEXTAREA>\n");
+	}
+	
 	protected void FORM_PASSWORD_FIELD(UserApplicationContext uctx,String name,int size)
 	{
 		FORM_PASSWORD_FIELD(get_user_buf(uctx), name, size);
@@ -263,6 +296,31 @@ public class RawUIModule extends WebModule
 	protected void FORM_PASSWORD_FIELD(StringBuilder buf,String name,int size)
 	{
 		buf.append("<INPUT TYPE='password' name='"+name+"' size='"+size+"'/>\n");
+	}
+	
+	protected void FORM_PULLDOWN_MENU(UserApplicationContext uctx,String name,String[] options,String[] values)
+	{
+		FORM_PULLDOWN_MENU(get_user_buf(uctx), name,options,values,0,null);
+	}
+	protected void FORM_PULLDOWN_MENU(UserApplicationContext uctx,String name,String[] options,String[] values,int width,String selected_value)
+	{
+		FORM_PULLDOWN_MENU(get_user_buf(uctx), name,options,values,width,selected_value);
+	}
+	
+	protected void FORM_PULLDOWN_MENU(StringBuilder buf,String name,String[] options,String[] values,int width,String selected_value)
+	{
+		if(width == 0)
+			buf.append("<SELECT NAME=\""+name+"\">\n");
+		else
+			buf.append("<SELECT NAME=\""+name+"\" style=\"width:"+width+"px;\">\n");
+		for(int i = 0;i < options.length;i++)
+		{
+			if(selected_value != null && selected_value.equals(values[i]))
+				buf.append("<OPTION SELECTED value=\""+values[i]+"\" > "+options[i]+"</OPTION>\n");
+			else
+				buf.append("<OPTION value=\""+values[i]+"\" > "+options[i]+"</OPTION>\n");
+		}
+		buf.append("</SELECT>\n");		
 	}
 	
 	protected void FORM_HIDDEN_FIELD(UserApplicationContext uctx,String name,String value)
@@ -325,6 +383,16 @@ public class RawUIModule extends WebModule
 		buf.append("<BR/>\n");
 	}
 	
+	protected void HR(UserApplicationContext uctx)
+	{
+		HR(get_user_buf(uctx));
+	}
+	
+	protected void HR(StringBuilder buf)
+	{
+		buf.append("<HR/>\n");
+	}
+	
 	protected void P(UserApplicationContext uctx)
 	{
 		P(get_user_buf(uctx));
@@ -335,7 +403,7 @@ public class RawUIModule extends WebModule
 		buf.append("<P/>\n");
 	}
 
-	protected void PRE(UserApplicationContext uctx,String text,int size)
+	protected void PRE(UserApplicationContext uctx,String text)
 	{
 		PRE(get_user_buf(uctx),text);
 	}
@@ -423,6 +491,16 @@ public class RawUIModule extends WebModule
 	protected void TR_START(StringBuilder buf)
 	{
 		buf.append("<TR>\n");
+	}
+	
+	protected void TH(UserApplicationContext uctx,String data)
+	{
+		TH(get_user_buf(uctx),data);
+	}
+	
+	protected void TH(StringBuilder buf,String data)
+	{
+		buf.append("<TH>"+data+"</TH>\n");		
 	}
 	
 	protected void TD(UserApplicationContext uctx,String data)
@@ -562,11 +640,29 @@ public class RawUIModule extends WebModule
 		buf.append("</script>\n");
 	}
 
-	protected void JS_TIMED_REDIRECT(UserApplicationContext uctx,String module_name,int submode,int ms)
+	protected void JS_TIMED_REDIRECT(UserApplicationContext uctx,String module_name,int submode,int ms,Object... params)
 	{
 		String url = RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw";
 		if(submode != RAW_SUBMODE_DEFAULT)
 			url += "?"+KEY_UI_MODULE_SUBMODE_KEY+"="+submode;
+			
+		if(params.length > 0 )
+		{
+			if(submode == RAW_SUBMODE_DEFAULT)
+				url +="?";
+			else
+				url += "&";
+		}
+		
+		StringBuilder p_buf = new StringBuilder();
+		for(int i = 0;i< params.length;i+=2)
+		{
+			p_buf.append(params[i]+"="+String.valueOf(params[i+1]));
+			p_buf.append("&");
+		}
+		if(params.length > 0)
+			p_buf.setLength(p_buf.length()-1);
+		url += p_buf.toString();
 		JS_TIMED_REDIRECT(get_user_buf(uctx),url, ms);
 	}
 	
@@ -596,6 +692,7 @@ public class RawUIModule extends WebModule
 			return getApplication().getConfig().getWebRootUrl();
 	}
 	
+	
 	protected void DISPLAY_ERROR(UserApplicationContext uctx,Map<String,Object> params)
 	{
 		String error = (String)params.get(KEY_UI_MODULE_ERROR_KEY);
@@ -621,7 +718,7 @@ public class RawUIModule extends WebModule
 	{
 		ERROR(e);//log error//
 		StringBuilder buf = get_user_buf(uctx);
-		DOCUMENT_START(buf, getName()+"ErrorOccurred", RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_ERROR_COLOR, 14, RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+		DOCUMENT_START(buf, getName()+"ErrorOccurred", RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_ERROR_COLOR, 14,14, RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 		SPAN(uctx, e.getMessage(), 16);
 		DOCUMENT_END(buf);
 	}
@@ -796,7 +893,7 @@ public class RawUIModule extends WebModule
 	{
 		Map<String,Object> params = new HashMap<String,Object>();
 		for(int i = 0;i < name_val_pairs.length;i+=2)
-			params.put((String)name_val_pairs[i], name_val_pairs[i+1]);
+			params.put((String)name_val_pairs[i], String.valueOf(name_val_pairs[i+1]));
 		GOTO_WITH_ERROR(uctx, submode, error, params);
 	}
 	
@@ -804,6 +901,47 @@ public class RawUIModule extends WebModule
 	{
 		params.put(KEY_UI_MODULE_ERROR_KEY, error);
 		execute_submode(uctx, submode, params);	
+	}
+	
+	protected void SET_ERROR(String error,Map<String,Object> params)
+	{
+		params.put(KEY_UI_MODULE_ERROR_KEY, error);
+	}
+	
+	protected boolean IS_NULL(String s)
+	{
+		return s == null || s.trim().equals("");
+	}
+	
+	protected String NORMALIZE(String s)
+	{
+		if(s == null) 
+			return null;
+		s = s.trim();
+		if(s.equals(""))
+			return null;
+		return s;
+	}
+	
+	protected void REQUIRED(String name,Object val) throws Exception
+	{
+		if(val == null)
+			throw new Exception(name+" is required");
+	}
+	
+	/* parse comma seperated string */
+	protected List<String> PARSE_LIST(String s)
+	{ 
+		if(s == null) 
+			return null;
+		s = REMOVE_WHITE_SPACE(s);
+		if(s.equals(""))
+			return null;
+		String[] ss = s.split(",");
+		List<String> ret = new ArrayList<String>();
+		for(int i = 0;i < ss.length;i++)
+			ret.add(ss[i].trim());
+		return ret;
 	}
 	
 	//TODO also need one that defaults return to submode//

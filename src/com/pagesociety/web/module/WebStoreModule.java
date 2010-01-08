@@ -1999,4 +1999,29 @@ public class WebStoreModule extends WebModule
 		}		
 	}
 	
+	
+	protected abstract class TRANSACTION
+	{
+		public abstract Object T();
+		public Object exec() throws Exception
+		{
+			try{
+				START_TRANSACTION();
+				Object ret = T();
+				COMMIT_TRANSACTION();
+				return ret;
+			}catch(Exception e)
+			{
+				try{
+					ROLLBACK_ALL_ACTIVE_TRANSACTIONS(store);
+					throw e;
+				}catch(PersistenceException ee)
+				{
+					ERROR("FAILED ROLLING BACK TRANSACTION!!!!",ee);
+					throw ee;
+				}
+			}
+		}
+		
+	}
 }
