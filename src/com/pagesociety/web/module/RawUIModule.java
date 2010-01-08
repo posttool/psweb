@@ -408,9 +408,21 @@ public class RawUIModule extends WebModule
 		PRE(get_user_buf(uctx),text);
 	}
 	
+	protected void PRE(UserApplicationContext uctx,String text,int width)
+	{
+		PRE(get_user_buf(uctx),text,width);
+	}
+	
 	protected void PRE(StringBuilder buf,String text)
 	{
 		buf.append("<PRE>\n");
+		buf.append(text);
+		buf.append("</PRE>\n");
+	}
+	
+	protected void PRE(StringBuilder buf,String text,int width)
+	{
+		buf.append("<PRE style='width:"+width+"px;'>\n");
 		buf.append(text);
 		buf.append("</PRE>\n");
 	}
@@ -592,7 +604,7 @@ public class RawUIModule extends WebModule
 	
 	protected void SPAN(StringBuilder buf,String text, String color)
 	{
-		buf.append("<SPAN style='color:"+color+";>"+text+"</SPAN>\n");
+		buf.append("<SPAN style='color:"+color+";'>"+text+"</SPAN>\n");
 	}
 	
 	protected void SPAN(UserApplicationContext uctx,String text)
@@ -934,7 +946,7 @@ public class RawUIModule extends WebModule
 	{ 
 		if(s == null) 
 			return null;
-		s = REMOVE_WHITE_SPACE(s);
+		s = s.trim();
 		if(s.equals(""))
 			return null;
 		String[] ss = s.split(",");
