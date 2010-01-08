@@ -1,6 +1,7 @@
 package com.pagesociety.web.module.email;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -11,7 +12,9 @@ import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage; 
+import javax.mail.internet.MimeMultipart;
 
 
 import com.pagesociety.persistence.Entity;
@@ -133,6 +136,23 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	
 	private void do_send_mail(String from, String[] to, String subject,String template_name,Map<String,Object> template_data) throws WebApplicationException
 	{
+		String plaintext_template_name = get_plaintext_template_name(template_name);
+		if(fm_renderer.templateExists(plaintext_template_name))
+			do_send_mail_html_and_plaintext(from, to, subject, template_name, plaintext_template_name,template_data);
+		else
+			do_send_mail_html_only(from, to, subject, template_name, template_data);
+	}
+	
+	private String get_plaintext_template_name(String template_name)
+	{
+		String template_name_before_extension = template_name.substring(0,template_name.lastIndexOf('.'));
+		String ext = template_name.substring(template_name.lastIndexOf('.'));
+		String plaintext_template_name = template_name_before_extension+"-PLAINTEXT"+ext;
+		return plaintext_template_name;
+	}
+	
+	private void do_send_mail_html_only(String from, String[] to, String subject,String template_name,Map<String,Object> template_data) throws WebApplicationException
+	{
 	    boolean debug = false;
 	    try{
 	    	
@@ -146,7 +166,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		    session.setDebug(debug);
 	
 		    // create a message
-		    MimeMessage msg = new MimeMessage(session);
+		    MimeMessage msg = new MimeMessage(session); 
 		    msg.setSubject(subject);
 		    
 		    // set the from and to address
@@ -174,6 +194,73 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	    }
 	    
 	}
+	
+	
+	private void do_send_mail_html_and_plaintext(String from, String[] to, String subject,String template_name,String plaintext_template_name,Map<String,Object> template_data) throws WebApplicationException
+	{
+	    boolean debug = false;
+	    try{
+	    	
+		     //Set the host smtp address
+		     Properties props = new Properties();
+		     props.put("mail.transport.protocol", "smtp");
+		     props.put("mail.smtp.host", smtp_server);
+		
+		    // create some properties and get the default Session
+		    Session session = Session.getDefaultInstance(props, null);
+		    session.setDebug(debug);
+	
+		    // create a message
+		    MimeMessage msg = new MimeMessage(session); 
+		    msg.setSubject(subject);
+		    
+		    // set the from and to address
+		    
+		    InternetAddress addressFrom = new InternetAddress(from);
+		    msg.setFrom(addressFrom);
+		  
+		    InternetAddress[] tos = new InternetAddress[to.length];
+		    for(int i = 0;i < to.length;i++)
+		    {
+		    	tos[i] = new InternetAddress(to[i]); 
+		    }
+		    msg.setRecipients(Message.RecipientType.TO,tos);
+			
+		    //expand the body
+		    String PLAINTEXTbody =  fm_renderer.render(plaintext_template_name, template_data);
+		    String HTMLbody =  fm_renderer.render(template_name, template_data);
+		    
+
+		    MimeMultipart content = new MimeMultipart("alternative");
+		    MimeBodyPart text = new MimeBodyPart();
+		    MimeBodyPart html = new MimeBodyPart();
+		    text.setText( PLAINTEXTbody);
+		    text.setHeader("MIME-Version" , "1.0" );
+		    text.setHeader("Content-Type" , text.getContentType() );
+		    content.addBodyPart(text);
+		    
+		    html.setContent(HTMLbody, "text/html");
+		    html.setHeader("MIME-Version" , "1.0" );
+		    html.setHeader("Content-Type" , "text/html" );
+		    content.addBodyPart(html);
+
+		    // Setting the Subject and Content Type
+		    msg.setContent( content );
+		    msg.setHeader("MIME-Version" , "1.0" );
+		    msg.setHeader("Content-Type" , content.getContentType() );
+		    msg.setHeader("X-Mailer", "Page Society Mailer Beeatch V1.0");
+		    msg.setSentDate(new Date());
+
+		    Transport.send(msg);
+		    
+	    }catch(Exception e)
+	    {
+	    	e.printStackTrace();
+	    	throw new WebApplicationException("AN ERROR OCCURRED.UNABLE TO SEND EMAIL.SEE LOGS.");
+	    }
+	    
+	}
+	
 	
 	private Thread  email_thread;
 	private boolean running = false;
