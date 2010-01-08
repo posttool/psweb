@@ -214,7 +214,11 @@ public class CouponPromotionManagerModule extends WebStoreModule
 			String recipient_email	=	recipient_name;
 			String subject 			= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_SUBJECT);
 			String message 			= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE);
-			String name 			= recipient_name.substring(0, recipient_name.indexOf('@'));
+			String name = null; 
+			if(recipient_name.indexOf('<') != -1)
+				name 			= recipient_name.substring(0, recipient_name.indexOf('<'));		
+			else
+				name 			= recipient_name.substring(0, recipient_name.indexOf('@'));	
 			String promo_code 		= (String)recipient.getAttribute(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE);
 			String link				= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_LINK);
 			Map<String,Object> template_data = new HashMap<String,Object>();

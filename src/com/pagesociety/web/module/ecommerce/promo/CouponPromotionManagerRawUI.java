@@ -189,7 +189,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 						"promo link:\t\t"+c_promo_link+"\n"+
 						"promo message:\t\t"+c_promo_message+"\n"+
 						"promo_list list:\t\t"+c_promo_list);
-				JS_TIMED_REDIRECT(uctx, getName(), RAW_SUBMODE_SHOW_CAMPAIGN, 2000,"campaign_id",promotion.getId());
+				JS_TIMED_REDIRECT(uctx, getName(), RAW_SUBMODE_SHOW_CAMPAIGN, 1000,"campaign_id",promotion.getId());
 			}catch(Exception e)
 			{
 				ERROR_PAGE(uctx,e);
@@ -262,13 +262,13 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 						TD(uctx, "Promo Subject:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "promo_message_subject",30,c_promo_subject==null?"":c_promo_subject);TD_END(uctx);
 						TR_END(uctx);
 						TR_START(uctx);
-						TD(uctx, "Promo Link:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "promo_message_link",50,c_promo_link==null?"":c_promo_link);TD_END(uctx);
+						TD(uctx, "Promo Link:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "promo_message_link",70,c_promo_link==null?"":c_promo_link);TD_END(uctx);
 						TR_END(uctx);						
 						TR_START(uctx);
-						TD(uctx, "Promo Message:");TD_START(uctx);FORM_TEXTAREA_FIELD(uctx, "promo_message",50,5,c_promo_message == null?"":c_promo_message);TD_END(uctx);
+						TD(uctx, "Promo Message:");TD_START(uctx);FORM_TEXTAREA_FIELD(uctx, "promo_message",70,5,c_promo_message == null?"":c_promo_message);TD_END(uctx);
 						TR_END(uctx);
 						TR_START(uctx);
-						TD(uctx, "Promo List:");TD_START(uctx);SPAN(uctx,"(email addresses or names)",8);BR(uctx);FORM_TEXTAREA_FIELD(uctx, "campaign_promo_list",50,10,c_promo_list==null?"":c_promo_list);TD_END(uctx);
+						TD(uctx, "Promo List:");TD_START(uctx);SPAN(uctx,"(email addresses or names)",8);BR(uctx);FORM_TEXTAREA_FIELD(uctx, "campaign_promo_list",70,10,c_promo_list==null?"":c_promo_list);TD_END(uctx);
 						TR_END(uctx);
 					TABLE_END(uctx);
 					FORM_SUBMIT_BUTTON(uctx,"+ Create");
@@ -369,6 +369,8 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			{
 				Entity r 			= recipients.get(i);
 				String recipient_name		  	= (String)r.getAttribute(CouponPromotionManagerModule.COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_RECIPIENT);
+				recipient_name = recipient_name.replaceAll("<", "&lt;");
+				recipient_name = recipient_name.replaceAll(">", "&gt;");
 				boolean activated 	= (Boolean)r.getAttribute(CouponPromotionManagerModule.COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATED);
 				if(activated)
 				{
@@ -381,15 +383,25 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 					Date used_date = null;
 					if(promo_used)
 						used_date = (Date)coupon_promo.getAttribute(WebStoreModule.FIELD_LAST_MODIFIED); 
-					
 					TR_START(uctx);
 						TD(uctx,recipient_name);
 						TD(uctx,promo_code);
 						TD(uctx,activation_date.toString());
 						TD(uctx,expr_date.toString());
-						TD(uctx,promo_used?"Yes":"No");
+						TD_START(uctx);
+						if(promo_used)
+							SPAN(uctx, "Yes", "green");
+						else
+							SPAN(uctx, "No", "red");
+						TD_END(uctx);
 						TD(uctx,promo_used?used_date.toString():"");
-						TD_START(uctx);A(uctx,getName(),RAW_SUBMODE_SHOW_CAMPAIGN,"[resend code]","resend",true,"recipient_id",r.getId(),"campaign_id",c_id);TD_END(uctx);
+						TD_START(uctx);
+						if(promo_used)
+							NBSP(uctx);
+						else
+							A_GET(uctx,getName(),RAW_SUBMODE_SHOW_CAMPAIGN,"[resend code]","resend",true,"recipient_id",r.getId(),"campaign_id",c_id);
+						
+						TD_END(uctx);
 					TR_END(uctx);	
 				}
 				else
@@ -420,18 +432,21 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			StringBuilder buf = new StringBuilder();
 			for(int i = 0;i < promo_list.size();i++)
 			{
-				buf.append(promo_list.get(i));
-				buf.append(",");
+				String recipient_name = promo_list.get(i);
+				recipient_name = recipient_name.replaceAll("<", "&lt;");
+				recipient_name = recipient_name.replaceAll(">", "&gt;");
+				buf.append(recipient_name);
+				buf.append(", ");
 			}
-			buf.setLength(buf.length()-1);
-			TABLE_START(uctx, 1, 800);
+			buf.setLength(buf.length()-2);
+			TABLE_START(uctx, 1, 900);
 			TR_START(uctx);
 			TH(uctx,"recipients");
 			TH(uctx,"promotion");
 			TR_END(uctx);
 				TR_START(uctx);
 					TD_START(uctx);
-						PRE(uctx,buf.toString());
+						SPAN(uctx,buf.toString());
 					TD_END(uctx);
 					TD_START(uctx);
 						PRE(uctx,
