@@ -353,9 +353,9 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			SPAN(uctx,(String)campaign.getAttribute(CouponPromotionManagerModule.COUPON_PROMOTION_CAMPAIGN_TITLE),18);
 			DISPLAY_ERROR(uctx,params);
 			DISPLAY_INFO(uctx,params);
-			A(uctx,getName(),RAW_SUBMODE_SHOW_CAMPAIGN,"[ ACTIVATE CAMPAIGN ]","activate_campaign",true,"campaign_id",c_id);
+			A(uctx,getName(),RAW_SUBMODE_SHOW_CAMPAIGN,"[ ACTIVATE RECIPIENTS ]","activate_campaign",true,"campaign_id",c_id);
 			P(uctx);
-			TABLE_START(uctx, 1, 900);
+			TABLE_START(uctx, 1, 1000);
 				TR_START(uctx);
 				TH(uctx,"Recipient");
 				TH(uctx,"Promo Code");
@@ -392,7 +392,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 						if(promo_used)
 							SPAN(uctx, "Yes", "green");
 						else
-							SPAN(uctx, "No", "red");
+							SPAN(uctx, "No", "black");
 						TD_END(uctx);
 						TD(uctx,promo_used?used_date.toString():"");
 						TD_START(uctx);
@@ -439,7 +439,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 				buf.append(", ");
 			}
 			buf.setLength(buf.length()-2);
-			TABLE_START(uctx, 1, 900);
+			TABLE_START(uctx, 1, 1000);
 			TR_START(uctx);
 			TH(uctx,"recipients");
 			TH(uctx,"promotion");
