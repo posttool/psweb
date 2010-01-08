@@ -14,7 +14,6 @@ import javax.script.ScriptException;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
-import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
@@ -23,7 +22,6 @@ import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
@@ -394,6 +392,35 @@ public class PromotionModule extends WebStoreModule
 					COUPON_PROMOTION_FIELD_PROMOTION,promotion,
 					COUPON_PROMOTION_FIELD_EXPIRATION_DATE,expiration_date);
 	}
+	
+	public Entity createCouponPromotion(Entity creator,String promotion_code,int num_times_can_be_used,Entity promotion,Date expiration_date,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2) throws WebApplicationException,PersistenceException
+	{
+		if(promotion_code == null)
+			promotion_code = RandomGUID.getGUID();
+		else
+		{
+			QueryResult result = QUERY(getCouponPromotionByPromoCodeQ(promotion_code));
+			if(result.size() != 0)
+				throw new WebApplicationException("NON UNIQUE PROMO CODE: "+promotion_code+". PROMO WITH CODE "+promotion_code+" ALREADY EXISTS");			
+		}
+		
+		return NEW(COUPON_PROMOTION_ENTITY,
+					creator,
+					COUPON_PROMOTION_FIELD_PROMO_CODE,promotion_code,
+					COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED,num_times_can_be_used,
+					COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED,0,
+					COUPON_PROMOTION_FIELD_PROMOTION,promotion,
+					COUPON_PROMOTION_FIELD_EXPIRATION_DATE,expiration_date,
+					COUPON_PROMOTION_FIELD_INITIAL_IR1,ir1,
+					COUPON_PROMOTION_FIELD_INITIAL_IR2,ir2,
+					COUPON_PROMOTION_FIELD_INITIAL_IR3,ir3,
+					COUPON_PROMOTION_FIELD_INITIAL_IR4,ir4,
+					COUPON_PROMOTION_FIELD_INITIAL_SR1,sr1,
+					COUPON_PROMOTION_FIELD_INITIAL_SR2,sr2,
+					COUPON_PROMOTION_FIELD_INITIAL_FPR1,fpr1,
+					COUPON_PROMOTION_FIELD_INITIAL_FPR2,fpr2
+					);
+	}
 
 	@Export
 	public Entity SetCouponPromotionExpirationDate(UserApplicationContext uctx,long coupon_promotion_id,Date expiration_date) throws WebApplicationException,PersistenceException
@@ -489,6 +516,23 @@ public class PromotionModule extends WebStoreModule
 				   PROMOTION_INSTANCE_FIELD_FPR2,0.0);
 	}		  
 	
+	public Entity createPromotionInstance(Entity creator,String origin,Entity promotion,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2) throws WebApplicationException,PersistenceException
+	{
+
+		return NEW(PROMOTION_INSTANCE_ENTITY,
+				   creator,
+				   PROMOTION_INSTANCE_FIELD_ORIGIN,origin,
+				   PROMOTION_INSTANCE_FIELD_PROMOTION,promotion,
+				   PROMOTION_INSTANCE_FIELD_IR1,ir1,
+				   PROMOTION_INSTANCE_FIELD_IR2,ir2,
+				   PROMOTION_INSTANCE_FIELD_IR3,ir3,	   
+				   PROMOTION_INSTANCE_FIELD_IR4,ir4,
+				   PROMOTION_INSTANCE_FIELD_SR1,sr1,
+				   PROMOTION_INSTANCE_FIELD_SR2,sr2,
+				   PROMOTION_INSTANCE_FIELD_FPR1,fpr1,
+				   PROMOTION_INSTANCE_FIELD_FPR2,fpr2);
+	}		  
+	
 	
 
 	public static final int ERROR_EXPIRED_PROMO_CODE 		   = 0x01;
@@ -526,7 +570,15 @@ public class PromotionModule extends WebStoreModule
 		if(number_times_has_been_used == number_times_can_be_used)
 				throw new WebApplicationException("PROMOCODE USED UP "+promo_code,ERROR_PROMO_CODE_USED_UP);
 		
-		Entity	promo_instance = createPromotionInstance(creator, promo_code,(Entity)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_PROMOTION));
+		Entity	promo_instance = createPromotionInstance(creator, promo_code,(Entity)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_PROMOTION),
+				(Long)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_IR1),
+				(Long)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_IR2),
+				(Long)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_IR3),
+				(Long)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_IR4),
+				(String)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_SR1),
+				(String)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_SR2),
+				(Double)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_FPR1),
+				(Double)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_FPR2));
 
 		UPDATE(coupon_promo,COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED,++number_times_has_been_used);
 		return promo_instance;		
@@ -600,6 +652,25 @@ public class PromotionModule extends WebStoreModule
 				   GLOBAL_PROMOTION_FIELD_ACTIVE,active);
 	}		  
 	
+	public Entity createGlobalPromotionInstance(Entity creator,Entity promotion,int active,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2) throws WebApplicationException,PersistenceException
+	{
+		return NEW(GLOBAL_PROMOTION_ENTITY,
+				   creator,
+				   GLOBAL_PROMOTION_FIELD_PROMOTION,promotion,
+				   GLOBAL_PROMOTION_FIELD_ACTIVE,active,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_IR1,ir1,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_IR2,ir2,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_IR3,ir3,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_IR4,ir4,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_SR1,sr1,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_SR2,sr2,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_FPR1,fpr1,
+				   GLOBAL_PROMOTION_FIELD_INITIAL_FPR2,fpr2
+				   );
+	}		  
+	
+	
+
 	@Export
 	public Entity ActivateGlobalPromotion(UserApplicationContext uctx,long global_promotion_id) throws WebApplicationException,PersistenceException
 	{		
@@ -668,7 +739,16 @@ public class PromotionModule extends WebStoreModule
 			Entity promotion_instance = null;
 			Entity promotion = (Entity)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_PROMOTION);
 			try{
-				promotion_instance = createPromotionInstance((Entity)global_promotion.getAttribute(FIELD_CREATOR), "GLOBAL", promotion);
+				promotion_instance = createPromotionInstance((Entity)global_promotion.getAttribute(FIELD_CREATOR), "GLOBAL", promotion,
+						(Long)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_IR1),		
+						(Long)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_IR2),		
+						(Long)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_IR3),		
+						(Long)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_IR4),		
+						(String)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_SR1),		
+						(String)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_SR2),
+						(Double)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_FPR1),
+						(Double)global_promotion.getAttribute(GLOBAL_PROMOTION_FIELD_INITIAL_FPR2));
+				
 			}catch(WebApplicationException wae)
 			{
 				//this should never happen. webapplication exception is only thrown when promo code exists
@@ -997,6 +1077,14 @@ public class PromotionModule extends WebStoreModule
 	public static String GLOBAL_PROMOTION_ENTITY 			= "GlobalPromotion";
 	public static String GLOBAL_PROMOTION_FIELD_PROMOTION 	= "promotion";
 	public static String GLOBAL_PROMOTION_FIELD_ACTIVE   	= "active";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_IR1 			= "ir1";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_IR2 			= "ir2";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_IR3 			= "ir3";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_IR4 			= "ir4";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_SR1 			= "sr1";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_SR2 			= "sr2";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_FPR1 			= "fpr1";
+	public static String GLOBAL_PROMOTION_FIELD_INITIAL_FPR2 			= "fpr2";
 	
 	public static String COUPON_PROMOTION_ENTITY 						= "CouponPromotion";
 	public static String COUPON_PROMOTION_FIELD_PROMOTION 				= "promotion";
@@ -1004,6 +1092,14 @@ public class PromotionModule extends WebStoreModule
 	public static String COUPON_PROMOTION_FIELD_EXPIRATION_DATE 		= "expiration_date";
 	public static String COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED 	= "no_times_code_can_be_used";
 	public static String COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED 	= "no_times_code_has_been_used";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_IR1 			= "ir1";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_IR2 			= "ir2";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_IR3 			= "ir3";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_IR4 			= "ir4";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_SR1 			= "sr1";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_SR2 			= "sr2";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_FPR1 			= "fpr1";
+	public static String COUPON_PROMOTION_FIELD_INITIAL_FPR2 			= "fpr2";
 	
 	public static String PROMOTION_INSTANCE_ENTITY 				= "UserPromotion";
 	public static String PROMOTION_INSTANCE_FIELD_ORIGIN 		= "origin";
@@ -1030,14 +1126,31 @@ public class PromotionModule extends WebStoreModule
 	
 		DEFINE_ENTITY(GLOBAL_PROMOTION_ENTITY,
 			  	  	  GLOBAL_PROMOTION_FIELD_PROMOTION,Types.TYPE_REFERENCE,PROMOTION_ENTITY,null,
-			  	  	  GLOBAL_PROMOTION_FIELD_ACTIVE,Types.TYPE_INT,GLOBAL_PROMOTION_STATE_INACTIVE);
+			  	  	  GLOBAL_PROMOTION_FIELD_ACTIVE,Types.TYPE_INT,GLOBAL_PROMOTION_STATE_INACTIVE,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_IR1,Types.TYPE_LONG,0L,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_IR2,Types.TYPE_LONG,0L,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_IR3,Types.TYPE_LONG,0L, 			
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_IR4,Types.TYPE_LONG,0L,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_SR1,Types.TYPE_STRING,null,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_SR2,Types.TYPE_STRING,null,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_FPR1,Types.TYPE_DOUBLE,0.0,
+			  	  	  GLOBAL_PROMOTION_FIELD_INITIAL_FPR2,Types.TYPE_DOUBLE,0.0);
 		
 		DEFINE_ENTITY(COUPON_PROMOTION_ENTITY,
 					  COUPON_PROMOTION_FIELD_PROMOTION,Types.TYPE_REFERENCE,PROMOTION_ENTITY,null,
 					  COUPON_PROMOTION_FIELD_PROMO_CODE,Types.TYPE_STRING,null, //ORIGIN//
 					  COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED,Types.TYPE_INT,1,
 					  COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED,Types.TYPE_INT,0,
-					  COUPON_PROMOTION_FIELD_EXPIRATION_DATE,Types.TYPE_DATE,null);
+					  COUPON_PROMOTION_FIELD_EXPIRATION_DATE,Types.TYPE_DATE,null,
+					  COUPON_PROMOTION_FIELD_INITIAL_IR1,Types.TYPE_LONG,0L,
+					  COUPON_PROMOTION_FIELD_INITIAL_IR2,Types.TYPE_LONG,0L,
+					  COUPON_PROMOTION_FIELD_INITIAL_IR3,Types.TYPE_LONG,0L, 			
+					  COUPON_PROMOTION_FIELD_INITIAL_IR4,Types.TYPE_LONG,0L,
+					  COUPON_PROMOTION_FIELD_INITIAL_SR1,Types.TYPE_STRING,null,
+					  COUPON_PROMOTION_FIELD_INITIAL_SR2,Types.TYPE_STRING,null,
+					  COUPON_PROMOTION_FIELD_INITIAL_FPR1,Types.TYPE_DOUBLE,0.0,
+					  COUPON_PROMOTION_FIELD_INITIAL_FPR2,Types.TYPE_DOUBLE,0.0);
+
 
 		DEFINE_ENTITY(PROMOTION_INSTANCE_ENTITY,
 					  PROMOTION_INSTANCE_FIELD_ORIGIN,Types.TYPE_STRING,null, //ORIGIN//
