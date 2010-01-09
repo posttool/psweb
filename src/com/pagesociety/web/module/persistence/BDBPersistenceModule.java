@@ -196,6 +196,10 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 		store.deleteBackup(fullbackup_token);
 	}
 
+	public File getBackupAsZipFile(String backup_identifier) throws PersistenceException
+	{
+		return store.getBackupAsZipFile(backup_identifier);	
+	}
 	public String getStatistics()
 	{
 		return ((BDBStore)store).getStatistics();
