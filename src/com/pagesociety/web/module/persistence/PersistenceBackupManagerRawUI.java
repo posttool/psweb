@@ -277,6 +277,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		
 			}
 		};
+		t.setDaemon(true);
 		t.start();
 		
 	}
