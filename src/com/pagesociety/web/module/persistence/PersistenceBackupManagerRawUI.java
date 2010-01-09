@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import sun.security.action.GetBooleanAction;
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
@@ -33,10 +35,17 @@ import com.pagesociety.web.module.permissions.PermissionEvaluator;
 public class PersistenceBackupManagerRawUI extends RawUIModule 
 {	
 	private static final String SLOT_STORE = "store";
+	private static final String PARAM_FULL_BACKUP_TIME 		  		= "full-backup-time";
+	private static final String PARAM_INCREMENTAL_BACKUP_INTERVAL 	= "incremental-backup-interval";
+	
 	protected IPersistenceProvider pp;
 	
 	private File data_file;
 	private Map<String,String> last_backup_map;
+	private int backup_time_hr;
+	private int backup_time_min;
+	private int inc_backup_interval;
+	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
@@ -47,6 +56,11 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			throw new InitializationException(e.getMessage());
 		}
+		String[] backup_time 	= GET_REQUIRED_LIST_PARAM(PARAM_FULL_BACKUP_TIME, config);
+		backup_time_hr 			= Integer.parseInt(backup_time[0]);
+		backup_time_min 		= Integer.parseInt(backup_time[1]);
+		inc_backup_interval 	= Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_INCREMENTAL_BACKUP_INTERVAL,config));
+		start_backup_thread();
 	}
 
 	private void init_last_backup_map() throws Exception
@@ -218,6 +232,54 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	
 	}
 	
+	private boolean backup_thread_is_running = false;
+	private boolean full_backup_for_day_is_done = false;
+	private void start_backup_thread()
+	{
+		Thread t = new Thread()
+		{
+			public void run()
+			{
+				while(true)
+				{
+					backup_thread_is_running = true;
+					Calendar now = Calendar.getInstance();
+					int now_hr  = now.get(Calendar.HOUR_OF_DAY);
+					int now_min = now.get(Calendar.MINUTE);
+
+					if(full_backup_for_day_is_done && now_hr == 0)
+						full_backup_for_day_is_done = false;
+					
+					if(now_hr >= backup_time_hr && now_min >= backup_time_min && !full_backup_for_day_is_done)
+					{
+						try{
+							String id = pp.doFullBackup();
+							full_backup_for_day_is_done = true;
+							last_backup_map.put(id,new Date().toString());
+							write_backup_map();
+						}catch(Exception pe)
+						{
+							pe.printStackTrace();
+						}
+					}
+					
+
+					backup_thread_is_running = false;
+					try{
+						Thread.sleep(60000);
+					}catch(InterruptedException ie)
+					{
+						ie.printStackTrace();
+						//not much to do.
+					}
+				}	
+				
+		
+			}
+		};
+		t.start();
+		
+	}
 	
 	
 }
