@@ -118,6 +118,12 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				continue;
 			recipient = activate_recipient(promotion,recipient);
 			recips.set(i,recipient);
+			try{
+				Thread.sleep(1000);
+			}catch(InterruptedException ie)
+			{
+				
+			}
 		}
 		return recips;
 	}
@@ -227,6 +233,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 			template_data.put("promo_code",promo_code);
 			template_data.put("link",link);
 			email_module.sendEmail(promo_sender_address,new String[]{recipient_email}, subject, template_name, template_data);
+
 		}		
 	}
 	
