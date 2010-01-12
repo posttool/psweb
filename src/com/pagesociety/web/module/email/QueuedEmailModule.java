@@ -289,12 +289,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 						//maybe put it back on the queue
 						e.printStackTrace();
 					}
-					try{
-						Thread.sleep(1000);//600 emails an hour/ 60 a minute/ 1 a second
-					}catch(InterruptedException ie)
-					{
-						
-					}
+				
 				
 				}
 				System.out.println(getName()+" QUEUED EMAIL THREAD EXITED");
