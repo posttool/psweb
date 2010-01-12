@@ -185,7 +185,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			DISPLAY_ERROR(uctx,params);
 			DISPLAY_INFO(uctx,params);
 			P(uctx);
-			TABLE_START(uctx, 1, 600);
+			TABLE_START(uctx, 1, 650);
 			TR_START(uctx);
 				TH(uctx, "Identifier");
 				TH(uctx, "Last Backup");
