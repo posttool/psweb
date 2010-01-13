@@ -243,10 +243,12 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 				while(true)
 				{
 					backup_thread_is_running = true;
-					Calendar now = Calendar.getInstance();
-					int now_hr  = now.get(Calendar.HOUR_OF_DAY);
-					int now_min = now.get(Calendar.MINUTE);
-
+					Calendar now 	= Calendar.getInstance();
+					int now_hr  	= now.get(Calendar.HOUR_OF_DAY);
+					int now_min 	= now.get(Calendar.MINUTE);
+					int year 		= now.get(Calendar.YEAR);
+					int day_of_year = now.get(Calendar.DAY_OF_YEAR);
+					
 					if(full_backup_for_day_is_done && now_hr == 0)
 						full_backup_for_day_is_done = false;
 					
