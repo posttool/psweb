@@ -265,6 +265,22 @@ public abstract class WebModule extends Module
 		return buf.toString();
 	}
 	
+	public String STRIP_TO_ALPHA_NUMERIC(String s)
+	{
+		if(s == null)
+			return null;
+		StringBuilder buf = new StringBuilder();
+		char[] cc = new char[s.length()];
+		s.getChars(0, s.length(), cc, 0);
+		for(int i = 0;i < cc.length;i++)
+		{
+			char c = cc[i];
+			if(Character.isLetterOrDigit(c))
+				buf.append(c);
+		}
+		return buf.toString();
+	}
+	
 	protected String[] GET_REQUIRED_LIST_PARAM(String name,Map<String,Object> config) throws InitializationException
 	{
 		String p = GET_REQUIRED_CONFIG_PARAM(name, config);
