@@ -133,7 +133,10 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS.",ERROR_USER_EMAIL_EXISTS);
 		
-		if(enforce_unique_username)
+		if(username != null && username.trim().equals(""))
+			username = null;
+					
+		if(enforce_unique_username && username != null)
 		{
 			existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
 			if(existing_user != null)
@@ -180,7 +183,10 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS",ERROR_USER_EMAIL_EXISTS);
 
-		if(enforce_unique_username)
+		if(username != null && username.trim().equals(""))
+			username = null;
+
+		if(enforce_unique_username && username != null)
 		{
 			existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
 			if(existing_user != null)
@@ -253,7 +259,10 @@ public class UserModule extends WebStoreModule
 	
 	public Entity updateUserName(Entity user,String username) throws PersistenceException,WebApplicationException
 	{
-		if(enforce_unique_username)
+		if(username != null && username.trim().equals(""))
+			username = null;
+
+		if(enforce_unique_username && username != null)
 		{
 			Entity existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
 			if(existing_user != null)
