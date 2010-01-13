@@ -133,6 +133,7 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS.",ERROR_USER_EMAIL_EXISTS);
 		
+		username = STRIP_TO_ALPHA_NUMERIC(username);
 		if(username != null && username.trim().equals(""))
 			username = null;
 					
@@ -183,6 +184,7 @@ public class UserModule extends WebStoreModule
 		if(existing_user != null)
 			throw new WebApplicationException("USER WITH EMAIL "+email+" ALREADY EXISTS",ERROR_USER_EMAIL_EXISTS);
 
+		username = STRIP_TO_ALPHA_NUMERIC(username);
 		if(username != null && username.trim().equals(""))
 			username = null;
 
@@ -259,6 +261,7 @@ public class UserModule extends WebStoreModule
 	
 	public Entity updateUserName(Entity user,String username) throws PersistenceException,WebApplicationException
 	{
+		username = STRIP_TO_ALPHA_NUMERIC(username);
 		if(username != null && username.trim().equals(""))
 			username = null;
 
