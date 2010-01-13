@@ -264,6 +264,9 @@ public class UserModule extends WebStoreModule
 
 		if(enforce_unique_username && username != null)
 		{
+			if(username.equals(user.getAttribute(FIELD_USERNAME)))
+				return user;
+
 			Entity existing_user = getUserByUsernameAndPassword(username, Query.VAL_GLOB);
 			if(existing_user != null)
 				throw new WebApplicationException("USER WITH USERNAME "+username+" ALREADY EXISTS.",ERROR_USER_USERNAME_EXISTS);
