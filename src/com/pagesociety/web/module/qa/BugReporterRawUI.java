@@ -75,7 +75,6 @@ public class BugReporterRawUI extends RawUIModule
 			try{
 				f = new File(tmp,upload.getFileName());
 				fos = new FileOutputStream(f);
-				System.out.println("WROTE FILE TO "+f.getAbsolutePath());
 			}catch(Exception e){e.printStackTrace();}
 			try{
 				
@@ -92,7 +91,6 @@ public class BugReporterRawUI extends RawUIModule
 		String description 	= upload.getParameter("description");
 		try{
 			Entity bug = bug_reporter_module.createBug(null,submitter , description, f);
-			System.out.println("CREATED BUG "+bug);
 		}catch(Exception e)
 		{
 			ERROR(e);
@@ -173,7 +171,6 @@ public class BugReporterRawUI extends RawUIModule
 				String submitter = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SUBMITTER); 
 				String description = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION); 
 				String ss = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT); 
-				System.out.println("SCREENSHOT IS "+ss);
 				TR_START(uctx);
 					TD(uctx,submitter);
 					TD(uctx,String.valueOf(bug.getAttribute(WebStoreModule.FIELD_LAST_MODIFIED)));
