@@ -640,6 +640,16 @@ public class RawUIModule extends WebModule
 		buf.append("&nbsp;");
 	}
 	
+	protected void IMG(UserApplicationContext uctx,String url)
+	{
+		IMG(get_user_buf(uctx),url);
+	}
+	
+	protected void IMG(StringBuilder buf,String url)
+	{
+		buf.append("<img src='"+url+"'>\n");
+	}
+	
 	protected void JS_REDIRECT(UserApplicationContext uctx,String url)
 	{
 		JS_REDIRECT(get_user_buf(uctx), url);
@@ -651,6 +661,7 @@ public class RawUIModule extends WebModule
 		buf.append("window.location = '"+url+"';\n");
 		buf.append("</script>\n");
 	}
+	
 
 	protected void JS_TIMED_REDIRECT(UserApplicationContext uctx,String module_name,int submode,int ms,Object... params)
 	{
@@ -737,7 +748,7 @@ public class RawUIModule extends WebModule
 	
 	public static final int RAW_SUBMODE_DEFAULT    = 0x00;
 	private static final String KEY_UI_MODULE_STACK 			= "__ui_module_stack__";
-	private static final String KEY_UI_MODULE_OUTPUT_BUF   		= "__ui_module_output__";
+	protected static final String KEY_UI_MODULE_OUTPUT_BUF   		= "__ui_module_output__";
 	private static final String KEY_UI_MODULE_RAW_COMMUNIQUE   	= "__ui_module_raw_communique__";
 	private static final String KEY_UI_MODULE_SUBMODE_KEY   	= "submode";
 	protected static final String KEY_UI_MODULE_INFO_KEY   		= "_info_";
@@ -823,6 +834,7 @@ public class RawUIModule extends WebModule
 		}
 		return ret;
 	}
+	
 
 	protected void RETURN(UserApplicationContext uctx)
 	{

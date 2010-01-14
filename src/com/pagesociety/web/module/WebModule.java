@@ -4,13 +4,18 @@ package com.pagesociety.web.module;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.Method;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -387,5 +392,66 @@ public abstract class WebModule extends Module
 		}
 	}
 
+
+	protected void COPY(File file, File destination_directory,String filename) throws PersistenceException
+	{
+		FileChannel ic = null;
+		FileChannel oc =  null;
+		try
+		{
+			ic = new FileInputStream(file).getChannel();
+			oc = new FileOutputStream(new File(destination_directory, (filename!=null)?filename:file.getName())).getChannel();
+			ic.transferTo(0, ic.size(), oc);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			throw new PersistenceException("Cant make archive copy!",e);
+		}
+		finally
+		{
+			try
+			{
+				if (ic!=null)
+					ic.close();
+				if (oc!=null)
+					oc.close();
+			} 
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				throw new PersistenceException("Cant make archive copy!",e);
+			}
+		}
+
+	}
+	
+    protected void COPY_DIR(File sourceLocation , File targetLocation)throws IOException {
+        
+        if (sourceLocation.isDirectory()) {
+            if (!targetLocation.exists()) {
+                targetLocation.mkdir();
+            }
+            
+            String[] children = sourceLocation.list();
+            for (int i=0; i<children.length; i++) {
+                COPY_DIR(new File(sourceLocation, children[i]),
+                        new File(targetLocation, children[i]));
+            }
+        } else {
+            
+            InputStream in = new FileInputStream(sourceLocation);
+            OutputStream out = new FileOutputStream(targetLocation);
+            
+            // Copy the bits from instream to outstream
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            in.close();
+            out.close();
+        }
+    }
 	
 }
