@@ -117,7 +117,7 @@ public class BugReporterRawUI extends RawUIModule
 				String description 	= ((String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION)).replaceAll("\n", "<br/>");
 				String screenshot 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT);
 				String url = "/BugReporterRawUI/Image/.raw?bid="+String.valueOf(bid);
-				DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 10,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+				DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 14,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 				P(uctx);
 				SPAN(uctx,"Bugz =]",18);
 				DISPLAY_ERROR(uctx,params);
@@ -216,7 +216,7 @@ public class BugReporterRawUI extends RawUIModule
 				if(description.length() > 65)
 					description = description.substring(0, 65);
 				
-				String ss = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT); 
+
 				TR_START(uctx);
 					TD(uctx,submitter);
 					TD(uctx,String.valueOf(bug.getAttribute(WebStoreModule.FIELD_LAST_MODIFIED)));
@@ -252,7 +252,7 @@ public class BugReporterRawUI extends RawUIModule
 			String description 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION);
 			String screenshot 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT);
 			String url = "/BugReporterRawUI/Image/.raw?bid="+String.valueOf(bid);
-			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 10,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 14,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
 			SPAN(uctx,"Bugz =]",18);
 			DISPLAY_ERROR(uctx,params);
