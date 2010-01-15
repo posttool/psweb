@@ -902,7 +902,7 @@ public class RawUIModule extends WebModule
 	{
 		Map<String,Object> params = new HashMap<String,Object>();
 		for(int i = 0;i < name_val_pairs.length;i+=2)
-			params.put((String)name_val_pairs[i], name_val_pairs[i+1]);
+			params.put((String)name_val_pairs[i], String.valueOf(name_val_pairs[i+1]));
 
 		GOTO_WITH_INFO(uctx, submode, info, params);
 	}
