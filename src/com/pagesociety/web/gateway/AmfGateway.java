@@ -15,6 +15,8 @@ import com.pagesociety.web.amf.AmfOut;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.ModuleRequest;
 
+import freemarker.log.Logger;
+
 public class AmfGateway
 {
 	private WebApplication _web_application;
@@ -33,6 +35,7 @@ public class AmfGateway
 		try
 		{
 			amf_in = new AmfIn(request);
+			System.out.println("REQUEST SIZE "+amf_in.total_bytes_read+"b "+(double)amf_in.total_bytes_read/(double)1024+"kb");
 			String request_path = request.getRequestURI().substring(request.getContextPath().length());
 			ModuleRequest module_request = GatewayUtil.parseModuleRequest(request, request_path);
 			module_request.setArguments(amf_in.getArguments().toArray());
