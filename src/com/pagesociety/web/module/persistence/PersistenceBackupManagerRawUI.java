@@ -45,6 +45,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	private int backup_time_hr;
 	private int backup_time_min;
 	private int inc_backup_interval;
+
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -242,6 +243,8 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			{
 				while(true)
 				{
+					
+					
 					backup_thread_is_running = true;
 					Calendar now 	= Calendar.getInstance();
 					int now_hr  	= now.get(Calendar.HOUR_OF_DAY);
