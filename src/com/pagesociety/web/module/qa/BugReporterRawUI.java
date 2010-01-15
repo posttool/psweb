@@ -200,6 +200,7 @@ public class BugReporterRawUI extends RawUIModule
 			P(uctx);
 			TABLE_START(uctx, 1, 1000);
 			TR_START(uctx);
+			TH(uctx,"ID");
 			TH(uctx,"Reporter");
 			TH(uctx,"Date");
 			TH(uctx,"Description");
@@ -215,9 +216,10 @@ public class BugReporterRawUI extends RawUIModule
 				String description 	= ((String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION));
 				if(description.length() > 65)
 					description = description.substring(0, 65);
-				
+				String id = String.valueOf(bug.getId());
 
 				TR_START(uctx);
+					TD(uctx,id);
 					TD(uctx,submitter);
 					TD(uctx,String.valueOf(bug.getAttribute(WebStoreModule.FIELD_LAST_MODIFIED)));
 					TD(uctx,description);
