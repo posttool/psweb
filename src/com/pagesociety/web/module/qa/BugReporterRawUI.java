@@ -89,8 +89,9 @@ public class BugReporterRawUI extends RawUIModule
 		
 		String submitter 	= upload.getParameter("submitter");
 		String description 	= upload.getParameter("description");
+		Entity bug = null;
 		try{
-			Entity bug = bug_reporter_module.createBug(null,submitter , description, f);
+			bug = bug_reporter_module.createBug(null,submitter , description, f);
 		}catch(Exception e)
 		{
 			ERROR(e);
@@ -99,40 +100,82 @@ public class BugReporterRawUI extends RawUIModule
 		}
 		
 
-		GOTO_WITH_INFO(uctx, RAW_SUBMODE_DEFAULT, "Bug Submit OK. Thank you!");
+		GOTO_WITH_INFO(uctx, RAW_SUBMODE_DEFAULT, "Bug Submit OK. Thank you!","show_bug",bug.getId());
 		return buf.toString();
 	}
 	
 
 	public void submode_default(UserApplicationContext uctx,Map<String,Object> params)
 	{
-		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-		P(uctx);
-		SPAN(uctx,"REPORT A BUG",18);
-		DISPLAY_ERROR(uctx,params);
-		DISPLAY_INFO(uctx,params);
-		P(uctx);
-		MULTIPART_FORM_START(uctx,RAW_MODULE_ROOT()+"/"+getName()+"/CreateBug/.form");
-		TABLE_START(uctx,0,800);
-		TR_START(uctx);
-			TD_START(uctx);SPAN(uctx,"Reported By:",16);TD_END(uctx);
-			TD_START(uctx);FORM_INPUT_FIELD(uctx, "submitter", 32, "");TD_END(uctx);
-		TR_END(uctx);
-		TR_START(uctx);
-			TD_START(uctx);SPAN(uctx,"Description:",16);TD_END(uctx);
-			TD_START(uctx);FORM_TEXTAREA_FIELD(uctx, "description", 60, 16);TD_END(uctx);
-		TR_END(uctx);
+		try{
+			if(params.get("show_bug") != null)
+			{
+				long bid = Long.parseLong((String)params.get("show_bug"));
+				Entity bug = bug_reporter_module.getBugById(bid);
+				
+				String submitter 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SUBMITTER);
+				String description 	= ((String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION)).replaceAll("\n", "<br/>");
+				String screenshot 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT);
+				String url = "/BugReporterRawUI/Image/.raw?bid="+String.valueOf(bid);
+				DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 10,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+				P(uctx);
+				SPAN(uctx,"Bugz =]",18);
+				DISPLAY_ERROR(uctx,params);
+				DISPLAY_INFO(uctx,params);
+				P(uctx);
+				TABLE_START(uctx,0,1000);
+					TR_START(uctx);
+						TD(uctx,"Submitted By:");TD(uctx,submitter);
+					TR_END(uctx);
+					TR_START(uctx);
+						TD(uctx,"Description:");TD(uctx,description);
+					TR_END(uctx);
+					TR_START(uctx);
+						TD(uctx,"Screen Shot:");TD_START(uctx);
+						if(screenshot!=null)
+							IMG(uctx,url);
+						else
+							NBSP(uctx);
+						TD_END(uctx);
+					TR_END(uctx);
+				TABLE_END(uctx);
+				HR(uctx);
+				A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Back ]");
+				DOCUMENT_END(uctx);
+				return;
+			}
+			
+			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			P(uctx);
+			SPAN(uctx,"REPORT A BUG",18);
+			DISPLAY_ERROR(uctx,params);
+			DISPLAY_INFO(uctx,params);
+			P(uctx);
+			MULTIPART_FORM_START(uctx,RAW_MODULE_ROOT()+"/"+getName()+"/CreateBug/.form");
+			TABLE_START(uctx,0,800);
 			TR_START(uctx);
-				TD_START(uctx);SPAN(uctx,"Screen Shot:",16);TD_END(uctx);
-				TD_START(uctx);FILE_INPUT_FIELD(uctx, "file");TD_END(uctx);
+				TD_START(uctx);SPAN(uctx,"Reported By:",16);TD_END(uctx);
+				TD_START(uctx);FORM_INPUT_FIELD(uctx, "submitter", 32, "");TD_END(uctx);
 			TR_END(uctx);
-		TABLE_END(uctx);
-		P(uctx);
-		FORM_SUBMIT_BUTTON(uctx, "+ Create Bug");
-		FORM_END(uctx);
-		HR(uctx);
-		A(uctx,getName(),RAW_SUBMODE_VIEW_BUGS,"[ View Bugs ]");
-		DOCUMENT_END(uctx);
+			TR_START(uctx);
+				TD_START(uctx);SPAN(uctx,"Description:",16);TD_END(uctx);
+				TD_START(uctx);FORM_TEXTAREA_FIELD(uctx, "description", 60, 16);TD_END(uctx);
+			TR_END(uctx);
+				TR_START(uctx);
+					TD_START(uctx);SPAN(uctx,"Screen Shot:",16);TD_END(uctx);
+					TD_START(uctx);FILE_INPUT_FIELD(uctx, "file");TD_END(uctx);
+				TR_END(uctx);
+			TABLE_END(uctx);
+			P(uctx);
+			FORM_SUBMIT_BUTTON(uctx, "+ Create Bug");
+			FORM_END(uctx);
+			HR(uctx);
+			A(uctx,getName(),RAW_SUBMODE_VIEW_BUGS,"[ View Bugs ]");
+			DOCUMENT_END(uctx);
+		}catch(Exception e)
+		{
+			ERROR_PAGE(uctx,e);
+		}
 	}
 	
 	public void submode_view_bugs(UserApplicationContext uctx,Map<String,Object> params)
@@ -169,7 +212,10 @@ public class BugReporterRawUI extends RawUIModule
 				
 				Entity bug = bugs.get(i);
 				String submitter = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SUBMITTER); 
-				String description = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION); 
+				String description 	= ((String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION));
+				if(description.length() > 65)
+					description = description.substring(0, 65);
+				
 				String ss = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT); 
 				TR_START(uctx);
 					TD(uctx,submitter);

@@ -13,7 +13,7 @@ import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.ecommerce.promo.PromotionModule;
+
 
 
 public class BugReporterModule extends WebStoreModule
