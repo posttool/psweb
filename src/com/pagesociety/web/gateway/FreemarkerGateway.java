@@ -24,6 +24,7 @@ public class FreemarkerGateway
 	public static final String APPLICATION_KEY = "application";
 	public static final String CONTEXT_KEY = "user_context";
 	public static final String REQUEST_URL_KEY = "request_url";
+	public static final String REQUEST_SERVER_NAME = "request_server_name";
 	public static final String REQUEST_PARAMS_KEY = "params";
 	public static final String WEB_URL_KEY = "web_url";
 	public static final String WEB_URL_SECURE_KEY = "web_url_secure";
@@ -44,13 +45,14 @@ public class FreemarkerGateway
 			HttpServletRequest request, HttpServletResponse response) throws IOException,
 			ServletException
 	{
+
 		String text_response;
 		String mime_type;
 		Map<String, Object> templateData;
 		try
 		{
 			mime_type = getMimeType(requestPath);
-			templateData = setup_template_context_object(user_context, requestPath, request.getParameterMap());
+			templateData = setup_template_context_object(user_context, requestPath,request.getServerName(), request.getParameterMap());
 			text_response = _fm_renderer.render(requestPath, templateData);
 		}
 		catch (Exception e)
@@ -94,7 +96,7 @@ public class FreemarkerGateway
 		{
 			response.setContentType(GatewayConstants.MIME_TYPE_HTML);
 			response.setStatus(404);
-			Map<String, Object> templateData = setup_template_context_object(user_context, url_mapped_request, servlet_request.getParameterMap());
+			Map<String, Object> templateData = setup_template_context_object(user_context, url_mapped_request,servlet_request.getServerName(), servlet_request.getParameterMap());
 			templateData.put(EXCEPTION_KEY, e);
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw, true);
@@ -120,7 +122,7 @@ public class FreemarkerGateway
 
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> setup_template_context_object(
-			UserApplicationContext user_context, String request_path, Map params)
+			UserApplicationContext user_context, String request_path, String host_name,Map params)
 	{
 		Map<String, Object> data = new HashMap<String, Object>();
 		data.put(APPLICATION_KEY, _web_application);
@@ -139,6 +141,7 @@ public class FreemarkerGateway
 		}
 		data.put(REQUEST_PARAMS_KEY, params0);
 		data.put(REQUEST_URL_KEY, request_path);
+		data.put(REQUEST_SERVER_NAME, host_name);
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
 		data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
 		//

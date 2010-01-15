@@ -185,6 +185,7 @@ public class HttpRequestRouter extends HttpServlet
 		{
 			UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
 			String path = (String)url_mapped_request[1];
+			System.out.println("MATCHED "+path);
 			if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
 			{
 				response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
