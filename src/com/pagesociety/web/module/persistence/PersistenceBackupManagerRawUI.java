@@ -251,9 +251,9 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 					int now_min 	= now.get(Calendar.MINUTE);
 					int year 		= now.get(Calendar.YEAR);
 					int day_of_year = now.get(Calendar.DAY_OF_YEAR);
+					String backup_for_day_key = String.valueOf(year)+"_"+String.valueOf(day_of_year);
+					full_backup_for_day_is_done = last_backup_map.get(backup_for_day_key)!=null;
 					
-					if(full_backup_for_day_is_done && now_hr == 0)
-						full_backup_for_day_is_done = false;
 					
 					if(now_hr >= backup_time_hr && now_min >= backup_time_min && !full_backup_for_day_is_done)
 					{
@@ -261,6 +261,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 							String id = pp.doFullBackup();
 							full_backup_for_day_is_done = true;
 							last_backup_map.put(id,new Date().toString());
+							last_backup_map.put(backup_for_day_key,"true");
 							write_backup_map();
 						}catch(Exception pe)
 						{
