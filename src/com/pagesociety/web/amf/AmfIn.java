@@ -36,7 +36,8 @@ public class AmfIn
 	// the list of passed arguments
 	public List<Object> args;
 	private Object return_value;
-
+	public int total_bytes_read;
+	
 	@SuppressWarnings("unchecked")
 	public AmfIn(HttpServletRequest request) throws IOException
 	{
@@ -49,6 +50,7 @@ public class AmfIn
 		buffer = ByteBuffer.allocate(expectedLength + 1);
 		ReadableByteChannel channel = Channels.newChannel(input);
 		int bytesRead = 0;
+		int totalBytesRead=0;
 		while (bytesRead != -1)
 		{
 			if (buffer.remaining() == 0)
@@ -57,6 +59,7 @@ public class AmfIn
 				buffer.expand(expectedLength);
 			}
 			bytesRead = channel.read(buffer.buf());
+			totalBytesRead+=bytesRead;
 		}
 		buffer.flip();
 		// read stuff from buffer
@@ -70,6 +73,7 @@ public class AmfIn
 		should_be_array_length_of_1 = buffer.getInt();
 		should_be_amf3_in_0_type = buffer.get(); // AMFType.AMF3_IN_AMF0
 		args = (List<Object>) readObject();
+		total_bytes_read = totalBytesRead;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -82,6 +86,7 @@ public class AmfIn
 		buffer = ByteBuffer.allocate(expectedLength + 1);
 		ReadableByteChannel channel = Channels.newChannel(input);
 		int bytesRead = 0;
+		int totalBytesRead=0;
 		while (bytesRead != -1)
 		{
 			if (buffer.remaining() == 0)
@@ -90,6 +95,7 @@ public class AmfIn
 				buffer.expand(expectedLength);
 			}
 			bytesRead = channel.read(buffer.buf());
+			totalBytesRead+=bytesRead;
 		}
 		buffer.flip();
 		// read stuff from buffer
@@ -101,6 +107,7 @@ public class AmfIn
 		msg_length = buffer.getInt(); //-1
 		should_be_amf3_in_0_type = buffer.get(); // AMFType.AMF3_IN_AMF0
 		return_value = readObject();
+		total_bytes_read = totalBytesRead;
 	}
 
 	public List<Object> getArguments()
