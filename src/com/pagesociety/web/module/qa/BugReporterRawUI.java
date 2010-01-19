@@ -295,7 +295,7 @@ public class BugReporterRawUI extends RawUIModule
 			{
 				for(int i = 0;i < annotations.size();i++)
 				{
-					PRE(uctx, annotations.get(i));
+					PRE(uctx, annotations.get(i),800);
 					P(uctx);
 				}
 			
