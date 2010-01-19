@@ -89,6 +89,8 @@ public class BugReporterRawUI extends RawUIModule
 		
 		String submitter 	= upload.getParameter("submitter");
 		String description 	= upload.getParameter("description");
+		if(description == null)
+			description = "";
 		Entity bug = null;
 		try{
 			bug = bug_reporter_module.createBug(null,submitter , description, f);
@@ -261,7 +263,7 @@ public class BugReporterRawUI extends RawUIModule
 			long bid =Long.parseLong((String)params.get("bid"));
 			Entity bug = bug_reporter_module.getBugById(bid);
 			String submitter 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SUBMITTER);
-			String description 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION);
+			String description 	= ((String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION)).replaceAll("\n", "<br/>");
 			String screenshot 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SCREENSHOT);
 			String url = "/BugReporterRawUI/Image/.raw?bid="+String.valueOf(bid);
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 14,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
@@ -295,7 +297,10 @@ public class BugReporterRawUI extends RawUIModule
 			{
 				for(int i = 0;i < annotations.size();i++)
 				{
-					PRE(uctx, annotations.get(i),800);
+					String annotation = annotations.get(i);
+					if(annotation != null)
+						annotation = annotation.replaceAll("\n", "<br/>");
+					SPAN(uctx, annotations.get(i),800);
 					P(uctx);
 				}
 			
