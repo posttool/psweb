@@ -292,6 +292,7 @@ public class BugReporterRawUI extends RawUIModule
 			P(uctx);
 			HR(uctx);
 			SPAN(uctx, "Annotations:");
+			BR(uctx);
 			List<String> annotations = (List<String>)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_ANNOTATIONS);
 			if(annotations != null)
 			{
@@ -300,7 +301,7 @@ public class BugReporterRawUI extends RawUIModule
 					String annotation = annotations.get(i);
 					if(annotation != null)
 						annotation = annotation.replaceAll("\n", "<br/>");
-					SPAN(uctx, annotations.get(i),10);
+					SPAN(uctx, annotations.get(i),14);
 					P(uctx);
 				}
 			
