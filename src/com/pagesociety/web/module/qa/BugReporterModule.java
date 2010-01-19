@@ -1,6 +1,8 @@
 package com.pagesociety.web.module.qa;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -71,6 +73,19 @@ public class BugReporterModule extends WebStoreModule
 			}
 	}
 	
+	public Entity createAnnotation(long bug_id,String annotation) throws PersistenceException
+	{
+		
+		Entity bug = getBugById(bug_id);
+		List<String> annotations = (List<String>)bug.getAttribute(PS_BUG_FIELD_ANNOTATIONS);
+		if(annotations == null)
+			annotations = new ArrayList<String>();
+		annotations.add("("+(new Date().toString())+") "+annotation);
+		return UPDATE(bug,
+					  PS_BUG_FIELD_ANNOTATIONS,annotations);
+		
+	}
+	
 	
 	public List<Entity> getAllBugs() throws PersistenceException
 	{
@@ -116,6 +131,7 @@ public class BugReporterModule extends WebStoreModule
 	public static String PS_BUG_FIELD_SUBMITTER    = "title";
 	public static String PS_BUG_FIELD_DESCRIPTION  = "description";
 	public static String PS_BUG_FIELD_SCREENSHOT   = "screenshot_filename";
+	public static String PS_BUG_FIELD_ANNOTATIONS   = "annotations";
 
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
@@ -123,7 +139,8 @@ public class BugReporterModule extends WebStoreModule
 		DEFINE_ENTITY(PS_BUG_ENTITY,
 				PS_BUG_FIELD_SUBMITTER,Types.TYPE_STRING,null,
 				PS_BUG_FIELD_DESCRIPTION,Types.TYPE_STRING,null,
-				PS_BUG_FIELD_SCREENSHOT,Types.TYPE_STRING,null
+				PS_BUG_FIELD_SCREENSHOT,Types.TYPE_STRING,null,
+				PS_BUG_FIELD_ANNOTATIONS,Types.TYPE_STRING | Types.TYPE_ARRAY,new ArrayList<String>()
 				);
 	
 	}

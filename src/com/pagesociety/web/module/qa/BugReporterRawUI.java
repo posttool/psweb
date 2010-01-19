@@ -204,6 +204,7 @@ public class BugReporterRawUI extends RawUIModule
 			TH(uctx,"Reporter");
 			TH(uctx,"Date");
 			TH(uctx,"Description");
+			TH(uctx,"Num Annotations");
 			TH(uctx,"");
 			TH(uctx,"");
 			TR_END(uctx);
@@ -214,6 +215,7 @@ public class BugReporterRawUI extends RawUIModule
 				Entity bug = bugs.get(i);
 				String submitter = (String) bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SUBMITTER); 
 				String description 	= ((String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_DESCRIPTION));
+				int no_annotations =	bug.getAttribute(BugReporterModule.PS_BUG_FIELD_ANNOTATIONS)==null?0:((List<String>)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_ANNOTATIONS)).size();
 				if(description.length() > 65)
 					description = description.substring(0, 65);
 				String id = String.valueOf(bug.getId());
@@ -223,6 +225,7 @@ public class BugReporterRawUI extends RawUIModule
 					TD(uctx,submitter);
 					TD(uctx,String.valueOf(bug.getAttribute(WebStoreModule.FIELD_LAST_MODIFIED)));
 					TD(uctx,description);
+					TD(uctx,String.valueOf(no_annotations));
 					TD_LINK(uctx, getName(), RAW_SUBMODE_VIEW_BUG, "[ view ]", "bid",bug.getId());
 					TD_LINK(uctx, getName(), RAW_SUBMODE_VIEW_BUGS, "[ delete ]", "delete_bid",bug.getId());
 				TR_END(uctx);
@@ -248,6 +251,13 @@ public class BugReporterRawUI extends RawUIModule
 			return;
 		}
 		try{
+			if(params.get("add_annotation") != null)
+			{
+				long bid =Long.parseLong((String)params.get("bid"));
+				String annotation = (String)params.get("annotation");
+				bug_reporter_module.createAnnotation(bid,annotation);
+			}
+	
 			long bid =Long.parseLong((String)params.get("bid"));
 			Entity bug = bug_reporter_module.getBugById(bid);
 			String submitter 	= (String)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_SUBMITTER);
@@ -276,6 +286,25 @@ public class BugReporterRawUI extends RawUIModule
 					TD_END(uctx);
 				TR_END(uctx);
 			TABLE_END(uctx);
+		
+			P(uctx);
+			HR(uctx);
+			SPAN(uctx, "Annotations:");
+			List<String> annotations = (List<String>)bug.getAttribute(BugReporterModule.PS_BUG_FIELD_ANNOTATIONS);
+			if(annotations != null)
+			{
+				for(int i = 0;i < annotations.size();i++)
+				{
+					PRE(uctx, annotations.get(i));
+					P(uctx);
+				}
+			
+			}
+			FORM_START(uctx,getName(),RAW_SUBMODE_VIEW_BUG,"bid",bid,"add_annotation",true);
+			FORM_TEXTAREA_FIELD(uctx, "annotation", 60, 8);
+			BR(uctx);
+			FORM_SUBMIT_BUTTON(uctx,"+ Add Annotation");
+			FORM_END(uctx);
 			HR(uctx);
 			A(uctx,getName(),RAW_SUBMODE_VIEW_BUGS,"[ Back ]");
 			DOCUMENT_END(uctx);
