@@ -14,20 +14,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.PersistenceProperty;
-import javax.servlet.http.HttpServletRequest;
+
 import javax.servlet.http.HttpServletResponse;
 
-import sun.security.action.GetBooleanAction;
+
 
 import com.pagesociety.persistence.Entity;
-import com.pagesociety.persistence.PersistenceException;
-import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.module.RawUIModule;
-import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.permissions.PermissionEvaluator;
 
 
