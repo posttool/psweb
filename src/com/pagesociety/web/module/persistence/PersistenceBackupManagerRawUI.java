@@ -107,7 +107,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	
 	public void submode_default(UserApplicationContext uctx,Map<String,Object> params) throws Exception
 	{
-		
+		try{
 		Entity user = (Entity)uctx.getUser();
 		if(!PermissionEvaluator.IS_ADMIN(user))
 		{
@@ -226,7 +226,11 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 
 			DOCUMENT_END(uctx);
 		}	
-	
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			ERROR_PAGE(uctx, e);
+		}
 	}
 	
 	private boolean backup_thread_is_running = false;
