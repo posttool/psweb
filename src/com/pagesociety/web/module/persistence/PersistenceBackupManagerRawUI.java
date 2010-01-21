@@ -262,6 +262,12 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 							full_backup_for_day_is_done = true;
 							last_backup_map.put(id,new Date().toString());
 							last_backup_map.put(backup_for_day_key,"true");
+							//delete the previous days keys so we dont bloat the hashmap//
+							for(int i = day_of_year;i >= 0;i--)
+							{
+								String delete_key = backup_for_day_key = String.valueOf(year)+"_"+String.valueOf(i);
+								last_backup_map.remove(delete_key);
+							}
 							write_backup_map();
 						}catch(Exception pe)
 						{
