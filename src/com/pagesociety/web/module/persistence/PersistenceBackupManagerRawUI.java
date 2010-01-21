@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -176,6 +177,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		else
 		{
 			List<String> backup_identifiers = pp.getBackupIdentifiers();
+			Collections.sort(backup_identifiers);
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
 			SPAN(uctx,pp.getName()+" BACKUP MANAGER",18);
