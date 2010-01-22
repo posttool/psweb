@@ -37,6 +37,7 @@ public class SystemNotificationModule extends WebStoreModule
 	public static final String CAN_DELETE_USER_ALERT 			 = "CAN_DELETE_USER_ALERT";
 	public static final String CAN_DELETE_GLOBAL_NOTIFICATION	 = "CAN_DELETE_GLOBAL_NOTIFICATION";
 	public static final String CAN_DELETE_GLOBAL_ALERT 		 	 = "CAN_DELETE_GLOBAL_ALERT";
+	
 	public void exportPermissions()
 	{
 		EXPORT_PERMISSION(CAN_CREATE_NOTIFICATION_FOR_USER);
