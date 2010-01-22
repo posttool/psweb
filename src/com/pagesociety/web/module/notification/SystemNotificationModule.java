@@ -37,7 +37,17 @@ public class SystemNotificationModule extends WebStoreModule
 	public static final String CAN_DELETE_USER_ALERT 			 = "CAN_DELETE_USER_ALERT";
 	public static final String CAN_DELETE_GLOBAL_NOTIFICATION	 = "CAN_DELETE_GLOBAL_NOTIFICATION";
 	public static final String CAN_DELETE_GLOBAL_ALERT 		 	 = "CAN_DELETE_GLOBAL_ALERT";
-
+	public void exportPermissions()
+	{
+		EXPORT_PERMISSION(CAN_CREATE_NOTIFICATION_FOR_USER);
+		EXPORT_PERMISSION(CAN_CREATE_ALERT_FOR_USER);
+		EXPORT_PERMISSION(CAN_CREATE_GLOBAL_NOTIFICATION);
+		EXPORT_PERMISSION(CAN_CREATE_GLOBAL_ALERT);
+		EXPORT_PERMISSION(CAN_DELETE_USER_NOTIFICATION);
+		EXPORT_PERMISSION(CAN_DELETE_USER_ALERT); 
+		EXPORT_PERMISSION(CAN_DELETE_GLOBAL_NOTIFICATION); 	
+		EXPORT_PERMISSION(CAN_DELETE_GLOBAL_ALERT); 
+	}
 
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -45,10 +55,12 @@ public class SystemNotificationModule extends WebStoreModule
 		super.init(app,config);	
 	}
 
+	
 	protected void defineSlots()
 	{
 		super.defineSlots();
 	}
+
 
 	@Export
 	public Entity CreateInfoNotificationForUser(UserApplicationContext uctx,long user_id,String notification_text) throws WebApplicationException,PersistenceException 
