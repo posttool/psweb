@@ -1322,7 +1322,11 @@ public class RecurringOrderModule extends ResourceModule
 		try{
 			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
 			Map<String,Object> template_data = new HashMap<String, Object>();
-			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+			String username = (String)user.getAttribute(UserModule.FIELD_USERNAME);
+			if(username == null || username.trim() == "")
+				username = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			template_data.put("username",username);
+				
 			if(additional_info == null)
 				template_data.put("additional_information","");
 			else
@@ -1343,7 +1347,12 @@ public class RecurringOrderModule extends ResourceModule
 		try{
 			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
 			Map<String,Object> template_data = new HashMap<String, Object>();
-			template_data.put("username",(String)user.getAttribute(UserModule.FIELD_EMAIL));
+
+			String username = (String)user.getAttribute(UserModule.FIELD_USERNAME);
+			if(username == null || username.trim() == "")
+				username = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			template_data.put("username",username);
+
 			if(additional_info == null)
 				template_data.put("additional_information","");
 			else
