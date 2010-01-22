@@ -462,5 +462,17 @@ public abstract class WebModule extends Module
             out.close();
         }
     }
-	
+
+    ///UTIL STUFF//
+    
+    public static String PREPARE_REQUIRED_USER_INPUT(String fieldname ,String s ) throws WebApplicationException
+    {
+    	if(s == null )
+    		throw new WebApplicationException(fieldname+" is required.");
+    	s = s.trim();
+    	if("".equals(s))
+    		throw new WebApplicationException(fieldname+" is required.");
+    	return s;
+    }
+    
 }
