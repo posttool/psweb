@@ -293,6 +293,15 @@ public abstract class WebModule extends Module
 		return p.split(",");
 	}
 	
+	protected String[] GET_OPTIONAL_LIST_PARAM(String name,Map<String,Object> config) throws InitializationException
+	{
+		String p = GET_OPTIONAL_CONFIG_PARAM(name, config);
+		if(p==null)
+			return null;
+		p = REMOVE_WHITE_SPACE(p);
+		return p.split(",");
+	}
+	
 	
 	protected void DISPATCH_EVENT(int event_type,Object... event_context) throws WebApplicationException
 	{
