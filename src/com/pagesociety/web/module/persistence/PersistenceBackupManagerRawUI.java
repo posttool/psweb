@@ -270,6 +270,14 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 								String delete_key =  String.valueOf(year)+"_"+String.valueOf(i);
 								last_backup_map.remove(delete_key);
 							}
+							if(day_of_year == 1)
+							{
+								String delete_key =  String.valueOf(year-1)+"_"+String.valueOf(365);
+								last_backup_map.remove(delete_key);	
+								delete_key =  String.valueOf(year-1)+"_"+String.valueOf(366);
+								last_backup_map.remove(delete_key);	
+							}
+
 							write_backup_map();
 						}catch(Exception pe)
 						{
