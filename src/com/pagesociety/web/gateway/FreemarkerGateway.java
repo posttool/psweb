@@ -16,6 +16,7 @@ import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.template.FreemarkerRenderer;
 
+import freemarker.ext.beans.BeansWrapper;
 import freemarker.template.TemplateException;
 
 public class FreemarkerGateway
@@ -144,6 +145,7 @@ public class FreemarkerGateway
 		data.put(REQUEST_SERVER_NAME, host_name);
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
 		data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
+		data.put("statics", BeansWrapper.getDefaultInstance().getStaticModels());
 		//
 		return data;
 	}
