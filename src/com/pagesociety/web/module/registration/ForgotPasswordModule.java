@@ -69,7 +69,12 @@ public class ForgotPasswordModule extends WebStoreModule
 			throw new WebApplicationException("NO USER WITH EMAIL "+email+"EXISTS");
 		/*creator is null. means system created this user */
 		String forgot_password_token = com.pagesociety.util.RandomGUID.getGUID();
-	
+		
+		// TODO hi toph... do we want to make sure that username is "", not null????
+		// when i leave username blank, on registration, i get null here...
+		String username = (String)user.getAttribute(UserModule.FIELD_USERNAME);
+		if (username==null)
+			username = email;
 		
 		NEW(OUTSTANDING_FORGOT_PASSWORD_ENTITY,null,
 			FIELD_ACTIVATION_TOKEN,forgot_password_token,
@@ -78,7 +83,7 @@ public class ForgotPasswordModule extends WebStoreModule
 
 		Map<String,Object> template_data = new HashMap<String,Object>();
 		template_data.put("user", user);
-		template_data.put("username", user.getAttribute(UserModule.FIELD_USERNAME));
+		template_data.put("username", username);
 		template_data.put("email", email);
 		template_data.put("forgot_password_token", forgot_password_token);
 		template_data.put("restore_password_url", restore_password_url);
