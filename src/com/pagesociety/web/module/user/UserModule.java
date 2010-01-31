@@ -518,19 +518,32 @@ public class UserModule extends WebStoreModule
 		return getUsersByRole(role, offset, page_size,order_by);
 	}
 	
+	@Export(ParameterNames={"role", "offset", "page_size", "order_by", "direction"})
+	public PagingQueryResult GetUsersByRole(UserApplicationContext uctx,int role,int offset,int page_size, String order_by, int direction) throws PersistenceException,WebApplicationException
+	{
+		Entity user = (Entity)uctx.getUser();
+		GUARD(user, CAN_BROWSE_USERS_BY_ROLE, "role",role);
+		return getUsersByRole(role, offset, page_size,order_by,direction);
+	}
+	
 	public PagingQueryResult getUsersByRole(int role,int offset,int page_size) throws PersistenceException,WebApplicationException
 	{
-		return getUsersByRole(role,offset,page_size,FIELD_EMAIL);		
+		return getUsersByRole(role,offset,page_size,FIELD_EMAIL,Query.ASC);		
 	}
 	
 	public PagingQueryResult getUsersByRole(int role,int offset,int page_size, String order_by) throws PersistenceException,WebApplicationException
+	{
+		return getUsersByRole(role,offset,page_size,order_by,Query.ASC);		
+	}
+	
+	public PagingQueryResult getUsersByRole(int role,int offset,int page_size, String order_by, int dir) throws PersistenceException,WebApplicationException
 	{
 		Query q = new Query(USER_ENTITY);
 		q.idx(INDEX_BY_ROLE);
 		q.setContainsAny(q.list(role));
 		q.setOffset(offset);
 		q.setPageSize(page_size);
-		q.orderBy(order_by);
+		q.orderBy(order_by,dir);
 		return PAGING_QUERY(q);			
 	}
 	
