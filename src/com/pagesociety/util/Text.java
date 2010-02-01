@@ -244,6 +244,8 @@ public class Text
 
 	public static String stripTags(String s)
 	{
+		if(s == null)
+			return null;
 		StringBuffer b = new StringBuffer();
 		boolean open = false;
 		for (int i = 0; i < s.length(); i++)
