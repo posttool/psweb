@@ -115,7 +115,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	/* Transaction captures flag existing authorizations for settlement.
 	 * Only authorizations can be captured. Captures can be submitted for an amount
 	 * equal to or less than the original authorization. */
-	//TODO: need auth code here probably
+
 	public BillingGatewayResponse doCapture(Entity billing_record,double amount,String auth_code) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
