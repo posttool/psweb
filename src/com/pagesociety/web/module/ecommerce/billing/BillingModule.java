@@ -213,7 +213,7 @@ public class BillingModule extends WebStoreModule
 		Calendar now = Calendar.getInstance();
 		int now_year = now.get(Calendar.YEAR);
 		if(year < now_year)
-			throw new WebApplicationException("PLEASE PROVIDE A VALID FOUR DIGIT YEAR. e.g. 2011");
+			throw new WebApplicationException("PLEASE PROVIDE A VALID FOUR DIGIT YEAR. e.g."+now_year);
 		return year;
 	}
 
