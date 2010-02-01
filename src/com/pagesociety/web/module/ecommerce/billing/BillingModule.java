@@ -1,5 +1,6 @@
 package com.pagesociety.web.module.ecommerce.billing;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -209,7 +210,9 @@ public class BillingModule extends WebStoreModule
 	
 	private int validate_and_normalize_year(int year)  throws WebApplicationException
 	{	
-		if(year < 2010)
+		Calendar now = Calendar.getInstance();
+		int now_year = now.get(Calendar.YEAR);
+		if(year < now_year)
 			throw new WebApplicationException("PLEASE PROVIDE A VALID FOUR DIGIT YEAR. e.g. 2011");
 		return year;
 	}
