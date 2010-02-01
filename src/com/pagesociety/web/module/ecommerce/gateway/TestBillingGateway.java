@@ -128,7 +128,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	 * Voids can only occur if the transaction has not been settled.*/
 	
 	//TODO: need some sort of transaction code here probably
-	public BillingGatewayResponse doVoid(Entity billing_record) 	throws BillingGatewayException
+	public BillingGatewayResponse doVoid(Entity billing_record,String auth_code) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING VOID FOR BILLING RECORD."+" "+billing_record);
@@ -138,7 +138,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	
 	/*Transaction refunds will reverse a previously settled transaction. 
 	 *If the transaction has not been settled, it must be voided instead of refunded.*/
-	public BillingGatewayResponse doRefund(Entity billing_record,double amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doRefund(Entity billing_record,double amount,String auth_code) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING REFUND FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);

@@ -25,11 +25,11 @@ public interface IBillingGateway
 	/* Transaction voids will cancel an existing sale or captured authorization. 
 	 * In addition, non-captured authorizations can be voided to prevent any future capture. 
 	 * Voids can only occur if the transaction has not been settled.*/
-	public BillingGatewayResponse doVoid(Entity billing_record) 	throws BillingGatewayException;
+	public BillingGatewayResponse doVoid(Entity billing_record,String auth_code) 	throws BillingGatewayException;
 	
 	/*Transaction refunds will reverse a previously settled transaction. 
 	 *If the transaction has not been settled, it must be voided instead of refunded.*/
-	public BillingGatewayResponse doRefund(Entity billing_record,double amount) 	throws BillingGatewayException;
+	public BillingGatewayResponse doRefund(Entity billing_record,double amount,String auth_code) 	throws BillingGatewayException;
 	
 	/*Transaction credits apply a negative amount to the cardholder’s card.
 	 *In most situations, credits are disabled as transaction refunds should
