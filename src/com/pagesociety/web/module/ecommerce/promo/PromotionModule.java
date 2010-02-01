@@ -445,7 +445,7 @@ public class PromotionModule extends WebStoreModule
 	{
 		Entity user 	 		= (Entity)uctx.getUser();
 		Entity coupon_promotion = GET(COUPON_PROMOTION_ENTITY,coupon_promotion_id);	
-		GUARD(user,CAN_DELETE_COUPON_PROMOTION, coupon_promotion);
+		GUARD(user,CAN_DELETE_COUPON_PROMOTION,GUARD_INSTANCE,coupon_promotion);
 		return deleteCouponPromotion(coupon_promotion);	
 	}
 	
