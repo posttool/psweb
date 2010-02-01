@@ -1,5 +1,6 @@
 package com.pagesociety.web.module.ecommerce.billing;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -143,6 +144,8 @@ public class BillingModule extends WebStoreModule
 				 								BILLINGRECORD_FIELD_EXP_YEAR, exp_year);
 		
 		exp_year = validate_and_normalize_year(exp_year);
+		if(ccvn != null && ccvn.trim().equals(""))
+			ccvn = null;
 		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn,preferred);
 	
 	}
@@ -206,7 +209,7 @@ public class BillingModule extends WebStoreModule
 	
 	private int validate_and_normalize_year(int year)  throws WebApplicationException
 	{	
-		if(year < 2009)
+		if(year < 2010)
 			throw new WebApplicationException("PLEASE PROVIDE A VALID FOUR DIGIT YEAR. e.g. 2011");
 		return year;
 	}
@@ -274,6 +277,8 @@ public class BillingModule extends WebStoreModule
 											BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 											BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 		exp_year 			  = validate_and_normalize_year(exp_year);
+		if(ccvn != null && ccvn.trim().equals(""))
+			ccvn = null;
 		return updateBillingRecord(billing_record,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
 	  }
 	
