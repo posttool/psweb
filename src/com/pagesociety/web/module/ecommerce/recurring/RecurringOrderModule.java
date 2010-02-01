@@ -776,7 +776,7 @@ public class RecurringOrderModule extends ResourceModule
 		double initial_fee = tally_initial_fee(recurring_order);
 		if(initial_fee != 0)
 		{
-			billing_gateway.doSale(billing_record, initial_fee);		
+			billing_gateway.doSale(billing_record, initial_fee,null);		
 			log_order_init_bill_ok(recurring_order, initial_fee);
 		}
 	}
@@ -806,7 +806,7 @@ public class RecurringOrderModule extends ResourceModule
 		
 		if(amount > 0)
 		{
-			billing_gateway.doSale(billing_record, amount);
+			billing_gateway.doSale(billing_record, amount,null);
 			log_order_monthly_bill_ok(recurring_order, amount);
 		}
 		else
@@ -827,7 +827,7 @@ public class RecurringOrderModule extends ResourceModule
 		double amount = (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
 		if(amount > 0)
 		{
-			billing_gateway.doSale(billing_record, amount);
+			billing_gateway.doSale(billing_record, amount,null);
 			log_order_catchup_bill_ok(recurring_order, amount);
 		}
 		else

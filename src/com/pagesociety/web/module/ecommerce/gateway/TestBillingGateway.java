@@ -24,7 +24,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 			do_full_credit_card_validation = true;
 	}
 	/* Check if card is valid */
-	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year) throws BillingGatewayException
+	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,String ccvn) throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		if(Validator.isEmptyOrNull(first_name))
@@ -92,7 +92,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 		
 	/* Transaction sales are submitted and immediately flagged for settlement.*/
 	
-	public BillingGatewayResponse doSale(Entity billing_record,double amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doSale(Entity billing_record,double amount,String ccvn) 	throws BillingGatewayException
 	{
 		//double d = Math.random();
 		//if(d > 0.85)
@@ -105,7 +105,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	/* Transaction authorizations are authorized immediately but are not flagged for settlement.
 	 *  These transactions must be flagged for settled using doCapture.
 	 *  Authorizations typically remain active for 3 to 7 business days. */
-	public BillingGatewayResponse doAuth(Entity billing_record,double amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doAuth(Entity billing_record,double amount,String ccvn) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING AUTH FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
@@ -116,7 +116,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	 * Only authorizations can be captured. Captures can be submitted for an amount
 	 * equal to or less than the original authorization. */
 	//TODO: need auth code here probably
-	public BillingGatewayResponse doCapture(Entity billing_record,double amount) 	throws BillingGatewayException
+	public BillingGatewayResponse doCapture(Entity billing_record,double amount,String auth_code) 	throws BillingGatewayException
 	{
 		BillingGatewayResponse response = new BillingGatewayResponse();
 		System.out.println("DOING CAPTURE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
