@@ -364,7 +364,7 @@ public class PromotionModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		GUARD(user,CAN_CREATE_COUPON_PROMOTION,GUARD_TYPE, COUPON_PROMOTION_ENTITY,
 												COUPON_PROMOTION_FIELD_PROMO_CODE,promotion_code,
-												COUPON_PROMOTION_FIELD_PROMOTION,
+												COUPON_PROMOTION_FIELD_PROMOTION,promotion,
 												COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED,num_times_code_can_be_used,
 												COUPON_PROMOTION_FIELD_EXPIRATION_DATE,expiration_date);		
 		return createCouponPromotion(user,promotion_code,num_times_code_can_be_used,promotion,expiration_date);
