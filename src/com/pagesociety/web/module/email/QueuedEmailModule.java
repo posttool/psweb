@@ -3,6 +3,7 @@ package com.pagesociety.web.module.email;
 import java.io.File;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -23,6 +24,7 @@ import javax.mail.internet.MimeMultipart;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
+import com.pagesociety.sql.test.User;
 import com.pagesociety.web.ApplicationBootstrap;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
@@ -133,6 +135,19 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		String[] s_to = new String[to.size()];
 		s_to = to.toArray(s_to);
 		sendEmail(from, s_to, subject, template_name, template_data);
+	}
+	
+	@Export
+	public void SendEmail(UserApplicationContext uctx, String to, String subject,String message)
+			throws PersistenceException,WebApplicationException {
+		Entity user = (Entity)uctx.getUser();
+		String from = (String)user.getAttribute(User.FIELD_EMAIL);
+		GUARD(user, CAN_SEND_EMAIL);
+		String[] s_to = new String[]{ to };
+		Map<String, Object> template_data = new HashMap<String,Object>();
+		template_data.put("user", user);
+		template_data.put("message", message);
+		sendEmail(from, s_to, subject, "generic.fm", template_data);
 	}
 
 
