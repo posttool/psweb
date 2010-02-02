@@ -439,6 +439,7 @@ public class WebStoreModule extends WebModule
 		do_fill_deep(store, e, c, d, fill_fields, EMPTY_STRING_ARRAY);
 	}
 	
+	/*pass EMPTY_STRING_ARRAY for mask fields to mask none and FILL_ALL_FIELDS for fill)fields to fill all */
 	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
 		if(e == null || c == d)
@@ -466,6 +467,10 @@ public class WebStoreModule extends WebModule
 
 			FILL_REF(store,e,ref_field_name);
 
+			for(int m = 0;m < mask_fields.length;m++)
+				e.setAttribute(mask_fields[m], null);
+
+			
 			if(fd.isArray())
 			{
 				c++;
