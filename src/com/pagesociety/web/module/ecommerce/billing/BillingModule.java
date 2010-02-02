@@ -4,6 +4,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
@@ -177,7 +179,8 @@ public class BillingModule extends WebStoreModule
 		
 		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);	
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
-
+        Matcher matcher = Pattern.compile("[\\s\\.-]").matcher(cc_no);
+        cc_no = matcher.replaceAll("");
 
 		Entity billing_record =  NEW(BILLINGRECORD_ENTITY,
 				   					creator,
