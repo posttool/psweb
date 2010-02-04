@@ -26,13 +26,13 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	/* Check if card is valid */
 	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,String ccvn) throws BillingGatewayException
 	{
-		BillingGatewayResponse response = new BillingGatewayResponse();
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
 		if(Validator.isEmptyOrNull(first_name))
 			throw new BillingGatewayException("FIRST NAME IS REQUIRED");
 		if(Validator.isEmptyOrNull(last_name))
 			throw new BillingGatewayException("LAST NAME IS REQUIRED");
 		if(Validator.isEmptyOrNull(add_1))
-			throw new BillingGatewayException("ADRESS IS REQUIRED");
+			throw new BillingGatewayException("ADDRESS IS REQUIRED");
 		if(Validator.isEmptyOrNull(city))
 			throw new BillingGatewayException("CITY IS REQUIRED");
 		if(Validator.isEmptyOrNull(state))
@@ -83,7 +83,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 		}
 	
 		if(!do_full_credit_card_validation)
-			return new BillingGatewayResponse();
+			return new BillingGatewayResponse("XXX");
 		
 		validate_credit_card_number(cc_type,cc_no);
 		return response;
@@ -92,22 +92,22 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 		
 	/* Transaction sales are submitted and immediately flagged for settlement.*/
 	
-	public BillingGatewayResponse doSale(Entity billing_record,double amount,String ccvn) 	throws BillingGatewayException
+	public BillingGatewayResponse doSale(Entity billing_record,double amount,String ccvn,String ponum,String annotation) 	throws BillingGatewayException
 	{
 		//double d = Math.random();
 		//if(d > 0.85)
 		//	throw new BillingGatewayException("FAILED BILLING BECAUSE YOU ARE IN THE CYCLE OF FAILURE.");
 
-		BillingGatewayResponse response = new BillingGatewayResponse();
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
 		System.out.println("DOING SALE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		return response;
 	}
 	/* Transaction authorizations are authorized immediately but are not flagged for settlement.
 	 *  These transactions must be flagged for settled using doCapture.
 	 *  Authorizations typically remain active for 3 to 7 business days. */
-	public BillingGatewayResponse doAuth(Entity billing_record,double amount,String ccvn) 	throws BillingGatewayException
+	public BillingGatewayResponse doAuth(Entity billing_record,double amount,String ccvn,String ponum,String annotation) 	throws BillingGatewayException
 	{
-		BillingGatewayResponse response = new BillingGatewayResponse();
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
 		System.out.println("DOING AUTH FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		return response;
 	}
@@ -116,9 +116,9 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	 * Only authorizations can be captured. Captures can be submitted for an amount
 	 * equal to or less than the original authorization. */
 
-	public BillingGatewayResponse doCapture(Entity billing_record,double amount,String ref_num) 	throws BillingGatewayException
+	public BillingGatewayResponse doCapture(Entity billing_record,String ref_num,Double amount) 	throws BillingGatewayException
 	{
-		BillingGatewayResponse response = new BillingGatewayResponse();
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
 		System.out.println("DOING CAPTURE FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		return response;
 	}
@@ -130,7 +130,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	//TODO: need some sort of transaction code here probably
 	public BillingGatewayResponse doVoid(Entity billing_record,String ref_num) 	throws BillingGatewayException
 	{
-		BillingGatewayResponse response = new BillingGatewayResponse();
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
 		System.out.println("DOING VOID FOR BILLING RECORD."+" "+billing_record);
 		//System.out.println(billing_record.toString());
 		return response;
@@ -138,10 +138,10 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	
 	/*Transaction refunds will reverse a previously settled transaction. 
 	 *If the transaction has not been settled, it must be voided instead of refunded.*/
-	public BillingGatewayResponse doRefund(Entity billing_record,double amount,String ref_num) 	throws BillingGatewayException
+	public BillingGatewayResponse doRefund(Entity billing_record,String ref_num) 	throws BillingGatewayException
 	{
-		BillingGatewayResponse response = new BillingGatewayResponse();
-		System.out.println("DOING REFUND FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
+		System.out.println("DOING REFUND FOR BILLING RECORD IN THE AMOUNT OF: xxx "+billing_record);
 		//System.out.println(billing_record.toString());
 		return response;
 	}
@@ -151,7 +151,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 	 *be used instead.*/	
 	public BillingGatewayResponse doCredit(Entity billing_record,double amount) 	throws BillingGatewayException
 	{
-		BillingGatewayResponse response = new BillingGatewayResponse();
+		BillingGatewayResponse response = new BillingGatewayResponse("XXX");
 		System.out.println("DOING CREDIT FOR BILLING RECORD IN THE AMOUNT OF: "+amount+" "+billing_record);
 		//System.out.println(billing_record.toString());
 		return response;

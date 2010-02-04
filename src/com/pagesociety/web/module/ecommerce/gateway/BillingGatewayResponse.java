@@ -4,8 +4,32 @@ import java.util.HashMap;
 
 public class BillingGatewayResponse 
 {
+	public static final String KEY_REFCODE = "REFCODE";
+	public static final String KEY_MESSAGE = "MESSAGE";
+	
 	private HashMap<String,Object> _props;
 	
+	public BillingGatewayResponse(String refcode)
+	{
+		_props.put(KEY_REFCODE, refcode);
+	}
+	
+	public BillingGatewayResponse(String refcode,String message)
+	{
+		_props.put(KEY_REFCODE, refcode);
+		_props.put(KEY_MESSAGE, message);
+	}
+	
+	public String getRefCode()
+	{
+		return (String)_props.get(KEY_REFCODE);
+	}
+
+	public String getMessage()
+	{
+		return (String)_props.get(KEY_MESSAGE);
+	}
+
 	public void setProperty(String name,Object value)
 	{
 		_props.put(name,value);

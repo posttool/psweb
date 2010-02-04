@@ -8,6 +8,7 @@ public class BillingGatewayException extends Exception
 	public BillingGatewayException(String msg)
 	{
 		super(msg);
+		user_recoverable = true;
 	}
 	
 	public BillingGatewayException(String msg,double amount)
