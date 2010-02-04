@@ -4,6 +4,7 @@ package com.pagesociety.web.module.ecommerce.gateway;
 public class BillingGatewayException extends Exception 
 {
 	private double amount;
+	private boolean user_recoverable = false;
 	public BillingGatewayException(String msg)
 	{
 		super(msg);
@@ -19,9 +20,20 @@ public class BillingGatewayException extends Exception
 	{
 		super(msg, e);
 	}
+
+	public BillingGatewayException(String msg,boolean recoverable)
+	{
+		super(msg);
+		this.user_recoverable = recoverable;
+	}
 	
 	public double getAmount()
 	{
 		return amount;
+	}
+	
+	public boolean isUserRecoverable()
+	{
+		return user_recoverable;
 	}
 }
