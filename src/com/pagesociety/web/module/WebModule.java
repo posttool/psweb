@@ -96,6 +96,30 @@ public abstract class WebModule extends Module
 		Object val = config.get(name);
 		return (String)val;
 	}
+	
+	public String GET_OPTIONAL_CONFIG_PARAM(String name,String default_val,Map<String,Object> config) throws InitializationException
+	{
+		Object val = config.get(name);
+		if(val == null)
+			return default_val;
+		return (String)val;
+	}
+
+	public int GET_OPTIONAL_INT_CONFIG_PARAM(String name,int default_val,Map<String,Object> config) throws InitializationException
+	{
+		Object val = config.get(name);
+		if(val == null)
+			return default_val;
+		return Integer.parseInt((String)val);
+	}
+	
+	public boolean GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(String name,boolean default_val,Map<String,Object> config) throws InitializationException
+	{
+		Object val = config.get(name);
+		if(val == null)
+			return default_val;
+		return Boolean.parseBoolean((String)val);
+	}
 
 	
 	protected void INFO(String message)
