@@ -1,6 +1,9 @@
 package com.pagesociety.web.module.ecommerce.gateway;
 
  import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -25,35 +28,192 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.util.RandomGUID;
+import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.ecommerce.billing.BillingModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayResponse;
+import com.pagesociety.web.module.encryption.EncryptionModule;
+import com.pagesociety.web.module.encryption.IEncryptionModule;
 import com.pagesociety.web.module.util.Validator;
 import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
 
   public class PayFlowProGateway extends WebModule implements IBillingGateway 
   {
-        
-     public static final String TARGET_HTTPS_SERVER = "pilot-payflowpro.paypal.com"; 
-     public static final int    TARGET_HTTPS_PORT   = 443; 
+      
+	  public static final String SLOT_BILLING_MODULE 			= "billing-module";
+	  
+	  public static final String PARAM_DEBUG_TRAFFIC 			= "debug-traffic";
+	  public static final String PARAM_PAYPAL_HTTPS_SERVER 		= "ppf-https-server";
+	  public static final String PARAM_PAYPAL_HTTPS_SERVER_PORT = "ppf-https-server-port";
+	  public static final String PARAM_PAYFLOW_PRODUCT_NAME 	= "ppf-product-name";
+	  public static final String PARAM_PAYFLOW_PRODUCT_VERSION 	= "ppf-product-name";
+	  public static final String PARAM_PAYFLOW_REQUEST_TIMEOUT 	= "ppf-request-timeout-seconds";
+	  
+	  private static final String PAYPAL_PRIVATE_DATA_FILENAME = "000";
+	  
+     //public static final String TARGET_HTTPS_SERVER = "pilot-payflowpro.paypal.com"; 
+     //public static final int    TARGET_HTTPS_PORT   = 443; 
 
-     private String payflow_vendor  = "new226423611";
-     private String payflow_user    = payflow_vendor;
-     private String payflow_partner = "wfb";
-     private String payflow_pwd	    = "nc1203091996";
+     private IEncryptionModule encryption_module;
+
 
      
-     public static void main(String[] args) throws Exception 
-     {
-        PayFlowProGateway c = new PayFlowProGateway();
-        //Map<String,String> response = c.do_ppf_sale(24.00);
-        //dump_nvp_response(response);
-     }
+     /* encrypted gateway params */
+     private String e_payflow_partner = null;
+     private String e_payflow_vendor  = null;
+     private String e_payflow_user    = null;
+     private String e_payflow_pwd	  = null;
+
+     private String ppf_https_server 			= null;
+     private int	ppf_https_port   			= 443;
+     private String ppf_product_name 			= null;
+     private String ppf_product_version 		= null;
+     private int 	ppf_request_timeout_seconds	= 45;
      
+     private boolean debug_traffic = false;
+     
+ 	public void init(WebApplication app,Map<String,Object> config) throws  InitializationException
+	{
+ 		super.init(app, config);
+ 		encryption_module = (IEncryptionModule)((BillingModule)getSlot(SLOT_BILLING_MODULE)).getEncryptionModule();
+ 		
+ 		ppf_https_server 			= GET_REQUIRED_CONFIG_PARAM(PARAM_PAYPAL_HTTPS_SERVER, config);
+ 		ppf_https_port	 			= GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_PAYPAL_HTTPS_SERVER_PORT,443, config);
+ 		ppf_product_name 			= GET_OPTIONAL_CONFIG_PARAM(PARAM_PAYFLOW_PRODUCT_NAME, config);
+ 		ppf_product_version 		= GET_OPTIONAL_CONFIG_PARAM(PARAM_PAYFLOW_PRODUCT_NAME, config);
+ 		ppf_request_timeout_seconds = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_PAYFLOW_REQUEST_TIMEOUT,45, config);
+ 		debug_traffic				= GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(PARAM_DEBUG_TRAFFIC, false, config);
+ 		try{
+ 			setup(app,config);
+ 		}catch(Exception e)
+ 		{
+ 			throw new InitializationException("FIALED SETTING UP PRIVATE PAYPAL DATA FILE.", e);
+ 		}
+ 	}
+
+	protected void defineSlots()
+	{
+		super.defineSlots();
+		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.billing.BillingModule.class, true);
+	}
+
+ 	
+ 	private void setup(WebApplication app,Map<String,Object> config) throws WebApplicationException
+ 	{
+ 		File private_data_file = GET_MODULE_DATA_FILE(app, PAYPAL_PRIVATE_DATA_FILENAME,false);
+		if(private_data_file == null) 
+			setup_private_data_file(app, private_data_file);
+		set_encrypted_gateway_params(app);
+ 	}
+ 	
+ 	private void set_encrypted_gateway_params(WebApplication app) throws WebApplicationException
+ 	{
+ 		File private_data_file 	   = GET_MODULE_DATA_FILE(app, PAYPAL_PRIVATE_DATA_FILENAME,false);
+ 		try{
+	 		BufferedReader reader 	   = new BufferedReader(new FileReader(private_data_file));
+	 		e_payflow_partner 	= reader.readLine();
+	 		e_payflow_vendor 	= reader.readLine();
+	 		e_payflow_user 		= reader.readLine();
+	 		e_payflow_pwd 		= reader.readLine();
+	 		reader.close();
+ 		}catch(Exception e)
+ 		{
+ 			ERROR(e);
+ 		}
+ 	}
+ 	
+ 	private void setup_private_data_file(WebApplication app,File key_test_file) throws WebApplicationException
+	{
+		String response = GET_CONSOLE_INPUT("PayFlowProGateway "+getName()+" needs to be setup. Are you ready?(Y/N)>\n>");
+		if(response.equalsIgnoreCase("N"))
+			throw new WebApplicationException("UNABLE TO START PayFlowProGateway MODULE "+getName()+". USER CANCELLED.");
+	
+		String s_payflow_partner = null;
+		String s_payflow_vendor = null;
+		String s_payflow_user = null;
+		String s_payflow_pwd = null;
+		while(true)
+		{
+			s_payflow_partner = GET_CONSOLE_INPUT("Please enter your PayFlowPro Partner ID, for example wfb:\n>");
+			if(s_payflow_partner.length() < 1)
+				continue;
+			else
+			{
+				String answer = GET_CONSOLE_INPUT("Partner ID is "+s_payflow_partner+". Is this correct[y/n]?>\n");
+				if(answer.equalsIgnoreCase("y"))
+					continue;
+				break;
+			}
+		}
+		
+		while(true)
+		{
+			s_payflow_vendor = GET_CONSOLE_INPUT("Please enter your PayFlowPro Vendor ID or Merchant Login Id:\n>");
+			if(s_payflow_partner.length() < 1)
+				continue;
+			else
+			{
+				String answer = GET_CONSOLE_INPUT("Vendor ID is "+s_payflow_vendor+". Is this correct[y/n]?>\n");
+				if(answer.equalsIgnoreCase("y"))
+					continue;
+				break;
+			}
+		}
+		
+		while(true)
+		{
+			s_payflow_user = GET_CONSOLE_INPUT("Please enter your PayFlowPro User ID or leave blank to set it to vendor id:\n>");
+			if(s_payflow_user.trim().equals(""))
+			{
+				s_payflow_user = s_payflow_vendor;
+			}
+			else
+			{
+				String answer = GET_CONSOLE_INPUT("User ID is "+s_payflow_user+". Is this correct[y/n]>?\n");
+				if(answer.equalsIgnoreCase("y"))
+					continue;
+				break;
+			}
+		}
+		
+		while(true)
+		{
+			s_payflow_pwd = GET_CONSOLE_INPUT("Please enter your PayFlowPro password:\n>");
+			if(s_payflow_pwd.length() < 1)
+				continue;
+			else
+			{
+				String answer = GET_CONSOLE_INPUT("Password is "+s_payflow_pwd+". Is this correct[y/n]?>\n");
+				if(answer.equalsIgnoreCase("y"))
+					continue;
+				break;
+			}
+		}
+
+		File private_data_file = GET_MODULE_DATA_FILE(app, PAYPAL_PRIVATE_DATA_FILENAME,true);
+		try{
+			FileWriter fw = new FileWriter(private_data_file);
+			fw.write(encryption_module.encryptString(s_payflow_partner)+"\n");
+			fw.write(encryption_module.encryptString(s_payflow_vendor)+"\n");
+			fw.write(encryption_module.encryptString(s_payflow_user)+"\n");
+			fw.write(encryption_module.encryptString(s_payflow_pwd)+"\n");
+			fw.close();
+		}catch(IOException ioe)
+		{
+			ioe.printStackTrace();
+			throw new WebApplicationException("FAILED WRITING SECRET KEY VERIFICATION FILE.");
+		}		
+	}
+ 	
+	
      /* Check if card is valid */
  	public BillingGatewayResponse doValidate(String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,String ccvn) throws BillingGatewayException
  	{
+ 		cc_no = normalize_cc_no(cc_no);
 		if(Validator.isEmptyOrNull(first_name))
 			throw new BillingGatewayException("FIRST NAME IS REQUIRED");
 		if(!Validator.isAlpha(first_name))
@@ -118,14 +278,14 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
 		////FINALLY SEND IT TO THE PROCESSOR TO VALIDATE/////
  		Map<String,String> ppf_response = null;
  		try{
- 			ppf_response = do_ppf_validate(normalize_cc_no(cc_no), 
- 									   normalize_month(exp_month),
- 									   normalize_year(exp_year),
- 									   add_1,
- 									   city,
- 									   state,
- 									   postal_code,
- 									   ccvn);
+ 			ppf_response = do_ppf_validate( normalize_cc_no(decrypt_cc_no(cc_no)), 
+ 									   		normalize_month(exp_month),
+ 									   		normalize_year(exp_year),
+ 									   		add_1,
+ 									   		city,
+ 									   		state,
+ 									   		postal_code,
+ 									   		ccvn);
  		}catch(PPFException ppfe)
  		{
  			TRANSLATE_PPF_EXCEPTION(ppfe);
@@ -167,7 +327,7 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
 		}
  		
  		try{
- 			ppf_response = do_ppf_sale(normalize_cc_no(cc_no), 
+ 			ppf_response = do_ppf_sale(normalize_cc_no(decrypt_cc_no(cc_no)), 
  									   normalize_month(exp_month),
  									   normalize_year(exp_year),
  									   first_name, 
@@ -223,7 +383,7 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
 		}
  		
  		try{
- 			ppf_response = do_ppf_auth(normalize_cc_no(cc_no), 
+ 			ppf_response = do_ppf_auth(normalize_cc_no(decrypt_cc_no(cc_no)), 
  									   normalize_month(exp_month),
  									   normalize_year(exp_year),
  									   first_name, 
@@ -477,11 +637,16 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
     	 Map<String,String> nvp_response = null;
 		 String request_id  	= gen_request_id(); 
 		 String current_request =  gen_nvp_request(request_id,params);		 
-		 int tries = 0;
+		 if(debug_traffic)
+		 {
+			 INFO("DEBUG TRAFFIC(REQUEST)");
+			 INFO(current_request);
+		 }
+		int tries = 0;
 		 while(true)
 		 {
 			 try {    	 	 	 
-	    		 socket = SSLSocketFactory.getDefault().createSocket(TARGET_HTTPS_SERVER, TARGET_HTTPS_PORT);
+	    		 socket = SSLSocketFactory.getDefault().createSocket(ppf_https_server, ppf_https_port);
 	    		 Writer out = new OutputStreamWriter(socket.getOutputStream(), "ISO-8859-1");
 	    		 printSocketInfo((SSLSocket)socket);
 	    		 out.write(current_request);
@@ -524,7 +689,10 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
 		 {
 			 ERROR(ioe);
 		 }
-		return nvp_response;
+
+		 if(debug_traffic)
+			 dump_nvp_response(nvp_response);
+		 return nvp_response;
      }
 
      private Map<String,String> parse_nvp_response(BufferedReader in) throws IOException
@@ -571,20 +739,18 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
      }
      
      
-     private static void dump_nvp_response(Map<String,String> response)
+     private void dump_nvp_response(Map<String,String> response)
      {
     	 Iterator<String> it = response.keySet().iterator();
     	 while(it.hasNext())
     	 {
     		 String key = it.next();
-    		 System.out.println(key+" = "+response.get(key));
+    		 INFO("DEBUG TRAFFIC(RESPONSE)");
+    		 INFO(key+" = "+response.get(key));
     	 }
      }
      
-     String payflow_product_name 			= "NewCaliforniaMusic";
-     String payflow_product_version 		= "0.1";
-     int 	payflow_request_timeout			= 45;
-     String payflow_server					= TARGET_HTTPS_SERVER;
+
      
      private String gen_nvp_request(String request_id,Object... key_values)
      {
@@ -592,12 +758,12 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
     	StringBuilder buf = new StringBuilder(); 
     	int content_length = body.length();
     	gen_nvp_request_header(buf,
-    							payflow_server,
+    							ppf_https_server,
     							request_id,
     							content_length,
-    							payflow_request_timeout,
-    							payflow_product_name,
-    							payflow_product_version); 
+    							ppf_request_timeout_seconds,
+    							ppf_product_name,
+    							ppf_product_version); 
     	buf.append(body);
     	return finalize_nvp_request(buf);
      }
@@ -608,11 +774,13 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
          buf.append("Connection: close\r\n");
          buf.append("Content-Type: text/namevalue\r\n");
          buf.append("Content-Length: "+content_length+"\r\n");
-         buf.append("Host: "+TARGET_HTTPS_SERVER+"\r\n");
+         buf.append("Host: "+ppf_https_server+"\r\n");
          buf.append("X-VPS-REQUEST-ID: "+request_id+"\r\n");
          buf.append("X-VPS-CLIENT-TIMEOUT: "+String.valueOf(timeout)+"\r\n");
-         buf.append("X-VPS-VIT-Integration-Product: "+product_name+"\r\n");
-         buf.append("X-VPS-VIT-Integration-Version: "+product_version+"\r\n");
+         if(product_name != null)
+        	 buf.append("X-VPS-VIT-Integration-Product: "+product_name+"\r\n");
+         if(product_version != null)
+        	 buf.append("X-VPS-VIT-Integration-Version: "+product_version+"\r\n");
          buf.append("\r\n"); 	  
      }
      
@@ -620,18 +788,26 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
      {
     	return buf.toString(); 
      }
-     
-
-     Object[] MESSAGE_AUTH_PARAMS = new Object[]{	"VENDOR",payflow_vendor,
-    	 											"USER",payflow_user,
-    	 											"PARTNER",payflow_partner,
-    	 											"PWD",payflow_pwd};
-    	 									
+ 									
      private String gen_nvp_body(Object... key_values)
      {
     	 StringBuilder buf = new StringBuilder();
     	 append_to_nvp_body(buf, key_values);
+    	 Object[] MESSAGE_AUTH_PARAMS = null;
+    	 try{
+	    	 MESSAGE_AUTH_PARAMS = new Object[]
+	    	 {	
+	    		"VENDOR",encryption_module.decryptString(e_payflow_vendor),
+				"USER",encryption_module.decryptString(e_payflow_user),
+				"PARTNER",encryption_module.decryptString(e_payflow_partner),
+				"PWD",encryption_module.decryptString(e_payflow_pwd)
+			 };	 
+    	 }catch(Exception e)
+    	 {
+    		 ERROR(e);
+    	 }
     	 append_to_nvp_body(buf, MESSAGE_AUTH_PARAMS);
+    	 MESSAGE_AUTH_PARAMS = null;
     	 return finalize_nvp_body(buf);
     	 
      }
@@ -664,7 +840,7 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
      
      private String gen_request_id()
      {
-    	 return "NC"+String.valueOf(new Date().getTime());
+    	 return RandomGUID.getGUID();
      }
      
     
@@ -722,7 +898,18 @@ import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
   	{
         return acct_no.replaceAll("[^\\d]", "" );
   	}
-     
+    
+  	private String decrypt_cc_no(String ccno)
+  	{
+  		try{
+  			return encryption_module.decryptString(ccno);
+  		}catch(Exception e)
+  		{
+  			ERROR(e);
+  		}
+  		return null;
+  	}
+  	
     private static String normalize_month(int month)
     {
     	if(month > 9)
