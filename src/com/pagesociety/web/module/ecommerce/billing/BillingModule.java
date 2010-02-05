@@ -22,6 +22,7 @@ import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
+import com.pagesociety.web.module.encryption.EncryptionModule;
 import com.pagesociety.web.module.encryption.IEncryptionModule;
 
 
@@ -61,6 +62,11 @@ public class BillingModule extends WebStoreModule
 		DEFINE_SLOT(SLOT_BILLING_GATEWAY_MODULE,IBillingGateway.class,true);
 		DEFINE_SLOT(SLOT_ENCRYPTION_MODULE,IEncryptionModule.class,true);
 	
+	}
+	
+	public IEncryptionModule getEncryptionModule()
+	{
+		return encryption_module;
 	}
 	
 	public static final String CAN_CREATE_BILLING_RECORD   		   = "CAN_CREATE_BILLING_RECORD";
