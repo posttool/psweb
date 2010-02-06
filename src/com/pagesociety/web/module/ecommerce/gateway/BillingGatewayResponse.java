@@ -7,10 +7,11 @@ public class BillingGatewayResponse
 	public static final String KEY_REFCODE = "REFCODE";
 	public static final String KEY_MESSAGE = "MESSAGE";
 	
-	private HashMap<String,Object> _props;
+	private HashMap<String,Object> _props = new HashMap<String,Object>();
 	
 	public BillingGatewayResponse(String refcode)
 	{
+		
 		_props.put(KEY_REFCODE, refcode);
 	}
 	
