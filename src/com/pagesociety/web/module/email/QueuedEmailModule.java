@@ -79,14 +79,16 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		String[] embedded_content_string = GET_OPTIONAL_LIST_PARAM(PARAM_EMBEDDED_CONTENT, config);
 		if(embedded_content_string == null)
 			embedded_content = new Object[0];
-		if(embedded_content_string.length % 3 != 0)
+		else
+			embedded_content = new Object[embedded_content_string.length];			
+
+		if( embedded_content.length % 3 != 0)
 			throw new InitializationException("embedded_content param should have a length which is a multiple of 3 since format for each item is <embed-content-id>,<embed-mime-type>,<embed-filename>");
 		try{
 			File web_root = new File(getApplication().getConfig().getWebRootDir());
-			embedded_content = new Object[embedded_content_string.length];
-			for(int i = 0; i < embedded_content_string.length;i+=3)
+
+			for(int i = 0; i < embedded_content.length;i+=3)
 			{
-					
 				String cid 		 = embedded_content_string[i];
 				String mime_type = embedded_content_string[i+1];
 				String filename  = embedded_content_string[i+2];
