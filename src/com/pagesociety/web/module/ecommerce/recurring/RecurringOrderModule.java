@@ -1071,7 +1071,7 @@ public class RecurringOrderModule extends ResourceModule
 				ERROR(wae);
 				continue;
 			}
-			
+			//TODO: might want to check for promotion here and set order back to init and 0 outstanding balance//
 			try{
 				Date now = new Date();
 				double balance = (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
