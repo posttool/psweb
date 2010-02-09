@@ -150,9 +150,9 @@ public class SystemNotificationModule extends WebStoreModule
 		{
 			case NOTIFICATION_TYPE_USER:
 				if(level == NOTIFICATION_LEVEL_INFO)
-					GUARD(user, CAN_DELETE_USER_NOTIFICATION,GUARD_INSTANCE,notification_user);
+					GUARD(user, CAN_DELETE_USER_NOTIFICATION,GUARD_INSTANCE,notification);
 				if(level == NOTIFICATION_LEVEL_ALERT)
-					GUARD(user, CAN_DELETE_USER_ALERT,GUARD_INSTANCE,notification_user);
+					GUARD(user, CAN_DELETE_USER_ALERT,GUARD_INSTANCE,notification);
 				break;
 			case NOTIFICATION_TYPE_GLOBAL:
 				if(level == NOTIFICATION_LEVEL_INFO)
