@@ -578,7 +578,8 @@ public class ResourceModule extends WebStoreModule
 			{
 				/* if we cant create a resource we need to delete the upload */
 				try{
-					path_provider.delete(path_token);
+					if(!update)
+						path_provider.delete(path_token);
 				}catch(Exception e){e.printStackTrace();}//swallow this one
 				
 				ERROR(pe);
