@@ -527,8 +527,11 @@ public class ResourceModule extends WebStoreModule
 		}
 		if(!bulk_upload)
 			outs = path_provider.getOutputStreams(path_token,content_type,file_size); 
+		String throw_exception_in_parse_upload = upload.getParameter("throw_exception_in_parse_upload");
 		try{
 			current_upload.parse(outs);
+			if(throw_exception_in_parse_upload != null)
+				throw new Exception("YOU TOLD ME TO THROW THIS.");
 			path_provider.endParse(path_token);
 		}catch(Exception e)
 		{
@@ -560,7 +563,8 @@ public class ResourceModule extends WebStoreModule
 		}
 		else
 		{
-
+			String throw_exception_in_add_resource = upload.getParameter("throw_exception_in_add_resource");
+			
 			Entity resource = null;
 			try{
 				if(update)
@@ -571,7 +575,10 @@ public class ResourceModule extends WebStoreModule
 				else
 				{
 					resource = do_add_resource(upload,user,content_type,simple_type,file_name,ext,file_size,path_token);					  
+					if(throw_exception_in_add_resource != null)
+						throw new PersistenceException("I AM THROWING THIS BECAUSE YOU TOLD ME TO.");
 					uploaded_file_info.setCompletionObject(resource);
+					
 				}
 			
 			}catch(PersistenceException pe)
