@@ -581,7 +581,7 @@ public class ResourceModule extends WebStoreModule
 					path_provider.delete(path_token);
 				}catch(Exception e){e.printStackTrace();}//swallow this one
 				
-				pe.printStackTrace();
+				ERROR(pe);
 				Exception ee = new WebApplicationException("COULDNT CREATE RESOURCE FOR FILE UPLOAD",pe);
 				uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
 				return false;
