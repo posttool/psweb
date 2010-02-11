@@ -83,7 +83,7 @@ public class ScriptModuleRawUI extends RawUIModule
 		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 		SCRIPT(uctx,"static/js/codemirror.js");
 		FORM_START(uctx,getName(),RAW_SUBMODE_DEFAULT);
-		
+		//FORM_TEXTAREA_FIELD(uctx, name, cols, rows, default_value)
 		FORM_END(uctx);
 		
 		String editor_setup = "<script>\nvar editor = CodeMirror.fromTextArea('inputfield', {\n"+
