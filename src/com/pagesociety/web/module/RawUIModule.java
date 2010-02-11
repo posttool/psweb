@@ -170,6 +170,16 @@ public class RawUIModule extends WebModule
 		buf.append("</HEAD>");
 	}
 	
+	protected void SCRIPT(UserApplicationContext uctx,String src)
+	{
+		SCRIPT(get_user_buf(uctx),src);
+	}
+	
+	protected void SCRIPT(StringBuilder buf,String src)
+	{
+		buf.append("<script src='"+src+"' type='text/javascript'></script>\n");
+	}
+	
 	protected void BODY_START(UserApplicationContext uctx,String bgcolor,String font_family,String font_color,int font_size)
 	{
 		BODY_START(get_user_buf(uctx), bgcolor, font_family, font_color, font_size);
@@ -283,9 +293,9 @@ public class RawUIModule extends WebModule
 	protected void FORM_TEXTAREA_FIELD(StringBuilder buf,String name,int cols,int rows,String default_value)
 	{
 		if(default_value == null)
-			buf.append("<TEXTAREA name='"+name+"' cols='"+cols+"' rows='"+rows+"'></TEXTAREA>\n");
+			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"'></TEXTAREA>\n");
 		else
-			buf.append("<TEXTAREA name='"+name+"' cols='"+cols+"' rows='"+rows+"' >"+default_value+"</TEXTAREA>\n");
+			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"' >"+default_value+"</TEXTAREA>\n");
 	}
 	
 	protected void FORM_PASSWORD_FIELD(UserApplicationContext uctx,String name,int size)
@@ -701,7 +711,16 @@ public class RawUIModule extends WebModule
 		buf.append("</script>\n");
 	}
 	
-
+	protected void INSERT(UserApplicationContext uctx,String contents)
+	{
+		INSERT(get_user_buf(uctx) , contents);
+	}
+	
+	protected void INSERT(StringBuilder buf,String contents)
+	{
+		buf.append(contents);
+	}
+	
 	protected String RAW_MODULE_EXEC_ROOT()
 	{
 		return getApplication().getConfig().getWebRootUrl()+"/"+getName()+"/Exec/.raw";

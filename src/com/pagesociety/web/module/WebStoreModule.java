@@ -81,6 +81,11 @@ public class WebStoreModule extends WebModule
 
 	}
 
+	public PersistentStore getStore()
+	{
+		return store;
+	}
+	
 	protected void defineSlots()
 	{
 		super.defineSlots();
