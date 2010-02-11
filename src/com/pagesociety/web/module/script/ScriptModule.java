@@ -44,8 +44,8 @@ public class ScriptModule extends WebStoreModule
 	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		try{
-			System.out.println("!!!!GONNA RUN STORE SCRIPT!!!!");
-			run_store_script("/test.js");
+			//System.out.println("!!!!GONNA RUN STORE SCRIPT!!!!");
+			//run_store_script("/test.js");
 		}catch(Exception e)
 		{
 			throw new InitializationException(e.getMessage());
@@ -66,85 +66,127 @@ public class ScriptModule extends WebStoreModule
 	public static final String PROMO_PROGRAM_WRAPPER_HEADER = "function apply_promotion(order){\n";
 	public static final String PROMO_PROGRAM_WRAPPER_FOOTER = "\n}\n";
 	public static final String JS_ENGINE_NAME = "JavaScript";
-	private void validate_promotion_source(String promotion_name,String source) throws WebApplicationException
+	public String validateScriptSource(String source) throws WebApplicationException
 	{
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
 		ScriptEngineManager mgr = new ScriptEngineManager();
 		StringBuilder buf = new StringBuilder();
-		buf.append(PROMO_PROGRAM_WRAPPER_HEADER);
 		buf.append(source );
-		buf.append(PROMO_PROGRAM_WRAPPER_FOOTER);
-		 
 		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);		 
 		ScriptContext ctx = jsEngine.getContext();
-		ctx.setAttribute(ScriptEngine.FILENAME ,promotion_name, ScriptContext.ENGINE_SCOPE);
 		ctx.setAttribute("MODULE", this,ScriptContext.ENGINE_SCOPE );
-
-		
 		//check syntax//
 		try {
 			jsEngine.eval(buf.toString());
 		} catch (ScriptException ex)
 		{
-			throw new WebApplicationException("SYNTAX ERROR IN PROMOTIONS SCRIPT.\n"+ex.getMessage(),ex);
+			return new String("SYNTAX ERROR IN SCRIPT.\n"+ex.getMessage());
 		}    
-			  
+		return "VALIDATE OK";
 	}
 	
-	private Object run_store_script(String filename_abs_path) throws PersistenceException,WebApplicationException
+	public String executeScript(String script) throws PersistenceException,WebApplicationException
 	{	
+		
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		if(uctx != null)
+		{
+			uctx.setProperty(USER_OUTPUT_BUF, new StringBuilder(new Date().toString()+"\n"));
+		}
 		START_TRANSACTION();
 		ScriptEngineManager mgr = new ScriptEngineManager();
 		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);		 
 		ScriptContext ctx = jsEngine.getContext();
-		ctx.setAttribute(ScriptEngine.FILENAME ,filename_abs_path,ScriptContext.ENGINE_SCOPE);
+		ctx.setAttribute(ScriptEngine.FILENAME ,getName(),ScriptContext.ENGINE_SCOPE);
 		ctx.setAttribute("$", this,ScriptContext.ENGINE_SCOPE );
-		FileReader f_reader = null;
-		try{
-			f_reader = new FileReader(filename_abs_path);
-		}catch(FileNotFoundException fnfe)
-		{
-			throw new WebApplicationException("UNABLE TO FIND SCRIPT FILE "+filename_abs_path);
-		}
+		String output = "";
 		try {
 
-			jsEngine.eval(f_reader);
+			jsEngine.eval(script);
 		} catch (ScriptException ex)
 		{
-			throw new WebApplicationException("SYNTAX ERROR IN PROMOTIONS SCRIPT.\n"+ex.getMessage(),ex);
+			ROLLBACK_TRANSACTION();
+			return new String("EXCEPTION WHILE EXECUTING SCRIPT.\n"+ex.getMessage());
 		}    
 		
-		  //apply promotion//
 		Object ret = null;  
 		try {
 			  Invocable inv = (Invocable)jsEngine;
 			  ret   = inv.invokeFunction("main",getApplication());
 		   } catch (Exception ex) {
-		      ex.printStackTrace();
 		      ROLLBACK_TRANSACTION();
+		      if(uctx != null)
+		      	{	
+		    	  output = ((StringBuilder)uctx.getProperty(USER_OUTPUT_BUF)).toString();
+		      	}
+		      return new String(output+"\n"+"EXCEPTION WHILE EXECUTING SCRIPT.\n"+ex.getMessage());
 		   }    
 		   COMMIT_TRANSACTION();
-		   return ret;
+		   if(uctx != null)
+		      	{	
+		    	  output = ((StringBuilder)uctx.getProperty(USER_OUTPUT_BUF)).toString();
+				}
+		   return output+"\n"+"EXECUTE OK";
 	}
 	
 	//xtra stuff exported to javascript//
+	private static final String USER_OUTPUT_BUF = "_user_output_buf_";
+
 	public void INFO(String message)
 	{
-		super.INFO(message);
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		if(uctx!=null)
+		{
+			StringBuilder buf = (StringBuilder)uctx.getProperty(USER_OUTPUT_BUF);
+			buf.append("<INFO> "+message+"\n");
+		}
+		else
+		{
+			super.INFO(message);
+		}
 	}
 	
 	public void WARNING(String message)
 	{
-		super.WARNING(message);
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		if(uctx!=null)
+		{
+			StringBuilder buf = (StringBuilder)uctx.getProperty(USER_OUTPUT_BUF);
+			buf.append("<WARNING> "+message+"\n");
+		}
+		else
+		{
+			super.WARNING(message);
+		}
 	}
 	
 	public void ERROR(String message)
 	{
-		super.ERROR(message);
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		if(uctx!=null)
+		{
+			StringBuilder buf = (StringBuilder)uctx.getProperty(USER_OUTPUT_BUF);
+			buf.append("<ERROR> "+message+"\n");
+		}
+		else
+		{
+			super.ERROR(message);
+		}
 	}
 	
 	public void ERROR(Exception e)
 	{
-		super.ERROR(e);
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		if(uctx!=null)
+		{
+			//should get stack trace as string //
+			StringBuilder buf = (StringBuilder)uctx.getProperty(USER_OUTPUT_BUF);
+			buf.append("<ERROR> "+e.getMessage()+"\n");
+		}
+		else
+		{
+			super.ERROR(e);
+		}
 	}
 	
 	

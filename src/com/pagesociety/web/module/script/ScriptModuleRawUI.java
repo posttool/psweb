@@ -1,22 +1,10 @@
 package com.pagesociety.web.module.script;
 
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
-import javax.servlet.http.HttpServletResponse;
+
 
 
 
@@ -31,7 +19,7 @@ import com.pagesociety.web.module.permissions.PermissionEvaluator;
 
 public class ScriptModuleRawUI extends RawUIModule 
 {	
-	public static final String SLOT_SCRIPT_MODULE = "script_module";
+	public static final String SLOT_SCRIPT_MODULE = "script-module";
 	
 	private ScriptModule script_module;
 	
@@ -69,31 +57,66 @@ public class ScriptModuleRawUI extends RawUIModule
 			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Coupon promotion manager module requires admin login.");
 			return;
 		}
-		if(params.get("do_full_backup") != null)
+		String output=null;
+		String code = null;
+		String content = "";
+		DUMP_PARAMS(params);
+		if(params.get("RUN") != null)
 		{
-		//	String id = pp.doFullBackup();
-		//	last_backup_map.put(id, new Date().toString());
-		//	write_backup_map();
-		//	DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-		//	P(uctx);
-		//	SPAN(uctx,pp.getName()+" BACKUP OK",18);
-		//	P(uctx);
-		//	JS_TIMED_REDIRECT(uctx, getName(),RAW_SUBMODE_DEFAULT,1000);
+			code = (String)params.get("code_editor");
+			output = script_module.executeScript(code);
+			content = code;
 		}
-		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-		SCRIPT(uctx,"/static/js/codemirror.js");
-		FORM_START(uctx,getName(),RAW_SUBMODE_DEFAULT);
-		//FORM_TEXTAREA_FIELD(uctx, name, cols, rows, default_value)
-		FORM_SUBMIT_BUTTON(uctx, "RUN");
-		FORM_END(uctx);
+		else if(params.get("VERIFY") != null)
+		{
+			code = (String)params.get("code_editor");
+			output = script_module.validateScriptSource(code);
+			content=code;
+		}
 		
-		String editor_setup = "<script>\nvar editor = CodeMirror.fromTextArea('inputfield', {\n"+
-			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],"+
-			  "\tpath: '/static/codemirror/js/',\n"+
-			  "\tstylesheet: /static/codemirror/css/jscolors.css'\n"+
+		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+		STYLE(uctx,"pre{font-size:12px;}");
+		SCRIPT_INCLUDE(uctx,"/static/js/codemirror/js/codemirror.js");
+		
+		//
+		//STYLE(uctx, ".CodeMirror-wrapping{outline:1px solid #777;}");
+		STYLE(uctx, 
+	    ".CodeMirror-line-numbers{"+
+			"background-color:#EEEEEE;"+
+			"color:#AAAAAA;"+
+			"font-family:monospace;"+
+			"font-size:10pt;"+
+			"margin-right:0.3em;"+
+			"padding-right:0.3em;"+
+			"padding-top:0;"+
+			"text-align:right;"+
+			"width:2.2em;"+
+			"}"
+		);
+		
+		FORM_START(uctx,getName(),RAW_SUBMODE_DEFAULT);
+		FORM_TEXTAREA_FIELD(uctx, "code_editor", 60, 40,content);
+		FORM_SUBMIT_BUTTON(uctx, "VERIFY");
+		FORM_SUBMIT_BUTTON(uctx, "RUN");
+		FORM_SUBMIT_BUTTON(uctx, "SAVE");
+		FORM_INPUT_FIELD(uctx, "save_name", 30, "");
+		FORM_END(uctx);
+		String editor_setup = 
+			  "<script>\nvar editor = CodeMirror.fromTextArea('code_editor_id', {\n"+
+			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],\n"+
+			  "\tpath: '/static/js/codemirror/js/',\n"+
+			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
+			  "\theight:'600px'\n"+
 			"});</script>\n";
 		INSERT(uctx,editor_setup);
-		
+		HR(uctx);
+
+		if(output != null)
+		{
+			FORM_TEXTAREA_FIELD(uctx, "output", 120, 10,output);
+			//PRE(uctx,output);
+		}
+		DOCUMENT_END(uctx);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
