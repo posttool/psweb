@@ -170,15 +170,37 @@ public class RawUIModule extends WebModule
 		buf.append("</HEAD>");
 	}
 	
-	protected void SCRIPT(UserApplicationContext uctx,String src)
+	protected void SCRIPT_INCLUDE(UserApplicationContext uctx,String src)
 	{
-		SCRIPT(get_user_buf(uctx),src);
+		SCRIPT_INCLUDE(get_user_buf(uctx),src);
 	}
 	
-	protected void SCRIPT(StringBuilder buf,String src)
+	protected void SCRIPT_INCLUDE(StringBuilder buf,String src)
 	{
 		buf.append("<script src='"+src+"' type='text/javascript'></script>\n");
 	}
+	
+	protected void STYLE(UserApplicationContext uctx,String stylestring)
+	{
+		STYLE(get_user_buf(uctx),stylestring);
+	}
+	
+	protected void STYLE(StringBuilder buf,String stylestring)
+	{
+		buf.append("<style type='text/css'>"+stylestring+"</style>\n");
+	}
+	
+	protected void STYLE_INCLUDE(UserApplicationContext uctx,String src)
+	{
+		STYLE_INCLUDE(get_user_buf(uctx),src);
+	}
+	
+	protected void STYLE_INCLUDE(StringBuilder buf,String src)
+	{
+		buf.append("<link rel='stylesheet' type='text/css' href='"+src+"'/>\n");
+	}
+
+	
 	
 	protected void BODY_START(UserApplicationContext uctx,String bgcolor,String font_family,String font_color,int font_size)
 	{
@@ -189,7 +211,7 @@ public class RawUIModule extends WebModule
 	{
 		if(font_family == null)
 			font_family = "arial";
-		buf.append("<BODY style='background-color:"+bgcolor+";font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(font_size)+"px'>");
+		buf.append("<BODY style='background-color:"+bgcolor+";font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(font_size)+"px'>\n");
 	}
 	
 	protected void FORM_START(UserApplicationContext uctx,String module_name,int submode,Object... name_val_pairs)
@@ -350,7 +372,7 @@ public class RawUIModule extends WebModule
 	
 	protected void FORM_SUBMIT_BUTTON(StringBuilder buf,String label)
 	{
-		buf.append("<INPUT TYPE='submit' value='"+label+"'/>");
+		buf.append("<INPUT TYPE='submit' NAME='"+label+"' value='"+label+"'/>");
 	}
 	
 	protected void FORM_END(UserApplicationContext uctx)
@@ -721,6 +743,46 @@ public class RawUIModule extends WebModule
 		buf.append(contents);
 	}
 	
+	protected void DIV_START(UserApplicationContext uctx,String classname,String id,String... styles)
+	{
+		DIV_START(get_user_buf(uctx) ,classname,id,styles);
+	}
+	
+	protected void DIV_START(StringBuilder buf,String classname,String id,String... styles)
+	{
+		StringBuilder stylestring_buf = new StringBuilder();
+		if(styles.length != 0)
+		{
+			stylestring_buf.append("style='");
+			for(int i = 0;i < styles.length;i+=2)
+			{
+				stylestring_buf.append(styles[i]+":"+styles[i+1]+";");
+			}
+			stylestring_buf.append("'");
+		}
+		
+		String class_string = "";
+		if(classname != null)
+			class_string = "class='"+classname+"'";
+		
+		String id_string = "";
+		if(id != null)
+			id_string = "id='"+id+"'";
+
+
+			buf.append("<DIV "+class_string+" "+id_string+" "+stylestring_buf.toString()+">\n");	
+
+	}
+	
+	protected void DIV_END(UserApplicationContext uctx)
+	{
+		DIV_END(get_user_buf(uctx));
+	}
+	
+	protected void DIV_END(StringBuilder buf)
+	{
+		buf.append("</DIV>\n");
+	}
 	protected String RAW_MODULE_EXEC_ROOT()
 	{
 		return getApplication().getConfig().getWebRootUrl()+"/"+getName()+"/Exec/.raw";
@@ -1069,6 +1131,19 @@ public class RawUIModule extends WebModule
 			);
 		}
 	}
+	
+	
+	public void DUMP_PARAMS(Map<String,Object> params)
+	{
+		
 
+		INFO("DUMP PARAMS");
+		Iterator<String> it = params.keySet().iterator();
+		while(it.hasNext())
+		{
+			String key = it.next();
+			INFO("\t"+key+" = "+String.valueOf(params.get(key)));
+		}
+	}
 	
 }
