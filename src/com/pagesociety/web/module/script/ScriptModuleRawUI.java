@@ -81,15 +81,16 @@ public class ScriptModuleRawUI extends RawUIModule
 		//	JS_TIMED_REDIRECT(uctx, getName(),RAW_SUBMODE_DEFAULT,1000);
 		}
 		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-		SCRIPT(uctx,"static/js/codemirror.js");
+		SCRIPT(uctx,"/static/js/codemirror.js");
 		FORM_START(uctx,getName(),RAW_SUBMODE_DEFAULT);
 		//FORM_TEXTAREA_FIELD(uctx, name, cols, rows, default_value)
+		FORM_SUBMIT_BUTTON(uctx, "RUN");
 		FORM_END(uctx);
 		
 		String editor_setup = "<script>\nvar editor = CodeMirror.fromTextArea('inputfield', {\n"+
 			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],"+
-			  "\tpath: 'lib/codemirror/js/',\n"+
-			  "\tstylesheet: 'lib/codemirror/css/jscolors.css'\n"+
+			  "\tpath: '/static/codemirror/js/',\n"+
+			  "\tstylesheet: /static/codemirror/css/jscolors.css'\n"+
 			"});</script>\n";
 		INSERT(uctx,editor_setup);
 		
