@@ -152,7 +152,7 @@ public class RawUIModule extends WebModule
 		buf.append("a{text-decoration:none;}");
 		buf.append("a:link { color:"+link_color+";}\n");
 		buf.append("a:visited { color:"+link_color+";}\n");
-		buf.append("a:hover { background-color:"+link_hover_color+";font-weight:bold;}\n");	
+		buf.append("a:hover { background-color:"+link_hover_color+";color:black;}\n");	
 		buf.append("th,td { font-family:"+font_family+";color:"+font_color+";font-size:"+String.valueOf(table_font_size)+"px;}\n");
 	
 		
@@ -975,7 +975,7 @@ public class RawUIModule extends WebModule
 		Map<String,Object> params = new HashMap<String,Object>();
 
 		for(int i = 0;i < name_val_pairs.length;i+=2)
-			params.put((String)name_val_pairs[i], name_val_pairs[i+1]);
+			params.put((String)name_val_pairs[i], String.valueOf(name_val_pairs[i+1]));
 		execute_submode(uctx, submode, params);
 	}
 	
@@ -1011,6 +1011,11 @@ public class RawUIModule extends WebModule
 	protected void SET_ERROR(String error,Map<String,Object> params)
 	{
 		params.put(KEY_UI_MODULE_ERROR_KEY, error);
+	}
+	
+	protected void SET_INFO(String info,Map<String,Object> params)
+	{
+		params.put(KEY_UI_MODULE_INFO_KEY, info);
 	}
 	
 	protected boolean IS_NULL(String s)

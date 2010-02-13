@@ -1,6 +1,7 @@
 package com.pagesociety.web.module;
 
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -486,6 +487,21 @@ public abstract class WebModule extends Module
             out.close();
         }
     }
+    
+    public String READ_FILE_AS_STRING(String filename) throws WebApplicationException
+    {
+        byte[] buffer = new byte[(int) new File(filename).length()];
+        BufferedInputStream f;
+		try {
+			f = new BufferedInputStream(new FileInputStream(filename));
+			f.read(buffer);
+		} catch (Exception e) {
+			throw new WebApplicationException("PROBLEM READING FILE "+filename+" :"+e.getMessage());
+		}
+
+        return new String(buffer);
+    }
+
 
     ///UTIL STUFF//
     
