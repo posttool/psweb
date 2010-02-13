@@ -1,8 +1,14 @@
 package com.pagesociety.web.module.script;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -35,36 +41,130 @@ import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 public class ScriptModule extends WebStoreModule 
 {
 
+	protected File[] scripts;
+	protected File[] includes;
+	protected File script_directory;
+	protected File script_include_directory;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
-
+		load_scripts(app,config);
 	}
 	
-	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
+	private void load_scripts(WebApplication app, Map<String,Object> config)
 	{
-		try{
-			//System.out.println("!!!!GONNA RUN STORE SCRIPT!!!!");
-			//run_store_script("/test.js");
-		}catch(Exception e)
-		{
-			throw new InitializationException(e.getMessage());
-		}
+		
+		script_directory 			= new File(GET_MODULE_DATA_DIRECTORY(app),"scripts");
+		script_directory.mkdirs();
+		script_include_directory 	= new File(GET_MODULE_DATA_DIRECTORY(app),"include");
+		script_include_directory.mkdirs();
+		scripts 					= script_directory.listFiles();
+		includes					= script_include_directory.listFiles();
+		//sort by filename//
+		System.out.println("SCRIPTS IS "+scripts);
+		 Arrays.sort( scripts, new Comparator()
+		    {
+		      public int compare(final Object o1, final Object o2) {
+		        return ((File)o1).getName().compareTo(((File) o2).getName());
+		      }
+		    }); 
+		 
+		 Arrays.sort( includes, new Comparator()
+		    {
+		      public int compare(final Object o1, final Object o2) {
+		        return ((File)o1).getName().compareTo(((File) o2).getName());
+		      }
+		    }); 
+
 	}
-
-
 	
 	protected void defineSlots()
 	{
 		super.defineSlots();
-	
 	}
 
+	public File[] getScripts()
+	{
+		load_scripts(getApplication(), getParams());
+		return scripts;
+	}
 
+	public File[] getIncludes()
+	{
+		load_scripts(getApplication(), getParams());
+		return includes;
+	}
+	
+	public String getScript(String filename) throws WebApplicationException
+	{
+		File f = new File(script_directory,filename);
+		if(!f.exists())
+			return null;
+		
+		return READ_FILE_AS_STRING(f.getAbsolutePath());
+	}
+	
+	public String getInclude(String filename) throws WebApplicationException
+	{
+		File f = new File(script_include_directory,filename);
+		if(!f.exists())
+			return null;
+		return READ_FILE_AS_STRING(f.getAbsolutePath());
+	}
 
-
-	public static final String PROMO_PROGRAM_WRAPPER_HEADER = "function apply_promotion(order){\n";
-	public static final String PROMO_PROGRAM_WRAPPER_FOOTER = "\n}\n";
+	public File setScript(String filename,String contents,boolean create) throws WebApplicationException
+	{
+		File f = new File(script_directory,filename);
+		if(!f.exists() && !create)
+			throw new WebApplicationException(filename+" does not exist.");
+		try{
+			FileWriter fw = new FileWriter(f, false);
+			fw.write(contents);
+			fw.close();
+		}catch(IOException ioe)
+		{
+			throw new WebApplicationException("Problem writing file "+filename+" :"+ioe.getMessage());
+		}
+		return f;
+	}
+	
+	public File setInclude(String filename,String contents,boolean create) throws WebApplicationException
+	{
+		File f = new File(script_include_directory,filename);
+		if(!f.exists() && !create)
+			throw new WebApplicationException(filename+" does not exist.");
+		try{
+			FileWriter fw = new FileWriter(f, false);
+			fw.write(contents);
+			fw.close();
+		}catch(IOException ioe)
+		{
+			throw new WebApplicationException("Problem writing file "+filename+" :"+ioe.getMessage());
+		}
+		return f;	
+	}
+	
+	
+	public File deleteScript(String filename) throws WebApplicationException
+	{
+		File f = new File(script_directory,filename);
+		if(!f.exists())
+			throw new WebApplicationException(filename+" does not exist.");
+		f.delete();
+		return f;
+	}
+	
+	public File deleteInclude(String filename) throws WebApplicationException
+	{
+		File f = new File(script_include_directory,filename);
+		if(!f.exists())
+			throw new WebApplicationException(filename+" does not exist.");
+		f.delete();
+		return f;	
+	}
+	
+	
+	
 	public static final String JS_ENGINE_NAME = "JavaScript";
 	public String validateScriptSource(String source) throws WebApplicationException
 	{
@@ -132,6 +232,20 @@ public class ScriptModule extends WebStoreModule
 	//xtra stuff exported to javascript//
 	private static final String USER_OUTPUT_BUF = "_user_output_buf_";
 
+	public void PRINT(String message)
+	{
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		if(uctx!=null)
+		{
+			StringBuilder buf = (StringBuilder)uctx.getProperty(USER_OUTPUT_BUF);
+			buf.append(message+"\n");
+		}
+		else
+		{
+			super.INFO(message);
+		}
+	}
+	
 	public void INFO(String message)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -204,8 +318,6 @@ public class ScriptModule extends WebStoreModule
 	////////////////////////////////////////
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
-
-
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
