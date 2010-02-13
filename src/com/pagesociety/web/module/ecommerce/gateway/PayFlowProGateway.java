@@ -19,7 +19,6 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -31,11 +30,8 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.ecommerce.billing.BillingModule;
-import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
-import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayResponse;
 import com.pagesociety.web.module.encryption.IEncryptionModule;
 import com.pagesociety.web.module.util.Validator;
-import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
 
   public class PayFlowProGateway extends WebModule implements IBillingGateway 
   {
