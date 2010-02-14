@@ -349,7 +349,7 @@ public class BillingModule extends WebStoreModule
 	}
 
 	@Export
-	public Entity UpdateBillingRecord(UserApplicationContext uctx,
+	public Entity DeleteBillingRecord(UserApplicationContext uctx,
 									 	long billing_record_id)throws WebApplicationException,PersistenceException,BillingGatewayException
 	  {
 		Entity user = (Entity)uctx.getUser();
