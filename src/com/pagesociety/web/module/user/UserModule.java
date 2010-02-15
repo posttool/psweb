@@ -492,7 +492,7 @@ public class UserModule extends WebStoreModule
 	public Entity deleteUser(Entity user)throws PersistenceException,WebApplicationException
 	{
 		System.out.println("!!! DELETEING USER "+user);
-
+		user = EXPAND(user);
 		long id = user.getId();
 		DELETE(user);
 		user.setId(id);
