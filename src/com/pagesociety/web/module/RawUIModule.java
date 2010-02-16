@@ -522,6 +522,13 @@ public class RawUIModule extends WebModule
 		TABLE_START(get_user_buf(uctx),border,width);
 	}
 	
+	protected void TABLE_START(UserApplicationContext uctx,int border)
+	{
+		
+		StringBuilder buf = get_user_buf(uctx);
+		buf.append("<TABLE BORDER='"+border+"' WIDTH='100%'>\n");
+	}
+	
 	protected void TABLE_START(StringBuilder buf,int border,int width)
 	{
 		buf.append("<TABLE BORDER='"+border+"' WIDTH='"+width+"'>\n");
