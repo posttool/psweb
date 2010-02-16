@@ -2,7 +2,12 @@ package com.pagesociety.web.module.script;
 
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 
 
@@ -75,17 +80,23 @@ public class ScriptModuleRawUI extends RawUIModule
 				if(managing_includes)
 					script_module.deleteInclude(script);
 				else
+				{
 					script_module.deleteScript(script);
+					script_module.deleteInputs(script);
+				}
 				SET_INFO(script+" was deleted OK.", params);
 			}
-			
+
 			File[] scripts = null;
 			if(managing_includes)
 				scripts = script_module.getIncludes();
 			else
 				scripts = script_module.getScripts();
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,12,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			String wording = managing_includes?"Scripts":"Includes";
 			SPAN(uctx, getApplication().getConfig().getName()+" Script Manager", 16);
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Manage "+wording+" ]","managing_includes",!managing_includes);
+			
 			DISPLAY_INFO(uctx, params);
 			DISPLAY_ERROR(uctx, params);
 			HR(uctx);
@@ -115,18 +126,10 @@ public class ScriptModuleRawUI extends RawUIModule
 			TD(uctx, "");
 			TD(uctx, "");
 			TD_START(uctx);
-			String wording = managing_includes?"INCLUDE":"SCRIPT";
-				A(uctx,getName(),RAW_SUBMODE_EDIT_SCRIPT,"[ + ADD "+wording+" ]","create",true,"managing_includes",managing_includes);
+			wording = managing_includes?"INCLUDE":"SCRIPT";
+			A(uctx,getName(),RAW_SUBMODE_EDIT_SCRIPT,"[ + ADD "+wording+" ]","create",true,"managing_includes",managing_includes);
 			TD_END(uctx);
 			TR_END(uctx);
-			wording = managing_includes?"Scripts":"Includes";
-				TR_START(uctx);
-					TD(uctx, "");
-					TD(uctx, "");
-					TD_START(uctx);
-					A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Manage "+wording+" ]","managing_includes",!managing_includes);
-					TD_END(uctx);
-				TR_END(uctx);
 			
 			DOCUMENT_END(uctx);
 			
@@ -150,12 +153,14 @@ public class ScriptModuleRawUI extends RawUIModule
 			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Script module requires admin login.");
 			return;
 		}
-		String output=null;
-		String code = null;
-		String content = "";
-		String savename = "";
-		boolean update = params.get("edit") != null;
-		boolean create = !update;
+		
+		String output			= null;
+		String code 			= null;
+		String content 			= "";
+		String input_content 	= "";
+		String savename 		= "";
+		boolean update 			= params.get("edit") != null;
+		boolean create 			= !update;
 		
 		DUMP_PARAMS(params);
 		if(update)
@@ -164,12 +169,16 @@ public class ScriptModuleRawUI extends RawUIModule
 			if(managing_includes)
 				content = script_module.getInclude(script);
 			else
-				content = script_module.getScript(script);
+			{
+				content 		= script_module.getScript(script);
+				input_content 	= script_module.getScriptInputs(script);
+			}
 			savename = script;
 		}
 		if(create)
 		{
 			content = "function main(application)\n{\n\n}\n";
+			input_content = "/*DECLARE INPUTS HERE*/\n\n[\n\t{\n\t\t'name':'testvar',\n\t\t'type':'text',\n\t\t'value':2345\n\t}\n]";
 			savename = "";
 		}
 		
@@ -180,21 +189,53 @@ public class ScriptModuleRawUI extends RawUIModule
 		}
 		else if(params.get("RUN") != null)
 		{
-			code = (String)params.get("code_editor");
-			output = script_module.executeScript(code);
+			code 			= (String)params.get("code_editor");
+			String inputs 	= (String)params.get("input_editor");
+			Map<String,Object> values = new HashMap<String,Object>();
+			if(inputs != null && !(inputs = inputs.trim()).equals(""))
+			{
+				try{
+
+					JSONArray input_specs = new JSONArray(inputs);
+					for(int i = 0;i < input_specs.length();i++)
+					{
+						JSONObject input_desc = input_specs.getJSONObject(i);
+						String type = input_desc.getString("type");
+						Object value = null;
+						if(type == null)
+							type = "string";
+						
+						value = input_desc.get("value");
+						values.put(input_desc.getString("name"), value);
+					}
+					output = script_module.executeScript(code,values);
+				}catch(Exception e)
+				{
+					output = "PROBLEM WITH SETTING UP INPUTS:\n"+e.getMessage();
+				}
+			}
+			else
+			{
+				//no input values so no need to worry about parsing them//
+				output = script_module.executeScript(code,null);
+			}
+			input_content = inputs;	
 			content = code;
 		}
 		else if(params.get("VERIFY") != null)
 		{
-			code = (String)params.get("code_editor");
-			output = script_module.validateScriptSource(code);
+			code 			= (String)params.get("code_editor");
+			output 			= script_module.validateScriptSource(code)+"\n";
 			content = code;
 		}
 		else if(params.get("SAVE") != null)
 		{
 			savename = (String)params.get("save_name");
 			savename = savename.replaceAll("\\s", "_");
-			code = (String)params.get("code_editor");
+			code 			= (String)params.get("code_editor");
+			if(!managing_includes)
+				input_content 	= (String)params.get("input_editor");
+
 			content = code;
 
 			if( savename == null || savename.trim().equals(""))
@@ -210,7 +251,10 @@ public class ScriptModuleRawUI extends RawUIModule
 				if(managing_includes)
 					f = script_module.setInclude(savename,code,!update);				
 				else
+				{
 					f = script_module.setScript(savename,code,!update);				
+					script_module.setScriptInputs(savename, input_content, !update);
+				}
 				SET_INFO(f.getAbsolutePath()+" "+message+" OK.",params);
 				update = true;
 				create = false;
@@ -257,9 +301,21 @@ public class ScriptModuleRawUI extends RawUIModule
 		);
 
 		FORM_START(uctx,getName(),RAW_SUBMODE_EDIT_SCRIPT);
+		TABLE_START(uctx,1);
+		TR_START(uctx);
+		TH(uctx,"code");
+		TH(uctx,"inputs");
+		TR_END(uctx);
+		TR_START(uctx);
+		TD_START(uctx);
 		FORM_TEXTAREA_FIELD(uctx, "code_editor", 60, 40,content);
+		TD_END(uctx);
+		TD_START(uctx);
+		FORM_TEXTAREA_FIELD(uctx, "input_editor", 60, 40,input_content);
+		TD_END(uctx);
+		TR_END(uctx);
 		//FORM_SUBMIT_BUTTON(uctx, "VERIFY");
-
+		TABLE_END(uctx);
 		
 		if(managing_includes)
 		{
@@ -291,7 +347,18 @@ public class ScriptModuleRawUI extends RawUIModule
 			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
 			  "\theight:'600px'\n"+
 			"});</script>\n";
+		
+		String input_editor_setup = 
+			  "<script>\nvar editor = CodeMirror.fromTextArea('input_editor_id', {\n"+
+			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],\n"+
+			  "\tpath: '/static/js/codemirror/js/',\n"+
+			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
+			  "\theight:'600px'\n"+
+			"});</script>\n";
+
+		
 		INSERT(uctx,editor_setup);
+		INSERT(uctx,input_editor_setup);
 		HR(uctx);
 
 		if(output != null)
@@ -332,7 +399,7 @@ public class ScriptModuleRawUI extends RawUIModule
 			if(params.get("RUN") != null)
 			{
 				String code = script_module.getScript(script);
-				output = script_module.executeScript(code);
+				output = script_module.executeScript(code,null);
 			}
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			SPAN(uctx, getApplication().getConfig().getName()+" Script Manager", 16);

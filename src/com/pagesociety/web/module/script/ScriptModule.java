@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,13 @@ public class ScriptModule extends WebStoreModule
 		script_directory.mkdirs();
 		script_include_directory 	= new File(GET_MODULE_DATA_DIRECTORY(app),"include");
 		script_include_directory.mkdirs();
-		scripts 					= script_directory.listFiles();
+		scripts 					= script_directory.listFiles(new FilenameFilter() 
+		{
+			public boolean accept(File dir, String name) 
+			{
+				return !name.endsWith(".inputs");
+			}
+		});
 		includes					= script_include_directory.listFiles();
 		//sort by filename//
 		System.out.println("SCRIPTS IS "+scripts);
@@ -104,6 +111,16 @@ public class ScriptModule extends WebStoreModule
 		return READ_FILE_AS_STRING(f.getAbsolutePath());
 	}
 	
+	public String getScriptInputs(String filename) throws WebApplicationException
+	{
+		File f = new File(script_directory,filename+".inputs");
+		if(!f.exists())
+			return null;
+		
+		return READ_FILE_AS_STRING(f.getAbsolutePath());
+	}
+	
+	
 	public String getInclude(String filename) throws WebApplicationException
 	{
 		File f = new File(script_include_directory,filename);
@@ -124,6 +141,22 @@ public class ScriptModule extends WebStoreModule
 		}catch(IOException ioe)
 		{
 			throw new WebApplicationException("Problem writing file "+filename+" :"+ioe.getMessage());
+		}
+		return f;
+	}
+	
+	public File setScriptInputs(String filename,String contents,boolean create) throws WebApplicationException
+	{
+		File f = new File(script_directory,filename+".inputs");
+		if(!f.exists() && !create)
+			throw new WebApplicationException(filename+".inputs"+" does not exist.");
+		try{
+			FileWriter fw = new FileWriter(f, false);
+			fw.write(contents);
+			fw.close();
+		}catch(IOException ioe)
+		{
+			throw new WebApplicationException("Problem writing file "+filename+".inputs"+" :"+ioe.getMessage());
 		}
 		return f;
 	}
@@ -153,7 +186,16 @@ public class ScriptModule extends WebStoreModule
 		f.delete();
 		return f;
 	}
-	
+
+	public File deleteInputs(String filename) throws WebApplicationException
+	{
+		File f = new File(script_directory,filename+".inputs");
+		if(!f.exists())
+			throw new WebApplicationException(filename+" does not exist.");
+		f.delete();
+		return f;
+	}
+
 	public File deleteInclude(String filename) throws WebApplicationException
 	{
 		File f = new File(script_include_directory,filename);
@@ -185,14 +227,32 @@ public class ScriptModule extends WebStoreModule
 		return "VALIDATE OK";
 	}
 	
-	public String executeScript(String script) throws PersistenceException,WebApplicationException
+	
+	private static final String USER_OUTPUT_BUF 	= "_user_output_buf_";
+	private static final String USER_SCRIPT_PARAMS 	= "_user_script_params_";
+	/* script is the source of the script not the name of a file.
+	 * 
+	 * params overrides other sources of inputs. 
+	 * it would be used it a thread int he system were executing a script
+	 * for instance.
+	 */
+	 private static ThreadLocal<Map<String,Object>> tl_params = new ThreadLocal<Map<String,Object>>();
+
+	public String executeScript(String script,Map<String,Object> params) throws PersistenceException,WebApplicationException
 	{	
 		
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		System.out.println("EXECUTING SCRIPT WITH PARAMS "+params);
 		if(uctx != null)
 		{
 			uctx.setProperty(USER_OUTPUT_BUF, new StringBuilder(new Date().toString()+"\n"));
+			uctx.setProperty(USER_SCRIPT_PARAMS, params);
 		}
+		else
+		{
+			tl_params.set(params);
+		}
+		
 		START_TRANSACTION();
 		ScriptEngineManager mgr = new ScriptEngineManager();
 		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);		 
@@ -229,9 +289,9 @@ public class ScriptModule extends WebStoreModule
 		   return output+"\n"+"EXECUTE OK";
 	}
 	
-	//xtra stuff exported to javascript//
-	private static final String USER_OUTPUT_BUF = "_user_output_buf_";
 
+	//xtra stuff exported to javascript//
+	
 	public void PRINT(String message)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -303,6 +363,18 @@ public class ScriptModule extends WebStoreModule
 		}
 	}
 	
+	public Object GET_INPUT(String name)
+	{
+		UserApplicationContext uctx = getApplication().getCallingUserContext();
+		Map<String,Object> params;
+		if(uctx!=null)
+			params = (Map<String,Object>)uctx.getProperty(USER_SCRIPT_PARAMS);
+		else
+			params = tl_params.get();
+		
+		System.out.println("NAME IS "+name+" VALUE IS "+params.get(name));
+		return params.get(name);
+	}
 	
 	public ArrayList<Object> NEW_LIST()
 	{
