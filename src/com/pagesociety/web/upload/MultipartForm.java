@@ -298,7 +298,7 @@ public class MultipartForm
 //////////////////STUFF TO ACCESS FORM PARAMETERS/////////////////////////
 	public String getParameter(String name)
 	{
-		return form_parameters.get(name).get(0);
+		return getStringParameter(name);
 	}
 
 	public String getStringParameter(String name)
