@@ -315,9 +315,9 @@ public class RawUIModule extends WebModule
 	protected void FORM_TEXTAREA_FIELD(StringBuilder buf,String name,int cols,int rows,String default_value)
 	{
 		if(default_value == null)
-			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"' spellcheck='false'></TEXTAREA>\n");
+			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"' spellcheck='false' wrap='off'></TEXTAREA>\n");
 		else
-			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"' spellcheck='false'>"+default_value+"</TEXTAREA>\n");
+			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"' spellcheck='false' wrap='off'>"+default_value+"</TEXTAREA>\n");
 	}
 	
 	protected void FORM_PASSWORD_FIELD(UserApplicationContext uctx,String name,int size)
