@@ -2,7 +2,12 @@ package com.pagesociety.web.module.script;
 
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
@@ -205,8 +210,40 @@ public class ScriptModuleRawUI extends RawUIModule
 						if(type == null)
 							type = "string";
 						
+						String name = input_desc.getString("name");
 						value = input_desc.get("value");
-						values.put(input_desc.getString("name"), value);
+						//change into a date in the execute context//
+						String svalue=null;
+						try{
+							svalue = (String)value;
+						}catch(Exception e){values.put(name,value);}
+						if(svalue != null && (svalue.trim().equals("") || svalue.equals("null")))
+								continue;
+						if("date".equals(type))
+						{
+								
+							String mm 	= svalue.substring(0,2);
+							String dd 	= svalue.substring(3,5);
+							String yyyy = svalue.substring(6,10);
+							String hh	= "0";
+							String min	= "0";
+							if(svalue.length() > 10)
+							{
+								hh  = svalue.substring(11,13);
+								min = svalue.substring(14,16);
+							}
+							 GregorianCalendar newGregCal = new GregorianCalendar(
+							     Integer.parseInt(yyyy),
+							     Integer.parseInt(mm) - 1,
+							     Integer.parseInt(dd),
+							     Integer.parseInt(hh),
+							     Integer.parseInt(min)
+							 );
+							 Date d = newGregCal.getTime();
+							 value = d;
+						}
+						
+						values.put(name, value);
 					}
 					output = script_module.executeScript(code,values);
 				}catch(Exception e)
@@ -234,11 +271,15 @@ public class ScriptModuleRawUI extends RawUIModule
 			savename = savename.replaceAll("\\s", "_");
 			code 			= (String)params.get("code_editor");
 			if(!managing_includes)
+			{
 				input_content 	= (String)params.get("input_editor");
-
+				output = "INPUTS:\n\t"+script_module.validateScriptSource(input_content)+"\n";
+			}
+			output += "SCRIPT:\n\t "+script_module.validateScriptSource(code)+"\n\n";
 			content = code;
-
-			if( savename == null || savename.trim().equals(""))
+			if(output.contains("ERROR"))
+				SET_ERROR("Script or Inputs failed validation.",params);
+			else if( savename == null || savename.trim().equals(""))
 				SET_ERROR("Must provide a name to save a script or include.",params);
 			else if(create && managing_includes && script_module.getInclude(savename) != null)
 				SET_ERROR("Include with name "+savename+" already exists",params);
@@ -248,16 +289,20 @@ public class ScriptModuleRawUI extends RawUIModule
 			{
 				String message = (create)?"created":"updated";
 				File f = null;
-				if(managing_includes)
-					f = script_module.setInclude(savename,code,!update);				
-				else
+				if(!output.contains("ERROR"))//this would be from failing the validate above//
 				{
-					f = script_module.setScript(savename,code,!update);				
-					script_module.setScriptInputs(savename, input_content, !update);
+					if(managing_includes)
+						f = script_module.setInclude(savename,code,!update);				
+					else
+					{
+						f = script_module.setScript(savename,code,!update);				
+						script_module.setScriptInputs(savename, input_content, !update);
+					}
+					SET_INFO(f.getAbsolutePath()+" "+message+" OK.",params);
+					output += f.getAbsolutePath()+" "+message+" OK.";
+					update = true;
+					create = false;
 				}
-				SET_INFO(f.getAbsolutePath()+" "+message+" OK.",params);
-				update = true;
-				create = false;
 			}
 		}
 
@@ -269,14 +314,16 @@ public class ScriptModuleRawUI extends RawUIModule
 		//}
 		
 		DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+		String wording = managing_includes?"Include":"Script";
 		if(create)
 		{
-			String wording = managing_includes?"Include":"Script";
-			SPAN(uctx, "Create "+wording, 16);
+			SPAN(uctx, "Create "+wording, 16); 
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Manage "+wording+"s ]","managing_includes",managing_includes);
 		}
 		if(update)
 		{
 			SPAN(uctx, "Edit: "+savename, 16);
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Manage "+wording+"s ]","managing_includes",managing_includes);
 		}
 		DISPLAY_INFO(uctx, params);
 		DISPLAY_ERROR(uctx, params);
@@ -302,29 +349,36 @@ public class ScriptModuleRawUI extends RawUIModule
 
 		FORM_START(uctx,getName(),RAW_SUBMODE_EDIT_SCRIPT);
 		TABLE_START(uctx,1);
-		TR_START(uctx);
-		TH(uctx,"code");
-		TH(uctx,"inputs");
-		TR_END(uctx);
+		if(!managing_includes)
+		{
+			TR_START(uctx);	
+			TH(uctx,"code");
+			TH(uctx,"inputs");
+			TR_END(uctx);
+		}
 		TR_START(uctx);
 		TD_START(uctx);
 		FORM_TEXTAREA_FIELD(uctx, "code_editor", 60, 40,content);
 		TD_END(uctx);
-		TD_START(uctx);
-		FORM_TEXTAREA_FIELD(uctx, "input_editor", 60, 40,input_content);
-		TD_END(uctx);
+		if(!managing_includes)
+		{
+			TD_START(uctx);
+			FORM_TEXTAREA_FIELD(uctx, "input_editor", 60, 40,input_content);
+			TD_END(uctx);
+		}
+
 		TR_END(uctx);
 		//FORM_SUBMIT_BUTTON(uctx, "VERIFY");
 		TABLE_END(uctx);
 		
 		if(managing_includes)
 		{
-			FORM_SUBMIT_BUTTON(uctx, "MANAGE INCLUDES");
+			//FORM_SUBMIT_BUTTON(uctx, "MANAGE INCLUDES");
 			FORM_SUBMIT_BUTTON(uctx, "VERIFY");
 		}
 		else
 		{
-			FORM_SUBMIT_BUTTON(uctx, "MANAGE SCRIPTS");
+			//FORM_SUBMIT_BUTTON(uctx, "MANAGE SCRIPTS");
 			FORM_SUBMIT_BUTTON(uctx, "RUN");
 		}
 		FORM_SUBMIT_BUTTON(uctx, "SAVE");
@@ -345,7 +399,7 @@ public class ScriptModuleRawUI extends RawUIModule
 			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],\n"+
 			  "\tpath: '/static/js/codemirror/js/',\n"+
 			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
-			  "\theight:'600px'\n"+
+			  "\theight:'480px'\n"+
 			"});</script>\n";
 		
 		String input_editor_setup = 
@@ -353,7 +407,7 @@ public class ScriptModuleRawUI extends RawUIModule
 			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],\n"+
 			  "\tpath: '/static/js/codemirror/js/',\n"+
 			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
-			  "\theight:'600px'\n"+
+			  "\theight:'480px'\n"+
 			"});</script>\n";
 
 		
@@ -391,25 +445,309 @@ public class ScriptModuleRawUI extends RawUIModule
 				ERROR_PAGE(uctx, new Exception("MISSING PARAMETER 'script'"));
 				return;
 			}
-			if(params.get("LIST SCRIPTS") != null)
-			{
-				GOTO(uctx,RAW_SUBMODE_DEFAULT);
-				return;
-			}
 			if(params.get("RUN") != null)
 			{
+				//make empty stuff from the form submission null
+				//in the execution context. restore it later below
+				Iterator<String> it = params.keySet().iterator();
+				while(it.hasNext())
+				{
+					String key = it.next();
+					String val = (String)params.get(key);
+					if(val != null && (val.trim().equals("") || val.equals("null")))
+					{
+						params.put(key,null);
+					}
+				}
+				
 				String code = script_module.getScript(script);
-				output = script_module.executeScript(code,null);
+				String inputs = script_module.getScriptInputs(script);
+				JSONArray input_specs = new JSONArray(inputs);
+				List<String> date_keys = new ArrayList<String>();
+				for(int i = 0;i < input_specs.length();i++)
+				{
+					JSONObject input_desc = input_specs.getJSONObject(i);
+					String type = input_desc.getString("type");
+					String name = input_desc.getString("name");
+
+					if("date".equals(type))
+					{
+						String date_val = (String)params.get(name); 						
+						if(date_val == null)
+						{
+							params.put(name,null);
+							continue;
+						}
+						String mm 	= date_val.substring(0,2);
+						String dd 	= date_val.substring(3,5);
+						String yyyy = date_val.substring(6,10);
+						String hh	= "0";
+						String min	= "0";
+						if(date_val.length() > 10)
+						{
+							hh  = date_val.substring(11,13);
+							min = date_val.substring(14,16);
+						}
+						 GregorianCalendar newGregCal = new GregorianCalendar(
+						     Integer.parseInt(yyyy),
+						     Integer.parseInt(mm) - 1,
+						     Integer.parseInt(dd),
+						     Integer.parseInt(hh),
+						     Integer.parseInt(min)
+						 );
+						 Date d = newGregCal.getTime();
+						 params.put(name, d);
+						 params.put(name+"_old", date_val);
+						 date_keys.add(name);
+					}
+					
+				}	
+				//swap back the string version of the date so the form behaves correctly//
+				output = script_module.executeScript(code,params);
+				for(int i = 0;i < date_keys.size();i++)
+					params.put(date_keys.get(i), params.get(date_keys.get(i)+"_old"));
+			
+				//make it the empty string for the sake of the forms default values//
+				it = params.keySet().iterator();
+				while(it.hasNext())
+				{
+					String key = it.next();
+					String val = (String)params.get(key);
+					if(val == null)
+					{
+						params.put(key,"");
+					}
+				}
 			}
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
-			SPAN(uctx, getApplication().getConfig().getName()+" Script Manager", 16);
+			SPAN(uctx,"Execute "+script,16);
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Manage Scripts ]","managing_includes",false);
 			DISPLAY_INFO(uctx, params);
 			DISPLAY_ERROR(uctx, params);
-			SPAN(uctx,"Execute "+script,16);
 			HR(uctx);
 			FORM_START(uctx,getName(),RAW_SUBMODE_RUN_SCRIPT);
+			TABLE_START(uctx,1);
+			String inputs = script_module.getScriptInputs(script);
+			if(inputs != null && !(inputs = inputs.trim()).equals(""))
+			{
+
+				try{
+
+					JSONArray input_specs = new JSONArray(inputs);
+					for(int i = 0;i < input_specs.length();i++)
+					{
+
+						JSONObject input_desc = input_specs.getJSONObject(i);
+						String type = input_desc.getString("type");
+						Object value = null;
+						if(type == null)
+							type = "text";
+						
+						TR_START(uctx);						
+						if("text".equalsIgnoreCase(type))
+						{
+							String name 	= input_desc.getString("name");
+							//optional//
+							int width = 30;
+							try{
+								width 	= input_desc.getInt("width");
+							}catch(Exception e){}
+							String desc = "";
+							try{
+								desc = input_desc.getString("description");
+							}catch(Exception e){}
+							String default_val = (String)params.get(name);
+							if(default_val == null)
+							{
+								try{
+									default_val = input_desc.getString("default_value");
+								}catch(Exception e)
+								{
+									try{
+										default_val = input_desc.getString("value");
+									}catch(Exception ee)
+									{
+										default_val = "";
+									}
+								}
+							}
+							if(default_val.equals("null"))
+								default_val = "";
+							TD(uctx,name);
+							TD_START(uctx);
+							FORM_INPUT_FIELD(uctx,name,width,default_val);SPAN(uctx,desc,10);
+							TD_END(uctx);
+						}
+						else if("textarea".equalsIgnoreCase(type))
+						{
+							String name 	= input_desc.getString("name");
+							//optional//
+							int rows= 5;
+							try{
+								rows 	= input_desc.getInt("rows");
+							}catch(Exception e){}
+							int cols= 30;
+							try{
+								cols 	= input_desc.getInt("cols");
+							}catch(Exception e){}
+							String desc = "";
+							try{
+								desc = input_desc.getString("description");
+							}catch(Exception e){}
+							String default_val = (String)params.get(name);
+							if(default_val == null)
+							{
+								try{
+									default_val = input_desc.getString("default_value");
+								}catch(Exception e)
+								{
+									try{
+										default_val = input_desc.getString("value");
+									}catch(Exception ee)
+									{
+										default_val = "";
+									}
+								}
+							}
+							if(default_val.equals("null"))
+								default_val = "";
+							TD(uctx,name);
+							TD_START(uctx);
+							FORM_TEXTAREA_FIELD(uctx, name, cols, rows, default_val);SPAN(uctx,desc,10);
+							TD_END(uctx);
+						}
+						else if("pulldown".equalsIgnoreCase(type) || "popup".equalsIgnoreCase(type))
+						{
+							String name 	= input_desc.getString("name");
+							//optional//
+							int rows= 5;
+					
+							String[] options	= input_desc.getString("options").split(",");
+							String default_val = (String)params.get(name);
+							if(default_val == null)
+							{
+								try{
+									default_val = input_desc.getString("default_value");
+								}catch(Exception e)
+								{
+									try{
+										default_val = input_desc.getString("value");
+									}catch(Exception ee)
+									{
+										default_val = "";
+									}
+								}
+							}
+							if(default_val.equals("null"))
+								default_val = "";
+							String desc = "";
+							try{
+								desc = input_desc.getString("description");
+							}catch(Exception e){}
+							TD(uctx,name);
+							TD_START(uctx);
+							StringBuilder pulldown = new StringBuilder();
+							pulldown.append("<SELECT NAME='"+name+"' >\n");
+							for(int ii = 0;ii < options.length;ii++)
+							{
+								String selected = "";
+								String option = options[ii].trim();
+								if(default_val.equals(option))
+									selected = "SELECTED";
+								pulldown.append("<OPTION "+selected+">"+option+"\n");
+							}
+							pulldown.append("</SELECT>\n");
+							INSERT(uctx, pulldown.toString());SPAN(uctx,desc,10);
+							TD_END(uctx);
+						}
+						else if("radio".equalsIgnoreCase(type))
+						{
+							String name 	= input_desc.getString("name");
+							//optional//
+							int rows= 5;
+					
+							String[] options	= input_desc.getString("options").split(",");
+							String default_val = (String)params.get(name);
+							if(default_val == null)
+							{
+								try{
+									default_val = input_desc.getString("default_value");
+								}catch(Exception e)
+								{
+									try{
+										default_val = input_desc.getString("value");
+									}catch(Exception ee)
+									{
+										default_val = "";
+									}
+								}
+							}
+							if(default_val.equals("null"))
+								default_val = "";
+							String desc = "";
+							try{
+								desc = input_desc.getString("description");
+							}catch(Exception e){}
+
+							TD(uctx,name);
+							TD_START(uctx);
+							StringBuilder radiogroup = new StringBuilder();
+							for(int ii = 0;ii < options.length;ii++)
+							{
+								String selected = "";
+								String option = options[ii].trim();
+								if(default_val.equals(option))
+									selected = "CHECKED";
+								radiogroup.append("<INPUT TYPE='radio' NAME='"+name+"' value='"+option+"' "+selected+"> "+option+"&nbsp;\n");
+							}
+
+							INSERT(uctx, radiogroup.toString());SPAN(uctx,desc,10);
+							
+							TD_END(uctx);
+						}
+						else if("date".equalsIgnoreCase(type))
+						{
+							String name 	= input_desc.getString("name");
+							String default_val = (String)params.get(name);
+							if(default_val == null)
+							{
+								try{
+									default_val = input_desc.getString("default_value");
+								}catch(Exception e)
+								{
+									try{
+										default_val = input_desc.getString("value");
+									}catch(Exception ee)
+									{
+										default_val = "";
+									}
+								}
+							}
+							if(default_val.equals("null"))
+								default_val = "";
+							TD(uctx,name);
+							TD_START(uctx);
+							String desc = "";
+							try{
+								desc = input_desc.getString("description");
+							}catch(Exception e){}
+							desc = " mm-dd-yyyy [hh:mm]" + desc;
+							StringBuilder date_input = new StringBuilder();
+							date_input.append("<INPUT TYPE='text' name='"+name+"' value='"+default_val+"'SIZE=8>");
+							INSERT(uctx, date_input.toString());SPAN(uctx,desc,10);
+							TD_END(uctx);
+						}
+						TR_END(uctx);
+
+					}
+				}catch(Exception e)
+				{
+					output = "PROBLEM WITH SETTING UP INPUTS:\n"+e.getMessage();
+				}
+			}
+
+			TABLE_END(uctx);
 			FORM_HIDDEN_FIELD(uctx, "script", script);
-			FORM_SUBMIT_BUTTON(uctx, "LIST SCRIPTS");
 			FORM_SUBMIT_BUTTON(uctx, "RUN");
 			if(output != null)
 			{

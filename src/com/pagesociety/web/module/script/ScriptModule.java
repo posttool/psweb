@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -191,7 +192,8 @@ public class ScriptModule extends WebStoreModule
 	{
 		File f = new File(script_directory,filename+".inputs");
 		if(!f.exists())
-			throw new WebApplicationException(filename+" does not exist.");
+			return f;
+			//	throw new WebApplicationException(filename+" does not exist.");
 		f.delete();
 		return f;
 	}
@@ -242,7 +244,9 @@ public class ScriptModule extends WebStoreModule
 	{	
 		
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
-		System.out.println("EXECUTING SCRIPT WITH PARAMS "+params);
+		//System.out.println("EXECUTING SCRIPT WITH PARAMS "+params);
+		if(params == null)
+			params = new HashMap<String, Object>();
 		if(uctx != null)
 		{
 			uctx.setProperty(USER_OUTPUT_BUF, new StringBuilder(new Date().toString()+"\n"));
@@ -266,6 +270,7 @@ public class ScriptModule extends WebStoreModule
 		} catch (ScriptException ex)
 		{
 			ROLLBACK_TRANSACTION();
+			ERROR(ex);
 			return new String("EXCEPTION WHILE EXECUTING SCRIPT.\n"+ex.getMessage());
 		}    
 		
@@ -386,6 +391,30 @@ public class ScriptModule extends WebStoreModule
 		return Integer.MAX_VALUE;
 	}
 
+	public Query NEW_QUERY(String entity_type)
+	{
+		return new Query(entity_type);
+	}
+	
+	public Object VAL_GLOB()
+	{
+		return Query.VAL_GLOB;
+	}
+	
+	public Object VAL_MIN()
+	{
+		return Query.VAL_MIN;
+	}
+	
+	public Object VAL_MAX()
+	{
+		return Query.VAL_MAX;
+	}
+
+	public Object PRIMARY_IDX()
+	{
+		return Query.PRIMARY_IDX;
+	}
 	
 	////////////////////////////////////////
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
