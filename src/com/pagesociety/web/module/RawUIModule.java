@@ -372,7 +372,7 @@ public class RawUIModule extends WebModule
 	
 	protected void FORM_SUBMIT_BUTTON(StringBuilder buf,String label)
 	{
-		buf.append("<INPUT TYPE='submit' NAME='"+label+"' value='"+label+"'/>");
+		buf.append("<INPUT TYPE='submit' NAME='"+label+"' value='"+label+"' onclick='this.clicked=true;'/>");
 	}
 	
 	protected void FORM_END(UserApplicationContext uctx)
