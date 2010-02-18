@@ -12,17 +12,12 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
-
-
-
-
-
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.RawUIModule;
 import com.pagesociety.web.module.permissions.PermissionEvaluator;
 
@@ -38,9 +33,16 @@ public class ScriptModuleRawUI extends RawUIModule
 	{
 		super.init(app,config);	
 		script_module = (ScriptModule)getSlot(SLOT_SCRIPT_MODULE);
-		
+		check_codemirror_installed();
 	}
 
+	private void check_codemirror_installed() throws InitializationException
+	{
+		File f = new File(getApplication().getConfig().getWebRootDir(),"/static/js/codemirror");
+		if(!f.exists())
+			throw new InitializationException("COULDNT FIND CODEMIRROR JAVASCRIP SUPPORT LIBRARY AT "+getApplication().getConfig().getWebRootDir()+"/static/js/codemirror");
+
+	}
 	protected void defineSlots()
 	{
 		super.defineSlots();
@@ -146,6 +148,7 @@ public class ScriptModuleRawUI extends RawUIModule
 	
 	public void submode_edit_script(UserApplicationContext uctx,Map<String,Object> params) throws Exception
 	{
+		DUMP_PARAMS(params);
 		try{
 			String s_managing_includes = (String)params.get("managing_includes");
 			boolean managing_includes = false;
@@ -166,8 +169,14 @@ public class ScriptModuleRawUI extends RawUIModule
 		String savename 		= "";
 		boolean update 			= params.get("edit") != null;
 		boolean create 			= !update;
+		String s_code_editor_offset = (String)params.get("code_editor_offset");
+		System.out.println("s CODE EDITOR OFFSET IS "+s_code_editor_offset);
+		int code_editor_offset 		= 1;
+		if(s_code_editor_offset != null)
+				code_editor_offset = Integer.parseInt(s_code_editor_offset);
+		System.out.println("CODE EDITOR OFFSET IS "+code_editor_offset);
 		
-		DUMP_PARAMS(params);
+
 		if(update)
 		{
 			String script = (String)params.get("edit");
@@ -182,7 +191,10 @@ public class ScriptModuleRawUI extends RawUIModule
 		}
 		if(create)
 		{
-			content = "function main(application)\n{\n\n}\n";
+			if(!managing_includes)
+				content = "function main(application)\n{\n\n}\n";
+			else
+				content = "/*define the functions you would like to include*/";
 			input_content = "/*DECLARE INPUTS HERE*/\n\n[\n\t{\n\t\t'name':'testvar',\n\t\t'type':'text',\n\t\t'value':2345\n\t}\n]";
 			savename = "";
 		}
@@ -275,7 +287,12 @@ public class ScriptModuleRawUI extends RawUIModule
 				input_content 	= (String)params.get("input_editor");
 				output = "INPUTS:\n\t"+script_module.validateScriptSource(input_content)+"\n";
 			}
-			output += "SCRIPT:\n\t "+script_module.validateScriptSource(code)+"\n\n";
+			else
+				output = "";
+			if(!managing_includes)
+				output += "SCRIPT:\n\t "+script_module.validateScriptSource(code)+"\n\n";
+			else
+				output += "INCLUDE:\n\t "+script_module.validateScriptSource(code)+"\n\n";
 			content = code;
 			if(output.contains("ERROR"))
 				SET_ERROR("Script or Inputs failed validation.",params);
@@ -348,6 +365,7 @@ public class ScriptModuleRawUI extends RawUIModule
 		);
 
 		FORM_START(uctx,getName(),RAW_SUBMODE_EDIT_SCRIPT);
+
 		TABLE_START(uctx,1);
 		if(!managing_includes)
 		{
@@ -359,6 +377,7 @@ public class ScriptModuleRawUI extends RawUIModule
 		TR_START(uctx);
 		TD_START(uctx);
 		FORM_TEXTAREA_FIELD(uctx, "code_editor", 60, 40,content);
+		FORM_HIDDEN_FIELD(uctx,"code_editor_offset","1");
 		TD_END(uctx);
 		if(!managing_includes)
 		{
@@ -395,24 +414,29 @@ public class ScriptModuleRawUI extends RawUIModule
 		}
 		FORM_END(uctx);
 		String editor_setup = 
-			  "<script>\nvar editor = CodeMirror.fromTextArea('code_editor_id', {\n"+
+			  "<script>\nvar code_editor_mirror = CodeMirror.fromTextArea('code_editor_id', {\n"+
 			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],\n"+
 			  "\tpath: '/static/js/codemirror/js/',\n"+
 			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
-			  "\theight:'480px'\n"+
-			"});</script>\n";
+			  "\theight:'480px',\n"+
+			  "\ttextWrapping:false,\n"+
+			  "\tinitCallback:function(mirror){mirror.jumpToLine("+code_editor_offset+");}\n"+
+			"});\n"+
+			"</script>\n";
 		
 		String input_editor_setup = 
-			  "<script>\nvar editor = CodeMirror.fromTextArea('input_editor_id', {\n"+
+			  "<script>\nvar input_editor = CodeMirror.fromTextArea('input_editor_id', {\n"+
 			  "\tparserfile: ['tokenizejavascript.js', 'parsejavascript.js'],\n"+
 			  "\tpath: '/static/js/codemirror/js/',\n"+
 			  "\tstylesheet: '/static/js/codemirror/css/jscolors.css',\n"+
+			  "\ttextWrapping:false,\n"+
 			  "\theight:'480px'\n"+
 			"});</script>\n";
 
 		
 		INSERT(uctx,editor_setup);
-		INSERT(uctx,input_editor_setup);
+		if(!managing_includes)
+			INSERT(uctx,input_editor_setup);
 		HR(uctx);
 
 		if(output != null)
@@ -420,6 +444,22 @@ public class ScriptModuleRawUI extends RawUIModule
 			FORM_TEXTAREA_FIELD(uctx, "output", 120, 10,output);
 			//PRE(uctx,output);
 		}
+		FORM_END(uctx);
+		String on_submit_crap = "<script>document.forms[0].onsubmit=on_form_submit;\n"+
+		//"function dump(o){if(o==null)return;var s='';for(var key in o){s+=key+'='+o[key];}alert(s);}\n"+
+		"function on_form_submit(){"+
+		"/*alert(code_editor_mirror.currentLine());*/"+
+		"document.forms[0].code_editor_offset.value=code_editor_mirror.currentLine();"+
+		"}</script>";
+			
+		//String jump_to_crap = "<script>" +
+		//"window.setTimeout(function(){"+
+		//"code_editor_mirror.jumpToLine("+code_editor_offset+");\n"+
+		//"alert('jumped to "+code_editor_offset+"');"+
+		//"},10);"+
+		//"</script>";
+		INSERT(uctx, on_submit_crap);
+		//INSERT(uctx, jump_to_crap);
 		DOCUMENT_END(uctx);
 		}catch(Exception e)
 		{
@@ -437,8 +477,8 @@ public class ScriptModuleRawUI extends RawUIModule
 				CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Script module requires admin login.");
 				return;
 			}
-			String script = (String)params.get("script");
-			String output = null;
+			String script 				= (String)params.get("script");
+			String output 				= null;
 
 			if(script == null)
 			{
@@ -462,46 +502,50 @@ public class ScriptModuleRawUI extends RawUIModule
 				
 				String code = script_module.getScript(script);
 				String inputs = script_module.getScriptInputs(script);
-				JSONArray input_specs = new JSONArray(inputs);
 				List<String> date_keys = new ArrayList<String>();
-				for(int i = 0;i < input_specs.length();i++)
+				if(inputs != null && !(inputs = inputs.trim()).equals(""))
 				{
-					JSONObject input_desc = input_specs.getJSONObject(i);
-					String type = input_desc.getString("type");
-					String name = input_desc.getString("name");
+					JSONArray input_specs = new JSONArray(inputs);
 
-					if("date".equals(type))
+					for(int i = 0;i < input_specs.length();i++)
 					{
-						String date_val = (String)params.get(name); 						
-						if(date_val == null)
+						JSONObject input_desc = input_specs.getJSONObject(i);
+						String type = input_desc.getString("type");
+						String name = input_desc.getString("name");
+	
+						if("date".equals(type))
 						{
-							params.put(name,null);
-							continue;
+							String date_val = (String)params.get(name); 						
+							if(date_val == null)
+							{
+								params.put(name,null);
+								continue;
+							}
+							String mm 	= date_val.substring(0,2);
+							String dd 	= date_val.substring(3,5);
+							String yyyy = date_val.substring(6,10);
+							String hh	= "0";
+							String min	= "0";
+							if(date_val.length() > 10)
+							{
+								hh  = date_val.substring(11,13);
+								min = date_val.substring(14,16);
+							}
+							 GregorianCalendar newGregCal = new GregorianCalendar(
+							     Integer.parseInt(yyyy),
+							     Integer.parseInt(mm) - 1,
+							     Integer.parseInt(dd),
+							     Integer.parseInt(hh),
+							     Integer.parseInt(min)
+							 );
+							 Date d = newGregCal.getTime();
+							 params.put(name, d);
+							 params.put(name+"_old", date_val);
+							 date_keys.add(name);
 						}
-						String mm 	= date_val.substring(0,2);
-						String dd 	= date_val.substring(3,5);
-						String yyyy = date_val.substring(6,10);
-						String hh	= "0";
-						String min	= "0";
-						if(date_val.length() > 10)
-						{
-							hh  = date_val.substring(11,13);
-							min = date_val.substring(14,16);
-						}
-						 GregorianCalendar newGregCal = new GregorianCalendar(
-						     Integer.parseInt(yyyy),
-						     Integer.parseInt(mm) - 1,
-						     Integer.parseInt(dd),
-						     Integer.parseInt(hh),
-						     Integer.parseInt(min)
-						 );
-						 Date d = newGregCal.getTime();
-						 params.put(name, d);
-						 params.put(name+"_old", date_val);
-						 date_keys.add(name);
-					}
-					
-				}	
+						
+					}	
+				}
 				//swap back the string version of the date so the form behaves correctly//
 				output = script_module.executeScript(code,params);
 				for(int i = 0;i < date_keys.size();i++)
@@ -530,9 +574,7 @@ public class ScriptModuleRawUI extends RawUIModule
 			String inputs = script_module.getScriptInputs(script);
 			if(inputs != null && !(inputs = inputs.trim()).equals(""))
 			{
-
 				try{
-
 					JSONArray input_specs = new JSONArray(inputs);
 					for(int i = 0;i < input_specs.length();i++)
 					{
@@ -748,12 +790,14 @@ public class ScriptModuleRawUI extends RawUIModule
 
 			TABLE_END(uctx);
 			FORM_HIDDEN_FIELD(uctx, "script", script);
-			FORM_SUBMIT_BUTTON(uctx, "RUN");
 			if(output != null)
 			{
 				FORM_TEXTAREA_FIELD(uctx, "output", 120, 10,output);
 				//PRE(uctx,output);
 			}
+			HR(uctx);
+			FORM_SUBMIT_BUTTON(uctx, "RUN");
+
 			FORM_END(uctx);
 			DOCUMENT_END(uctx);
 		}catch(Exception e)

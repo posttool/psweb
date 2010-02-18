@@ -1,5 +1,6 @@
 package com.pagesociety.web.module.script;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -7,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -50,6 +52,7 @@ public class ScriptModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
+		
 		load_scripts(app,config);
 	}
 	
@@ -69,7 +72,7 @@ public class ScriptModule extends WebStoreModule
 		});
 		includes					= script_include_directory.listFiles();
 		//sort by filename//
-		System.out.println("SCRIPTS IS "+scripts);
+		//System.out.println("SCRIPTS IS "+scripts);
 		 Arrays.sort( scripts, new Comparator()
 		    {
 		      public int compare(final Object o1, final Object o2) {
@@ -167,6 +170,7 @@ public class ScriptModule extends WebStoreModule
 		File f = new File(script_include_directory,filename);
 		if(!f.exists() && !create)
 			throw new WebApplicationException(filename+" does not exist.");
+		f.getParentFile().mkdirs();
 		try{
 			FileWriter fw = new FileWriter(f, false);
 			fw.write(contents);
@@ -214,14 +218,14 @@ public class ScriptModule extends WebStoreModule
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
 		ScriptEngineManager mgr = new ScriptEngineManager();
-		StringBuilder buf = new StringBuilder();
-		buf.append(source );
+		source = expand_includes(source,null);
+
 		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);		 
 		ScriptContext ctx = jsEngine.getContext();
-		ctx.setAttribute("MODULE", this,ScriptContext.ENGINE_SCOPE );
+		ctx.setAttribute("$", this,ScriptContext.ENGINE_SCOPE );
 		//check syntax//
 		try {
-			jsEngine.eval(buf.toString());
+			jsEngine.eval(source);
 		} catch (ScriptException ex)
 		{
 			return new String("SYNTAX ERROR IN SCRIPT.\n"+ex.getMessage());
@@ -245,6 +249,8 @@ public class ScriptModule extends WebStoreModule
 		
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
 		//System.out.println("EXECUTING SCRIPT WITH PARAMS "+params);
+		script = expand_includes(script,null);
+		
 		if(params == null)
 			params = new HashMap<String, Object>();
 		if(uctx != null)
@@ -294,6 +300,72 @@ public class ScriptModule extends WebStoreModule
 		   return output+"\n"+"EXECUTE OK";
 	}
 	
+	private String expand_includes(String script,Map<String,String> included_files) throws WebApplicationException
+	{
+	
+		BufferedReader br = new BufferedReader(new StringReader(script));
+		String line = null;
+		StringBuilder buf = new StringBuilder();
+		if(included_files == null)
+			included_files = new HashMap<String,String>();
+		
+		try{
+			while((line = br.readLine()) != null)
+			{
+				String trimmed_line = line.trim();
+				if(trimmed_line.startsWith("#include"))
+				{
+					String rest_of_line = trimmed_line.split("\\#include")[1];
+					rest_of_line = rest_of_line.trim();
+					byte[] bb = rest_of_line.getBytes();
+					byte parse_until = 0;
+					boolean system_include = false;
+					if(bb[0] == (byte)'<')
+					{
+						parse_until = (byte)'>';
+						system_include = true;
+					}
+					else if(bb[0] == (byte)'"')
+						parse_until = (byte)'"';	
+					StringBuilder include_filename = new StringBuilder();
+					for(int i = 1;i < bb.length;i++)
+					{
+						byte b = bb[i];
+						if(b == parse_until || b == (byte)'\n')
+							break;
+						include_filename.append((char)b);
+					}
+					String filename = include_filename.toString();
+					String include_string = null;
+					
+					boolean already_included = included_files.get(filename) != null;
+					if(already_included)
+						continue;
+					
+					
+					if(system_include)
+						include_string = getInclude(filename);
+					else
+						include_string = READ_FILE_AS_STRING(filename);	
+					
+					include_string = expand_includes(include_string, included_files);					
+					included_files.put(filename, "yes");
+					
+					buf.append(include_string);
+				}
+				else
+				{
+					buf.append(line+"\n");
+				}
+			}
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new WebApplicationException("Exception WHILST EXPANDING INCLUDES. MESSAGE WAS: "+e.getMessage());
+		}
+		//System.out.println("AFTER INCLUDE FILE IS \n"+buf.toString());
+		return buf.toString();
+	}
 
 	//xtra stuff exported to javascript//
 	
@@ -377,7 +449,7 @@ public class ScriptModule extends WebStoreModule
 		else
 			params = tl_params.get();
 		
-		System.out.println("NAME IS "+name+" VALUE IS "+params.get(name));
+		//System.out.println("NAME IS "+name+" VALUE IS "+params.get(name));
 		return params.get(name);
 	}
 	
