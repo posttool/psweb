@@ -277,6 +277,17 @@ public class ScriptModuleRawUI extends RawUIModule
 			output 			= script_module.validateScriptSource(code)+"\n";
 			content = code;
 		}
+		else if(params.get("JUMP TO LINE") != null)
+		{
+			try{
+				code 			= (String)params.get("code_editor");
+				code_editor_offset = script_module.translate_line_number_to_before_include_expand(code,Integer.parseInt((String)params.get("jump_to_offset")));
+				output = (String)params.get("last_output");
+			}catch(Exception e)
+			{
+				ERROR(e);
+			}
+		}
 		else if(params.get("SAVE") != null)
 		{
 			savename = (String)params.get("save_name");
@@ -400,6 +411,7 @@ public class ScriptModuleRawUI extends RawUIModule
 			//FORM_SUBMIT_BUTTON(uctx, "MANAGE SCRIPTS");
 			FORM_SUBMIT_BUTTON(uctx, "RUN");
 		}
+
 		FORM_SUBMIT_BUTTON(uctx, "SAVE");
 		if(create)
 		{
@@ -412,6 +424,8 @@ public class ScriptModuleRawUI extends RawUIModule
 			FORM_HIDDEN_FIELD(uctx, "edit", savename);
 			FORM_HIDDEN_FIELD(uctx, "managing_includes", String.valueOf(managing_includes));
 		}
+		FORM_SUBMIT_BUTTON(uctx, "JUMP TO LINE");FORM_INPUT_FIELD(uctx, "jump_to_offset", 4, "");
+		FORM_HIDDEN_FIELD(uctx, "last_output", "");
 		FORM_END(uctx);
 		String editor_setup = 
 			  "<script>\nvar code_editor_mirror = CodeMirror.fromTextArea('code_editor_id', {\n"+
@@ -448,8 +462,10 @@ public class ScriptModuleRawUI extends RawUIModule
 		String on_submit_crap = "<script>document.forms[0].onsubmit=on_form_submit;\n"+
 		//"function dump(o){if(o==null)return;var s='';for(var key in o){s+=key+'='+o[key];}alert(s);}\n"+
 		"function on_form_submit(){"+
-		"/*alert(code_editor_mirror.currentLine());*/"+
+		"/*alert(document.forms[0]['JUMP TO LINE'].value);*/"+
 		"document.forms[0].code_editor_offset.value=code_editor_mirror.currentLine();"+
+		"if(document.forms[0]['JUMP TO LINE'].clicked != null){\n"+
+		"document.forms[0].last_output.value =  document.getElementById('output_id').value;}\n"+
 		"}</script>";
 			
 		//String jump_to_crap = "<script>" +

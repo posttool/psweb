@@ -300,6 +300,37 @@ public class ScriptModule extends WebStoreModule
 		   return output+"\n"+"EXECUTE OK";
 	}
 	
+	
+	public int translate_line_number_to_before_include_expand(String script,int no)
+	{
+		try{
+		int length_before_include = 0;
+		int num_includes = 0;
+		BufferedReader br = new BufferedReader(new StringReader(script));
+		String line;
+		while((line = br.readLine()) != null)
+		{
+			length_before_include++;
+			if(line.trim().startsWith("#include"))
+			{
+				num_includes++;
+			}
+		}
+		
+		int length_after_include = 0;
+		script = expand_includes(script,null);
+		br = new BufferedReader(new StringReader(script));
+		while((line = br.readLine()) != null)
+			length_after_include++;
+
+		return no - (length_after_include - length_before_include);
+		}catch(Exception e)
+		{
+			ERROR(e);
+			return 0;
+		}
+	}
+	
 	private String expand_includes(String script,Map<String,String> included_files) throws WebApplicationException
 	{
 	
@@ -368,7 +399,7 @@ public class ScriptModule extends WebStoreModule
 	}
 
 	//xtra stuff exported to javascript//
-	
+	/*STD LIB*/
 	public void PRINT(String message)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -475,6 +506,16 @@ public class ScriptModule extends WebStoreModule
 		return Integer.MAX_VALUE;
 	}
 
+	public void SLEEP(long millis)
+	{
+		try{
+			Thread.sleep(millis);
+		}catch(Exception e)
+		{
+			ERROR(e);
+		}
+	}
+	/*QUERY FUNCTIONS*/
 	public Query NEW_QUERY(String entity_type)
 	{
 		return new Query(entity_type);
