@@ -458,6 +458,18 @@ public class ScriptModule extends WebStoreModule
 		return new ArrayList<Object>();
 	}
 	
+	public Map<Object,Object> NEW_MAP()
+	{
+		return new HashMap<Object,Object>();
+	}
+
+	public Entity NEW_ENTITY(String type)
+	{
+		 Entity e =  new Entity();
+		 e.setType(type);
+		 return e;
+	}
+	
 	public int MAX_INT()
 	{
 		return Integer.MAX_VALUE;
