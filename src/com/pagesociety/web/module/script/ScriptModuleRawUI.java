@@ -124,7 +124,7 @@ public class ScriptModuleRawUI extends RawUIModule
 						A_GET(uctx,getName(),RAW_SUBMODE_EDIT_SCRIPT,"[ edit ]","edit",name,"managing_includes",managing_includes);
 					TD_END(uctx);
 					TD_START(uctx);
-						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ delete ]","delete",name,"managing_includes",managing_includes);
+						A_GET_CONFIRM(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ delete ]","delete",name,"managing_includes",managing_includes);
 					TD_END(uctx);
 				TR_END(uctx);
 				
@@ -170,12 +170,9 @@ public class ScriptModuleRawUI extends RawUIModule
 		boolean update 			= params.get("edit") != null;
 		boolean create 			= !update;
 		String s_code_editor_offset = (String)params.get("code_editor_offset");
-		System.out.println("s CODE EDITOR OFFSET IS "+s_code_editor_offset);
 		int code_editor_offset 		= 1;
 		if(s_code_editor_offset != null)
 				code_editor_offset = Integer.parseInt(s_code_editor_offset);
-		System.out.println("CODE EDITOR OFFSET IS "+code_editor_offset);
-		
 
 		if(update)
 		{
@@ -282,7 +279,10 @@ public class ScriptModuleRawUI extends RawUIModule
 			try{
 				code 			= (String)params.get("code_editor");
 				code_editor_offset = script_module.translate_line_number_to_before_include_expand(code,Integer.parseInt((String)params.get("jump_to_offset")));
-				output = (String)params.get("last_output");
+				String last_output = (String)params.get("last_output");
+				if(last_output != null && !last_output.trim().equals(""))
+					output = last_output;
+				content = code;
 			}catch(Exception e)
 			{
 				ERROR(e);
