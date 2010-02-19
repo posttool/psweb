@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptException;
+
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.FieldDefinition;
@@ -553,7 +555,26 @@ public class RecurringOrderModule extends ResourceModule
 				}
 				
 			try{
-				double amount = get_order_amount_with_promotions_applied(recurring_order);
+				double amount = 0;
+				try{
+					amount = get_order_amount_with_promotions_applied(recurring_order);
+				}catch(WebApplicationException wae)
+				{
+					//script exception//
+					ERROR(wae);
+					String message = "Hey Dudes. There was a script exception"+
+					" while applying promotions to order "+recurring_order+
+					". The order was not billed it needs to be looked in to";
+					MODULE_LOG(message);
+					Map<String,Object> data = new HashMap<String,Object>();
+					data.put("message", message);
+					try {
+						email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "script exception", "generic.fm", data);
+					} catch (WebApplicationException e) {
+						ERROR(e);
+					}
+					break;
+				}
 				do_regular_billing(order_user,recurring_order,billing_record,amount);				
 			}catch(BillingGatewayException bge2)
 			{
@@ -972,12 +993,29 @@ public class RecurringOrderModule extends ResourceModule
 					}
 				}
 				
-				System.out.println("ABOUT TO APPL PROMOTIONS ON ORDER\n"+recurring_order);
+				MODULE_LOG("ABOUT TO APPL PROMOTIONS ON ORDER\n"+recurring_order);
 				double amount_before_promotions = tally_order(recurring_order);
-				System.out.println("\tBEFORE PROMOTIONS ORDER AMOUNT \n"+amount_before_promotions);
+				MODULE_LOG("\tBEFORE PROMOTIONS ORDER AMOUNT \n"+amount_before_promotions);
 				double amount_after_promotions = 0;
-				try{
+				try {
 					amount_after_promotions = get_order_amount_with_promotions_applied(recurring_order);
+				} catch (WebApplicationException e1) {
+					//script exception//
+					ERROR(e1);
+					String message = "Hey Dudes. There was a script exception"+
+					" while applying promotions to order "+recurring_order+
+					". The order was not billed it needs to be looked in to";
+					MODULE_LOG(message);
+					Map<String,Object> data = new HashMap<String,Object>();
+					data.put("message", message);
+					try {
+						email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "script exception", "generic.fm", data);
+					} catch (WebApplicationException e) {
+						ERROR(e);
+					}
+					continue;
+				}
+				try{
 					do_regular_billing(order_user,recurring_order, billing_record,amount_after_promotions);
 				}
 				catch(PersistenceException pe4)
@@ -991,7 +1029,7 @@ public class RecurringOrderModule extends ResourceModule
 					continue;
 				}
 
-				System.out.println("\tAFTER  PROMOTIONS ORDER AMOUNT \n"+amount_after_promotions);
+				MODULE_LOG("\tAFTER  PROMOTIONS ORDER AMOUNT \n"+amount_after_promotions);
 				
 				
 
@@ -1006,7 +1044,7 @@ public class RecurringOrderModule extends ResourceModule
 				
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
-				break;
+				break;//break out of for loop//
 			}
 
 		}
