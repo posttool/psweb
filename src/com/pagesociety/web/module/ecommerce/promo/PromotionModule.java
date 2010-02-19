@@ -850,6 +850,7 @@ public class PromotionModule extends WebStoreModule
 		ScriptContext ctx = jsEngine.getContext();
 		ctx.setAttribute(ScriptEngine.FILENAME ,promotion_name, ScriptContext.ENGINE_SCOPE);
 		ctx.setAttribute("P", this,ScriptContext.ENGINE_SCOPE );
+		ctx.setAttribute("$", this,ScriptContext.ENGINE_SCOPE );
 		ctx.setAttribute("MEM",new MEM() ,ScriptContext.ENGINE_SCOPE );
 		
 		//check syntax//
