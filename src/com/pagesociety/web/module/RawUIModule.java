@@ -507,6 +507,29 @@ public class RawUIModule extends WebModule
 		A(buf,RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw?"+KEY_UI_MODULE_SUBMODE_KEY+"="+String.valueOf(submode)+"&"+p_buf.toString(),text);
 	}
 	
+	protected void A_GET_CONFIRM(UserApplicationContext uctx,String module_name,int submode,String text,Object... params)
+	{
+		A_GET_CONFIRM(get_user_buf(uctx), module_name, submode, text, params);
+	}
+	
+	protected void A_GET_CONFIRM(StringBuilder buf,String module_name,int submode,String text,Object... params)
+	{
+		StringBuilder p_buf = new StringBuilder();
+		for(int i = 0;i< params.length;i+=2)
+		{
+			p_buf.append(params[i]+"="+params[i+1]);
+			p_buf.append("&");
+		}
+		if(params.length > 0)
+			p_buf.setLength(p_buf.length()-1);
+		
+		String url = RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw?"+KEY_UI_MODULE_SUBMODE_KEY+"="+String.valueOf(submode)+"&"+p_buf.toString();
+		buf.append(" <a href=\"javascript: if (confirm('Really " +text+"?')) { window.location.href='"+url+"' } else { void('') };\" >"+text+"</a>");
+	}
+	
+	 
+	
+	
 	protected void A(UserApplicationContext uctx,String url,String text)
 	{
 		A(get_user_buf(uctx),url,text);
