@@ -320,6 +320,8 @@ public class RawUIModule extends WebModule
 			buf.append("<TEXTAREA name='"+name+"' id='"+name+"_id' cols='"+cols+"' rows='"+rows+"' spellcheck='false' wrap='off'>"+default_value+"</TEXTAREA>\n");
 	}
 	
+	
+	
 	protected void FORM_PASSWORD_FIELD(UserApplicationContext uctx,String name,int size)
 	{
 		FORM_PASSWORD_FIELD(get_user_buf(uctx), name, size);
