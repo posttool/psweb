@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -515,6 +516,66 @@ public class ScriptModule extends WebStoreModule
 			ERROR(e);
 		}
 	}
+	/* TYPE COERCE FUNCTIONS */
+	public Integer INT(Object o)
+	{
+		if(o == null)
+			return null;
+		else if(o.getClass() == String.class)
+			return Integer.parseInt((String)o);
+		else if(o.getClass() == Double.class)
+			return  new Integer((int)((Double)o).doubleValue());
+		else if(o.getClass() == Integer.class)
+			return (Integer)o;
+		throw new RuntimeException("BAD INT CAST "+String.valueOf(o));
+	}
+	
+	public Float FLOAT(Object o)
+	{
+		if(o == null)
+			return null;
+		else if(o.getClass() == String.class)
+			return Float.parseFloat((String)o);
+		else if(o.getClass() == Double.class)
+			return  new Float((float)((Double)o).doubleValue());
+		else if(o.getClass() == Float.class)
+			return (Float)o;
+		throw new RuntimeException("BAD FLOAT CAST "+String.valueOf(o));
+	}
+
+	public String STRING(Object o)
+	{
+		if(o == null)
+			return null;
+		else if(o.getClass() == String.class)
+			return (String)o;
+		else if(o.getClass() == Double.class)
+			return  String.valueOf(((Double)o).doubleValue());
+		else if(o.getClass() == Float.class)
+			return String.valueOf((Float)o);
+		throw new RuntimeException("BAD STRING CAST "+String.valueOf(o));
+	}
+	
+	public Date DATE(String yyyy,String mm, String dd)
+	{
+		return DATE(yyyy,mm,dd,"0","0");
+	}
+	
+	public Date DATE(String yyyy,String mm, String dd,String hh,String min)
+	{
+		 GregorianCalendar newGregCal = new GregorianCalendar(
+			     Integer.parseInt(yyyy),
+			     Integer.parseInt(mm) - 1,
+			     Integer.parseInt(dd),
+			     Integer.parseInt(hh),
+			     Integer.parseInt(min)
+			 );
+		 Date d = newGregCal.getTime();
+		 return d;
+	}
+	
+
+	
 	/*QUERY FUNCTIONS*/
 	public Query NEW_QUERY(String entity_type)
 	{

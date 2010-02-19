@@ -242,12 +242,12 @@ public class ScriptModuleRawUI extends RawUIModule
 								min = svalue.substring(14,16);
 							}
 							 GregorianCalendar newGregCal = new GregorianCalendar(
-							     Integer.parseInt(yyyy),
-							     Integer.parseInt(mm) - 1,
-							     Integer.parseInt(dd),
-							     Integer.parseInt(hh),
-							     Integer.parseInt(min)
-							 );
+								     Integer.parseInt(yyyy),
+								     Integer.parseInt(mm) - 1,
+								     Integer.parseInt(dd),
+								     Integer.parseInt(hh),
+								     Integer.parseInt(min)
+								 );
 							 Date d = newGregCal.getTime();
 							 value = d;
 						}
