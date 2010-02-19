@@ -455,7 +455,7 @@ public class ScriptModuleRawUI extends RawUIModule
 
 		if(output != null)
 		{
-			FORM_TEXTAREA_FIELD(uctx, "output", 120, 10,output);
+			FORM_TEXTAREA_FIELD(uctx, "output", 140, 10,output);
 			//PRE(uctx,output);
 		}
 		FORM_END(uctx);
