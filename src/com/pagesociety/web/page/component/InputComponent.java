@@ -8,9 +8,9 @@ public class InputComponent extends Component
 	private String type;
 	private String value;
 
-	public InputComponent(Container parent, String id)
+	public InputComponent(Container parent, String id, String class_name)
 	{
-		super(parent, id);
+		super(parent, id, class_name);
 		type = "input";
 		value = "";
 	}

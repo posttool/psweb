@@ -62,7 +62,7 @@ public class Page
 
 	public InputComponent addInput(String id, String type, String value)
 	{
-		InputComponent i = new InputComponent(target, id);
+		InputComponent i = new InputComponent(target, id, null);
 		i.setType(type);
 		i.setValue(value);
 		return i;
