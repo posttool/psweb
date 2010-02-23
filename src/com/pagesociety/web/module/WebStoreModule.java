@@ -424,6 +424,7 @@ public class WebStoreModule extends WebModule
 //do_fill_deep(store,e,0,MAX_INT,FILL(dsfs, sfsf, gdgd, sdgsdg), MASK(password, email))
 	public static final String[] EMPTY_STRING_ARRAY = new String[0];
 	public static final String[] FILL_ALL_FIELDS    = EMPTY_STRING_ARRAY;
+	public static final String[] FILL_NO_FIELDS    	= null;
 	public static String[] MASK(String... fieldnames)
 	{
 		return fieldnames;
@@ -444,7 +445,7 @@ public class WebStoreModule extends WebModule
 		do_fill_deep(store, e, c, d, fill_fields, EMPTY_STRING_ARRAY);
 	}
 	
-	/*pass EMPTY_STRING_ARRAY for mask fields to mask none and FILL_ALL_FIELDS for fill)fields to fill all */
+	/*pass EMPTY_STRING_ARRAY for mask fields to mask none and FILL_ALL_FIELDS && FILL_NO_FIELDS to fill none for fill)fields to fill all */
 	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
 		if(e == null || c == d)
@@ -462,6 +463,9 @@ public class WebStoreModule extends WebModule
 		else
 			fields_to_fill = fill_fields;
 		
+		for(int m = 0;m < mask_fields.length;m++)
+			e.setAttribute(mask_fields[m], null);
+		
 		for(int i = 0;i < fields_to_fill.length ;i++)
 		{
 			String ref_field_name = fields_to_fill[i];
@@ -471,10 +475,6 @@ public class WebStoreModule extends WebModule
 				continue;
 
 			FILL_REF(store,e,ref_field_name);
-
-			for(int m = 0;m < mask_fields.length;m++)
-				e.setAttribute(mask_fields[m], null);
-
 			
 			if(fd.isArray())
 			{
@@ -1936,6 +1936,72 @@ public class WebStoreModule extends WebModule
 		return false;
 	}
 	
+	public PagingQueryResult BROWSE(String entity_type, String index, int op,Object value, int offset, int page_size,String order_by,int order_by_order,String[] fill_fields, String[] mask_fields, boolean cache_results) throws PersistenceException
+	{
+		Query q = new Query(entity_type);
+		q.idx(index);
+		switch(op)
+		{
+		case Query.EQ:
+				q.eq(value);
+				break;
+		case Query.GT:
+				q.gt(value);
+				break;
+		case Query.GTE:
+				q.gte(value);
+				break;
+		case Query.LT:
+				q.lt(value);
+				break;
+		case Query.LTE:
+				q.lte(value);
+				break;
+		case Query.STARTSWITH:
+				q.startsWith(value);
+				break;
+		case Query.SET_CONTAINS_ANY:
+				q.setContainsAny((List<?>)value);
+				break;
+		case Query.SET_CONTAINS_ALL:
+				q.setContainsAll((List<?>)value);
+				break;
+		case Query.BETWEEN_START_INCLUSIVE_ASC:
+				Object[] vals = (Object[])value;
+				q.betweenStartInclusive(vals[0],vals[1]);	
+				break;
+		case Query.BETWEEN_START_INCLUSIVE_DESC:
+				vals = (Object[])value;
+				q.betweenStartInclusiveDesc(vals[0],vals[1]);
+				break;
+		case Query.BETWEEN_END_INCLUSIVE_ASC:
+				vals = (Object[])value;
+				q.betweenEndInclusive(vals[0],vals[1]);
+				break;
+		case Query.BETWEEN_END_INCLUSIVE_DESC:
+				vals = (Object[])value;
+				q.betweenEndInclusiveDesc(vals[0],vals[1]);
+				break;
+		case Query.BETWEEN_INCLUSIVE_ASC:
+				vals = (Object[])value;
+				q.between(vals[0],vals[1]);
+				break;
+		case Query.BETWEEN_INCLUSIVE_DESC:	
+				vals = (Object[])value;
+				q.betweenDesc(vals[0],vals[1]);
+				break;
+		}
+		q.offset(offset);
+		q.pageSize(page_size);
+		if(order_by != null)
+			q.orderBy(order_by,order_by_order);
+		q.cacheResults(cache_results);
+		if(fill_fields == FILL_NO_FIELDS)
+			return PAGING_QUERY(q);
+		else
+			return PAGING_QUERY_FILL_DEEP_AND_MASK(q, fill_fields, mask_fields);
+	}
+
 	
 	//TRANSACTIONS///
 	private static ThreadLocal<List<Integer>> current_transaction_id_list = new ThreadLocal<List<Integer>>();
