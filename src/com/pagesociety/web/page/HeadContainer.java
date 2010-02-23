@@ -15,6 +15,6 @@ public class HeadContainer
 	{
 		b.append("<head>\n");
 		// todo imports
-		b.append("</head>");
+		b.append("</head>\n");
 	}
 }

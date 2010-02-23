@@ -18,9 +18,10 @@ public class LabelComponent extends Component
 		b.append("<div ");
 		b.append(" ");
 		render_class_attr(b);
+		render_styles(b);
 		b.append(">");
 		b.append(value);
-		b.append("</div>");
+		b.append("</div>\n");
 	}
 
 	public void setValue(String value)

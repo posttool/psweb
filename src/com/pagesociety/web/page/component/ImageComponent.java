@@ -18,7 +18,7 @@ public class ImageComponent extends Component
 		b.append(" ");
 		render_class_attr(b);
 		render_attrs(b, "src", src);
-		b.append("/>");
+		b.append("/>\n");
 	}
 
 	public void setSrc(String src)
