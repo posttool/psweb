@@ -949,6 +949,26 @@ public class RawUIModule extends WebModule
 	}
 	
 
+	protected void RETURN(UserApplicationContext uctx,Object... name_val_pairs)
+	{
+		List<ui_module_stack_frame> stack = get_user_stack(uctx);
+		ui_module_stack_frame caller = pop_caller(uctx);
+			
+		String caller_module = getName();
+		int caller_return_to_submode = RAW_SUBMODE_DEFAULT;
+		if(caller != null)
+		{
+			caller_module 			 = caller.caller_module;
+			caller_return_to_submode = caller.caller_return_to_submode;
+		}
+		Map<String,Object> data = new HashMap<String,Object>();
+		for(int i = 0;i < name_val_pairs.length;i+=2)
+			data.put((String)name_val_pairs[i], name_val_pairs[i+1]);
+
+		execute_module_submode(uctx, caller_module, caller_return_to_submode, data );
+	}
+	
+	
 	protected void RETURN(UserApplicationContext uctx)
 	{
 		List<ui_module_stack_frame> stack = get_user_stack(uctx);
