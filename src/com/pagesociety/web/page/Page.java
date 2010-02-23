@@ -40,7 +40,7 @@ public class Page
 
 	public void render(StringBuilder b)
 	{
-		b.append("<html>");
+		b.append("<html>\n");
 		head.render(b);
 		body.render(b);
 		b.append("</html>");
