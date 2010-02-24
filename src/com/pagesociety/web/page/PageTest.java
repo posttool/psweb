@@ -75,18 +75,18 @@ public class PageTest
 	{
 		Page p = new Page();
 		// styles
-		p.addStyle("body", 		Style.BACKGROUND_COLOR, "#444444", Style.FONT_FAMILY, Style.FONT_FAMILY_ARIAL);
-		p.addStyle("div, th, td", Style.FONT_SIZE, "10", Style.COLOR, "#555555");
-		p.addStyle("table", "border-collapse", "collapse");
-		p.addStyle("table, th, td", "border", "1px solid #777777", "padding", "5px");
-		p.addStyle("input[type=\"text\"]", "border", "1px solid #444444", Style.FONT_SIZE, "20", "padding", "3px", "margin", "0px");
-		p.addStyle("#content", 	Style.WIDTH, "800px", Style.HEIGHT, "800px", "margin", "10px auto", "padding", "10px", "background-color", "#ffffff");
-		p.addStyle("#logo_nav", Style.BACKGROUND_COLOR, "#cccccc", Style.HEIGHT, "50px", "margin-bottom", "10px");
-		p.addStyle("#column0", 	Style.WIDTH, "380px", "padding-right", "10px");
-		p.addStyle("#column1", 	Style.WIDTH, "380px");
-		p.addStyle(".label_container", "margin-bottom", "10px");
-		p.addStyle(".small_label", Style.FONT_FAMILY, "Arial", Style.FONT_SIZE, "8", Style.COLOR, "#555555", Style.LETTER_SPACING, ".1em");
-		p.addStyle(".big_text", 	Style.FONT_FAMILY, "Arial", Style.FONT_SIZE, "18", Style.COLOR, "#777777");
+		p.addStyle("body", 					Style.BACKGROUND_COLOR, "#444444", Style.FONT_FAMILY, Style.FONT_FAMILY_ARIAL);
+		p.addStyle("div, th, td", 			Style.FONT_SIZE, "10", Style.COLOR, "#555555");
+		p.addStyle("table", 				"border-collapse", "collapse");
+		p.addStyle("table, th, td", 		"border", "1px solid #777777", "padding", "5px");
+		p.addStyle("input[type='text']", 	"border", "1px solid #444444", Style.FONT_SIZE, "20", "padding", "3px", "margin", "0px");
+		p.addStyle("#content", 				Style.WIDTH, "800px", Style.HEIGHT, "800px", "margin", "10px auto", "padding", "10px", "background-color", "#ffffff");
+		p.addStyle("#logo_nav", 			Style.BACKGROUND_COLOR, "#cccccc", Style.HEIGHT, "50px", "margin-bottom", "10px");
+		p.addStyle("#column0", 				Style.WIDTH, "380px", "padding-right", "10px");
+		p.addStyle("#column1", 				Style.WIDTH, "380px");
+		p.addStyle(".label_container", 		"margin-bottom", "10px");
+		p.addStyle(".small_label", 			Style.FONT_FAMILY, "Arial", Style.FONT_SIZE, "8", Style.COLOR, "#555555", Style.LETTER_SPACING, ".1em");
+		p.addStyle(".big_text", 			Style.FONT_FAMILY, "Arial", Style.FONT_SIZE, "18", Style.COLOR, "#777777");
 		// set default styles for components
 		p.setLabelClassName("small_label");
 		p.setLabelContainerClassName("label_container");

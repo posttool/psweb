@@ -91,6 +91,8 @@ public class Page
 		if (component_map_by_id.containsKey(id))
 			return false;
 		component_map_by_id.put(id, c);
+		if (c instanceof IEditor) 
+			input_ids.add(id);
 		return true;
 	}
 	
@@ -140,7 +142,6 @@ public class Page
 		InputComponent i = new InputComponent(target, id, null);
 		i.setType("text");
 		i.setValue(value);
-		input_ids.add(id);
 		return i;
 	}
 

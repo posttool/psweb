@@ -2,8 +2,9 @@ package com.pagesociety.web.page.component;
 
 import com.pagesociety.web.page.Component;
 import com.pagesociety.web.page.Container;
+import com.pagesociety.web.page.IEditor;
 
-public class InputComponent extends Component
+public class InputComponent extends Component implements IEditor
 {
 	private String type;
 	private String value;
@@ -13,6 +14,7 @@ public class InputComponent extends Component
 		super(parent, id, class_name);
 		type = "text";
 		value = "";
+		// TODO register a javascript function for get_value_of(id) for this component
 	}
 
 	public void render(StringBuilder b)
