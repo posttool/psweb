@@ -153,9 +153,12 @@ public abstract class WebModule extends Module
 		throw new WebApplicationException(e.getMessage(),e);
 	}
 
-	protected String GUARD_INSTANCE = "instance";
-	protected String GUARD_TYPE		= "entity_type";
-	protected String GUARD_USER		= "user";
+	protected String GUARD_INSTANCE 		= "instance";
+	protected String GUARD_TYPE				= "entity_type";
+	protected String GUARD_USER				= "user";
+	protected String GUARD_BROWSE_INDEX		= "browse_index";
+	protected String GUARD_BROWSE_OP		= "browse_op";
+	protected String GUARD_BROWSE_VALUE		= "browse_value";
 	protected void GUARD(Entity user,String permission_id,Object... flattened_context) throws PermissionsException,PersistenceException
 	{
 		Map<String,Object> context = new HashMap<String, Object>();
