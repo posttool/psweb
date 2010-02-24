@@ -11,14 +11,19 @@ public class InputComponent extends Component
 	public InputComponent(Container parent, String id, String class_name)
 	{
 		super(parent, id, class_name);
-		type = "input";
+		type = "text";
 		value = "";
 	}
 
 	public void render(StringBuilder b)
 	{
-		render_self_closed_tag(b, "input", "id", id, "type", type, "value", value);
+		b.append("<input ");
+		render_attributes_id_class_style(b);
+		render_attrs(b, "type", type, "value", value);
+		b.append("/>\n");
 	}
+
+	
 
 	public void setType(String type)
 	{

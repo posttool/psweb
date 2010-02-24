@@ -16,9 +16,7 @@ public class LabelComponent extends Component
 	public void render(StringBuilder b)
 	{
 		b.append("<div ");
-		b.append(" ");
-		render_class_attr(b);
-		render_styles(b);
+		render_attributes_id_class_style(b);
 		b.append(">");
 		b.append(value);
 		b.append("</div>\n");
