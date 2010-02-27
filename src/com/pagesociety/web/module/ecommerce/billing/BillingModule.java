@@ -19,6 +19,7 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
+import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
@@ -117,7 +118,6 @@ public class BillingModule extends WebStoreModule
 	}
 	
 
-	
 	@Export
 	public Entity CreateBillingRecord(UserApplicationContext uctx,
 			  String first_name,
