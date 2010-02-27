@@ -92,6 +92,142 @@ public class RawUIModule extends WebModule
 		
 	}
 	
+	
+	protected void BUILD_DYNAMIC_FORM_JS_FUNC(StringBuilder buf)
+	{
+		buf.append("function build_and_submit_form(post_url,kvp,return_with_kvp)\n"+
+		"{\n"+
+			"var submitForm = document.createElement(\"FORM\");\n"+
+			 "document.body.appendChild(submitForm);\n"+
+			 "submitForm.method = \"POST\";\n"+	
+			 "var i = 0;\n"+
+			 "var element;\n"+
+			 "var newElement;\n"+
+			 "for(i = 0;i < kvp.length;i+=2)\n"+
+			 "{\n"+
+		 	 	"newElement = document.createElement(\"input\")\n" +
+		 	 	"newElement.type = \"hidden\";\n"+
+		 	 	"newElement.name = kvp[i];\n"+
+		 	 	"if(kvp[i+1].match(\"^\\$\")==\"$\")\n"+
+				 "{\n"+
+			 	 "element = document.getElementById(kvp[i+1].substring(1));\n"+
+			 	 "if(element != null)\n"+
+			 	 	"newElement.value = element.value;\n"+
+			 	 "}\n"+
+			 	 "else{\n"+
+			 	 "newElement.value = kvp[i+1]\n"+
+			 	 "}\n"+	
+				 "submitForm.appendChild(newElement);\n"+
+			 "}\n"+
+			 "if(return_with_kvp != null)\n"+
+			 "{\n"+
+				 "for(i = 0;i < return_with_kvp.length;i+=2)\n"+
+				 "{\n"+
+			 	 	 "newElement = document.createElement(\"input\")\n" +
+					 "newElement.type = \"hidden\";\n"+
+					 "newElement.name = \"__ret_to_caller__\"+return_with_kvp[i];\n"+
+					 "if(return_with_kvp[i+1].match(\"^\\$\")==\"$\")\n"+
+					 "{\n"+
+				 	 "element = document.getElementById(return_with_kvp[i+1].substring(1));\n"+
+				 	 "newElement.value = element.value;\n"+
+				 	 "}\n"+
+				 	 "else{\n"+
+				 	 "newElement.value = return_with_kvp[i+1]\n"+
+				 	 "}\n"+	
+					 "submitForm.appendChild(newElement);\n"+
+				 "}\n"+
+			 "}\n"+
+			 "submitForm.action= post_url;\n"+
+			 "submitForm.submit();\n"+
+		"}");
+		
+	}
+	
+	
+	protected Object[] KVP(Object... kvp)
+	{	
+		return kvp;
+	}
+
+	/* if a value name in the kvp array starts with '$' the javascript will try
+	 * to get that element by id and if it exists get its value
+	 */
+	protected void BUTTON_GOTO(UserApplicationContext uctx,String module_name,int submode,String text,Object[] arbitrary_kvp)
+	{
+		BUTTON_GOTO(get_user_buf(uctx), module_name, submode, text, arbitrary_kvp);
+	}
+	
+	protected void BUTTON_GOTO(StringBuilder buf,String module_name,int submode,String text,Object[] arbitrary_kvp)
+	{
+		
+		String js_arb_val_array  = gen_js_arb_values_array(submode,arbitrary_kvp);			
+		String action = RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw";		
+		String on_click = "build_and_submit_form('"+action+"',"+js_arb_val_array+");";
+		buf.append("<a href=\"javascript:{}\" onclick=\""+on_click+"\">"+text+"</a>");
+	}
+
+	protected void BUTTON_CALL(UserApplicationContext uctx,String module_name,int submode,String text,Object[] form_kvp,Object[] arbitrary_kvp,int return_to_submode,Object[] return_to_kvp)
+	{
+		BUTTON_CALL(get_user_buf(uctx), module_name, submode, text, form_kvp, arbitrary_kvp,return_to_submode,return_to_kvp);
+	}
+	
+	protected void BUTTON_CALL(StringBuilder buf,String module_name,int submode,String text,Object[] form_kvp,Object[] arbitrary_kvp,int return_to_submode,Object[] return_with_kvp)
+	{
+
+		String js_arb_val_array 		= gen_js_arb_values_array(submode, arbitrary_kvp);	
+		String js_return_with_val_array = gen_js_return_with_val_array(return_to_submode,return_with_kvp);	
+		String action = RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw";
+		String on_click = "build_and_submit_form('"+action+","+js_arb_val_array+","+js_return_with_val_array+");";
+		buf.append("<a href=\"javascript:{}\" onclick=\""+on_click+"\">"+text+"</a>");
+	}
+
+
+	private String gen_js_arb_values_array(int submode,Object... kvp)
+	{
+		StringBuilder b = new StringBuilder();
+		b.append("[");
+		b.append("'"+KEY_UI_MODULE_SUBMODE_KEY+"','"+submode+"',");
+		int i = 0;
+		for(i = 0;i < kvp.length;i+=2)
+		{
+			String key = (String)kvp[i];
+			Object value = kvp[i+1];
+			b.append("'"+key+"'");
+			b.append(",");
+			b.append("'"+String.valueOf(value)+"'");
+			b.append(",");
+		}
+		//get rid of last comma
+
+		b.setLength(b.length()-1);
+		b.append("]");
+		return b.toString();
+	}
+	
+	private String gen_js_return_with_val_array(int return_to_submode, Object... kvp)
+	{
+		StringBuilder b = new StringBuilder();
+		b.append("[");
+		int i = 0;
+		b.append("'__do__call__','true',");
+		b.append("'__return_to_mode__','"+getName()+"',");
+		b.append("'__return_to_submode__','"+return_to_submode+"',");
+		for(i = 0;i < kvp.length;i+=2)
+		{
+			String key = (String)kvp[i];
+			Object value = kvp[i+1];
+			b.append("'"+key+"'");
+			b.append(",");
+			b.append("'"+String.valueOf(value)+"'");
+			b.append(",");
+		}
+		//get rid of last comma
+		b.setLength(b.length()-1);
+		b.append("]");
+		return b.toString();
+	}
+	
+	
 	protected void DOCUMENT_END(UserApplicationContext uctx)
 	{
 		DOCUMENT_END(get_user_buf(uctx));
@@ -137,6 +273,9 @@ public class RawUIModule extends WebModule
 	protected void HEAD_START(StringBuilder buf,String title)
 	{
 		buf.append("<HEAD> \n<TITLE>"+title+"</TITLE>\n");
+		buf.append("<SCRIPT>");
+		BUILD_DYNAMIC_FORM_JS_FUNC(buf);
+		buf.append("</SCRIPT>");
 	}
 	
 	protected void STYLE(UserApplicationContext uctx,String bgcolor,String font_family,String font_color,int font_size,String link_color,String link_hover_color)
@@ -883,12 +1022,16 @@ public class RawUIModule extends WebModule
 		HttpServletRequest request = (HttpServletRequest)c.getRequest();
 		
 		Map<String,Object>params = new HashMap<String,Object>();
+		Map<String,Object>return_to_params = new HashMap<String,Object>();
 		Enumeration e = request.getParameterNames();
 		while(e.hasMoreElements())
 		{
 			String pname = (String)e.nextElement();
 			Object val 	 = request.getParameter(pname);
+			if(pname.startsWith("__ret_to_caller__"))
+				return_to_params.put(pname.substring("__ret_to_caller__".length()),val);
 			params.put(pname, val);
+
 		}
 
 		int callee_submode = RAW_SUBMODE_DEFAULT;
@@ -897,7 +1040,16 @@ public class RawUIModule extends WebModule
 		}catch(Exception ee){}
 	
 		if(canExecSubmode((Entity)uctx.getUser(),callee_submode,params))
+		{
+			if(params.get("__do_call__") != null)
+			{
+				String caller 			 = (String)params.get("__return_to_mode__");
+				int return_to_submode 	 = Integer.parseInt((String)params.get("__return_to_submode__"));			
+				push_caller(uctx, caller, return_to_submode,return_to_params);
+			}
+			
 			execute_submode(uctx, callee_submode, params);
+		}
 		else
 			ERROR_PAGE(uctx, new PermissionsException("NO PERMISSION."));
 		
@@ -953,18 +1105,58 @@ public class RawUIModule extends WebModule
 	{
 		List<ui_module_stack_frame> stack = get_user_stack(uctx);
 		ui_module_stack_frame caller = pop_caller(uctx);
-			
-		String caller_module = getName();
-		int caller_return_to_submode = RAW_SUBMODE_DEFAULT;
+		String 				caller_module 			 = getName();
+		int 				caller_return_to_submode = RAW_SUBMODE_DEFAULT;
+		Map<String,Object> 	data = new HashMap<String,Object>();
+		Object[] 			return_with_params = null;
+		Object[]			all_params = null;
+
 		if(caller != null)
 		{
-			caller_module 			 = caller.caller_module;
-			caller_return_to_submode = caller.caller_return_to_submode;
+			caller_module 			 		= caller.caller_module;
+			caller_return_to_submode 		= caller.caller_return_to_submode;
+			if(caller.return_with_params != null)
+				return_with_params		     = MAP_TO_KEY_VALUE_PAIRS(caller.return_with_params);
 		}
-		Map<String,Object> data = new HashMap<String,Object>();
-		for(int i = 0;i < name_val_pairs.length;i+=2)
-			data.put((String)name_val_pairs[i], name_val_pairs[i+1]);
+		if(return_with_params != null)
+		{
+			all_params = new Object[return_with_params.length+name_val_pairs.length];
+			System.arraycopy(return_with_params, 0, all_params, 0, return_with_params.length);
+			System.arraycopy(name_val_pairs,0,all_params,name_val_pairs.length,name_val_pairs.length); 
+		}
+		else
+			all_params = name_val_pairs;
 
+		
+		
+		//for(int i = 0;i < name_val_pairs.length;i+=2)
+		//	data.put((String)name_val_pairs[i], name_val_pairs[i+1]);
+		
+		
+		String s = "<script>\n"+
+		"var submitForm = document.createElement(\"FORM\");\n"+
+		 "document.body.appendChild(submitForm);\n"+
+		 "submitForm.method = \"POST\";\n"+	
+		 "var i = 0;\n"+
+		 "var element;\n"+
+		 "var newElement;\n"+
+		 "for(i = 0;i < kvp.length;i+=2)\n"+
+		 "{\n"+
+	 	 	"newElement = document.createElement(\"input\")\n" +
+	 	 	"newElement.type = \"hidden\";\n"+
+	 	 	"newElement.name = kvp[i];\n"+
+	 	 	"if(kvp[i+1].match(\"^\\$\")==\"$\")\n"+
+			 "{\n"+
+		 	 "element = document.getElementById(kvp[i+1].substring(1));\n"+
+		 	 "if(element != null)\n"+
+		 	 	"newElement.value = element.value;\n"+
+		 	 "}\n"+
+		 	 "else{\n"+
+		 	 "newElement.value = kvp[i+1]\n"+
+		 	 "}\n"+	
+			 "submitForm.appendChild(newElement);\n"+
+		 "}\n"+
+		"<script>\n";
 		execute_module_submode(uctx, caller_module, caller_return_to_submode, data );
 	}
 	
@@ -1085,10 +1277,11 @@ public class RawUIModule extends WebModule
 		return s;
 	}
 	
-	protected void REQUIRED(String name,Object val) throws Exception
+	protected Object REQUIRED(String name,Object val) throws Exception
 	{
 		if(val == null)
 			throw new Exception(name+" is required");
+		return val;
 	}
 	
 	/* parse comma seperated string */
@@ -1138,6 +1331,17 @@ public class RawUIModule extends WebModule
 		caller_stack.add(f);
 	}
 	
+	private void push_caller(UserApplicationContext uctx,String module_name,int return_to_submode,Map<String,Object> params)
+	{
+		List<ui_module_stack_frame> caller_stack = get_user_stack(uctx);
+		ui_module_stack_frame f 	= new ui_module_stack_frame();
+		f.caller_module 		    = module_name;
+		f.caller_return_to_submode  = return_to_submode;
+		f.return_with_params = params;
+		caller_stack.add(f);
+	}
+	
+	
 	private ui_module_stack_frame pop_caller(UserApplicationContext uctx)
 	{
 		List<ui_module_stack_frame> caller_stack = get_user_stack(uctx);
@@ -1174,7 +1378,7 @@ public class RawUIModule extends WebModule
 //		public int	   	calling_submode;
 		public String 	caller_module;
 		public int 		caller_return_to_submode;
-		public Map<String,Object> params;
+		public Map<String,Object> return_with_params;
 	
 		public String toString()
 		{
@@ -1184,7 +1388,7 @@ public class RawUIModule extends WebModule
 //			"calling_submode: "+calling_submode+"\n"+
 			"\ncallee_module:   "+caller_module+"\n"+
 			"callee_submode:  "+caller_return_to_submode+"\n"+
-			"params:          "+params+"\n"
+			"params:          "+return_with_params+"\n"
 			);
 		}
 	}

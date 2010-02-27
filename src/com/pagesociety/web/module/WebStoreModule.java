@@ -115,6 +115,17 @@ public class WebStoreModule extends WebModule
 		return associated_entity_definitions;
 	}
 	
+	public void VERIFY_MODULE_IS_DEFINER_OF_ENTITY_TYPE(String type) throws WebApplicationException
+	{
+		List<EntityDefinition> defs = getAssociatedEntityDefinitions();
+		for(int i = 0;i< defs.size();i++)
+		{
+			if(defs.get(i).getName().equals(type))
+				return;
+		}
+		throw new WebApplicationException("THIS MODULE DID NOT DEFINE TYPE "+type);
+	}
+	
 	/* system level fields...at some point we will have the app potentially set these up 
 	 * when it starts ADD_SYSTEM_LEVEL_FIELD,RENAME_SYSTEM_LEVEL_FIELD etc
 	 */
@@ -473,7 +484,12 @@ public class WebStoreModule extends WebModule
 			
 			if(fd == null)//this can hapen when you use the explict fill since all fieldnames will not be in all entities
 				continue;
-
+		
+			for(int m = 0;m < mask_fields.length;m++)
+			{
+				if(mask_fields[m].equals(ref_field_name))
+					continue;
+			}
 			FILL_REF(store,e,ref_field_name);
 			
 			if(fd.isArray())
@@ -1991,6 +2007,7 @@ public class WebStoreModule extends WebModule
 				q.betweenDesc(vals[0],vals[1]);
 				break;
 		}
+
 		q.offset(offset);
 		q.pageSize(page_size);
 		if(order_by != null)

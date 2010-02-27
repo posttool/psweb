@@ -518,4 +518,40 @@ public abstract class WebModule extends Module
     	return s;
     }
     
+    
+    public static Map<String,Object> KEY_VALUE_PAIRS_TO_MAP(Object... kvp)
+    {
+    	Map<String,Object> map = new HashMap<String,Object>();
+    	for(int i = 0;i < kvp.length;i+=2)
+    	{
+    		map.put((String)kvp[i],kvp[i+1]);
+    	}
+    	return map;
+    }
+    
+    public static Object[] MAP_TO_KEY_VALUE_PAIRS(Map<String,Object> map)
+    {
+    	int size = 	map.entrySet().size();
+    	Object[] ret = new Object[size*2];
+    	Iterator<String> it = map.keySet().iterator();
+    	int i = 0;
+    	while(it.hasNext())
+    	{
+    		String key = it.next();
+    		Object val = map.get(key);
+    		ret[i++] = key;
+    		ret[i++] = val;
+    	}
+    	return ret;
+    }
+    
+    
+    public static Object[] JOIN_KVP(Object[] kvp,Object... kvp2)
+    {
+    	Object[] ret = new Object[kvp.length + kvp2.length];
+    	System.arraycopy(kvp, 0, ret, 0, kvp.length);
+    	System.arraycopy(kvp2, 0, ret, kvp.length, kvp2.length);
+    	return ret;
+    }
+    
 }
