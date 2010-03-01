@@ -227,6 +227,7 @@ public class BillingModule extends WebStoreModule
 	}
 
 	@Export
+	@TransactionProtect
 	public Entity UpdateBillingRecord(UserApplicationContext uctx,Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		VALIDATE_TYPE(BILLINGRECORD_ENTITY, billing_record);
@@ -252,6 +253,7 @@ public class BillingModule extends WebStoreModule
 	}
 	
 	@Export
+	@TransactionProtect/*leave cc number null to set it to exisitng cc no */
 	public Entity UpdateBillingRecord(UserApplicationContext uctx,
 									  long billing_record_id,
 									  String first_name,
@@ -269,10 +271,10 @@ public class BillingModule extends WebStoreModule
 									  int exp_year,
 									  String ccvn)throws WebApplicationException,PersistenceException,BillingGatewayException
 	  {
-		
+		if(!isConfigured())
+			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
 		Entity user = (Entity)uctx.getUser();
 
-		
 		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
 		GUARD(user,CAN_UPDATE_BILLING_RECORD,GUARD_INSTANCE,billing_record,		
 											BILLINGRECORD_FIELD_FIRST_NAME,first_name,
@@ -288,7 +290,10 @@ public class BillingModule extends WebStoreModule
 											BILLINGRECORD_FIELD_CC_NO,cc_no,
 											BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 											BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
+
 		exp_year 			  = validate_and_normalize_year(exp_year);
+		if(cc_no == null)
+			cc_no = encryption_module.decryptString((String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO));
 		if(ccvn != null && ccvn.trim().equals(""))
 			ccvn = null;
 		return updateBillingRecord(billing_record,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
