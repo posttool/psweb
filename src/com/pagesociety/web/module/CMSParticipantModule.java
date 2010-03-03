@@ -1,6 +1,7 @@
 
 package com.pagesociety.web.module;
 
+import java.util.List;
 import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
@@ -68,5 +69,16 @@ public class CMSParticipantModule extends WebStoreModule
 		return DELETE(e);
 	}
 	
+	public Entity doFillSingleReference(Entity e,String fieldname) throws PersistenceException,WebApplicationException
+	{
+		VERIFY_MODULE_IS_DEFINER_OF_ENTITY_TYPE(e.getType());
+		return GET_REF(e,fieldname);
+	}
+	
+	public List<Entity> doFillMultiReference(Entity e,String fieldname) throws PersistenceException,WebApplicationException
+	{
+		VERIFY_MODULE_IS_DEFINER_OF_ENTITY_TYPE(e.getType());
+		return GET_LIST_REF(e, fieldname);
+	}
 	
 }
