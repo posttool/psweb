@@ -108,7 +108,7 @@ public class RawUIModule extends WebModule
 		 	 	"newElement = document.createElement(\"input\")\n" +
 		 	 	"newElement.type = \"hidden\";\n"+
 		 	 	"newElement.name = kvp[i];\n"+
-		 	 	"if(kvp[i+1].match(\"^\\$\")==\"$\")\n"+
+		 	 	"if(kvp[i+1].indexOf('$')==0)\n"+
 				 "{\n"+
 			 	 "element = document.getElementById(kvp[i+1].substring(1));\n"+
 			 	 "if(element != null)\n"+
@@ -126,9 +126,9 @@ public class RawUIModule extends WebModule
 			 	 	 "newElement = document.createElement(\"input\")\n" +
 					 "newElement.type = \"hidden\";\n"+
 					 "newElement.name = \"__ret_to_caller__\"+return_with_kvp[i];\n"+
-					 "if(return_with_kvp[i+1].match(\"^\\$\")==\"$\")\n"+
+					 "if(return_with_kvp[i+1].indexOf('$')==0)\n"+
 					 "{\n"+
-				 	 "element = document.getElementById(return_with_kvp[i+1].substring(1));\n"+
+					 "element = document.getElementById(return_with_kvp[i+1].substring(1));\n"+
 				 	 "newElement.value = element.value;\n"+
 				 	 "}\n"+
 				 	 "else{\n"+
@@ -166,18 +166,23 @@ public class RawUIModule extends WebModule
 		buf.append("<a href=\"javascript:{}\" onclick=\""+on_click+"\">"+text+"</a>");
 	}
 
-	protected void BUTTON_CALL(UserApplicationContext uctx,String module_name,int submode,String text,Object[] form_kvp,Object[] arbitrary_kvp,int return_to_submode,Object[] return_to_kvp)
+	protected void BUTTON_CALL(UserApplicationContext uctx,String module_name,int submode,String text,Object[] arbitrary_kvp,int return_to_submode,Object[] return_to_kvp)
 	{
-		BUTTON_CALL(get_user_buf(uctx), module_name, submode, text, form_kvp, arbitrary_kvp,return_to_submode,return_to_kvp);
+		BUTTON_CALL(get_user_buf(uctx), module_name, submode, text,  arbitrary_kvp,return_to_submode,return_to_kvp);
 	}
 	
-	protected void BUTTON_CALL(StringBuilder buf,String module_name,int submode,String text,Object[] form_kvp,Object[] arbitrary_kvp,int return_to_submode,Object[] return_with_kvp)
+	protected void BUTTON_CALL(StringBuilder buf,String module_name,int submode,String text,Object[] arbitrary_kvp,int return_to_submode,Object[] return_with_kvp)
 	{
-
+		if(arbitrary_kvp == null)
+			arbitrary_kvp = KVP();
+		if(return_with_kvp == null)
+			return_with_kvp = KVP();
+		
 		String js_arb_val_array 		= gen_js_arb_values_array(submode, arbitrary_kvp);	
 		String js_return_with_val_array = gen_js_return_with_val_array(return_to_submode,return_with_kvp);	
+		
 		String action = RAW_MODULE_ROOT()+"/"+module_name+"/Exec/.raw";
-		String on_click = "build_and_submit_form('"+action+","+js_arb_val_array+","+js_return_with_val_array+");";
+		String on_click = "build_and_submit_form('"+action+"',"+js_arb_val_array+","+js_return_with_val_array+");";
 		buf.append("<a href=\"javascript:{}\" onclick=\""+on_click+"\">"+text+"</a>");
 	}
 
@@ -209,7 +214,7 @@ public class RawUIModule extends WebModule
 		StringBuilder b = new StringBuilder();
 		b.append("[");
 		int i = 0;
-		b.append("'__do__call__','true',");
+		b.append("'__do_call__','true',");
 		b.append("'__return_to_mode__','"+getName()+"',");
 		b.append("'__return_to_submode__','"+return_to_submode+"',");
 		for(i = 0;i < kvp.length;i+=2)
@@ -438,7 +443,7 @@ public class RawUIModule extends WebModule
 	
 	protected void FORM_INPUT_FIELD(StringBuilder buf,String name,int size,String default_val)
 	{
-		buf.append("<INPUT TYPE='text' name='"+name+"' size='"+size+"' value='"+((default_val == null)?"":default_val)+"'/>\n");
+		buf.append("<INPUT TYPE='text' name='"+name+"' id='"+name+"_id' size='"+size+"' value='"+((default_val == null)?"":default_val)+"'/>\n");
 	}
 	
 	protected void FORM_TEXTAREA_FIELD(UserApplicationContext uctx,String name,int cols,int rows)
@@ -503,7 +508,7 @@ public class RawUIModule extends WebModule
 	
 	protected void FORM_HIDDEN_FIELD(StringBuilder buf,String name,Object value)
 	{
-		buf.append("<INPUT TYPE='hidden' name='"+name+"' value='"+String.valueOf(value)+"'/>\n");
+		buf.append("<INPUT TYPE='hidden' name='"+name+"' id='"+name+"_id' value='"+String.valueOf(value)+"'/>\n");
 	}
 	
 	protected void FORM_SUBMIT_BUTTON(UserApplicationContext uctx,String label)
@@ -1029,8 +1034,15 @@ public class RawUIModule extends WebModule
 			String pname = (String)e.nextElement();
 			Object val 	 = request.getParameter(pname);
 			if(pname.startsWith("__ret_to_caller__"))
+			{
 				return_to_params.put(pname.substring("__ret_to_caller__".length()),val);
-			params.put(pname, val);
+			}
+			else if(pname.equals("__button_return__"))
+			{//clean up the stack from a __button_return__
+				pop_caller(uctx);
+			}
+			else
+				params.put(pname, val);
 
 		}
 
@@ -1041,10 +1053,13 @@ public class RawUIModule extends WebModule
 	
 		if(canExecSubmode((Entity)uctx.getUser(),callee_submode,params))
 		{
-			if(params.get("__do_call__") != null)
+			if(return_to_params.get("__do_call__") != null)
 			{
-				String caller 			 = (String)params.get("__return_to_mode__");
-				int return_to_submode 	 = Integer.parseInt((String)params.get("__return_to_submode__"));			
+				String caller 			 = (String)return_to_params.get("__return_to_mode__");
+				int return_to_submode 	 = Integer.parseInt((String)return_to_params.get("__return_to_submode__"));			
+				return_to_params.remove("__do_call__");
+				return_to_params.remove("__return_to_mode__");
+				return_to_params.remove("__return_to_submode__");
 				push_caller(uctx, caller, return_to_submode,return_to_params);
 			}
 			
@@ -1103,11 +1118,9 @@ public class RawUIModule extends WebModule
 
 	protected void RETURN(UserApplicationContext uctx,Object... name_val_pairs)
 	{
-		List<ui_module_stack_frame> stack = get_user_stack(uctx);
 		ui_module_stack_frame caller = pop_caller(uctx);
 		String 				caller_module 			 = getName();
 		int 				caller_return_to_submode = RAW_SUBMODE_DEFAULT;
-		Map<String,Object> 	data = new HashMap<String,Object>();
 		Object[] 			return_with_params = null;
 		Object[]			all_params = null;
 
@@ -1122,43 +1135,66 @@ public class RawUIModule extends WebModule
 		{
 			all_params = new Object[return_with_params.length+name_val_pairs.length];
 			System.arraycopy(return_with_params, 0, all_params, 0, return_with_params.length);
-			System.arraycopy(name_val_pairs,0,all_params,name_val_pairs.length,name_val_pairs.length); 
+			System.arraycopy(name_val_pairs,0,all_params,return_with_params.length,name_val_pairs.length); 
 		}
 		else
 			all_params = name_val_pairs;
 
-		
-		
-		//for(int i = 0;i < name_val_pairs.length;i+=2)
-		//	data.put((String)name_val_pairs[i], name_val_pairs[i+1]);
-		
-		
-		String s = "<script>\n"+
-		"var submitForm = document.createElement(\"FORM\");\n"+
-		 "document.body.appendChild(submitForm);\n"+
-		 "submitForm.method = \"POST\";\n"+	
-		 "var i = 0;\n"+
-		 "var element;\n"+
-		 "var newElement;\n"+
-		 "for(i = 0;i < kvp.length;i+=2)\n"+
-		 "{\n"+
-	 	 	"newElement = document.createElement(\"input\")\n" +
-	 	 	"newElement.type = \"hidden\";\n"+
-	 	 	"newElement.name = kvp[i];\n"+
-	 	 	"if(kvp[i+1].match(\"^\\$\")==\"$\")\n"+
-			 "{\n"+
-		 	 "element = document.getElementById(kvp[i+1].substring(1));\n"+
-		 	 "if(element != null)\n"+
-		 	 	"newElement.value = element.value;\n"+
-		 	 "}\n"+
-		 	 "else{\n"+
-		 	 "newElement.value = kvp[i+1]\n"+
-		 	 "}\n"+	
-			 "submitForm.appendChild(newElement);\n"+
-		 "}\n"+
-		"<script>\n";
-		execute_module_submode(uctx, caller_module, caller_return_to_submode, data );
+		String s 	  		= gen_js_arb_values_array(caller_return_to_submode, all_params);
+		String action 		= RAW_MODULE_ROOT()+"/"+caller_module+"/Exec/.raw";
+		StringBuilder buf 	= get_user_buf(uctx);		
+
+		buf.append("<html>\n");
+		buf.append("<head>\n");
+		buf.append("<script>\n");
+		BUILD_DYNAMIC_FORM_JS_FUNC(buf);
+		buf.append("</script>\n");
+		buf.append("</head>\n");
+		buf.append("<body>\n");
+		buf.append("<script>\n");
+		buf.append("\tbuild_and_submit_form('"+action+"',"+s+");\n");
+		buf.append("</script>\n");
+		buf.append("</body>\n");
+		buf.append("</html>\n");
+		System.out.println("ABOUT TO RETURN: "+buf.toString());
 	}
+	
+	
+	protected void BUTTON_RETURN(UserApplicationContext uctx,String text,Object... name_val_pairs)
+	{
+		ui_module_stack_frame caller = peek_caller(uctx);//we need to make sure this gets popped
+														//so we look for __button_return__ in DO_EXEC
+		String 				caller_module 			 = getName();
+		int 				caller_return_to_submode = RAW_SUBMODE_DEFAULT;
+		Object[] 			return_with_params 		 = null;
+		Object[]			all_params 				 = null;
+
+		if(caller != null)
+		{
+			caller_module 			 		= caller.caller_module;
+			caller_return_to_submode 		= caller.caller_return_to_submode;
+			if(caller.return_with_params != null)
+				return_with_params		     = MAP_TO_KEY_VALUE_PAIRS(caller.return_with_params);
+
+		}
+		if(return_with_params != null)
+		{
+			all_params = new Object[return_with_params.length+name_val_pairs.length];
+			System.arraycopy(return_with_params, 0, all_params, 0, return_with_params.length);
+			System.arraycopy(name_val_pairs,0,all_params,return_with_params.length,name_val_pairs.length); 
+		}
+		else
+			all_params = name_val_pairs;
+		all_params = JOIN_KVP(all_params, "__button_return__",true);
+		String s 	  		= gen_js_arb_values_array(caller_return_to_submode, all_params);
+		String action 		= RAW_MODULE_ROOT()+"/"+caller_module+"/Exec/.raw";
+		StringBuilder buf 	= get_user_buf(uctx);		
+
+		String on_click = "build_and_submit_form('"+action+"',"+s+");";
+		buf.append("<a href=\"javascript:{}\" onclick=\""+on_click+"\">"+text+"</a>");
+
+	}
+	
 	
 	
 	protected void RETURN(UserApplicationContext uctx)
@@ -1349,6 +1385,15 @@ public class RawUIModule extends WebModule
 			return null;
 		else
 			return caller_stack.remove(caller_stack.size()-1);
+	}
+	
+	private ui_module_stack_frame peek_caller(UserApplicationContext uctx)
+	{
+		List<ui_module_stack_frame> caller_stack = get_user_stack(uctx);
+		if(caller_stack.size() == 0)
+			return null;
+		else
+			return caller_stack.get(caller_stack.size()-1);
 	}
 		
 	private List<ui_module_stack_frame> get_user_stack(UserApplicationContext uctx)
