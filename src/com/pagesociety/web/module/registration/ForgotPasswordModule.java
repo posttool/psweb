@@ -86,8 +86,8 @@ public class ForgotPasswordModule extends WebStoreModule
 		template_data.put("username", username);
 		template_data.put("email", email);
 		template_data.put("forgot_password_token", forgot_password_token);
-		/* the anchor has to come after the query string for flash */
-		/* so we pass them to the template seperately */
+		/* the anchor has to come after the query string for flash 	*/
+		/* so we pass them to the template seperately 				*/
 		String restore_password_url_anchor = null;
 		int idx = -1;
 		if((idx = restore_password_url.indexOf('#')) != -1)

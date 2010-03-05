@@ -66,8 +66,10 @@ public class RegistrationModule extends WebStoreModule
 				throw new InitializationException("EMAIL CONFIRMATION FEATURE REQUIRES THAT YOU PROVIDE AN IEmailModule instance IN SLOT "+SLOT_EMAIL_MODULE);
 			
 			email_template_name  = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_NAME, config);
-			email_subject	     = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_SUBJECT, config);
+			email_subject	     = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_SUBJECT, config);			
 			activate_account_url = GET_REQUIRED_CONFIG_PARAM(PARAM_ACTIVATE_ACCOUNT_URL, config);
+			
+			
 			user_module.registerLockMessage(LOCKED_PENDING_REGISTRATION, LOCK_MESSAGE);
 
 		}
@@ -114,7 +116,13 @@ public class RegistrationModule extends WebStoreModule
 			template_data.put("username", username);
 			template_data.put("email", email);
 			template_data.put("activation_token", activation_token);
+			/* our flash deep linking needs the # anchor after the query string*/
+			String activate_account_url_anchor = null;
+			int idx = -1;
+			if((idx = activate_account_url.indexOf('#')) != -1)
+				activate_account_url_anchor = activate_account_url.substring(idx);
 			template_data.put("activate_account_url", activate_account_url);
+			template_data.put("activate_account_url_anchor", activate_account_url_anchor);
 			email_module.sendEmail(null, new String[]{email}, email_subject, email_template_name, template_data);
 		}
 
