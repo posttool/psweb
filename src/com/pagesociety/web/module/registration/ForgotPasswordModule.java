@@ -91,8 +91,10 @@ public class ForgotPasswordModule extends WebStoreModule
 		String restore_password_url_anchor = null;
 		int idx = -1;
 		if((idx = restore_password_url.indexOf('#')) != -1)
+		{
 			restore_password_url_anchor = restore_password_url.substring(idx);
-
+			restore_password_url = restore_password_url.substring(0, idx);
+		}
 		template_data.put("restore_password_url", restore_password_url);
 		template_data.put("restore_password_url_anchor", restore_password_url_anchor);
 		

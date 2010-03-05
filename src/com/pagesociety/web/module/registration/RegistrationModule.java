@@ -120,7 +120,10 @@ public class RegistrationModule extends WebStoreModule
 			String activate_account_url_anchor = null;
 			int idx = -1;
 			if((idx = activate_account_url.indexOf('#')) != -1)
+			{
 				activate_account_url_anchor = activate_account_url.substring(idx);
+				activate_account_url		= activate_account_url.substring(0, idx);
+			}
 			template_data.put("activate_account_url", activate_account_url);
 			template_data.put("activate_account_url_anchor", activate_account_url_anchor);
 			email_module.sendEmail(null, new String[]{email}, email_subject, email_template_name, template_data);
