@@ -76,7 +76,7 @@ public class ForgotPasswordModule extends WebStoreModule
 		if (username==null)
 			username = email;
 		
-		NEW(OUTSTANDING_FORGOT_PASSWORD_ENTITY,null,
+		Entity fpe = NEW(OUTSTANDING_FORGOT_PASSWORD_ENTITY,null,
 			FIELD_ACTIVATION_TOKEN,forgot_password_token,
 			FIELD_ACTIVATION_UID,user.getId());
 			
@@ -117,7 +117,7 @@ public class ForgotPasswordModule extends WebStoreModule
 		Entity forgot_password_record = result.getEntities().get(0);
 		Entity user = GET(UserModule.USER_ENTITY, (Long) forgot_password_record.getAttribute(FIELD_ACTIVATION_UID));
 		DELETE(forgot_password_record);
-		// log them in//
+		// log them in//		
 		uctx.setUser(user);
 		return user;
 	}
