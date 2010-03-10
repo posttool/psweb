@@ -24,6 +24,7 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.TransactionProtect;
+import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
@@ -31,7 +32,7 @@ import com.pagesociety.web.module.encryption.EncryptionModule;
 import com.pagesociety.web.module.encryption.IEncryptionModule;
 
 
-public class ISOCountryModule extends WebStoreModule 
+public class ISOCountryModule extends WebModule 
 {
 	
 	

@@ -54,18 +54,18 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 			case BillingModule.CC_TYPE_MASTERCARD:
 			case BillingModule.CC_TYPE_DISCOVER:
 				if(cc_no.length() < 16 && cc_no.length() != 13)
-					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.", BillingGatewayException.BAD_CC_NUMBER);
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
 				break;
 			case BillingModule.CC_TYPE_DINERS:
 				if(cc_no.length() < 14)
-					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.", BillingGatewayException.BAD_CC_NUMBER);
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
 				break;
 			case BillingModule.CC_TYPE_AMEX:
 				if(cc_no.length() < 15)
-					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.", BillingGatewayException.BAD_CC_NUMBER);
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
 				break;
 			default:
-					throw new BillingGatewayException("BAD CREDIT CARD TYPE", BillingGatewayException.BAD_CC_TYPE); 
+					throw new BillingGatewayException("BAD CREDIT CARD TYPE"); 
 		}
 					
 		Calendar now = Calendar.getInstance();
@@ -75,12 +75,12 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
 
 		if(year > exp_year)
 		{
-			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.", BillingGatewayException.CC_NUMBER_EXPIRED);
+			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
 		}
 		
 		if(year == exp_year && month > exp_month)
 		{
-			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.", BillingGatewayException.CC_NUMBER_EXPIRED);
+			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
 		}
 	
 		if(!do_full_credit_card_validation)
@@ -169,7 +169,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
         Matcher m = Pattern.compile("[^\\d\\s\\.-]").matcher(number);
         
         if (m.find()) 
-            throw new BillingGatewayException("Credit card number can only contain numbers, spaces, \"-\", and \".\"", BillingGatewayException.BAD_CC_NUMBER);
+            throw new BillingGatewayException("Credit card number can only contain numbers, spaces, \"-\", and \".\"");
     
         Matcher matcher = Pattern.compile("[\\s\\.-]").matcher(number);
         number = matcher.replaceAll("");
@@ -189,7 +189,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
                 Integer.parseInt(number.substring(0, 2)) < 51 ||
                 Integer.parseInt(number.substring(0, 2)) > 55)
             {
-            	throw new BillingGatewayException("BAD MASTERCARD CREDIT CARD NUMBER", BillingGatewayException.BAD_CC_NUMBER );
+            	throw new BillingGatewayException("BAD MASTERCARD CREDIT CARD NUMBER" );
             }
             break;
 			
@@ -197,7 +197,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
             if ((number.length() != 13 && number.length() != 16) ||
                     Integer.parseInt(number.substring(0, 1)) != 4)
             {
-            	throw new BillingGatewayException("BAD VISA CREDIT CARD NUMBER", BillingGatewayException.BAD_CC_NUMBER);
+            	throw new BillingGatewayException("BAD VISA CREDIT CARD NUMBER");
             }
             break;
 			
@@ -206,7 +206,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
                 (Integer.parseInt(number.substring(0, 2)) != 34 &&
                     Integer.parseInt(number.substring(0, 2)) != 37))
             {
-            	throw new BillingGatewayException("BAD AMEX CREDIT CARD NUMBER", BillingGatewayException.BAD_CC_NUMBER);
+            	throw new BillingGatewayException("BAD AMEX CREDIT CARD NUMBER");
             }
             break;
 			
@@ -214,7 +214,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
             if (number.length() != 16 ||
                 Integer.parseInt(number.substring(0, 5)) != 6011)
             {
-            	throw new BillingGatewayException("BAD DISCOVER CREDIT CARD NUMBER", BillingGatewayException.BAD_CC_NUMBER);
+            	throw new BillingGatewayException("BAD DISCOVER CREDIT CARD NUMBER");
             }
             break;
 			
@@ -225,7 +225,7 @@ public class TestBillingGateway extends WebModule implements IBillingGateway
                     Integer.parseInt(number.substring(0, 3)) < 300 ||
                         Integer.parseInt(number.substring(0, 3)) > 305))
             {
-            	throw new BillingGatewayException("BAD DINERS CREDIT CARD NUMBER", BillingGatewayException.BAD_CC_NUMBER);
+            	throw new BillingGatewayException("BAD DINERS CREDIT CARD NUMBER");
             }
             break;
         }

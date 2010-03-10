@@ -29,6 +29,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
+import com.pagesociety.web.module.ecommerce.ISOCountryModule;
 import com.pagesociety.web.module.ecommerce.billing.BillingModule;
 import com.pagesociety.web.module.encryption.IEncryptionModule;
 import com.pagesociety.web.module.util.Validator;
@@ -36,7 +37,8 @@ import com.pagesociety.web.module.util.Validator;
   public class PayFlowProGateway extends WebModule implements IBillingGateway 
   {
       
-	  public static final String SLOT_BILLING_MODULE 			= "billing-module";
+	  public static final String SLOT_ENCRYPTION_MODULE 		= "encryption-module";
+	  public static final String SLOT_ISO_COUNTRY_MODULE 		= "iso-country-module";
 	  
 	  public static final String PARAM_DEBUG_TRAFFIC 			= "debug-traffic";
 	  public static final String PARAM_PAYPAL_HTTPS_SERVER 		= "ppf-https-server";
@@ -50,7 +52,8 @@ import com.pagesociety.web.module.util.Validator;
      //public static final String TARGET_HTTPS_SERVER = "pilot-payflowpro.paypal.com"; 
      //public static final int    TARGET_HTTPS_PORT   = 443; 
 
-     private IEncryptionModule encryption_module;
+	  private IEncryptionModule encryption_module;
+	  private ISOCountryModule  iso_country_module;
 
 
      
@@ -71,7 +74,8 @@ import com.pagesociety.web.module.util.Validator;
  	public void init(WebApplication app,Map<String,Object> config) throws  InitializationException
 	{
  		super.init(app, config);
- 		encryption_module = (IEncryptionModule)((BillingModule)getSlot(SLOT_BILLING_MODULE)).getEncryptionModule();
+ 		encryption_module 	= (IEncryptionModule)getSlot(SLOT_ENCRYPTION_MODULE);
+ 		iso_country_module 	= (ISOCountryModule)getSlot(SLOT_ISO_COUNTRY_MODULE);
  		
  		ppf_https_server 			= GET_REQUIRED_CONFIG_PARAM(PARAM_PAYPAL_HTTPS_SERVER, config);
  		ppf_https_port	 			= GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_PAYPAL_HTTPS_SERVER_PORT,443, config);
@@ -83,14 +87,15 @@ import com.pagesociety.web.module.util.Validator;
  			setup(app,config);
  		}catch(Exception e)
  		{
- 			throw new InitializationException("FIALED SETTING UP PRIVATE PAYPAL DATA FILE.", e);
+ 			throw new InitializationException("FAILED SETTING UP PRIVATE PAYPAL DATA FILE.", e);
  		}
  	}
 
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_BILLING_MODULE, com.pagesociety.web.module.ecommerce.billing.BillingModule.class, true);
+		DEFINE_SLOT(SLOT_ENCRYPTION_MODULE, com.pagesociety.web.module.encryption.IEncryptionModule.class, true);
+		DEFINE_SLOT(SLOT_ISO_COUNTRY_MODULE, com.pagesociety.web.module.ecommerce.ISOCountryModule.class, true);
 	}
 
  	
@@ -137,8 +142,7 @@ import com.pagesociety.web.module.util.Validator;
 			{
 				String answer = GET_CONSOLE_INPUT("Partner ID is "+s_payflow_partner+". Is this correct[y/n]?>\n");
 				if(answer.equalsIgnoreCase("y"))
-					continue;
-				break;
+					break;
 			}
 		}
 		
@@ -151,24 +155,23 @@ import com.pagesociety.web.module.util.Validator;
 			{
 				String answer = GET_CONSOLE_INPUT("Vendor ID is "+s_payflow_vendor+". Is this correct[y/n]?>\n");
 				if(answer.equalsIgnoreCase("y"))
-					continue;
-				break;
+					break;
 			}
 		}
 		
 		while(true)
 		{
-			s_payflow_user = GET_CONSOLE_INPUT("Please enter your PayFlowPro User ID or leave blank to set it to vendor id:\n>");
+			s_payflow_user = GET_CONSOLE_INPUT(1,"Please enter your PayFlowPro User ID or leave blank to set it to vendor id:\n>");
 			if(s_payflow_user.trim().equals(""))
 			{
 				s_payflow_user = s_payflow_vendor;
+				break;
 			}
 			else
 			{
 				String answer = GET_CONSOLE_INPUT("User ID is "+s_payflow_user+". Is this correct[y/n]>?\n");
 				if(answer.equalsIgnoreCase("y"))
-					continue;
-				break;
+					break;
 			}
 		}
 		
@@ -181,13 +184,29 @@ import com.pagesociety.web.module.util.Validator;
 			{
 				String answer = GET_CONSOLE_INPUT("Password is "+s_payflow_pwd+". Is this correct[y/n]?>\n");
 				if(answer.equalsIgnoreCase("y"))
-					continue;
-				break;
+					break;
+			}
+		}
+		
+		String secret_phrase = null;
+		while(true)
+		{
+			secret_phrase = GET_CONSOLE_INPUT("Please enter your encryption module secret phrase:\n>");
+			if(secret_phrase.length() < 1)
+				continue;
+			else
+			{
+				String answer = GET_CONSOLE_INPUT("Phrase is "+secret_phrase+". Is this correct[y/n]?>\n");
+				if(answer.equalsIgnoreCase("y"))
+					break;
 			}
 		}
 
+		
+
 		File private_data_file = GET_MODULE_DATA_FILE(app, PAYPAL_PRIVATE_DATA_FILENAME,true);
 		try{
+			encryption_module.setSecretKeyPhrase(secret_phrase);
 			FileWriter fw = new FileWriter(private_data_file);
 			fw.write(encryption_module.encryptString(s_payflow_partner)+"\n");
 			fw.write(encryption_module.encryptString(s_payflow_vendor)+"\n");
@@ -229,6 +248,11 @@ import com.pagesociety.web.module.util.Validator;
 		if(Validator.isEmptyOrNull(cc_no))
 			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
 
+
+		String iso_country = null;
+		if((iso_country = iso_country_module.getCountryCode(country)) == null)
+			throw new BillingGatewayException("COUNTRY IS UNRECOGNIZED.CANT GET ISO CODE.");
+		
 		
 		switch(cc_type)
 		{
@@ -276,6 +300,7 @@ import com.pagesociety.web.module.util.Validator;
  									   		add_1,
  									   		city,
  									   		state,
+ 									   		iso_country,
  									   		postal_code,
  									   		ccvn);
  		}catch(PPFException ppfe)
@@ -317,6 +342,9 @@ import com.pagesociety.web.module.util.Validator;
 		{
 			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
 		}
+		String iso_country = null;
+		if((iso_country = iso_country_module.getCountryCode(country)) == null)
+			throw new BillingGatewayException("COUNTRY IS UNRECOGNIZED.CANT GET ISO CODE.");
  		
  		try{
  			ppf_response = do_ppf_sale(normalize_cc_no(decrypt_cc_no(cc_no)), 
@@ -328,7 +356,7 @@ import com.pagesociety.web.module.util.Validator;
  									   city,
  									   state,
  									   postal_code,
- 									   country,
+ 									   iso_country,
  									   ccvn,
  									   normalize_amount(amount),
  									   ponum,
@@ -374,6 +402,10 @@ import com.pagesociety.web.module.util.Validator;
 			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
 		}
  		
+		String iso_country = null;
+		if((iso_country = iso_country_module.getCountryCode(country)) == null)
+			throw new BillingGatewayException("COUNTRY IS UNRECOGNIZED.CANT GET ISO CODE.");
+		
  		try{
  			ppf_response = do_ppf_auth(normalize_cc_no(decrypt_cc_no(cc_no)), 
  									   normalize_month(exp_month),
@@ -383,7 +415,7 @@ import com.pagesociety.web.module.util.Validator;
  									   add_1,
  									   city,
  									   state,
- 									   country,
+ 									   iso_country,
  									   postal_code,
  									   ccvn,
  									   normalize_amount(amount),
@@ -473,6 +505,7 @@ import com.pagesociety.web.module.util.Validator;
     										  String address,
     										  String city,
     										  String state,
+    										  String country,
     										  String zip,
     										  String ccvn) throws PPFException
     {
@@ -487,6 +520,7 @@ import com.pagesociety.web.module.util.Validator;
 					"CITY",city,
 					"STATE",state,
 					"STREET",address,
+					"BILLTOCOUNTRY",country,
 					"ZIP",zip,
 					"CVV2",ccvn);
     	
@@ -638,11 +672,12 @@ import com.pagesociety.web.module.util.Validator;
 		 while(true)
 		 {
 			 try {    	 	 	 
-	    		 socket = SSLSocketFactory.getDefault().createSocket(ppf_https_server, ppf_https_port);
-	    		 Writer out = new OutputStreamWriter(socket.getOutputStream(), "ISO-8859-1");
+				 socket 	= SSLSocketFactory.getDefault().createSocket(ppf_https_server, ppf_https_port);
+	    		 Writer out = new OutputStreamWriter(socket.getOutputStream(), "ISO-8859-1");	 
 	    		 printSocketInfo((SSLSocket)socket);
 	    		 out.write(current_request);
 	    		 out.flush();  
+	    		 
 	    		 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "ISO-8859-1"));
 	    		 nvp_response = parse_nvp_response(in);
 	    		 
