@@ -325,6 +325,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	{
 		return base_s3_url + path_token;
 	}
+	
+	public String getBaseUrl() throws WebApplicationException
+	{
+		return base_s3_url;
+	}
 
 	/* this should take preview params */
 	private ConcurrentHashMap<String, Object> current_thumbnail_generators = new ConcurrentHashMap<String, Object>();

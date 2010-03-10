@@ -197,6 +197,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return buf.toString();
 	}
 	
+	public String getBaseUrl()	throws WebApplicationException
+	{
+		return base_url;
+	}
+	
 	/* this should take preview params */
 	public String getPreviewUrl(String path_token,int width,int height)	throws WebApplicationException
 	{

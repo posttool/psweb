@@ -38,6 +38,7 @@ import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
+import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.upload.MultipartForm;
 import com.pagesociety.web.upload.MultipartFormConstants;
@@ -92,6 +93,11 @@ public class ResourceModule extends WebStoreModule
 	{
 		System.out.println("SETTING RESOURCE ENTITY NAME TO "+name);
 		resource_entity_name = name;
+	}
+	
+	public String getResourceEntityName()
+	{
+		return resource_entity_name;
 	}
 	
 	private void set_parameters(Map<String,Object> config) throws InitializationException
@@ -445,6 +451,36 @@ public class ResourceModule extends WebStoreModule
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
 		return path_provider.getFile(path_token);		
+	}
+	
+	public String getResourceBaseURL() throws WebApplicationException
+	{
+		return path_provider.getBaseUrl();
+	}
+	
+	//TODO:GUARD
+	@Export
+	public List<Map<String,Object>> GetAppResourceInfo(UserApplicationContext ctx) throws WebApplicationException
+	{
+		List<Module> modules = getApplication().getModules();
+		List ret 			 = new ArrayList<Map<String,Object>>();
+
+		
+		for(int i = 0;i < modules.size();i++)
+		{
+			Module m = modules.get(i);
+			if(m instanceof ResourceModule)
+			{
+				ResourceModule rm 		= (ResourceModule)m;
+				String modulename 		= m.getName();
+				String resource_entity 		= rm.getResourceEntityName();
+				String resource_base_url 	= rm.getResourceBaseURL();
+				ret.add(new OBJECT("resource_module_name",modulename,
+									"resource_entity_name",resource_entity,
+									"resource_base_url",resource_base_url));
+			}
+		}
+		return ret;
 	}
 	
 	///////////////////////////////////END MODULE FUNCTIONS ///////
