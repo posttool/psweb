@@ -475,7 +475,7 @@ public class ResourceModule extends WebStoreModule
 				String modulename 		= m.getName();
 				String resource_entity 		= rm.getResourceEntityName();
 				String resource_base_url 	= rm.getResourceBaseURL();
-				ret.add(new OBJECT("resource_module_name",modulename,
+				ret.add(new OBJECT(	"resource_module_name",modulename,
 									"resource_entity_name",resource_entity,
 									"resource_base_url",resource_base_url));
 			}
