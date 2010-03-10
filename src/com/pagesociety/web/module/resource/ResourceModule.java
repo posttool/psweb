@@ -459,6 +459,7 @@ public class ResourceModule extends WebStoreModule
 	}
 	
 	//TODO:GUARD
+	//this should ultimately live in the application...not a module
 	@Export
 	public List<Map<String,Object>> GetAppResourceInfo(UserApplicationContext ctx) throws WebApplicationException
 	{
