@@ -3,10 +3,14 @@ package com.pagesociety.web.config;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import com.pagesociety.util.XML;
 import com.pagesociety.web.config.ModuleInitParams.ModuleInfo;
@@ -49,6 +53,8 @@ public class WebApplicationInitParams
 	private ModuleInitParams modules;
 	private UrlMapInitParams urlMap;
 	private Properties		 deployment_properties;
+	
+	private Map<String,String> init_parameters = new HashMap<String,String>();
 	
 
 	public WebApplicationInitParams(File config_dir) throws InitializationException
@@ -107,6 +113,16 @@ public class WebApplicationInitParams
 		version = expand_property(application_element.getAttribute(ATTR_APP_VERSION));
 		if(version == null)
 			throw new InitializationException("application.xml: application node is missing required attribute "+ATTR_APP_VERSION);
+		
+		//everything ends up in this paramters map//
+		//all the attributes of the application tag in application.xml//
+		NamedNodeMap optional_atts = application_element.getAttributes();
+		int s = optional_atts.getLength();
+		for(int i = 0;i < s;i++)
+		{
+			Node n = optional_atts.item(i);
+			init_parameters.put(n.getNodeName(), expand_property(n.getNodeValue()));
+		}
 		
 		String userApplicationContextClassS = expand_property(application_element.getAttribute(ATTR_APP_USER_CONTEXT_CLASS));
 		if(userApplicationContextClassS == null)
@@ -214,7 +230,16 @@ public class WebApplicationInitParams
 	}
 	
 	
-	
+	public String getInitParameter(String name)
+	{
+		return (String)init_parameters.get(name);
+	}
+
+	public Map<String,String> getInitParameters(String name)
+	{
+		return init_parameters;
+	}
+
 	public String getApplicationClassName()
 	{
 		return applicationClassName;
