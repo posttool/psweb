@@ -274,9 +274,9 @@ public abstract class WebModule extends Module
 	    	   ioe.printStackTrace();
 	    	   throw new WebApplicationException("ERROR READING CONSOLE INPUT "+ioe.getMessage());
 	        }
-			if(input == null || input.equals(""))
-				num_times--;
-			else
+			//if(input == null || input.equals(""))
+			//	num_times--;
+			//else
 				return input;
 		}
 		throw new WebApplicationException("THE APP REQUIRES CONSOLE INPUT TO STARTUP.");
