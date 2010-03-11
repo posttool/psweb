@@ -235,7 +235,7 @@ public class WebApplicationInitParams
 		return (String)init_parameters.get(name);
 	}
 
-	public Map<String,String> getInitParameters(String name)
+	public Map<String,String> getInitParameters()
 	{
 		return init_parameters;
 	}
