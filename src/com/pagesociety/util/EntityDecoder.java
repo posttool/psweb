@@ -71,7 +71,13 @@ public class EntityDecoder
 				// ok must be escaped unicode
 				if (temp.length() == 7)
 				{
+					try{
 					s = s.substring(0, i) + (char) Integer.parseInt(temp.substring(2, 6)) + s.substring(j + 1);
+					}catch(NumberFormatException e)
+					{
+						System.out.println("BARF WAS "+temp.substring(2, 6));
+						throw e;
+					}
 					return unescapeHTML(s); // recursive call
 				}
 			}
