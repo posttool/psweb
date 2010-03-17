@@ -67,7 +67,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		s3_api_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_API_KEY, config);
 		s3_secret_key = GET_REQUIRED_CONFIG_PARAM(PARAM_S3_SECRET_KEY, config);
 		image_magick_path = GET_REQUIRED_CONFIG_PARAM(PARAM_IMAGE_MAGICK_PATH, config);
-		base_s3_url = "http://" + s3_bucket + ".s3.amazonaws.com/";
+		base_s3_url = "http://" + s3_bucket + ".s3.amazonaws.com";
 		if (!new File(image_magick_path).exists())
 			throw new InitializationException("CANT FIND IMAGE MAGICK INSTALL AT " + image_magick_path);
 		image_magick_convert_cmd = image_magick_path + File.separator + "convert";
@@ -323,7 +323,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	public String getUrl(String path_token) throws WebApplicationException
 	{
-		return base_s3_url + path_token;
+		return base_s3_url + "/"+ path_token;
 	}
 	
 	public String getBaseUrl() throws WebApplicationException
@@ -348,7 +348,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			if (resized_exists)
 			{
 				System.out.println("FOUND " + preview_key + " PREVIEW AT " + width + " " + height);
-				return base_s3_url + preview_key;
+				return base_s3_url +"/"+ preview_key;
 			}
 			lock = current_thumbnail_generators.putIfAbsent(preview_key, new Object());
 			if (lock != null)
@@ -363,7 +363,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 					INFO("NOT WAITING ANYMORE");
 					boolean resized_now_exists = conn.checkKeyExists(s3_bucket, preview_key);
 					if (resized_now_exists)
-						return base_s3_url + preview_key;
+						return base_s3_url +"/"+ preview_key;
 					else
 						throw new Exception("WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
 				}
@@ -430,8 +430,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			{
 				lock.notifyAll();
 			}
-			INFO("EXITING GET PREVIEW URL " + base_s3_url + preview_key);
-			return base_s3_url + preview_key;
+			INFO("EXITING GET PREVIEW URL " + base_s3_url +"/"+ preview_key);
+			return base_s3_url + "/"+ preview_key;
 		}
 		catch (IOException ioe)
 		{
