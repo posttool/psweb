@@ -106,7 +106,6 @@ public class ISOCountryModule extends WebModule
 						"048", "Bahrdi",
 						"112", "Belain",
 						"050", "Bangladesh",
-						"051", "Armenia",
 						"052", "Barbados",
 						"056", "Belgium",
 						"060", "Bermuda",
