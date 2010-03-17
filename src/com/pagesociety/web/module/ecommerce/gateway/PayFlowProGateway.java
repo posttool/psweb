@@ -294,7 +294,7 @@ import com.pagesociety.web.module.util.Validator;
 		////FINALLY SEND IT TO THE PROCESSOR TO VALIDATE/////
  		Map<String,String> ppf_response = null;
  		try{
- 			ppf_response = do_ppf_validate( normalize_cc_no(decrypt_cc_no(cc_no)), 
+ 			ppf_response = do_ppf_validate( normalize_cc_no(cc_no), 
  									   		normalize_month(exp_month),
  									   		normalize_year(exp_year),
  									   		add_1,
@@ -511,12 +511,13 @@ import com.pagesociety.web.module.util.Validator;
     {
     	/*null values arent included in the request*/
     	/* this if we set a value to null it means it is optional */
+    	
     	Map<String,String> response = do_ppf_request(
         			"TRXTYPE","A",
 					"TENDER","C",
         			"ACCT",cc_no,
 					"EXPDATE",exp_mo+exp_yr_2_digits,
-					"AMT",0.00,
+					"AMT",normalize_amount(0.00),
 					"CITY",city,
 					"STATE",state,
 					"STREET",address,
@@ -769,10 +770,10 @@ import com.pagesociety.web.module.util.Validator;
      private void dump_nvp_response(Map<String,String> response)
      {
     	 Iterator<String> it = response.keySet().iterator();
+		 INFO("DEBUG TRAFFIC(RESPONSE)");
     	 while(it.hasNext())
     	 {
     		 String key = it.next();
-    		 INFO("DEBUG TRAFFIC(RESPONSE)");
     		 INFO(key+" = "+response.get(key));
     	 }
      }
@@ -892,7 +893,7 @@ import com.pagesociety.web.module.util.Validator;
      		throw new PPFException("ADDRESS MISMATCH",true);
      	String avszip_response  = response.get("AVSZIP");
      	if(avszip_response != null && avszip_response.equals("N"))
-     		throw new PPFException("ADDRESS MISMATCH",true);
+     		throw new PPFException("ADDRESS MISMATCH (ZIP)",true);
 
      	String cvv2match_response = response.get("CVV2MATCH");
      	if(cvv2match_response != null && cvv2match_response.equals("N"))
