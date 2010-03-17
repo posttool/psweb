@@ -387,7 +387,7 @@ public class BillingModule extends WebStoreModule
 		q.offset(offset);
 		q.pageSize(page_size);
 		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER, GUARD_USER,user);
-		PagingQueryResult result = PAGING_QUERY(q);		
+		PagingQueryResult result = PAGING_QUERY_FILL_AND_MASK(q,BILLINGRECORD_FIELD_CC_NO);		
 		return result;
 	}
 	
@@ -405,11 +405,13 @@ public class BillingModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity billing_record = getPreferredBillingRecord(user);
 		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER, GUARD_USER, user);
+		billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO, null);
 		return billing_record;
 	}
 	
 	public Entity getPreferredBillingRecord(Entity user)throws PersistenceException
 	{
+		
 		Query q = new Query(BILLINGRECORD_ENTITY);
 		q.idx(IDX_BY_USER_BY_PREFERRED);
 		q.eq(q.list(user,true));
@@ -420,7 +422,9 @@ public class BillingModule extends WebStoreModule
 		else if(n > 1)
 			ERROR("DATA INTEGRETY ISSUE. MORE THAN ONE PREFERRED BILLING RECORD FOR USER "+user);
 		
-		return result.getEntities().get(0);		
+		System.out.println("BILLING RECORD IS "+result.getEntities().get(0));
+		Entity billing_record = result.getEntities().get(0);		 
+		return billing_record;
 	}
 	
 	@Export
