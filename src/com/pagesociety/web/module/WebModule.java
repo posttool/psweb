@@ -152,6 +152,11 @@ public abstract class WebModule extends Module
 	{
 		throw new WebApplicationException(e.getMessage(),e);
 	}
+	
+	protected void WAE(String prefix,Exception e) throws WebApplicationException
+	{
+		throw new WebApplicationException(prefix+" "+e.getMessage(),e);
+	}
 
 	protected String GUARD_INSTANCE 		= "instance";
 	protected String GUARD_TYPE				= "entity_type";
