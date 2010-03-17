@@ -247,6 +247,8 @@ import com.pagesociety.web.module.util.Validator;
 			throw new BillingGatewayException("POSTAL CODE IS REQUIRED");
 		if(Validator.isEmptyOrNull(cc_no))
 			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
+		if(Validator.isEmptyOrNull(ccvn))
+			throw new BillingGatewayException("CC SECURITY CODE IS REQUIRED");
 
 
 		String iso_country = null;
@@ -290,7 +292,7 @@ import com.pagesociety.web.module.util.Validator;
 		}
 	
 		validate_credit_card_number(cc_type,cc_no);
-		
+
 		////FINALLY SEND IT TO THE PROCESSOR TO VALIDATE/////
  		Map<String,String> ppf_response = null;
  		try{
