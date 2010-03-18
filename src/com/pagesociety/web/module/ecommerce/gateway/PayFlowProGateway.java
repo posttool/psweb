@@ -357,8 +357,8 @@ import com.pagesociety.web.module.util.Validator;
  									   add_1,
  									   city,
  									   state,
- 									   postal_code,
  									   iso_country,
+ 									   postal_code,
  									   ccvn,
  									   normalize_amount(amount),
  									   ponum,
@@ -920,7 +920,7 @@ import com.pagesociety.web.module.util.Validator;
   	
   	private static String normalize_amount(double amt)
   	{
-    	DecimalFormat df = new DecimalFormat("#####.##");
+    	DecimalFormat df = new DecimalFormat("#####.00");
     	return df.format(amt);
   	}
 
@@ -968,7 +968,8 @@ import com.pagesociety.web.module.util.Validator;
  			return null;
  		String PNREF 	= ppf_response.get("PNREF");
  		String MESSAGE 	= ppf_response.get("RESPMSG");
- 		BillingGatewayResponse response = new BillingGatewayResponse(PNREF,MESSAGE);
+ 		String AUTHCODE = ppf_response.get("AUTHCODE");
+ 		BillingGatewayResponse response = new BillingGatewayResponse(PNREF,AUTHCODE,MESSAGE);
  		Iterator<String> it = ppf_response.keySet().iterator();
  		while(it.hasNext())
  		{

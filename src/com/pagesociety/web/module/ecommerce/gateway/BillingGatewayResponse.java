@@ -6,6 +6,7 @@ public class BillingGatewayResponse
 {
 	public static final String KEY_REFCODE = "REFCODE";
 	public static final String KEY_MESSAGE = "MESSAGE";
+	public static final String KEY_AUTHCODE = "AUTHCODE";
 	
 	private HashMap<String,Object> _props = new HashMap<String,Object>();
 	
@@ -21,9 +22,21 @@ public class BillingGatewayResponse
 		_props.put(KEY_MESSAGE, message);
 	}
 	
+	public BillingGatewayResponse(String refcode,String authcode,String message)
+	{
+		_props.put(KEY_REFCODE, refcode);
+		_props.put(KEY_MESSAGE, message);
+		_props.put(KEY_AUTHCODE, authcode);
+	}
+	
 	public String getRefCode()
 	{
 		return (String)_props.get(KEY_REFCODE);
+	}
+
+	public String getAuthCode()
+	{
+		return (String)_props.get(KEY_AUTHCODE);
 	}
 
 	public String getMessage()
