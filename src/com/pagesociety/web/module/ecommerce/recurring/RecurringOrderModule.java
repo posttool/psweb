@@ -1,6 +1,5 @@
 package com.pagesociety.web.module.ecommerce.recurring;
 
-
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -8,9 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.script.ScriptException;
-
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.FieldDefinition;
@@ -18,11 +14,9 @@ import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
-
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
@@ -34,7 +28,6 @@ import com.pagesociety.web.module.ecommerce.promo.PromotionModule;
 import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.logger.LoggerModule;
 import com.pagesociety.web.module.notification.SystemNotificationModule;
-import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.resource.ResourceModule;
 import com.pagesociety.web.module.user.UserModule;
 
@@ -563,17 +556,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					//script exception//
 					ERROR(wae);
-					String message = "Hey Dudes. There was a script exception"+
-					" while applying promotions to order "+recurring_order+
-					". The order was not billed it needs to be looked in to";
-					MODULE_LOG(message);
-					Map<String,Object> data = new HashMap<String,Object>();
-					data.put("message", message);
-					try {
-						email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "script exception", "generic.fm", data);
-					} catch (WebApplicationException e) {
-						ERROR(e);
-					}
+					send_promo_script_failed_email(wae, recurring_order);
 					break;
 				}
 				do_regular_billing(order_user,recurring_order,billing_record,amount);				
@@ -662,6 +645,12 @@ public class RecurringOrderModule extends ResourceModule
 				break;
 			case ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD:
 				double amount = tally_order(recurring_order);
+				try {
+					amount = get_order_amount_with_promotions_applied(recurring_order);
+				} catch (WebApplicationException e) {
+					e.printStackTrace();
+					send_promo_script_failed_email(e, recurring_order);
+				}
 				log_order_billing_failed(recurring_order,amount,(String)args[0]);
 				Date now = new Date();
 				//this needs to be in a seperate function???\\
@@ -672,7 +661,7 @@ public class RecurringOrderModule extends ResourceModule
 						RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS,now);
 				
 				send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
-				send_billing_failed_email(recurring_order, null);
+				send_billing_failed_email(recurring_order, (String)args[0]);
 				log_order_delinquent(recurring_order, old_status);
 				MODULE_LOG( 2,"billing failure. order now in grace period for user: "+order_user.getAttribute(UserModule.FIELD_EMAIL)+" "+order_user);
 				break;
@@ -816,7 +805,7 @@ public class RecurringOrderModule extends ResourceModule
 	}
 	
  
-	private double do_regular_billing(Entity order_user,Entity recurring_order,Entity billing_record,double amount) throws PersistenceException,BillingGatewayException,WebApplicationException
+	private double do_regular_billing(Entity order_user,Entity recurring_order,Entity billing_record,double amount) throws PersistenceException,BillingGatewayException
 	{
 		Date next_bill_date = (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
 		Date now     = new Date();
@@ -824,7 +813,7 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			//cant bill a date before the next bill date
 			MODULE_LOG(0,"WARNING: SKIPPING BILLING RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER: "+recurring_order.getId()+" user:"+order_user);
-			throw new WebApplicationException(" CANT BILL RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER");
+			//throw new WebApplicationException(" CANT BILL RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER");
 		}
 		
 		if(amount > 0)
@@ -982,13 +971,24 @@ public class RecurringOrderModule extends ResourceModule
 				recurring_order = orders_that_need_to_be_billed.get(i);
 				FILL_REFS(recurring_order);
 				order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
+				
+				double amount_after_promotions = 0;
+				try {
+					amount_after_promotions = get_order_amount_with_promotions_applied(recurring_order);
+				} catch (WebApplicationException e1) {
+					//script exception//
+					ERROR(e1);
+					send_promo_script_failed_email(e1, recurring_order);
+					continue;
+				}
 				billing_record = billing_module.getPreferredBillingRecord(order_user);
 				if(billing_record == null)
 				{
-					if(orderIsFreeForLife(recurring_order))
+					if(amount_after_promotions == 0)
 						;
 					else
 					{
+						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,"Need user credit card info.");	
 						MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 						MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
 						continue;
@@ -998,36 +998,20 @@ public class RecurringOrderModule extends ResourceModule
 				MODULE_LOG("ABOUT TO APPL PROMOTIONS ON ORDER\n"+recurring_order);
 				double amount_before_promotions = tally_order(recurring_order);
 				MODULE_LOG("\tBEFORE PROMOTIONS ORDER AMOUNT \n"+amount_before_promotions);
-				double amount_after_promotions = 0;
-				try {
-					amount_after_promotions = get_order_amount_with_promotions_applied(recurring_order);
-				} catch (WebApplicationException e1) {
-					//script exception//
-					ERROR(e1);
-					String message = "Hey Dudes. There was a script exception"+
-					" while applying promotions to order "+recurring_order+
-					". The order was not billed it needs to be looked in to";
-					MODULE_LOG(message);
-					Map<String,Object> data = new HashMap<String,Object>();
-					data.put("message", message);
-					try {
-						email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "script exception", "generic.fm", data);
-					} catch (WebApplicationException e) {
-						ERROR(e);
-					}
-					continue;
-				}
+
 				try{
 					do_regular_billing(order_user,recurring_order, billing_record,amount_after_promotions);
 				}
 				catch(PersistenceException pe4)
 				{
-					throw pe4;
+					//throw pe4;
+					continue;//this is out fault for now//
 				}
-				catch(Exception e)
+				catch(BillingGatewayException bge)
 				{
-					ERROR(e);
-					updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD);	
+					ERROR(bge);
+					if(bge.isUserRecoverable())
+						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,bge.getMessage());
 					continue;
 				}
 
@@ -1114,8 +1098,8 @@ public class RecurringOrderModule extends ResourceModule
 			//TODO: might want to check for promotion here and set order back to init and 0 outstanding balance//
 			try{
 				Date now = new Date();
-				double balance = (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
-				balance += amount;
+				double balance 	= (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
+				balance 		+= amount;
 				UPDATE(recurring_order,
 						RECURRING_ORDER_FIELD_LAST_BILL_DATE,now,
 						RECURRING_ORDER_FIELD_NEXT_BILL_DATE,calculate_next_bill_date(recurring_order, now),
@@ -1136,11 +1120,12 @@ public class RecurringOrderModule extends ResourceModule
 	private void check_billing_failed_grace_period_expired(Date now,Entity recurring_order) throws PersistenceException
 	{
 		Date billing_failed_genesis  =  (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
-		int grace_period_in_ms = billing_failed_grace_period_in_days * (1000 * 60 * 60 * 24);
+		
+		long grace_period_in_ms = (long)billing_failed_grace_period_in_days * (long)(1000 * 60 * 60 * 24);
+		
 		if(now.getTime() > billing_failed_genesis.getTime()+grace_period_in_ms)
 		{
-			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED);				
-
+			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED);
 		}
 		else
 		{
@@ -1217,9 +1202,9 @@ public class RecurringOrderModule extends ResourceModule
 	private void check_chuck_billing_failed_user(Date now,Entity failed_order) throws PersistenceException
 	{
 		
-		Date failed_genesis  			= (Date)failed_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
-		int grace_period_in_ms 			= billing_failed_grace_period_in_days * (1000 * 60 *60 * 24);
-		int failed_billing_clean_period = grace_period_in_ms + billing_failed_grace_period_expired_reap_period_in_days * (1000 * 60 * 60 * 24);
+		Date failed_genesis  				= (Date)failed_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
+		long grace_period_in_ms 			= (long)billing_failed_grace_period_in_days * (long)(1000 * 60 *60 * 24);
+		long failed_billing_clean_period 	= grace_period_in_ms + (long)billing_failed_grace_period_expired_reap_period_in_days * (long)(1000 * 60 * 60 * 24);
 		if(now.getTime() > failed_genesis.getTime()+failed_billing_clean_period)
 		{
 			updateRecurringOrderStatus(failed_order, ORDER_STATUS_CLOSED);				
@@ -1320,7 +1305,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date trial_create_date  =  (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		int trial_period_in_ms = trial_period_in_days * (1000 * 60*60*24);
+		long trial_period_in_ms = (long)trial_period_in_days * (long)(1000 * 60*60*24);
 		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);				
@@ -1339,8 +1324,8 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		
 		Date trial_create_date  		= (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		int trial_period_in_ms 			= trial_period_in_days * (1000 * 60 *60*24);
-		int expired_trial_clean_period 	= trial_period_in_ms + expired_trial_reap_period_in_days * (1000 * 60*60*24);
+		long trial_period_in_ms 			= (long)trial_period_in_days * (long)(1000 * 60 *60*24);
+		long expired_trial_clean_period 	= (long)trial_period_in_ms + (long)expired_trial_reap_period_in_days * (1000 * 60*60*24);
 		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);				
@@ -1529,7 +1514,7 @@ public class RecurringOrderModule extends ResourceModule
 	private void log_order_delinquent(Entity recurring_order,int old_status) throws PersistenceException
 	{
 		int current_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
-		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_SUSPENDED, "Order "+recurring_order.getId()+" is now delinquent. Order status was "+OSS(old_status)+" and is now "+OSS(current_status)+".", recurring_order);
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_SUSPENDED, "Order "+recurring_order.getId()+" is now delinquent. Order status was "+OSS(old_status)+" and is now "+OSS(current_status)+". Please update your billing info.", recurring_order);
 	}
 
 	
@@ -1540,7 +1525,7 @@ public class RecurringOrderModule extends ResourceModule
 
 	private void log_order_init_bill_ok(Entity recurring_order,double amount,BillingGatewayResponse bgr) throws PersistenceException
 	{
-		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_INIT_BILLING_OK, "Order "+recurring_order.getId()+" was billed for initial fee of $"+normalize_amount(amount)+". REF:"+bgr.getRefCode(), recurring_order);
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_INIT_BILLING_OK, "Order "+recurring_order.getId()+" was billed for an initial fee of $"+normalize_amount(amount)+". REF:"+bgr.getRefCode()+" AUTH:"+bgr.getAuthCode(), recurring_order);
 	}
 	
 	private void log_order_init_bill_failed(Entity recurring_order,double amount,String fail_message) throws PersistenceException
@@ -1550,12 +1535,12 @@ public class RecurringOrderModule extends ResourceModule
 	
 	private void log_order_monthly_bill_ok(Entity recurring_order,double amount,BillingGatewayResponse bgr) throws PersistenceException
 	{
-		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for monthly fee of $"+normalize_amount(amount)+". REF:"+bgr.getRefCode(), recurring_order);
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for a monthly fee of $"+normalize_amount(amount)+". REF:"+bgr.getRefCode()+" AUTH:"+bgr.getAuthCode(), recurring_order);
 	}
 	
 	private void log_order_catchup_bill_ok(Entity recurring_order,double amount,BillingGatewayResponse bgr) throws PersistenceException
 	{
-		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for fee of $"+normalize_amount(roundDouble(amount,2))+". REF:"+bgr.getRefCode(), recurring_order);
+		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for a fee of $"+normalize_amount(roundDouble(amount,2))+". REF:"+bgr.getRefCode()+" AUTH:"+bgr.getAuthCode(), recurring_order);
 	}
 	
 	private void log_order_billing_failed(Entity recurring_order,double amount,String fail_msg) throws PersistenceException
@@ -1575,7 +1560,7 @@ public class RecurringOrderModule extends ResourceModule
 	
  	private static String normalize_amount(double amt)
   	{
-    	DecimalFormat df = new DecimalFormat("#####.##");
+    	DecimalFormat df = new DecimalFormat("#####.00");
     	return df.format(amt);
   	}
 
@@ -1613,6 +1598,23 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			billing_thread_running = false;
 			billing_thread.interrupt();			
+		}
+
+	}
+
+	public void send_promo_script_failed_email(WebApplicationException e1,Entity recurring_order)
+	{
+		//script exception//
+		String message = "Hey Dudes. There was a script exception at "+new Date()+
+		" while applying promotions to order "+recurring_order+
+		". The order was not billed it needs to be looked in to";
+		MODULE_LOG(message);
+		Map<String,Object> data = new HashMap<String,Object>();
+		data.put("message", message);
+		try {
+			email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "script exception", "generic.fm", data);
+		} catch (WebApplicationException e) {
+			ERROR(e);
 		}
 
 	}
@@ -1709,6 +1711,8 @@ public class RecurringOrderModule extends ResourceModule
 	
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_STATE 			 = "byCatalogState";
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_NUMBER_BY_CATALOG_STATE = "byCatalogNumberByCatalogState";
+
+	
 
 	
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
