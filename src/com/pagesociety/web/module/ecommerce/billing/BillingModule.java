@@ -405,7 +405,8 @@ public class BillingModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 		Entity billing_record = getPreferredBillingRecord(user);
 		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER, GUARD_USER, user);
-		billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO, null);
+		if(billing_record != null)
+			billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO, null);
 		return billing_record;
 	}
 	
