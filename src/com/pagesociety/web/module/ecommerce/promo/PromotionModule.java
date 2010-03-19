@@ -809,10 +809,11 @@ public class PromotionModule extends WebStoreModule
 			Entity promotion = promotions.get(i);
 			try{
 				Boolean ret = (Boolean)apply_promotion(order, promotion);
-				if(ret.equals(Boolean.TRUE)|| ret.equals(null))
+				if( ret == null || ret.equals(Boolean.TRUE))
 					applied_promotions.add(promotion);
 			}catch(Exception e)
 			{
+				e.printStackTrace();
 				throw new WebApplicationException("FAILED APPLYING PROMOTION "+promotion.getId());
 			}
 		}
@@ -891,6 +892,7 @@ public class PromotionModule extends WebStoreModule
 		ScriptContext ctx = jsEngine.getContext();
 		ctx.setAttribute(ScriptEngine.FILENAME ,promotion_name,ScriptContext.ENGINE_SCOPE);
 		ctx.setAttribute("P", this,ScriptContext.ENGINE_SCOPE );
+		ctx.setAttribute("$", this,ScriptContext.ENGINE_SCOPE );
 		ctx.setAttribute("MEM",m ,ScriptContext.ENGINE_SCOPE );
 		
 		try {
@@ -928,6 +930,10 @@ public class PromotionModule extends WebStoreModule
 		return ret;
 	}
 	
+	public void LOG(String s)
+	{
+		INFO(s);
+	}
 	
 	class MEM
 	{
@@ -952,9 +958,9 @@ public class PromotionModule extends WebStoreModule
 		public MEM(long lr1,long lr2,long lr3,long lr4,String sr1,String sr2,double fpr1,double fpr2,long gr1,long gr2)
 		{
 			this.lr1  = lr1;
-			this.lr1  = lr2;
-			this.lr1  = lr3;
-			this.lr1  = lr4;
+			this.lr2  = lr2;
+			this.lr3  = lr3;
+			this.lr4  = lr4;
 			this.sr1  = sr1;
 			this.sr2  = sr2;
 			this.fpr1 = fpr1;
