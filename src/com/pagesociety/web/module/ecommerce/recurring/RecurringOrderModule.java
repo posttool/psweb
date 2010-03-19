@@ -528,8 +528,9 @@ public class RecurringOrderModule extends ResourceModule
 			}
 			else
 			{
-				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_NO_PREFERRED_BILLING_RECORD);
-				throw new WebApplicationException("USER DOES NOT HAVE PREFERRED BILLING RECORD SET. NO WAY TO OPEN ORDER.");
+				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,"Need billing info.");
+				//throw new WebApplicationException("USER DOES NOT HAVE PREFERRED BILLING RECORD SET. NO WAY TO OPEN ORDER.");
+				return recurring_order;
 			}
 		}
 		
@@ -644,13 +645,11 @@ public class RecurringOrderModule extends ResourceModule
 				send_billing_failed_email(recurring_order, null);
 				break;
 			case ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD:
-				double amount = tally_order(recurring_order);
-				try {
-					amount = get_order_amount_with_promotions_applied(recurring_order);
-				} catch (WebApplicationException e) {
-					e.printStackTrace();
-					send_promo_script_failed_email(e, recurring_order);
-				}
+				double amount 	= tally_order(recurring_order);
+				Double a 		= (Double)recurring_order.getAttribute("cached_amt");
+				if(a != null)
+					amount = a;
+				
 				log_order_billing_failed(recurring_order,amount,(String)args[0]);
 				Date now = new Date();
 				//this needs to be in a seperate function???\\
@@ -699,7 +698,9 @@ public class RecurringOrderModule extends ResourceModule
 	private double get_order_amount_with_promotions_applied(Entity recurring_order) throws WebApplicationException
 	{
 		promotion_module.applyPromotions(recurring_order);
-		return tally_order(recurring_order);
+		double amt =  tally_order(recurring_order);
+		recurring_order.setAttribute("cached_amt",amt);
+		return amt;
 	}
 	
 	
