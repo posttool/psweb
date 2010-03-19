@@ -677,7 +677,7 @@ import com.pagesociety.web.module.util.Validator;
 			 try {    	 	 	 
 				 socket 	= SSLSocketFactory.getDefault().createSocket(ppf_https_server, ppf_https_port);
 	    		 Writer out = new OutputStreamWriter(socket.getOutputStream(), "ISO-8859-1");	 
-	    		 printSocketInfo((SSLSocket)socket);
+	    		 //printSocketInfo((SSLSocket)socket);
 	    		 out.write(current_request);
 	    		 out.flush();  
 	    		 
