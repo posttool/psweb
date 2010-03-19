@@ -646,10 +646,12 @@ public class RecurringOrderModule extends ResourceModule
 				break;
 			case ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD:
 				double amount 	= tally_order(recurring_order);
-				Double a 		= (Double)recurring_order.getAttribute("cached_amt");
-				if(a != null)
-					amount = a;
-				
+				try{
+					amount = get_order_amount_with_promotions_applied(recurring_order);
+				}catch(WebApplicationException wae)
+				{
+					send_promo_script_failed_email(wae, recurring_order);
+				}
 				log_order_billing_failed(recurring_order,amount,(String)args[0]);
 				Date now = new Date();
 				//this needs to be in a seperate function???\\
@@ -697,6 +699,9 @@ public class RecurringOrderModule extends ResourceModule
 	
 	private double get_order_amount_with_promotions_applied(Entity recurring_order) throws WebApplicationException
 	{
+		Double a= null;
+		if((a = (Double)recurring_order.getAttribute("cached_amt")) != null)
+			return a;
 		promotion_module.applyPromotions(recurring_order);
 		double amt =  tally_order(recurring_order);
 		recurring_order.setAttribute("cached_amt",amt);
@@ -1607,7 +1612,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		//script exception//
 		String message = "Hey Dudes. There was a script exception at "+new Date()+
-		" while applying promotions to order "+recurring_order+
+		"("+e1.getMessage()+ ") while applying promotions to order "+recurring_order+
 		". The order was not billed it needs to be looked in to";
 		MODULE_LOG(message);
 		Map<String,Object> data = new HashMap<String,Object>();
