@@ -73,7 +73,7 @@ public class ApplicationInfoModule extends WebModule
 	public List<Map<String,Object>> GetAppResourceInfo(UserApplicationContext ctx) throws WebApplicationException
 	{
 		List<Module> modules = getApplication().getModules();
-		List ret 			 = new ArrayList<Map<String,Object>>();
+		List<Map<String,Object>> ret 			 = new ArrayList<Map<String,Object>>();
 
 		
 		for(int i = 0;i < modules.size();i++)
