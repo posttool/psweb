@@ -728,6 +728,7 @@ public class ResourceModule extends WebStoreModule
 	public Entity createResource(Entity creator,File f, boolean delete) throws WebApplicationException,PersistenceException
 	{
 		try{
+			INFO("CREATING RESOURCE FROM FILE "+f.getAbsolutePath()+" ("+(f.length()/1024)+" kb)");
 			String filename = f.getName();
 			String path_token 	   = path_provider.getPathToken(creator, filename);
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
