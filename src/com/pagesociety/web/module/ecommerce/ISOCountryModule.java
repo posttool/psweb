@@ -352,7 +352,6 @@ public class ISOCountryModule extends WebModule
 		Collections.sort(countries_list);
 		countries_list.remove("United States");
 		countries_list.set(0,"United States");
-		
 	}
 
 }

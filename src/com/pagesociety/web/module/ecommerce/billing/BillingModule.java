@@ -423,7 +423,7 @@ public class BillingModule extends WebStoreModule
 		else if(n > 1)
 			ERROR("DATA INTEGRETY ISSUE. MORE THAN ONE PREFERRED BILLING RECORD FOR USER "+user);
 		
-		System.out.println("BILLING RECORD IS "+result.getEntities().get(0));
+
 		Entity billing_record = result.getEntities().get(0);		 
 		return billing_record;
 	}
