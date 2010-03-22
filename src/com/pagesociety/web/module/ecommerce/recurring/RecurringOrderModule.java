@@ -764,8 +764,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(user_id);
-		
-			
+					
 		return getTransactionHistoryByUser(target_user,offset,page_size);
 	}
 	
