@@ -236,19 +236,19 @@ import com.pagesociety.web.module.util.Validator;
 			throw new BillingGatewayException("LAST NAME IS INVALID");
 		
 		if(Validator.isEmptyOrNull(add_1))
-			throw new BillingGatewayException("ADDRESS IS REQUIRED");
+			throw new BillingGatewayException("ADDRESS IS REQUIRED",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 		if(Validator.isEmptyOrNull(city))
-			throw new BillingGatewayException("CITY IS REQUIRED");
+			throw new BillingGatewayException("CITY IS REQUIRED",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 		if(Validator.isEmptyOrNull(state))
-			throw new BillingGatewayException("STATE IS REQUIRED");
+			throw new BillingGatewayException("STATE IS REQUIRED",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 		if(Validator.isEmptyOrNull(country))
-			throw new BillingGatewayException("COUNTRY IS REQUIRED");
+			throw new BillingGatewayException("COUNTRY IS REQUIRED",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 		if(Validator.isEmptyOrNull(postal_code))
-			throw new BillingGatewayException("POSTAL CODE IS REQUIRED");
+			throw new BillingGatewayException("POSTAL CODE IS REQUIRED",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 		if(Validator.isEmptyOrNull(cc_no))
-			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED");
-		if(Validator.isEmptyOrNull(ccvn))
-			throw new BillingGatewayException("CC SECURITY CODE IS REQUIRED");
+			throw new BillingGatewayException("CREDIT CARD NUMBER IS REQUIRED",true,BillingGatewayException.FAILURE_CODE_FAILED);
+		//if(Validator.isEmptyOrNull(ccvn))
+		//	throw new BillingGatewayException("CC SECURITY CODE IS REQUIRED");
 
 
 		String iso_country = null;
@@ -262,18 +262,18 @@ import com.pagesociety.web.module.util.Validator;
 			case BillingModule.CC_TYPE_MASTERCARD:
 			case BillingModule.CC_TYPE_DISCOVER:
 				if(cc_no.length() < 16 && cc_no.length() != 13)
-					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.",true,BillingGatewayException.FAILURE_CODE_FAILED);
 				break;
 			case BillingModule.CC_TYPE_DINERS:
 				if(cc_no.length() < 14)
-					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.",true,BillingGatewayException.FAILURE_CODE_FAILED);
 				break;
 			case BillingModule.CC_TYPE_AMEX:
 				if(cc_no.length() < 15)
-					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.");
+					throw new BillingGatewayException("CREDIT CARD NUMBER IS INVALID. NOT ENOUGH DIGITS.",true,BillingGatewayException.FAILURE_CODE_FAILED);
 				break;
 			default:
-					throw new BillingGatewayException("BAD CREDIT CARD TYPE"); 
+					throw new BillingGatewayException("BAD CREDIT CARD TYPE",true,BillingGatewayException.FAILURE_CODE_FAILED); 
 		}
 		
 		Calendar now = Calendar.getInstance();
@@ -283,12 +283,12 @@ import com.pagesociety.web.module.util.Validator;
 
 		if(year > exp_year)
 		{
-			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
+			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.",true,BillingGatewayException.FAILURE_CODE_FAILED);
 		}
 		
 		if(year == exp_year && month > exp_month)
 		{
-			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.");
+			throw new BillingGatewayException("BAD EXPIRATION DATE. CREDIT CARD IS EXPIRED.",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_EXPR_DATE);
 		}
 	
 		validate_credit_card_number(cc_type,cc_no);
@@ -710,7 +710,7 @@ import com.pagesociety.web.module.util.Validator;
 					 continue;
 				 }
 				 else	 
-					 throw new PPFException("BAILING OUT IN BILLING GATEWAY MODULE BECAUSE OF WEIRD ERROR."+e.getMessage(),false);
+					 throw new PPFException("BAILING OUT IN BILLING GATEWAY MODULE BECAUSE OF WEIRD ERROR."+e.getMessage(),false,BillingGatewayException.FAILURE_CODE_SYSTEM_FAILURE);
 	    	}
 		 }
 		 try{
@@ -882,28 +882,30 @@ import com.pagesociety.web.module.util.Validator;
  		 * prevent the exception from happening i.e. change the expr date
  		 */
  		public boolean recoverable = true;
- 		public PPFException(String msg,boolean recoverable)
+ 		public int code;
+ 		public PPFException(String msg,boolean recoverable,int code)
  		{
  			super(msg);
  			this.recoverable = recoverable;
+ 			this.code = code;
  		}
  	}
   	private void check_ppf_response(Map<String,String> response) throws PPFException
   	{
      	String avsaddr_response = response.get("AVSADDR");
      	if(avsaddr_response != null && avsaddr_response.equals("N"))
-     		throw new PPFException("ADDRESS MISMATCH",true);
+     		throw new PPFException("ADDRESS MISMATCH",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
      	String avszip_response  = response.get("AVSZIP");
      	if(avszip_response != null && avszip_response.equals("N"))
-     		throw new PPFException("ADDRESS MISMATCH (ZIP)",true);
+     		throw new PPFException("ADDRESS MISMATCH (ZIP)",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 
      	String cvv2match_response = response.get("CVV2MATCH");
      	if(cvv2match_response != null && cvv2match_response.equals("N"))
-     		throw new PPFException("BAD SECURITY CODE",true);
+     		throw new PPFException("BAD SECURITY CODE",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
 
      	int result = Integer.parseInt(response.get("RESULT"));
      	if(result < 0)
-     		throw new PPFException("COMMUNICATION ERROR. RETRY LATER. SPECIFIC CODE WAS "+result+": "+response.get("RESPMSG"),false);//add message
+     		throw new PPFException("COMMUNICATION ERROR. RETRY LATER. SPECIFIC CODE WAS "+result+": "+response.get("RESPMSG"),false,BillingGatewayException.FAILURE_CODE_SYSTEM_FAILURE);//add message
      	    	
      	switch(result)
      	{
@@ -911,10 +913,11 @@ import com.pagesociety.web.module.util.Validator;
      			break;
      		case 12://declined
      		case 23://invalid acct number
+     			throw new PPFException(result+": "+response.get("RESPMSG"),true,BillingGatewayException.FAILURE_CODE_FAILED);
      		case 24://invalid expr date
-     			throw new PPFException(result+": "+response.get("RESPMSG"),true);
+     			throw new PPFException(result+": "+response.get("RESPMSG"),true,BillingGatewayException.FAILURE_CODE_FAILED_ON_EXPR_DATE);
      		default:
-     			throw new PPFException(result+": "+response.get("RESPMSG"),false);
+     			throw new PPFException(result+": "+response.get("RESPMSG"),false,BillingGatewayException.FAILURE_CODE_SYSTEM_FAILURE);
      	}
   	}
   	
@@ -959,7 +962,7 @@ import com.pagesociety.web.module.util.Validator;
      
  	private void TRANSLATE_PPF_EXCEPTION(PPFException ppfe) throws BillingGatewayException
  	{
- 		throw new BillingGatewayException(ppfe.getMessage(),ppfe.recoverable); 
+ 		throw new BillingGatewayException(ppfe.getMessage(),ppfe.recoverable,ppfe.code); 
  	}
  	
  	private BillingGatewayResponse TRANSLATE_PPF_RESPONSE(Map<String,String> ppf_response) throws BillingGatewayException
@@ -1014,7 +1017,7 @@ import com.pagesociety.web.module.util.Validator;
  	            if ((number.length() != 13 && number.length() != 16) ||
  	                    Integer.parseInt(number.substring(0, 1)) != 4)
  	            {
- 	            	throw new BillingGatewayException("BAD VISA CREDIT CARD NUMBER");
+ 	            	throw new BillingGatewayException("BAD VISA CREDIT CARD NUMBER "+number);
  	            }
  	            break;
  				
