@@ -2,6 +2,7 @@ package com.pagesociety.web.module.ecommerce;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -344,6 +345,9 @@ public class ISOCountryModule extends WebModule
 			String code 	= COUNTRY_CODES_LIST[i-1];
 			String country 	= COUNTRY_CODES_LIST[i];
 			countries_list.add(country);
+			Collections.sort(countries_list);
+			countries_list.remove("United States");
+			countries_list.set(0,"United States");
 			country_to_code_map.put(country,code);
 			code_to_country_map.put(code,country);
 		}
