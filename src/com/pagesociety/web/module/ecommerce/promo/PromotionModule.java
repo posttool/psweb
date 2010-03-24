@@ -538,6 +538,8 @@ public class PromotionModule extends WebStoreModule
 	public static final int ERROR_EXPIRED_PROMO_CODE 		   = 0x01;
 	public static final int ERROR_BAD_PROMO_CODE 		       = 0x02;
 	public static final int ERROR_PROMO_CODE_USED_UP 		   = 0x03;
+	public static final int ERROR_UNABLE_TO_APPLY_PROMOTION	   = 0x04;
+	
 	@Export //CAN GET MULTIPLE PROMOS FOR THE SAME CODE...REGISTERS WILL REFLECT ALL ACTIVITY FOR THAT CODE I.E. ALL USERS
 	//THIS SHOULD WORK FINE IF THE PROMOS ARE SIMPLE LIKE 20%OFF, 20%OFF FIRST SIX BILLING CYCLES SEEMS HARD BECAUSE
 	//THE USER PROMOTION NEEDS PRIVATE SPACE TO KEEP TRACK OF HOW MANY TIMES BILLED
@@ -814,12 +816,13 @@ public class PromotionModule extends WebStoreModule
 			}catch(Exception e)
 			{
 				e.printStackTrace();
-				throw new WebApplicationException("FAILED APPLYING PROMOTION "+promotion.getId());
+				throw new WebApplicationException("FAILED APPLYING PROMOTION "+promotion.getId(),ERROR_UNABLE_TO_APPLY_PROMOTION);
 			}
 		}
 		return applied_promotions;
 	}
 	
+
 	public void applyPromotion(Entity order,Entity promotion) throws WebApplicationException
 	{
 
