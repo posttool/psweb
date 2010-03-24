@@ -93,6 +93,7 @@ public class Page
 		component_map_by_id.put(id, c);
 		if (c instanceof IEditor) 
 			input_ids.add(id);
+		//TODO aggregate by class_name
 		return true;
 	}
 	
