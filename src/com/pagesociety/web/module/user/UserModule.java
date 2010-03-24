@@ -407,7 +407,7 @@ public class UserModule extends WebStoreModule
 				UserModule.FIELD_LOCK_NOTES,"");	
 	}
 
-		
+	public static final int ERROR_LOGIN_FAILED = 0x20010;	
 	@Export(ParameterNames={"email_or_username", "password"})
 	public Entity Login(UserApplicationContext uctx,String email_or_username,String password) throws WebApplicationException,PersistenceException
 	{
@@ -442,11 +442,11 @@ public class UserModule extends WebStoreModule
 		Entity user = getUserByEmail(email);
 		//System.out.println("USER "+user+"\n"+email);
 		if(user == null)
-			throw new LoginFailedException("LOGIN FAILED");
+			throw new LoginFailedException("LOGIN FAILED",ERROR_LOGIN_FAILED);
 
 		if(user.getAttribute(FIELD_PASSWORD).equals(password))
 			return user;
-		throw new LoginFailedException("LOGIN FAILED");
+		throw new LoginFailedException("LOGIN FAILED",ERROR_LOGIN_FAILED);
 	}
 	
 	public Entity loginViaUsername(String username,String password)throws WebApplicationException,PersistenceException
