@@ -30,7 +30,8 @@ public class RichTextEditor extends Component implements IEditor
 	{
 		b.append("<div>");
 		b.append("<textarea id=\"editor\" name=\"editor\" rows=\"20\" cols=\"75\"> \n ");
-		b.append(value);
+		if(value != null)
+			b.append(value);
 		b.append("\n</textarea>  \n ");
 		b.append("<script>  \n ");
 		b.append("(function() { \n ");
