@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.web.IPageRenderer;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
@@ -24,11 +26,29 @@ import com.pagesociety.web.module.util.Util;
 public class RawUIModule extends WebModule
 {
 	private boolean secure;
+	private Class 	page_renderer_class;
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
 		setSecure(true);
 		declareSubmodes(app,config);
+	}
+	
+	public void setRendererClass(Class<?> c) throws InitializationException
+	{
+		if(!c.isAssignableFrom(IPageRenderer.class))
+			throw new InitializationException("MUST SET RENDERER CLASS TO A CLASS IMPLEMENTING IRenderer interface ");
+		page_renderer_class = c;
+	}
+	
+	public void setRenderer(UserApplicationContext uctx,Object renderer)
+	{
+		uctx.setProperty(KEY_CURRENT_RENDERER_KEY,renderer);
+	}
+	
+	public Object getRenderer(UserApplicationContext uctx)
+	{
+		return uctx.getProperty(KEY_CURRENT_RENDERER_KEY);
 	}
 	
 	public void setSecure(boolean b)
@@ -1007,9 +1027,14 @@ public class RawUIModule extends WebModule
 	private static final String KEY_UI_MODULE_STACK 			= "__ui_module_stack__";
 	protected static final String KEY_UI_MODULE_OUTPUT_BUF   		= "__ui_module_output__";
 	private static final String KEY_UI_MODULE_RAW_COMMUNIQUE   	= "__ui_module_raw_communique__";
-	private static final String KEY_UI_MODULE_SUBMODE_KEY   	= "submode";
-	protected static final String KEY_UI_MODULE_INFO_KEY   		= "_info_";
-	private static final String KEY_UI_MODULE_ERROR_KEY   		= "_error_";
+	
+	
+	public static final String KEY_UI_MODULE_SUBMODE_KEY   	= "submode";
+	public static final String KEY_UI_MODULE_INFO_KEY   		= "_info_";
+	public static final String KEY_UI_MODULE_ERROR_KEY   		= "_error_";
+	
+	private static final String KEY_CURRENT_RENDERER_KEY  		= "_renderer_";
+
 
 	
 	protected void DO_EXEC(UserApplicationContext uctx,RawCommunique c) 
@@ -1023,12 +1048,12 @@ public class RawUIModule extends WebModule
 		
 		uctx.setProperty(KEY_UI_MODULE_RAW_COMMUNIQUE, c);
 		uctx.setProperty(KEY_UI_MODULE_OUTPUT_BUF, new StringBuilder());
-		
+				
 		HttpServletRequest request = (HttpServletRequest)c.getRequest();
 		
 		Map<String,Object>params = new HashMap<String,Object>();
 		Map<String,Object>return_to_params = new HashMap<String,Object>();
-		Enumeration e = request.getParameterNames();
+		Enumeration	 e = request.getParameterNames();
 		while(e.hasMoreElements())
 		{
 			String pname = (String)e.nextElement();
@@ -1049,8 +1074,26 @@ public class RawUIModule extends WebModule
 		int callee_submode = RAW_SUBMODE_DEFAULT;
 		try{
 			callee_submode = Integer.parseInt((String)params.get(KEY_UI_MODULE_SUBMODE_KEY));
-		}catch(Exception ee){}
+		}catch(Exception ee)
+		{
+
+		}
 	
+		Class<?> submode_renderer_class = submode_renderer_map.get(callee_submode);
+		Object r = null;
+		try{ 
+			if(submode_renderer_class != null)
+				r = get_instance(submode_renderer_class);
+			else if(page_renderer_class != null)
+				r = get_instance(page_renderer_class);
+
+				
+			setRenderer(uctx, r);
+		}catch(Exception ee)
+		{
+			ERROR(ee);
+		}
+		
 		if(canExecSubmode((Entity)uctx.getUser(),callee_submode,params))
 		{
 			if(return_to_params.get("__do_call__") != null)
@@ -1070,7 +1113,15 @@ public class RawUIModule extends WebModule
 		
 		HttpServletResponse response = (HttpServletResponse)c.getResponse();
 		try{
+			
+			if(submode_renderer_class != null || page_renderer_class != null)
+			{
+				IPageRenderer renderer = (IPageRenderer)getRenderer(uctx);
+				renderer.render(get_user_buf(uctx));
+			}
+
 			response.getWriter().println(get_user_buf(uctx).toString());
+
 		}
 		catch(IllegalStateException ise)
 		{
@@ -1085,6 +1136,27 @@ public class RawUIModule extends WebModule
 		}
 	}
 	
+	private Object get_instance(Class<?> c) throws Exception
+	{
+		String classname = c.getName();
+		if(classname.indexOf('$') != -1)
+		{
+			StringTokenizer st = new StringTokenizer(classname, "$");
+			String outer_class_name = st.nextToken();
+			String inner_class_name = st.nextToken();
+			Object oc = Class.forName(outer_class_name).newInstance();
+			Class[] innerClasses = oc.getClass().getClasses();
+
+			for(int i=0;i<innerClasses.length;i++)
+			{
+				if(innerClasses[i].getName().equals(classname))
+					return innerClasses[i].getConstructor(new Class[]{oc.getClass()}).newInstance(new Object[]{oc});
+			}
+			return null;
+		}
+		else
+			return c.newInstance();
+	}
 
 	protected RawCommunique GET_RAW_COMMUNIQUE(UserApplicationContext uctx)
 	{
@@ -1215,6 +1287,11 @@ public class RawUIModule extends WebModule
 	private Map<Integer,Method> submode_map = new HashMap<Integer,Method>();
 	protected void declareSubmode(int submode_id,String method_name) throws WebApplicationException
 	{
+		declareSubmode(submode_id, method_name, null);
+	}
+	private Map<Integer,Class<?>> submode_renderer_map = new HashMap<Integer,Class<?>>();
+	protected void declareSubmode(int submode_id,String method_name,Class<?> renderer_class) throws WebApplicationException
+	{
 		Method[] mm = this.getClass().getDeclaredMethods();
 		for(int i = 0;i < mm.length;i++)
 		{
@@ -1226,8 +1303,14 @@ public class RawUIModule extends WebModule
 				break;
 			}
 		}
+		if(renderer_class != null)
+		{
+			submode_renderer_map.put(submode_id,renderer_class);
+		}
 	}
 
+
+	
 	private void push_stack_frame(UserApplicationContext uctx,ui_module_stack_frame f)
 	{
 		//System.out.println("PUSHING FRAME "+f);
