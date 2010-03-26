@@ -210,13 +210,13 @@ public class BillingModule extends WebStoreModule
 				   					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
 		
 
-		DISPATCH_EVENT(EVENT_BILLING_RECORD_CREATED,
-				   	   BILLING_EVENT_BILLING_RECORD,billing_record);
-		
 		if(preferred != null && preferred == true)
 			setPreferredBillingRecord(creator,billing_record);
 
- 		return billing_record;
+		DISPATCH_EVENT(EVENT_BILLING_RECORD_CREATED,
+			   	   BILLING_EVENT_BILLING_RECORD,billing_record);
+ 		
+		return billing_record;
 	
 	}
 			  
