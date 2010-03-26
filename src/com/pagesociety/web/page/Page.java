@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import com.pagesociety.web.IPageRenderer;
 import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.page.component.ImageComponent;
 import com.pagesociety.web.page.component.InputComponent;
@@ -13,7 +14,7 @@ import com.pagesociety.web.page.component.LabelComponent;
 import com.pagesociety.web.page.component.PagingSortedTable;
 import com.pagesociety.web.page.component.RichTextEditor;
 
-public class Page
+public class Page implements IPageRenderer
 {
 	private HeadContainer head;
 	private BodyContainer body;
@@ -134,6 +135,12 @@ public class Page
 	{
 		target = stack.pop();
 		return target;
+	}
+	
+	public Component add(Component c)
+	{
+		c.setParent(target);
+		return c;
 	}
 
 	public InputComponent addInput(String id, String value)

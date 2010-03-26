@@ -16,26 +16,7 @@ public class Container extends Component
 		super(parent, id, class_name);
 		children = new ArrayList<Component>();
 	}
-
-// use page.getById() instead
-//	public Component getById(String id)
-//	{
-//		if (id==null)
-//			
-//		if (id.equals(this.id))
-//			return this;
-//		int s = children.size();
-//		for (int i = 0; i < s; i++)
-//		{
-//			Component ccc = children.get(i);
-//			if (id.equals(ccc.id))
-//				return ccc;
-//			if (ccc instanceof Container)
-//				return ((Container) ccc).getById(id);
-//		}
-//		return null;
-//	}
-
+	
 	public void render(StringBuilder b)
 	{
 		int s = children.size();

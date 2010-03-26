@@ -17,6 +17,21 @@ public class PageTest
 		System.out.println(test3().render());
 	}
 	
+	public static Page test00()
+	{
+		Page p = new Page();
+		p.beginContainer("xyz");
+			p.addInput("X", "Y").setStyle("font","Arial","color","#ff00ff");
+			p.addInput("A", "Y");
+			p.beginContainer("abc");
+				p.addLabel("Hi");
+				p.addInput("AAA", "AAA");
+				p.addImage("http://googogole.cinifd/dshjds.jpg");
+			p.endContainer();
+		p.endContainer();
+		return p;
+	}
+	
 	public static Page test0()
 	{
 		Page p = new Page();

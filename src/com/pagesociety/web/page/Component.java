@@ -19,6 +19,11 @@ public abstract class Component
 		this.parent = parent;
 		this.id = id;
 		this.class_name = class_name;
+		setParent(parent);
+	}
+
+	public void setParent(Container parent)
+	{
 		if (parent == null)
 			return;
 		this.page = parent.page;
@@ -28,7 +33,7 @@ public abstract class Component
 		parent.children.add(this);
 		//
 	}
-
+	
 	public void setStyle(String... style)
 	{
 		if (this.style==null)

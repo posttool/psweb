@@ -7,6 +7,24 @@ public class Style
 	public static final String HEIGHT 							= "height";
 	public static final String TOP 								= "top";
 	public static final String LEFT 							= "left";
+	
+	public static final String MARGIN							= "margin";
+	public static final String MARGIN_TOP						= "margin-top";
+	public static final String MARGIN_RIGHT						= "margin-right";
+	public static final String MARGIN_BOTTON					= "margin-bottom";
+	public static final String MARGIN_LEFT						= "margin-left";
+	
+	public static final String BORDER							= "border";
+	public static final String BORDER_TOP						= "border-top";
+	public static final String BORDER_RIGHT						= "border-right";
+	public static final String BORDER_BOTTOM					= "border-bottom";
+	public static final String BORDER_LEFT						= "border-left";
+	
+	public static final String PADDING							= "padding";
+	public static final String PADDING_TOP						= "padding-top";
+	public static final String PADDING_RIGHT					= "padding-right";
+	public static final String PADDING_BOTTON					= "padding-bottom";
+	public static final String PADDING_LEFT						= "padding-left";
 
 	public static final String BACKGROUND_COLOR 				= "background-color";
 	public static final String COLOR 							= "color";
