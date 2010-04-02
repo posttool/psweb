@@ -37,7 +37,9 @@ public class JsonGateway
 			module_request.setUserContext(user_context);
 			module_return = _web_application.dispatch(module_request);
 			text_response = JsonEncoder.encode(module_return);
-			if (request.getParameter("noencode") == null)
+			if (request.getParameter("callback") != null)
+				text_response = request.getParameter("callback")+"("+text_response+");";
+			if (request.getParameter("encode") != null)
 				text_response = Text.encodeURIComponent(text_response);
 		}
 		catch (Throwable e)

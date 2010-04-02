@@ -9,7 +9,7 @@ public class BillingGatewayException extends Exception
 	
 	public static final int FAILURE_CODE_SYSTEM_FAILURE			= 0x00;
 	public static final int FAILURE_CODE_FAILED					= 0x01;
-	public static final int FAILURE_CODE_FAILED_ON_ADDRESS		 = 0x02;
+	public static final int FAILURE_CODE_FAILED_ON_ADDRESS		= 0x02;
 	public static final int FAILURE_CODE_FAILED_ON_EXPR_DATE	= 0x03;
 	public static final int FAILURE_CODE_FAILED_ON_SECURITY_CODE = 0x04;
 	

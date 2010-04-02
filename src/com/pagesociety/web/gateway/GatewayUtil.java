@@ -1,8 +1,13 @@
 package com.pagesociety.web.gateway;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.ModuleDefinition;
+import com.pagesociety.web.module.ModuleMethod;
+import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
 
 public class GatewayUtil
@@ -39,7 +44,7 @@ public class GatewayUtil
 	{
 		ModuleRequest module_request = parseModuleRequest(servlet_request, request_path);
 		//
-		String json = servlet_request.getParameter("json");
+		String json = servlet_request.getParameter("args");
 		Object[] args = JsonEncoder.decode(json);
 		Object[] typed_args;
 		try
@@ -57,23 +62,31 @@ public class GatewayUtil
 	public static Object[] coerceArgs(String module_name, String method_name,
 			Object[] args) throws WebApplicationException
 	{
-		/*
-		ModuleDefinition module_def = MODULES.get(module_name);
+	
+		ModuleDefinition module_def = ModuleRegistry.getModuleDefinition(module_name);
 		if (module_def == null)
 			throw new RuntimeException("ModuleRegistry NO MODULE " + module_name);
-		ModuleMethod m = module_def.getMethodsForMethodName(method_name);
+		List<ModuleMethod> m = module_def.getMethodsForMethodName(method_name);
 		if (m == null)
 			throw new RuntimeException("ModuleRegistry NO METHOD " + method_name);
-		try
+
+		int s = m.size();
+		Object[] ca = null;
+		for(int i = 0;i < s;i++)
 		{
-			return m.coerceArgs(args);
+			ModuleMethod mm = m.get(i);
+			if (mm.getParameterTypes().length!=args.length+1)
+				continue;
+			try {
+				ca = mm.coerceArgs(args);
+			} 
+			catch(Exception e)
+			{
+			}
 		}
-		catch (Exception e)
-		{
-			System.out.println("CANT COERCE ARGS " + module_name + "/" + method_name + " args=" + args);
-			return args;
-		}
-		*/
-		throw new WebApplicationException("UNSUPPORTED FOR NOW. REVISIT MON!!");
+		if (ca==null)
+			throw new WebApplicationException("CANT CALL "+module_name+"/"+method_name+" with args "+args);
+
+		return ca;
 	}
 }
