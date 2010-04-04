@@ -1,6 +1,7 @@
 package com.pagesociety.web.module.resource;
 
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -754,7 +756,29 @@ public class ResourceModule extends WebStoreModule
 			ERROR(e);
 			throw new WebApplicationException("PROBLEM ADDING RESOURCE FROM FILE");
 		}
-		
+	}
+	
+	public Entity createResource(Entity creator,String filename, String text) throws WebApplicationException,PersistenceException
+	{
+		filename += ".txt";
+		byte[] buf = text.getBytes();
+		int length = buf.length;
+		try{
+			String path_token 	   = path_provider.getPathToken(creator, filename);
+			String content_type 	= MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, length) ;
+			for(int i = 0;i < os.length;i++)
+				os[i].write(buf);
+			for(int i = 0;i < os.length;i++)
+				os[i].close();
+			INFO("CREATING RESOURCE FROM TEXT ("+(length/1024)+" kb) "+path_token);
+			
+			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), length, path_token);
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new WebApplicationException("PROBLEM ADDING RESOURCE FROM FILE");
+		}
 	}
 	
 	
