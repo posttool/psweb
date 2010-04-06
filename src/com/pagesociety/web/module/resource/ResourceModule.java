@@ -758,17 +758,17 @@ public class ResourceModule extends WebStoreModule
 		}
 	}
 	
-	public Entity createResource(Entity creator,String filename, String text) throws WebApplicationException,PersistenceException
+	public Entity createResource(Entity creator,String filename,byte[] content,String mime_type) throws WebApplicationException,PersistenceException
 	{
-		filename += ".txt";
-		byte[] buf = text.getBytes();
-		int length = buf.length;
 		try{
+			int length = content.length;
 			String path_token 	   = path_provider.getPathToken(creator, filename);
-			String content_type 	= MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+			String content_type 	= mime_type;
 			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, length) ;
+
 			for(int i = 0;i < os.length;i++)
-				os[i].write(buf);
+				os[i].write(content);
+
 			for(int i = 0;i < os.length;i++)
 				os[i].close();
 			INFO("CREATING RESOURCE FROM TEXT ("+(length/1024)+" kb) "+path_token);
