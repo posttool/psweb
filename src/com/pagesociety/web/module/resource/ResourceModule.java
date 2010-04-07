@@ -764,7 +764,7 @@ public class ResourceModule extends WebStoreModule
 			int length = content.length;
 			String path_token 	   = path_provider.getPathToken(creator, filename);
 			String content_type 	= mime_type;
-			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, length) ;
+			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, length);
 
 			for(int i = 0;i < os.length;i++)
 				os[i].write(content);
