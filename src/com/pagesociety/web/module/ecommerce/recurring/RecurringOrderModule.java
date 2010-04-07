@@ -792,7 +792,7 @@ public class RecurringOrderModule extends ResourceModule
 		double initial_fee = tally_initial_fee(recurring_order);
 		if(initial_fee != 0)
 		{
-			BillingGatewayResponse bgr = billing_gateway.doSale(billing_record, initial_fee,null,"PSTRO"+recurring_order.getId(),"oid:"+recurring_order.getId()+"uid:"+((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER)).getId()+":initial_fee:"+normalize_amount(initial_fee));		
+			BillingGatewayResponse bgr = billing_gateway.doSale(billing_record, initial_fee,null,"PSTRO"+recurring_order.getId(),"[INITIAL FEE]oid:"+recurring_order.getId()+"uid:"+((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER)).getId()+":initial_fee:"+normalize_amount(initial_fee));		
 			log_order_init_bill_ok(recurring_order, initial_fee, bgr);
 		}
 	}
@@ -823,7 +823,7 @@ public class RecurringOrderModule extends ResourceModule
 		
 		if(amount > 0)
 		{
-			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,String.valueOf("PSTRO"+recurring_order.getId()),"oid:"+recurring_order.getId()+":user:"+order_user.getAttribute("email")+":uid:"+order_user.getId()+":amt:"+amount);
+			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,String.valueOf("PSTRO"+recurring_order.getId()),"[MONTHLY_BILLING]oid:"+recurring_order.getId()+":user:"+order_user.getAttribute("email")+":uid:"+order_user.getId()+":amt:$"+normalize_amount(amount));
 			log_order_monthly_bill_ok(recurring_order, amount,response);
 		}
 		else
@@ -844,7 +844,7 @@ public class RecurringOrderModule extends ResourceModule
 		double amount = (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
 		if(amount > 0)
 		{
-			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,null,null);
+			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,"PSTRO"+recurring_order.getId(),"[CATCH_UP_BILLING]oid:"+recurring_order.getId()+":user:"+order_user.getAttribute("email")+":uid:"+order_user.getId()+":amt:$"+normalize_amount(amount));
 			log_order_catchup_bill_ok(recurring_order, amount,response);
 		}
 		else
