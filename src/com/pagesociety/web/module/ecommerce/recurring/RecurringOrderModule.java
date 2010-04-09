@@ -825,6 +825,7 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,String.valueOf("PSTRO"+recurring_order.getId()),"[MONTHLY_BILLING]oid:"+recurring_order.getId()+":user:"+order_user.getAttribute("email")+":uid:"+order_user.getId()+":amt:$"+normalize_amount(amount));
 			log_order_monthly_bill_ok(recurring_order, amount,response);
+			send_billing_ok_email(recurring_order, amount, response);
 		}
 		else
 		{
@@ -1369,6 +1370,56 @@ public class RecurringOrderModule extends ResourceModule
 				template_data.put("additional_information",additional_info);
 			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
 			email_module.sendEmail(null, new String[]{user_email}, "Welcome to Postera.com.", "welcome.fm", template_data);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			MODULE_LOG("EMAIL MODULE FAILED SENDING WELCOME EMAIL TO USER "+user.getId()+" "+user_email);
+		}
+	}
+	
+	private void send_billing_ok_email(Entity recurring_order,double amount,BillingGatewayResponse bgr)
+	{		
+		Entity user = null;
+		String user_email = null;
+		Entity billing_record = null;
+
+		try{
+			user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
+			String username = (String)user.getAttribute(UserModule.FIELD_USERNAME);
+			user_email = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			if(username == null || username.trim() == "")
+				username = (String)user.getAttribute(UserModule.FIELD_EMAIL);
+			Date d = (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_LAST_BILL_DATE);
+			billing_record = billing_module.getPreferredBillingRecord(user);
+			String first_name = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_FIRST_NAME);
+			String last_name = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_LAST_NAME);
+			String address1 = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_ADDRESS_LINE_1);
+			String address2 = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_ADDRESS_LINE_2);
+			String city = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_CITY);
+			String st = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_STATE);
+			String zip = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_POSTAL_CODE);
+			String country = (String)billing_record.getAttribute(BillingModule.BILLINGRECORD_FIELD_COUNTRY);
+			String amt = "$"+normalize_amount(amount);
+			String gateway_ref = bgr.getRefCode();
+			String gateway_auth = bgr.getAuthCode();
+			long order_id = recurring_order.getId();
+			Map<String,Object> template_data = new HashMap<String, Object>();
+			template_data.put("username",username);
+			template_data.put("user_email",user_email);
+			template_data.put("first_name",first_name);
+			template_data.put("last_name",last_name);
+			template_data.put("address1",address1);
+			template_data.put("address2",address2);
+			template_data.put("city",city);
+			template_data.put("state",st);
+			template_data.put("zip",zip);
+			template_data.put("country",country);
+			template_data.put("amount",amt);
+			template_data.put("invoice_number",order_id);
+			template_data.put("invoice_date",d);
+			template_data.put("gateway_ref",gateway_ref);
+			template_data.put("gateway_auth",gateway_auth);
+			email_module.sendEmail(null, new String[]{user_email}, "Postera.com: Payment Receipt ["+order_id+"]", "recurring-bill.fm", template_data);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
