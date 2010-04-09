@@ -951,6 +951,7 @@ public class WebStoreModule extends WebModule
 		return QUERY_FILL_DEEP(store,q, fill_fieldnames);
 	}
 	
+	/* THIS FILLS ALL THE REFS BY DEFAULT. THE MASK FIELDS ARE APPLIED AFTER*/
 	public QueryResult QUERY_FILL_AND_MASK(Query q,String... mask_fields) throws PersistenceException
 	{
 		return QUERY_FILL_AND_MASK(store, q, mask_fields);
