@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
@@ -23,8 +25,13 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
@@ -106,6 +113,25 @@ public abstract class WebModule extends Module
 		return (String)val;
 	}
 
+	public int GET_REQUIRED_INT_CONFIG_PARAM(String name,Map<String,Object> config) throws InitializationException
+	{
+		Object val = config.get(name);
+		if(val == null)
+			if(val == null)
+				throw new InitializationException("MISSING REQUIRED CONFIG PARAM..."+name);
+		try
+		{
+			if(val.getClass() == Integer.class || val.getClass() == int.class)
+				return (Integer)val;
+			else
+				return Integer.parseInt((String)val);
+		}catch(NumberFormatException nfe)
+		{
+			throw new InitializationException("REQUIRED CONFIG PARAM "+name+" SHOULD BE OF TYPE INT.");
+		}
+	
+	}
+	
 	public int GET_OPTIONAL_INT_CONFIG_PARAM(String name,int default_val,Map<String,Object> config) throws InitializationException
 	{
 		Object val = config.get(name);
@@ -496,15 +522,21 @@ public abstract class WebModule extends Module
         }
     }
     
-    public String READ_FILE_AS_STRING(String filename) throws WebApplicationException
+    public static String READ_FILE_AS_STRING(String filename) throws WebApplicationException
     {
-        byte[] buffer = new byte[(int) new File(filename).length()];
-        BufferedInputStream f;
+    	File f = new File(filename);
+    	return READ_FILE_AS_STRING(f);
+    }
+    
+    public static String READ_FILE_AS_STRING(File f) throws WebApplicationException
+    {
+        byte[] buffer = new byte[(int)f.length()];
+        BufferedInputStream ff;
 		try {
-			f = new BufferedInputStream(new FileInputStream(filename));
-			f.read(buffer);
+			ff = new BufferedInputStream(new FileInputStream(f));
+			ff.read(buffer);
 		} catch (Exception e) {
-			throw new WebApplicationException("PROBLEM READING FILE "+filename+" :"+e.getMessage());
+			throw new WebApplicationException("PROBLEM READING FILE "+f.getAbsolutePath()+" :"+e.getMessage());
 		}
 
         return new String(buffer);
@@ -558,5 +590,91 @@ public abstract class WebModule extends Module
     	System.arraycopy(kvp2, 0, ret, kvp.length, kvp2.length);
     	return ret;
     }
+    
+    
+    public Map<String,Object> JSON_CONFIG_TO_MAP(File f) throws InitializationException
+	{
+
+		Map<String,Object> map = null;
+		try{ 
+			String contents = READ_FILE_AS_STRING(f.getAbsolutePath());
+			JSONObject o = new JSONObject(contents);
+			map = json_to_map(new LinkedHashMap<String,Object>(), o);
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new InitializationException("PROBLEM READING CONFIG FILE: "+f.getAbsolutePath());
+		}
+		return map;
+	}
+	
+	private Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws InitializationException
+	{
+		try{
+			String[] keys = JSONObject.getNames(o);
+			if(keys == null)
+				return ret;
+			for(int i = 0;i < keys.length;i++)
+			{
+				Object val = o.get(keys[i]);
+				if(val instanceof JSONObject)
+				{
+				
+					Map<String,Object> o_map = new LinkedHashMap<String,Object>();
+					ret.put(keys[i], json_to_map(o_map,(JSONObject)val));
+					
+				}
+				else if(val instanceof JSONArray)
+				{
+					JSONArray L = (JSONArray)val;
+					List<Object> list = new ArrayList<Object>(L.length());
+					ret.put(keys[i], parse_json_list(list, L));
+				}
+				else
+				{
+					ret.put(keys[i],val);
+				}
+			}
+			return ret;
+		}catch(Exception e)
+		{
+			ERROR(e);
+			throw new InitializationException("PROBLEM CONVERTING JSON FILE TO MAP");
+		}
+		
+	}
+	
+	public List<Object> parse_json_list(List<Object> list,JSONArray L) throws JSONException,InitializationException
+	{
+		
+		for(int ii = 0;ii < L.length();ii++)
+		{
+				Object vv = L.get(ii);
+				if(vv instanceof JSONObject)
+				{
+					Map<String,Object> o_map = new LinkedHashMap<String,Object>();
+					list.add(json_to_map(o_map,(JSONObject)vv));
+				}
+				else if(vv instanceof JSONArray)
+				{
+					List<Object> ll = new ArrayList<Object>(((JSONArray)vv).length());
+					list.add(parse_json_list(ll, (JSONArray)vv));
+				}
+				else
+				{
+					list.add(vv);	
+				}
+		}
+		return list;
+	}
+	
+	
+	 public static String getStackTrace(Throwable aThrowable) {
+		    final Writer result = new StringWriter();
+		    final PrintWriter printWriter = new PrintWriter(result);
+		    aThrowable.printStackTrace(printWriter);
+		    return result.toString();
+		  }
+
     
 }
