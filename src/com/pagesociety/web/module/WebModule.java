@@ -17,17 +17,16 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,6 +41,7 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
 import com.pagesociety.web.module.permissions.PermissionEvaluator;
 import com.pagesociety.web.module.permissions.PermissionsModule;
+
 
 
 
@@ -676,12 +676,99 @@ public abstract class WebModule extends Module
 	}
 	
 	
-	 public static String getStackTrace(Throwable aThrowable) {
+	 public static String GET_STACK_TRACE(Throwable aThrowable) {
 		    final Writer result = new StringWriter();
 		    final PrintWriter printWriter = new PrintWriter(result);
 		    aThrowable.printStackTrace(printWriter);
 		    return result.toString();
 		  }
 
-    
+
+	 ///MATCHER STUFF, regexp to Object//
+		@SuppressWarnings("serial")
+		protected class PS_MATCHER_LIST extends ArrayList<PSMatcher> 
+		{
+			public PS_MATCHER_LIST()
+			{
+				super();
+			}
+			
+			public PS_MATCHER_LIST(Map<String,Object> match_map,boolean case_insenstive)
+			{
+				super();
+				for(String key: match_map.keySet())
+				{
+					add(new PSMatcher(key, match_map.get(key), case_insenstive));
+				}
+			}
+			
+			public PSMatcher add(String regexp,Object ret,boolean case_insensitive)
+			{
+				PSMatcher m = new PSMatcher(regexp, ret, case_insensitive); 
+				add(m);
+				return m;
+			}
+			
+			public Object getFirstMatch(String in)
+			{
+				int s= this.size();
+				for(int i = 0;i < s;i++)
+				{
+					PSMatcher m = get(i);
+					Object o = null;
+					if((o = m.getMatch(in)) != null)
+						return o;
+				}
+				return null;
+			}
+			
+			public List<Object> getAllMatches(String in)
+			{
+				List<Object> ret = new ArrayList<Object>();
+				int s= this.size();
+				for(int i = 0;i < s;i++)
+				{
+					PSMatcher m = get(i);
+					Object o = null;
+					if((o = m.matches(in)) != null)
+						ret.add(o);
+				}
+				return ret;
+			}
+		}
+		
+
+		class PSMatcher
+		{
+			private Object ret;
+			private Pattern p;
+			public PSMatcher(String regexp,Object ret,boolean case_insensitive)
+			{
+				if(case_insensitive)
+					this.p = Pattern.compile(regexp,Pattern.CASE_INSENSITIVE);
+				else
+					this.p = Pattern.compile(regexp);
+				this.ret = ret;
+			}
+			
+			public boolean matches(String in)
+			{
+				return p.matcher(in).matches();
+			}
+			
+			public Object getMatch(String in)
+			{
+				if(matches(in))
+					return ret;
+				return null;
+			}
+			
+			public String toString()
+			{
+				return p.toString()+" -> "+ret.toString();
+			}
+		}
+		
+	 ////END MATCHER STUFF//
+	 
 }
