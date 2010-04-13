@@ -24,6 +24,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	private static final String PARAM_RESOURCE_BASE_DIR   		  = "path-provider-base-dir";
 	private static final String PARAM_RESOURCE_BASE_URL   		  = "path-provider-base-url";
 	private static final String PARAM_IMAGE_MAGICK_PATH   		  = "path-provider-image-magick-path";
+	private static final String PARAM_DIRECTORY_DEPTH			  = "path-provider-directory-depth";
 	
 	protected String base_dir;
 	protected String base_url;
@@ -41,6 +42,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		base_dir = GET_REQUIRED_CONFIG_PARAM(PARAM_RESOURCE_BASE_DIR, config);
 		base_url = GET_REQUIRED_CONFIG_PARAM(PARAM_RESOURCE_BASE_URL, config);
 		image_magick_path 		  = GET_REQUIRED_CONFIG_PARAM(PARAM_IMAGE_MAGICK_PATH, config);
+		depth 		  = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_DIRECTORY_DEPTH, 8, config);
 		
 		if(!new File(image_magick_path).exists())
 			throw new InitializationException("CANT FIND IMAGE MAGICK INSTALL AT "+image_magick_path);
