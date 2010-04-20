@@ -41,7 +41,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	private Map<String,String> last_backup_map;
 	private int backup_time_hr;
 	private int backup_time_min;
-	private int inc_backup_interval;
+	private int inc_backup_interval;//TODO
 
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -54,11 +54,16 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			throw new InitializationException(e.getMessage());
 		}
-		String[] backup_time 	= GET_REQUIRED_LIST_PARAM(PARAM_FULL_BACKUP_TIME, config);
-		backup_time_hr 			= Integer.parseInt(backup_time[0]);
-		backup_time_min 		= Integer.parseInt(backup_time[1]);
-		inc_backup_interval 	= Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_INCREMENTAL_BACKUP_INTERVAL,config));
-		start_backup_thread();
+		String[] backup_time	= GET_OPTIONAL_LIST_PARAM(PARAM_FULL_BACKUP_TIME, config);
+		if (backup_time != null)
+		{
+			backup_time_hr	= Integer.parseInt(backup_time[0]);
+			backup_time_min	= Integer.parseInt(backup_time[1]);
+			String incremental_backup_interval = GET_REQUIRED_CONFIG_PARAM(PARAM_INCREMENTAL_BACKUP_INTERVAL,config);
+			if (incremental_backup_interval != null)
+				inc_backup_interval	= Integer.parseInt(incremental_backup_interval);
+			start_backup_thread();
+		}
 	}
 
 	private void init_last_backup_map() throws Exception
@@ -123,6 +128,16 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
 			SPAN(uctx,pp.getName()+" BACKUP OK",18);
+			P(uctx);
+			JS_TIMED_REDIRECT(uctx, getName(),RAW_SUBMODE_DEFAULT,1000);
+		}
+		else if (params.get("clean_log_files") != null)
+		{
+			BDBPersistenceModule bdbpp = (BDBPersistenceModule) pp;
+			int howmany = bdbpp.removeUnusedLogFiles();
+			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
+			P(uctx);
+			SPAN(uctx,pp.getName()+" REMOVED "+howmany+" UNUSED LOG FILES",18);
 			P(uctx);
 			JS_TIMED_REDIRECT(uctx, getName(),RAW_SUBMODE_DEFAULT,1000);
 		}
@@ -225,6 +240,8 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			TABLE_END(uctx);
 			P(uctx);
 			A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ + DO FULL BACKUP ]","do_full_backup",true);
+			if (pp instanceof BDBPersistenceModule)
+				A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ - CLEAN UNUSED LOG FILES ]","clean_log_files",true);
 
 			DOCUMENT_END(uctx);
 		}	

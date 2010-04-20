@@ -31,7 +31,7 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	private static final String PARAM_STORE_BACKUP_DIRECTORY = "store-backup-directory";
 	private static final String SLOT_EVOLUTION_PROVIDER    = "evolution-provider";
 	
-	private PersistentStore    store;
+	private BDBStore    store;
 	private IEvolutionProvider evolution_provider;
 	
 	public static final String CAN_DO_BACKUP  = "CAN_DO_BACKUP";
@@ -154,6 +154,11 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public String doFullBackup() throws PersistenceException
 	{
 		return store.doFullBackup();
+	}
+	
+	public int removeUnusedLogFiles() throws PersistenceException
+	{
+		return store.removeUnusedLogFiles();
 	}
 
 	@Export
