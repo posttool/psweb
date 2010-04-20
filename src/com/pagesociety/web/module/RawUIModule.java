@@ -987,8 +987,15 @@ public class RawUIModule extends WebModule
 	protected String RAW_MODULE_ROOT()
 	{
 		if(secure)
-			return getApplication().getConfig().getWebRootUrlSecure();
-		else
+		{
+			String sec_root =  getApplication().getConfig().getWebRootUrlSecure();
+			if(sec_root == null)
+			{
+				ERROR("WARNING: "+getName()+" IS TRYING TO ACCESS PROPERTY WebRootUrlSecure AND IT IS null. DEFAULTING TO UNSECURE WEBROOT. IF YOU WOULD LIKE THIS MESSAGE TO DISAPPEAR CHANGE THE RawModule secure SETTING TO FALSE.");
+				sec_root = getApplication().getConfig().getWebRootUrl();
+			}
+			return sec_root;
+		}else
 			return getApplication().getConfig().getWebRootUrl();
 	}
 	
