@@ -438,9 +438,9 @@ public class UserModule extends WebStoreModule
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
 	{
-		//System.out.println("TRYING TO LOGIN WITH PASSWORD "+password);
+		System.out.println("TRYING TO LOGIN WITH PASSWORD "+password);
 		Entity user = getUserByEmail(email);
-		//System.out.println("USER "+user+"\n"+email);
+		System.out.println("USER "+user+"\n"+email);
 		if(user == null)
 			throw new LoginFailedException("LOGIN FAILED",ERROR_LOGIN_FAILED);
 
@@ -613,6 +613,7 @@ public class UserModule extends WebStoreModule
 		Query q = new Query(USER_ENTITY);
 		q.idx(INDEX_BY_EMAIL);
 		q.eq(email);
+		q.cacheResults(false);
 		QueryResult result = QUERY(q);
 		
 		if(result.size() == 1)
