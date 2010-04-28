@@ -76,16 +76,18 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			image_magick_convert_cmd = image_magick_convert_cmd + ".exe";
 		}
 		ImageMagick.setRuntimeExecPath(image_magick_convert_cmd);
+
+		setup_delete_queue();
+		init_bucket();
+		init_scratch_directory(app, config);
+		setup_crossdomain_file(app, config);
+		start_s3_delete_consumer();	
 	}
 
 	public void loadbang(WebApplication app, Map<String, Object> config)
 			throws InitializationException
 	{
-		setup_delete_queue();
-		init_bucket();
-		init_scratch_directory(app, config);
-		setup_crossdomain_file(app, config);
-		start_s3_delete_consumer();
+
 		start_scratch_cleaner();
 	}
 
