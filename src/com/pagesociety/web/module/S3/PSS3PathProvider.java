@@ -370,7 +370,9 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 						INFO(Thread.currentThread()+" PW: WAS WAITING NOW RETURNING: "+preview_key);
 						synchronized(lock)
 						{
-							notifyAll(); //there might be more than one thread waiting
+							try{
+								lock.notifyAll(); //there might be more than one thread waiting
+								}catch (Exception eee) {}						
 						}
 						return base_s3_url +"/"+ preview_key;
 					}
@@ -381,10 +383,12 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				{	
 					synchronized(lock)
 					{
-						notifyAll(); //there might be more than one thread waiting
-					}
+						try{
+							lock.notifyAll(); //there might be more than one thread waiting
+							}catch (Exception eee) {}						
 					INFO(Thread.currentThread()+" PW: ABOUT TO BARF IN WAIT FOR "+preview_key);
 					WAE(e);
+					}
 				}
 			}
 			else
