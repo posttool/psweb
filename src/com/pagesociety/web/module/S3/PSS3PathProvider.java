@@ -349,56 +349,72 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			boolean resized_exists = conn.checkKeyExists(s3_bucket, preview_key);
 			if (resized_exists)
 			{
-				System.out.println("FOUND " + preview_key + " PREVIEW AT " + width + " " + height);
+				INFO("FOUND " + preview_key + " PREVIEW AT " + width + " " + height);
 				return base_s3_url +"/"+ preview_key;
 			}
-			lock = current_thumbnail_generators.putIfAbsent(preview_key, new Object());
+			Object L = new Object();
+			lock = current_thumbnail_generators.putIfAbsent(preview_key,L);
 			if (lock != null)
 			{
 				try
 				{
 					synchronized (lock)
 					{
-						INFO("WAITING IN PREVIEW");
+						INFO(Thread.currentThread()+"PW: WAITING IN PREVIEW FOR: "+preview_key);
 						lock.wait();
 					}
-					INFO("NOT WAITING ANYMORE");
+					INFO(Thread.currentThread()+" PW: NOT WAITING ANYMORE: "+preview_key);
 					boolean resized_now_exists = conn.checkKeyExists(s3_bucket, preview_key);
 					if (resized_now_exists)
+					{
+						INFO(Thread.currentThread()+" PW: WAS WAITING NOW RETURNING: "+preview_key);
+						synchronized(lock)
+						{
+							notifyAll(); //there might be more than one thread waiting
+						}
 						return base_s3_url +"/"+ preview_key;
+					}
 					else
-						throw new Exception("WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
+						throw new Exception(Thread.currentThread()+" PW: WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
 				}
 				catch (Exception e)
-				{
+				{	
+					synchronized(lock)
+					{
+						notifyAll(); //there might be more than one thread waiting
+					}
+					INFO(Thread.currentThread()+" PW: ABOUT TO BARF IN WAIT FOR "+preview_key);
 					WAE(e);
 				}
 			}
 			else
 			{
-				lock = current_thumbnail_generators.get(preview_key);
+				lock = L;
 			}
-			System.out.println("DIDNT FIND " + preview_key + " PREVIEW AT " + width + " " + height);
+			INFO("DIDNT FIND " + preview_key + " PREVIEW AT " + width + " " + height);
 			// look for it in the scratch directory//
 			File original_file = new File(scratch_directory, path_token);
 			if (!original_file.exists())
 			{
-				System.out.println("DIDNT FIND " + path_token + " IN SCRATCH DIRECTORY. GOING TO AMAZON FOR ORIGINAL.");
+				INFO("DIDNT FIND " + path_token + " IN SCRATCH DIRECTORY. GOING TO AMAZON FOR ORIGINAL.");
 				GetResponse r = conn.get(s3_bucket, path_token, null);
 				if (r.object == null)
 				{					
-					current_thumbnail_generators.remove(preview_key);
+					
 					synchronized (lock)
 					{
+						current_thumbnail_generators.remove(preview_key);
 						lock.notifyAll();
+						throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE " + s3_bucket + " " + path_token + " BUT IT DOESNT SEEM TO EXIST.");
 					}
-					throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE " + s3_bucket + " " + path_token + " BUT IT DOESNT SEEM TO EXIST.");
+					
 				}
 				original_file.getParentFile().mkdirs();
 				FileOutputStream fos = new FileOutputStream(original_file);
 				fos.write(r.object.data);
 				fos.flush();
 				fos.close();
+				INFO("GOT "+path_token+" FROM AMAZON AND WROTE IT TO "+original_file.getAbsolutePath());
 			}
 			File preview = new File(scratch_directory, preview_key);
 			preview.getParentFile().mkdirs();
@@ -408,28 +424,34 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			}
 			catch (Exception e)
 			{
-				current_thumbnail_generators.remove(preview_key);
+
 				synchronized (lock)
 				{
+					current_thumbnail_generators.remove(preview_key);
 					lock.notifyAll();
+					WAE(e);
 				}
-				WAE(e);
+			
 			}
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
+			INFO("WRITING PREVIEW TO S3 "+preview_key+" length:"+preview.length()+" content-type:"+content_type);
 			PSS3Object pobj = new PSS3Object(new FileInputStream(preview), preview.length(), content_type, PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, preview_key, pobj);
-			if (pr.connection.getResponseCode() != pr.connection.HTTP_OK)
+			if (pr.connection.getResponseCode() != HttpURLConnection.HTTP_OK)
 			{
-				current_thumbnail_generators.remove(preview_key);
+				
 				synchronized (lock)
 				{
+					current_thumbnail_generators.remove(preview_key);
 					lock.notifyAll();
+					throw new WebApplicationException("PROBLEM WRITING PREVIEW TO S3 " + s3_bucket + " " + preview_key + " HTTP RESPONSE WAS " + pr.connection.getResponseCode());
 				}
-				throw new WebApplicationException("PROBLEM WRITING PREVIEW TO S3 " + s3_bucket + " " + preview_key + " HTTP RESPONSE WAS " + pr.connection.getResponseCode());
+
 			}
-			current_thumbnail_generators.remove(preview_key);
+
 			synchronized (lock)
 			{
+				current_thumbnail_generators.remove(preview_key);
 				lock.notifyAll();
 			}
 			INFO("EXITING GET PREVIEW URL " + base_s3_url +"/"+ preview_key);
@@ -439,10 +461,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		{
 			if (lock != null)
 			{
-				if (preview_key != null)
-					current_thumbnail_generators.remove(preview_key);
+
 				synchronized (lock)
 				{
+					if (preview_key != null)
+						current_thumbnail_generators.remove(preview_key);
 					lock.notifyAll();
 				}
 			}
@@ -579,15 +602,15 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			create_image_preview(original, dest, w, h);
 			break;
 		case FileInfo.SIMPLE_TYPE_DOCUMENT:
-			throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
+			throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
 		case FileInfo.SIMPLE_TYPE_SWF:
-			throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
+			throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
 		case FileInfo.SIMPLE_TYPE_VIDEO:
-			throw new WebApplicationException("VIDEO PREVIEW NOT SUPPORTED YET");
+			throw new WebApplicationException("VIDEO PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
 		case FileInfo.SIMPLE_TYPE_AUDIO:
-			throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
+			throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
 		default:
-			throw new WebApplicationException("UNKNOW SIMPLE TYPE " + type);
+			throw new WebApplicationException("UNKNOWN SIMPLE TYPE " + type +" "+original.getAbsolutePath());
 		}
 	}
 
