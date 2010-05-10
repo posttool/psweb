@@ -368,27 +368,15 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 					if (resized_now_exists)
 					{
 						INFO(Thread.currentThread()+" PW: WAS WAITING NOW RETURNING: "+preview_key);
-						synchronized(lock)
-						{
-							try{
-								lock.notifyAll(); //there might be more than one thread waiting
-								}catch (Exception eee) {}						
-						}
 						return base_s3_url +"/"+ preview_key;
 					}
 					else
 						throw new Exception(Thread.currentThread()+" PW: WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
 				}
 				catch (Exception e)
-				{	
-					synchronized(lock)
-					{
-						try{
-							lock.notifyAll(); //there might be more than one thread waiting
-							}catch (Exception eee) {}						
+				{		
 					INFO(Thread.currentThread()+" PW: ABOUT TO BARF IN WAIT FOR "+preview_key);
 					WAE(e);
-					}
 				}
 			}
 			else
