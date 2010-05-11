@@ -335,8 +335,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	}
 
 	/* this should take preview params */
-	private ConcurrentHashMap<String, Object> current_thumbnail_generators 		= new ConcurrentHashMap<String, Object>();
-	private HashSet<Object> 				  current_thumbnail_generator_locks = new HashSet<Object>();
+	private ConcurrentHashMap<String, Object> current_thumbnail_generator_locks = new ConcurrentHashMap<String, Object>();
+	private HashSet<Object> 				  active_thumbnail_generator_locks  = new HashSet<Object>();
 
 	public String getPreviewUrl(String path_token, int width, int height) throws WebApplicationException
 	{
@@ -354,12 +354,12 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				INFO("FOUND " + preview_key + " PREVIEW AT " + width + " " + height);
 				return base_s3_url +"/"+ preview_key;
 			}
-			lock = current_thumbnail_generators.putIfAbsent(preview_key,L);
+			lock = current_thumbnail_generator_locks.putIfAbsent(preview_key,L);
 			if (lock != null)
 			{
 					synchronized (lock)
 					{
-						if(current_thumbnail_generator_locks.contains(lock))
+						if(active_thumbnail_generator_locks.contains(lock))
 						{
 							INFO(Thread.currentThread()+"PW: WAITING IN PREVIEW FOR: "+preview_key);
 							lock.wait();		
@@ -382,7 +382,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		lock = L;			
 		try{
 	
-			current_thumbnail_generator_locks.add(lock);
+			active_thumbnail_generator_locks.add(lock);
 			do_generate_preview(conn, path_token, preview_key, width, height);
 			return base_s3_url +"/"+ preview_key;		
 		}catch(WebApplicationException e)
@@ -393,8 +393,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		{
 			synchronized (lock) 
 			{
-				current_thumbnail_generator_locks.remove(lock);
-				current_thumbnail_generators.remove(preview_key);
+				active_thumbnail_generator_locks.remove(lock);
+				current_thumbnail_generator_locks.remove(preview_key);
 				lock.notifyAll();				
 			}			
 			
