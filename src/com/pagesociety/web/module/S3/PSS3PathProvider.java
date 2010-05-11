@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -334,138 +335,122 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	}
 
 	/* this should take preview params */
-	private ConcurrentHashMap<String, Object> current_thumbnail_generators = new ConcurrentHashMap<String, Object>();
+	private ConcurrentHashMap<String, Object> current_thumbnail_generators 		= new ConcurrentHashMap<String, Object>();
+	private HashSet<Object> 				  current_thumbnail_generator_locks = new HashSet<Object>();
 
-	public String getPreviewUrl(String path_token, int width, int height)
-			throws WebApplicationException
+	public String getPreviewUrl(String path_token, int width, int height) throws WebApplicationException
 	{
 		INFO("GETTING PREVIEW URL FOR " + path_token + " AT " + width + " " + height);
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key);
 		String preview_key = get_preview_file_relative_path(path_token, width, height);
 		INFO("PREVIEW KEY IS " + preview_key);
-		Object lock = null;
-		try
-		{
-			boolean resized_exists = conn.checkKeyExists(s3_bucket, preview_key);
+		Object lock 		   = null;
+		boolean resized_exists = false;
+		Object L = new Object();
+		try{
+			resized_exists = conn.checkKeyExists(s3_bucket, preview_key);
 			if (resized_exists)
 			{
 				INFO("FOUND " + preview_key + " PREVIEW AT " + width + " " + height);
 				return base_s3_url +"/"+ preview_key;
 			}
-			Object L = new Object();
 			lock = current_thumbnail_generators.putIfAbsent(preview_key,L);
 			if (lock != null)
 			{
-				try
-				{
 					synchronized (lock)
 					{
-						INFO(Thread.currentThread()+"PW: WAITING IN PREVIEW FOR: "+preview_key);
-						lock.wait();
+						if(current_thumbnail_generator_locks.contains(lock))
+						{
+							INFO(Thread.currentThread()+"PW: WAITING IN PREVIEW FOR: "+preview_key);
+							lock.wait();		
+						}
 					}
 					INFO(Thread.currentThread()+" PW: NOT WAITING ANYMORE: "+preview_key);
-					boolean resized_now_exists = conn.checkKeyExists(s3_bucket, preview_key);
+					boolean resized_now_exists = true;
+					resized_now_exists = conn.checkKeyExists(s3_bucket, preview_key);
+	
 					if (resized_now_exists)
 					{
 						INFO(Thread.currentThread()+" PW: WAS WAITING NOW RETURNING: "+preview_key);
 						return base_s3_url +"/"+ preview_key;
 					}
 					else
-						throw new Exception(Thread.currentThread()+" PW: WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
-				}
-				catch (Exception e)
-				{		
-					INFO(Thread.currentThread()+" PW: ABOUT TO BARF IN WAIT FOR "+preview_key);
-					WAE(e);
-				}
+						throw new WebApplicationException(Thread.currentThread()+" PW: WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
 			}
-			else
+		}catch(Exception e){WAE(e);}
+		
+		lock = L;			
+		try{
+	
+			current_thumbnail_generator_locks.add(lock);
+			do_generate_preview(conn, path_token, preview_key, width, height);
+			return base_s3_url +"/"+ preview_key;		
+		}catch(WebApplicationException e)
+		{		
+			throw e;
+		}
+		finally
+		{
+			synchronized (lock) 
 			{
-				lock = L;
-			}
-			INFO("DIDNT FIND " + preview_key + " PREVIEW AT " + width + " " + height);
+				current_thumbnail_generator_locks.remove(lock);
+				current_thumbnail_generators.remove(preview_key);
+				lock.notifyAll();				
+			}			
+			
+		}
+	
+	}
+
+	public void do_generate_preview(PSAWSAuthConnection conn,String path_token,String preview_key, int width, int height) throws WebApplicationException
+	{
+		
+		FileOutputStream fos = null;
+		try{
 			// look for it in the scratch directory//
 			File original_file = new File(scratch_directory, path_token);
+			
 			if (!original_file.exists())
 			{
 				INFO("DIDNT FIND " + path_token + " IN SCRATCH DIRECTORY. GOING TO AMAZON FOR ORIGINAL.");
 				GetResponse r = conn.get(s3_bucket, path_token, null);
 				if (r.object == null)
-				{					
-					
-					synchronized (lock)
-					{
-						current_thumbnail_generators.remove(preview_key);
-						lock.notifyAll();
-						throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE " + s3_bucket + " " + path_token + " BUT IT DOESNT SEEM TO EXIST.");
-					}
-					
-				}
+					throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE " + s3_bucket + " " + path_token + " BUT IT DOESNT SEEM TO EXIST.");
+	
 				original_file.getParentFile().mkdirs();
-				FileOutputStream fos = new FileOutputStream(original_file);
+				fos = new FileOutputStream(original_file);
 				fos.write(r.object.data);
 				fos.flush();
 				fos.close();
 				INFO("GOT "+path_token+" FROM AMAZON AND WROTE IT TO "+original_file.getAbsolutePath());
 			}
+			//now it exists in the scratch directory...lets make a preview//	
 			File preview = new File(scratch_directory, preview_key);
 			preview.getParentFile().mkdirs();
-			try
-			{
-				create_preview(original_file, preview, width, height);
-			}
-			catch (Exception e)
-			{
-
-				synchronized (lock)
-				{
-					current_thumbnail_generators.remove(preview_key);
-					lock.notifyAll();
-					WAE(e);
-				}
+			create_preview(original_file, preview, width, height);
 			
-			}
+			//put the preview on amazon
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
 			INFO("WRITING PREVIEW TO S3 "+preview_key+" length:"+preview.length()+" content-type:"+content_type);
 			PSS3Object pobj = new PSS3Object(new FileInputStream(preview), preview.length(), content_type, PSAWSAuthConnection.PERMISSIONS_PUBLIC_READ);
 			Response pr = conn.streamingPut(s3_bucket, preview_key, pobj);
 			if (pr.connection.getResponseCode() != HttpURLConnection.HTTP_OK)
-			{
-				
-				synchronized (lock)
-				{
-					current_thumbnail_generators.remove(preview_key);
-					lock.notifyAll();
 					throw new WebApplicationException("PROBLEM WRITING PREVIEW TO S3 " + s3_bucket + " " + preview_key + " HTTP RESPONSE WAS " + pr.connection.getResponseCode());
-				}
-
-			}
-
-			synchronized (lock)
-			{
-				current_thumbnail_generators.remove(preview_key);
-				lock.notifyAll();
-			}
 			INFO("EXITING GET PREVIEW URL " + base_s3_url +"/"+ preview_key);
-			return base_s3_url + "/"+ preview_key;
-		}
-		catch (IOException ioe)
-		{
-			if (lock != null)
-			{
 
-				synchronized (lock)
-				{
-					if (preview_key != null)
-						current_thumbnail_generators.remove(preview_key);
-					lock.notifyAll();
-				}
+		
+		}catch(Exception e)
+		{
+			if(fos != null)
+			{
+				try{
+					fos.close();
+				}catch(IOException ioe){ioe.printStackTrace();}
 			}
-			ERROR(ioe);
-			throw new WebApplicationException("IO ERROR IN S3 GEN PREVIEW. SEE LOGS. " + ioe.getMessage());
+			throw new WebApplicationException("PROBLEM GENERATING PREVIEW FOR "+path_token,e);
 		}
 	}
-
+	
 	// dont forget to close output stream if you use this method
 	public OutputStream[] getOutputStreams(String path_token, String content_type,
 			long content_size) throws WebApplicationException
