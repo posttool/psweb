@@ -901,7 +901,7 @@ import com.pagesociety.web.module.util.Validator;
 
      	String cvv2match_response = response.get("CVV2MATCH");
      	if(cvv2match_response != null && cvv2match_response.equals("N"))
-     		throw new PPFException("BAD SECURITY CODE",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_ADDRESS);
+     		throw new PPFException("BAD SECURITY CODE",true,BillingGatewayException.FAILURE_CODE_FAILED_ON_SECURITY_CODE);
 
      	int result = Integer.parseInt(response.get("RESULT"));
      	if(result < 0)
