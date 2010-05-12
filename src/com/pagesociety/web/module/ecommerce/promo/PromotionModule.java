@@ -570,7 +570,7 @@ public class PromotionModule extends WebStoreModule
 		int number_times_can_be_used = (Integer)coupon_promo.getAttribute(COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED);
 		int number_times_has_been_used = (Integer)coupon_promo.getAttribute(COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED);
 		if(number_times_has_been_used == number_times_can_be_used)
-				throw new WebApplicationException("PROMOCODE USED UP "+promo_code,ERROR_PROMO_CODE_USED_UP);
+				throw new WebApplicationException("PROMO CODE "+promo_code+" IS NO LONGER VALID.",ERROR_PROMO_CODE_USED_UP);
 		
 		Entity	promo_instance = createPromotionInstance(creator, promo_code,(Entity)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_PROMOTION),
 				(Long)coupon_promo.getAttribute(COUPON_PROMOTION_FIELD_INITIAL_IR1),
