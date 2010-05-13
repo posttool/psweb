@@ -19,7 +19,9 @@ public class FileInfo
 	public static final int PDF = 12;
 	public static final int DOC = 13;
 	public static final int SWF = 14;
-	public static final int EXTENSIONS_LENGTH = 15;
+	public static final int FLV = 15;
+	public static final int F4V = 16;
+	public static final int EXTENSIONS_LENGTH = 17;
 	public static final String[][] EXTENSIONS = new String[EXTENSIONS_LENGTH][];
 	static
 	{
@@ -38,6 +40,8 @@ public class FileInfo
 		EXTENSIONS[PDF]  = new String[] { "pdf" };
 		EXTENSIONS[DOC]  = new String[] { "doc" };
 		EXTENSIONS[SWF]  = new String[] { "swf" };
+		EXTENSIONS[FLV]  = new String[] { "flv" };
+		EXTENSIONS[F4V]  = new String[] { "f4v" };
 	}
 	// "simple" types
 	public static final int SIMPLE_TYPE_IMAGE    = 100;
@@ -112,6 +116,8 @@ public class FileInfo
 		case WAV:
 		case VOG:
 			return SIMPLE_TYPE_AUDIO;
+		case FLV:
+		case F4V:
 		case AVI:
 		case MOV:
 		case DIVX:
