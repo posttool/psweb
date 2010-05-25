@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.net.FileNameMap;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -19,8 +21,10 @@ import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
+import org.apache.commons.io.FileUtils;
 
 
+import com.pagesociety.util.FileInfo;
 import com.pagesociety.util.Text;
 
 public class MultipartForm
@@ -48,6 +52,7 @@ public class MultipartForm
 	InputStream upload_input_stream;
 	
 	private static String upload_tmp_dir;
+	
 	
 	public MultipartForm(HttpServletRequest request) throws MultipartFormException
 	{
@@ -140,7 +145,10 @@ public class MultipartForm
 					FileItemHeaders headers = item.getHeaders();
 					upload_file_name = item.getName();					
 					upload_input_stream = stream;
-					upload_content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(upload_file_name);
+					
+					//upload_content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(upload_file_name);
+					upload_content_type = MimeTypeConstants.getMimeType(FileInfo.getExtension(upload_file_name));		
+					System.out.println("MultiplartForm.java: CONTENT TYPE IS "+upload_content_type+" FOR "+upload_file_name);
 					break;
 				}
 			}
