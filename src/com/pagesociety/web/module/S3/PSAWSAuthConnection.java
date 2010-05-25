@@ -16,6 +16,7 @@ import com.pagesociety.web.module.S3.amazon.Utils;
 public class PSAWSAuthConnection extends AWSAuthConnection
 {
 	public static final String PERMISSIONS_PUBLIC_READ = "public-read";
+	public static final String PERMISSIONS_PRIVATE_READ = "private-read";//to be used..could be used for newcali//
 
 	 public PSAWSAuthConnection(String awsAccessKeyId, String awsSecretAccessKey)
 	 {
