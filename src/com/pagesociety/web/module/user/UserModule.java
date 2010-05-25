@@ -409,12 +409,12 @@ public class UserModule extends WebStoreModule
 
 	public static final int ERROR_LOGIN_FAILED = 0x20010;	
 	@Export(ParameterNames={"email_or_username", "password"})
-	public Entity Login(UserApplicationContext uctx,String email_or_username,String password) throws WebApplicationException,PersistenceException
+	public Entity Login(UserApplicationContext uctx,String email,String password) throws WebApplicationException,PersistenceException
 	{
 		
 		Entity user = null;
 		//if(isValidEmail(email_or_username))
-			user = loginViaEmail(email_or_username, password);
+			user = loginViaEmail(email, password);
 		//else
 		//	user = loginViaUsername(email_or_username, password);
 		
@@ -430,10 +430,9 @@ public class UserModule extends WebStoreModule
 
 		uctx.setUser(user);
 		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
-				   USER_EVENT_USER, user);
+				   		USER_EVENT_USER, user);
 		return UPDATE(user,
-					  FIELD_LAST_LOGIN, new Date());
-				
+					  FIELD_LAST_LOGIN, new Date());				
 	}
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
