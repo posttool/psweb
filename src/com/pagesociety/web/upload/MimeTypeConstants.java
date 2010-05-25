@@ -115,6 +115,7 @@ public final class MimeTypeConstants
       s_mapMimeTypes.put("latex", "application/x-latex");
       s_mapMimeTypes.put("lha", "application/octet-stream");
       s_mapMimeTypes.put("lzh", "application/octet-stream");
+      s_mapMimeTypes.put("m4v", "video/x-m4v");
       s_mapMimeTypes.put("man", "application/x-troff-man");
       s_mapMimeTypes.put("mathml", "application/mathml+xml");
       s_mapMimeTypes.put("me", "application/x-troff-me");
@@ -127,6 +128,7 @@ public final class MimeTypeConstants
       s_mapMimeTypes.put("mov", "video/quicktime");
       s_mapMimeTypes.put("mp2", "audio/mpeg");
       s_mapMimeTypes.put("mp3", "audio/mpeg");
+      s_mapMimeTypes.put("mp4", "video/mp4");
       s_mapMimeTypes.put("mpeg", "video/mpeg");
       s_mapMimeTypes.put("mpe", "video/mpeg");
       s_mapMimeTypes.put("mpga", "audio/mpeg");
