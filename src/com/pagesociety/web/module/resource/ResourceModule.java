@@ -734,6 +734,7 @@ public class ResourceModule extends WebStoreModule
 			String filename = f.getName();
 			String path_token 	   = path_provider.getPathToken(creator, filename);
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+			INFO("CONTENT TYPE IS "+content_type);
 			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, f.length()) ;
 		
 			byte[] buf = new byte[4096];
