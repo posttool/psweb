@@ -57,7 +57,8 @@ public final class MimeTypeConstants
     */
    static 
    {
-      s_mapMimeTypes = new HashMap(161);
+      s_mapMimeTypes = new HashMap(164);
+      s_mapMimeTypes.put("3gp", "video/3gpp");
       s_mapMimeTypes.put("ai", "application/postscript");
       s_mapMimeTypes.put("aif", "audio/x-aiff");
       s_mapMimeTypes.put("aifc", "audio/x-aiff");
