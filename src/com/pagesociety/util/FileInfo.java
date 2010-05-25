@@ -21,7 +21,10 @@ public class FileInfo
 	public static final int SWF = 14;
 	public static final int FLV = 15;
 	public static final int F4V = 16;
-	public static final int EXTENSIONS_LENGTH = 17;
+	public static final int M4V = 17;
+	public static final int THREEGP = 18;
+	public static final int MP4 = 19;
+	public static final int EXTENSIONS_LENGTH = 20;
 	public static final String[][] EXTENSIONS = new String[EXTENSIONS_LENGTH][];
 	static
 	{
@@ -42,6 +45,9 @@ public class FileInfo
 		EXTENSIONS[SWF]  = new String[] { "swf" };
 		EXTENSIONS[FLV]  = new String[] { "flv" };
 		EXTENSIONS[F4V]  = new String[] { "f4v" };
+		EXTENSIONS[M4V]  = new String[] { "m4v" };
+		EXTENSIONS[MP4]  = new String[] { "mp4" };
+		EXTENSIONS[THREEGP]  = new String[] { "3gp" };
 	}
 	// "simple" types
 	public static final int SIMPLE_TYPE_IMAGE    = 100;
@@ -122,6 +128,9 @@ public class FileInfo
 		case MOV:
 		case DIVX:
 		case MPG:
+		case M4V:
+		case MP4:
+		case THREEGP:			
 			return SIMPLE_TYPE_VIDEO;
 		case PDF:
 		case DOC:
