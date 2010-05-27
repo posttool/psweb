@@ -495,7 +495,7 @@ public abstract class WebApplication
 		System.out.println("******************************************************************");
 		System.out.println();
 		
-		//_sess_name_space_mgr.destroy();
+		_sess_name_space_mgr.destroy();
 	}
 	
 	

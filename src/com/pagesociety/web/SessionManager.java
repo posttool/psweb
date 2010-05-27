@@ -16,16 +16,17 @@ public class SessionManager
 	}
 	//5 minutes
 	private static long REAP_INTERVAL = 1000 * 60 * 5;
-	private boolean working;
+	private boolean reaping;
+	private Thread session_reaper_thread;
 
 	private void start_reaper()
 	{
-		Thread t = new Thread("SessionManager")
+		session_reaper_thread = new Thread("SessionManager")
 		{
 			public void run()
 			{
-				working = true;
-				while (working)
+				reaping = true;
+				while (reaping)
 				{
 					long now = System.currentTimeMillis();
 					Iterator<String> iter = _session_map.keySet().iterator();
@@ -43,18 +44,18 @@ public class SessionManager
 					}
 					catch (InterruptedException ie)
 					{
-						working = false;
 					}
 				}
 			}
 		};
-		t.setDaemon(true);
-		t.start();
+		session_reaper_thread.setDaemon(true);
+		session_reaper_thread.start();
 	}
 	
 	public void destroy()
 	{
-		working = false;
+		reaping = false;
+		session_reaper_thread.interrupt();
 	}
 
 	private class ExpiringObject
