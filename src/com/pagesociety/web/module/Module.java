@@ -218,6 +218,6 @@ public abstract class Module
 	
 	public void onDestroy()
 	{
-		//do nothing by default
+		_application.INFO(getName()+ " IS BEING DESTROYED");
 	}
 }

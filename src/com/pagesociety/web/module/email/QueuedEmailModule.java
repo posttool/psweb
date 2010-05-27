@@ -385,7 +385,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	private void start_email_thread()
 	{
 		running = true;
-		email_thread = new Thread()
+		email_thread = new Thread(getName())
 		{
 			public void run()
 			{
@@ -394,7 +394,9 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 					queue_obj qo = null;
 					try{
 						qo = email_queue.take();
-					}catch(InterruptedException ie){}
+					}catch(InterruptedException ie){
+						INFO("EMAIL MODULES WAS INTERRUPTED running="+running);
+					}
 					if(!running)
 						break;
 					try{
@@ -413,7 +415,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 				System.out.println(getName()+" QUEUED EMAIL THREAD EXITED");
 			}
 		};
-		//t.setDaemon(true);
+		//email_thread.setDaemon(true);
 		email_thread.start();
 	}
 	
