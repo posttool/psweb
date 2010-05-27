@@ -13,6 +13,11 @@ public class SessionNameSpaceManager
 		_name_spaced_session_maps = new ConcurrentHashMap<String, SessionManager>();
 		_next_session_manager = new SessionManager();
 	}
+	
+	public void destroy()
+	{
+		_next_session_manager.destroy();
+	}
 
 	public SessionManager get(String name_space)
 	{
