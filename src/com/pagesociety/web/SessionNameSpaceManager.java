@@ -16,6 +16,8 @@ public class SessionNameSpaceManager
 	
 	public void destroy()
 	{
+		for (SessionManager s : _name_spaced_session_maps.values())
+			s.destroy();
 		_next_session_manager.destroy();
 	}
 
