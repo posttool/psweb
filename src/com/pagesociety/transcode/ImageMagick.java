@@ -16,9 +16,9 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		EXEC_PATH = path;
 	}
 	
-	private int width;
-	private int height;
-	private int quality = 78;
+	private int 	width;
+	private int 	height;
+	private int 	quality = 78;
 	private boolean gray;
 
 	public ImageMagick(File input, File output)
@@ -46,14 +46,41 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	{
 		String[] cmds = new String[] { EXEC_PATH, // convert
 				input.getAbsolutePath(), // input
-				"-resize", width + "x" + height + ">", // -resize
-				"-quality", String.valueOf(quality), // -quality
-				"-colorspace", gray ? "Gray" : "RGB", // -colorspace
+				"-resize", get_resize_geometry_string(), // -resize 
+				"-quality", String.valueOf(quality), 	// -quality
+				"-colorspace", gray ? "Gray" : "RGB", 	// -colorspace
 				output.getAbsolutePath() };
 		CmdWork w = new CmdWork(this, cmds);
 		CmdWorker.doWork(w);
 	}
+	
+	//TODO: This is a placeholder for now.
+	//We need to refactor preview logic throughout
+	//the app stack.
+	//if width is 0 it means fit to height
+	//if height is 0 it means fit to width
+	//if width and height are provided we use them
+	//and append an '>' which tells image magick:
+	//	Change as per widthxheight but only if an image dimension exceeds a specified dimension. 
+	//At some point getImagePreviewURL should take a map of paramters
+	//instead of width and height. These parameters might change depending
+	//on the simple type.
+	public String get_resize_geometry_string()
+	{
+		StringBuilder buf = new StringBuilder();
+		if(width != 0 )
+			buf.append(String.valueOf(width));
+		if(height != 0 )
+		{
+			buf.append('x');
+			buf.append(String.valueOf(height));
+		}
+		if(width != 0 || height != 0)
+			buf.append(">");
 
+		return buf.toString();
+	}
+	
 	public void sigstart(long id)
 	{
 		if (DEBUG)
