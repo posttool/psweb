@@ -44,7 +44,7 @@ public class FileInfo
 		EXTENSIONS[DOC]  = new String[] { "doc" };
 		EXTENSIONS[SWF]  = new String[] { "swf" };
 		EXTENSIONS[FLV]  = new String[] { "flv" };
-		EXTENSIONS[F4V]  = new String[] { "f4v" };
+		EXTENSIONS[F4V]  = new String[] { "f4v","f4p","f4a","f4b" };
 		EXTENSIONS[M4V]  = new String[] { "m4v" };
 		EXTENSIONS[MP4]  = new String[] { "mp4" };
 		EXTENSIONS[THREEGP]  = new String[] { "3gp" };
@@ -148,28 +148,19 @@ public class FileInfo
 	
 	public static String getSimpleTypeAsString(String filename)
 	{
-		int type = getType(filename);
+		int type = getSimpleType(filename);
 		switch (type)
 		{
-			case JPG:
-			case GIF:
-			case PNG:
-				return SIMPLE_TYPE_IMAGE_STRING;
-			case AIF:
-			case MP3:
-			case WAV:
-			case VOG:
-				return SIMPLE_TYPE_AUDIO_STRING;
-			case AVI:
-			case MOV:
-			case DIVX:
-			case MPG:
-				return SIMPLE_TYPE_VIDEO_STRING;
-			case PDF:
-			case DOC:
-				return SIMPLE_TYPE_DOCUMENT_STRING;	
-			case SWF:
-				return SIMPLE_TYPE_SWF_STRING;		
+		case SIMPLE_TYPE_IMAGE:
+			return SIMPLE_TYPE_IMAGE_STRING;
+		case SIMPLE_TYPE_AUDIO:
+			return SIMPLE_TYPE_AUDIO_STRING;
+		case SIMPLE_TYPE_VIDEO:
+			return SIMPLE_TYPE_VIDEO_STRING;
+		case SIMPLE_TYPE_DOCUMENT:	
+			return SIMPLE_TYPE_DOCUMENT_STRING;
+		case SWF:
+			return SIMPLE_TYPE_SWF_STRING;
 		}
 		return "????";
 	}
