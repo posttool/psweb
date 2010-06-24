@@ -91,6 +91,11 @@ public final class MimeTypeConstants
       s_mapMimeTypes.put("etx", "text/x-setext");
       s_mapMimeTypes.put("exe", "application/octet-stream");
       s_mapMimeTypes.put("ez", "application/andrew-inset");
+      s_mapMimeTypes.put("f4v", "video/mp4");
+      s_mapMimeTypes.put("f4p", "video/mp4");
+      s_mapMimeTypes.put("f4a", "video/mp4");
+      s_mapMimeTypes.put("f4b", "video/mp4");
+      s_mapMimeTypes.put("flv", "video/x-flv");
       s_mapMimeTypes.put("gif", "image/gif");
       s_mapMimeTypes.put("gtar", "application/x-gtar");
       s_mapMimeTypes.put("gz", "application/gzip");
