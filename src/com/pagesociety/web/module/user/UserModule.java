@@ -437,7 +437,7 @@ public class UserModule extends WebStoreModule
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
 	{
-		System.out.println("TRYING TO LOGIN WITH PASSWORD "+password);
+		
 		Entity user = getUserByEmail(email);
 		System.out.println("USER "+user+"\n"+email);
 		if(user == null)
