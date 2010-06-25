@@ -178,7 +178,10 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	{
 		StringBuilder path_token = new StringBuilder();
 		String rid = RandomGUID.getGUID().substring(24);
-		path_token.append(user.getId());
+		if(user == null)
+			path_token.append(0);
+		else
+			path_token.append(user.getId());
 		path_token.append('/');
 		path_token.append(rid);
 		path_token.append('_');
