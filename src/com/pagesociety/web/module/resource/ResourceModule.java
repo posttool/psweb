@@ -287,7 +287,8 @@ public class ResourceModule extends WebStoreModule
 		return urls;
 	}
 
-	//TODO: get resourcePreviewURLWithDim //
+
+	
 	@Export(ParameterNames={"resource_id", "w", "h"})
 	public String GetResourcePreviewURLWithDim(UserApplicationContext uctx,long resource_id,int w, int h) throws WebApplicationException,PersistenceException
 	{
