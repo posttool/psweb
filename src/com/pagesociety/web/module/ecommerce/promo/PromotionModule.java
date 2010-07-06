@@ -938,7 +938,7 @@ public class PromotionModule extends WebStoreModule
 		INFO(s);
 	}
 	
-	class MEM
+	public class MEM
 	{
 
 		private long   lr1;
