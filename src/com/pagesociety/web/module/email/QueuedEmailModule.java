@@ -42,6 +42,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	private static final String PARAM_EMAIL_RETURN_ADDRESS	     = "email-return-address";
 	private static final String PARAM_EMAIL_QUEUE_SIZE		     = "email-queue-size";
 	private static final String PARAM_EMBEDDED_CONTENT		     = "embedded-content";
+	private static final String PARAM_THROTTLE_IN_MS		     = "throttle-in-ms";
 	
 	protected String smtp_server;
 	protected String email_template_dir;
@@ -51,6 +52,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	protected FreemarkerRenderer fm_renderer;
 
 	private int					email_queue_size = 512;
+	private long				throttle_in_ms = 0;
 	private BlockingQueue<queue_obj> email_queue;//this holds the user entity we are registering
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -60,6 +62,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		smtp_server 	     = GET_REQUIRED_CONFIG_PARAM(PARAM_SMTP_SERVER, config);
 		email_template_dir   = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_DIR, config);
 		email_return_address = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_RETURN_ADDRESS, config);
+		throttle_in_ms 		 = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_THROTTLE_IN_MS, 0, config);
 		setup_embedded_content(config);
 		
 		File f = new File(email_template_dir);
@@ -402,7 +405,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 					try{
 						System.out.println(getName()+" SENDING MAIL "+qo.to[0]+" "+qo.subject+" "+qo.template_name);
 						do_send_mail(qo.from, qo.to, qo.subject, qo.template_name, qo.template_data);
-
+						Thread.sleep(throttle_in_ms);
 					}catch(Exception e)
 					{
 						//TODO:nothing we can really do here
