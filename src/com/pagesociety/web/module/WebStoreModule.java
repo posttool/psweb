@@ -849,7 +849,7 @@ public class WebStoreModule extends WebModule
 		return FORCE_EXPAND(store,e);
 	}
 	
-	public Entity GET( String entity_type,long entity_id) throws PersistenceException
+	public Entity GET( String entity_type,long entity_id) throws PersistenceException//this should throw webapplication exception....not persistence execption duh.
 	{
 		return GET(store,entity_type,entity_id);
 	}
