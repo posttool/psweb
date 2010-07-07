@@ -123,6 +123,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			List<String> c_promo_list;
 			String c_promo_subject;
 			String c_promo_link;
+			String c_promo_presslink;
 			String c_promo_message;
 			long c_promo_ir1;
 			long c_promo_ir2;		
@@ -142,6 +143,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 					c_promo_subject		  =	NORMALIZE((String)params.get("promo_message_subject"));
 					REQUIRED("promo_subject",c_promo_subject);
 					c_promo_link		  =	NORMALIZE((String)params.get("promo_message_link"));
+					c_promo_presslink		  =	NORMALIZE((String)params.get("promo_message_presslink"));
 					c_promo_message		  = NORMALIZE((String)params.get("promo_message"));
 					REQUIRED("promo_message",c_promo_message);
 					c_promo_list	  	  = PARSE_LIST((String)params.get("campaign_promo_list"));
@@ -164,6 +166,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 							"campaign_promo_list",(String)params.get("campaign_promo_list"),
 							"promo_message_subject",params.get("promo_message_subject"),
 							"promo_message_link",params.get("promo_message_link"),
+							"promo_message_presslink",params.get("promo_message_presslink"),
 							"promo_message",params.get("promo_message"),
 							"ir1",params.get("ir1"),
 							"ir2",params.get("ir2"),
@@ -176,7 +179,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 					return;
 				}
 				try{
-				Entity promotion = promotion_campaign_module.createCouponPromotionCampaign(null, c_title, c_promo_prefix, c_promo_id,c_promo_ir1,c_promo_ir2,c_promo_ir3,c_promo_ir4,c_promo_sr1,c_promo_sr2,c_promo_fpr1,c_promo_fpr2, c_num_days_valid,c_promo_subject,c_promo_link,c_promo_message, c_promo_list);
+				Entity promotion = promotion_campaign_module.createCouponPromotionCampaign(null, c_title, c_promo_prefix, c_promo_id,c_promo_ir1,c_promo_ir2,c_promo_ir3,c_promo_ir4,c_promo_sr1,c_promo_sr2,c_promo_fpr1,c_promo_fpr2, c_num_days_valid,c_promo_subject,c_promo_link,c_promo_presslink,c_promo_message, c_promo_list);
 				
 				DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 				P(uctx);
@@ -187,6 +190,8 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 						"promo id:\t\t"+c_promo_id+"\n"+
 						"promo subject:\t\t"+c_promo_subject+"\n"+
 						"promo link:\t\t"+c_promo_link+"\n"+
+						"promo presslink:\t\t"+c_promo_presslink+"\n"+
+						"promo press link:\t\t"+c_promo_presslink+"\n"+
 						"promo message:\t\t"+c_promo_message+"\n"+
 						"promo_list list:\t\t"+c_promo_list);
 				JS_TIMED_REDIRECT(uctx, getName(), RAW_SUBMODE_SHOW_CAMPAIGN, 1000,"campaign_id",promotion.getId());
@@ -205,6 +210,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			String c_promo_list	  		= NORMALIZE((String)params.get("campaign_promo_list"));
 			String c_promo_subject	  	= NORMALIZE((String)params.get("promo_message_subject"));
 			String c_promo_link		  	= NORMALIZE((String)params.get("promo_message_link"));
+			String c_promo_presslink	= NORMALIZE((String)params.get("promo_message_presslink"));
 			String c_promo_message	  	= NORMALIZE((String)params.get("promo_message"));
 			String c_promo_ir1		  	= NORMALIZE((String)params.get("ir1"));
 			String c_promo_ir2		  	= NORMALIZE((String)params.get("ir2"));
@@ -263,6 +269,9 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 						TR_END(uctx);
 						TR_START(uctx);
 						TD(uctx, "Promo Link:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "promo_message_link",70,c_promo_link==null?"":c_promo_link);TD_END(uctx);
+						TR_END(uctx);
+						TR_START(uctx);
+						TD(uctx, "Press Release Link:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "promo_message_presslink",70,c_promo_presslink==null?"":c_promo_presslink);TD_END(uctx);
 						TR_END(uctx);						
 						TR_START(uctx);
 						TD(uctx, "Promo Message:");TD_START(uctx);FORM_TEXTAREA_FIELD(uctx, "promo_message",70,5,c_promo_message == null?"":c_promo_message);TD_END(uctx);

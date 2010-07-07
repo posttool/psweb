@@ -58,7 +58,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 
 	
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-	public Entity createCouponPromotionCampaign(Entity creator,String title,String promo_prefix,long promotion_id,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2,int expr_in_days,String subject,String link,String message,List<String> promo_list) throws PersistenceException
+	public Entity createCouponPromotionCampaign(Entity creator,String title,String promo_prefix,long promotion_id,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2,int expr_in_days,String subject,String link,String presslink,String message,List<String> promo_list) throws PersistenceException
 	{
 			try{
 				START_TRANSACTION();
@@ -85,6 +85,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 								COUPON_PROMOTION_CAMPAIGN_EXPIRES_NUM_DAYS,expr_in_days,
 								COUPON_PROMOTION_CAMPAIGN_MESSAGE_SUBJECT,subject,
 								COUPON_PROMOTION_CAMPAIGN_MESSAGE_LINK,link,
+								COUPON_PROMOTION_CAMPAIGN_MESSAGE_PRESSLINK,presslink,
 								COUPON_PROMOTION_CAMPAIGN_MESSAGE,message,
 								COUPON_PROMOTION_CAMPAIGN_PROMO_LIST,promo_list,
 								COUPON_PROMOTION_CAMPAIGN_RECIPIENTS,recips,
@@ -227,11 +228,13 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				name 			= recipient_name.substring(0, recipient_name.indexOf('@'));	
 			String promo_code 		= (String)recipient.getAttribute(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE);
 			String link				= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_LINK);
+			String presslink		= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_PRESSLINK);
 			Map<String,Object> template_data = new HashMap<String,Object>();
 			template_data.put("message",message);
 			template_data.put("name",name);
 			template_data.put("promo_code",promo_code);
 			template_data.put("link",link);
+			template_data.put("presslink",presslink);
 			email_module.sendEmail(promo_sender_address,new String[]{recipient_email}, subject, template_name, template_data);
 
 		}		
@@ -295,6 +298,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 	public static String COUPON_PROMOTION_CAMPAIGN_CODE_PREFIX 		= "code_prefix";
 	public static String COUPON_PROMOTION_CAMPAIGN_MESSAGE_SUBJECT 	= "campaign_message_subject";
 	public static String COUPON_PROMOTION_CAMPAIGN_MESSAGE_LINK 	= "campaign_message_link";
+	public static String COUPON_PROMOTION_CAMPAIGN_MESSAGE_PRESSLINK = "campaign_message_presslink";
 	public static String COUPON_PROMOTION_CAMPAIGN_MESSAGE 			= "campaign_message";
 	public static String COUPON_PROMOTION_CAMPAIGN_RECIPIENTS 		= "campaign_recipients";
 	public static String COUPON_PROMOTION_CAMPAIGN_IR1 				= "ir1";
@@ -320,6 +324,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				COUPON_PROMOTION_CAMPAIGN_CODE_PREFIX,Types.TYPE_STRING,null,
 				COUPON_PROMOTION_CAMPAIGN_MESSAGE_SUBJECT,Types.TYPE_STRING,"",
 				COUPON_PROMOTION_CAMPAIGN_MESSAGE_LINK,Types.TYPE_STRING,"",
+				COUPON_PROMOTION_CAMPAIGN_MESSAGE_PRESSLINK,Types.TYPE_STRING,null,
 				COUPON_PROMOTION_CAMPAIGN_MESSAGE,Types.TYPE_STRING,null,
 				COUPON_PROMOTION_CAMPAIGN_PROMOTION,Types.TYPE_REFERENCE,PromotionModule.PROMOTION_ENTITY,null,
 				COUPON_PROMOTION_CAMPAIGN_PROMO_LIST,Types.TYPE_STRING | Types.TYPE_ARRAY,null,
