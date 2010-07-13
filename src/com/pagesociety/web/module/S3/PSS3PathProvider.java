@@ -613,8 +613,12 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			throws WebApplicationException
 	{
 		int dot_idx = path_token.lastIndexOf('.');
-		if (dot_idx != -1)
+		String ext = FileInfo.EXTENSIONS[FileInfo.JPG][0];
+		if (dot_idx != -1 && path_token.length()-1 > dot_idx)
+		{
+			ext = FileInfo.getExtension(path_token);
 			path_token = path_token.substring(0, dot_idx);
+		}
 		StringBuilder preview_name = new StringBuilder();
 		preview_name.append(path_token);
 		preview_name.append('_');
@@ -622,7 +626,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		preview_name.append('x');
 		preview_name.append(String.valueOf(height));
 		preview_name.append('.');
-		preview_name.append(FileInfo.EXTENSIONS[FileInfo.JPG][0]);
+		preview_name.append(ext);
 		return preview_name.toString();
 	}
 
