@@ -316,7 +316,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		String dir 				  	= path_token.substring(0,last_slash_index); //original_file_relative_path.getParent();
 		String original_file_name 	= path_token.substring(last_slash_index+1);
 		int dot_idx 			  	= original_file_name.lastIndexOf('.');
-		String ext 					= null;
+		String ext 					= FileInfo.EXTENSIONS[FileInfo.JPG][0];
 		
 		if(dot_idx != -1)
 		{
@@ -335,8 +335,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		//if(ext != null)
 		//{
 			preview_name.append('.');
-			preview_name.append(FileInfo.EXTENSIONS[FileInfo.JPG][0]);
-			//preview_name.append(ext);
+			//preview_name.append(FileInfo.EXTENSIONS[FileInfo.JPG][0]);
+			preview_name.append(ext);
 		//}
 		return preview_name.toString();
 	}
