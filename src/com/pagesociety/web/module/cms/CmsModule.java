@@ -334,7 +334,8 @@ public class CmsModule extends WebStoreModule
 		Entity getter = (Entity) uctx.getUser();
 		Entity e = GET(entity_type, entity_id);
 		GUARD(getter, CAN_READ_ENTITY, "entity_type", entity_type, "instance", e);
-		return FILL_REFS(e);
+		return FILL_DEEP_AND_MASK(e, FILL_ALL_FIELDS, EMPTY_STRING_ARRAY);
+	//	return FILL_REFS(e);
 	}
 
 	public Entity getEntityById(String entity_type, long entity_id)
