@@ -355,6 +355,15 @@ public class ResourceModule extends WebStoreModule
 	}
 
 
+
+	@Export(ParameterNames={"resources", "w", "h"})
+	public List<String> GetResourcePreviewURLSWithDim(UserApplicationContext uctx,List<Entity> resources,int w, int h) throws WebApplicationException,PersistenceException
+	{
+
+		//check to make sure it exists//
+		return GetResourcePreviewURLsWithDim(uctx, ENTITIES_TO_IDS(resources), w, h);
+		
+	}
 	@Export(ParameterNames={"resource_ids", "w", "h"})
 	public List<String> GetResourcePreviewURLsWithDim(UserApplicationContext uctx,List<Long> resource_ids,int w, int h) throws WebApplicationException,PersistenceException
 	{
