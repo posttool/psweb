@@ -17,7 +17,6 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mail.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/bcprov-jdk16-141.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-3.2-FINAL-20081019.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/gson-1.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PSPersistence"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
