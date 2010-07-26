@@ -3,10 +3,8 @@ package com.pagesociety.web.module.cms;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityDefinition;
@@ -20,6 +18,7 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
+import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
 import com.pagesociety.web.module.permissions.PermissionsModule;
@@ -27,13 +26,20 @@ import com.pagesociety.web.module.permissions.PermissionsModule;
 public class CmsModule extends WebStoreModule
 {
 	private static final String SLOT_PERMISSIONS_MODULE = "permissions-module";
-	private PermissionsModule permissions;
 	public static final String CAN_READ_SCHEMA = "CAN_READ_SCHEMA";
 	public static final String CAN_CREATE_ENTITY = "CAN_CREATE_ENTITY";
 	public static final String CAN_READ_ENTITY = "CAN_READ_ENTITY";
 	public static final String CAN_UPDATE_ENTITY = "CAN_UPDATE_ENTITY";
 	public static final String CAN_DELETE_ENTITY = "CAN_DELETE_ENTITY";
 	public static final String CAN_BROWSE_ENTITY = "CAN_BROWSE_ENTITY";
+	
+	public static final int EVENT_ENTITY_PRE_CREATE	  = 0x1001;
+	public static final int EVENT_ENTITY_POST_CREATE  = 0x1002;
+	public static final int EVENT_ENTITY_PRE_UPDATE   = 0x1003;
+	public static final int EVENT_ENTITY_POST_UPDATE  = 0x1004;
+	public static final int EVENT_ENTITY_PRE_DELETE   = 0x1005;
+	public static final int EVENT_ENTITY_POST_DELETE  = 0x1006;
+
 
 	protected void exportPermissions()
 	{
@@ -275,12 +281,16 @@ public class CmsModule extends WebStoreModule
 	}
 
 	@Export(ParameterNames = { "entity" })
+	@TransactionProtect
 	public Entity CreateEntity(UserApplicationContext uctx, Entity e)
 			throws WebApplicationException, PersistenceException
 	{
 		Entity creator = (Entity) uctx.getUser();
 		GUARD(creator, CAN_CREATE_ENTITY, "type", e.getType(), "instance", e);
-		return createEntity(creator, e);
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_CREATE, "candidate",e);
+		Entity ce =  createEntity(creator, e);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_CREATE, "candidate",e,"instance",ce);
+		return ce;
 	}
 
 	public Entity createEntity(Entity creator, Entity e) throws PersistenceException
@@ -289,14 +299,19 @@ public class CmsModule extends WebStoreModule
 	}
 
 	@Export(ParameterNames = { "e" })
+	@TransactionProtect
 	public Entity UpdateEntity(UserApplicationContext uctx, Entity e)
 			throws WebApplicationException, PersistenceException
 	{
 		Entity editor = (Entity) uctx.getUser();
 		Entity existing_instance = GET(e.getType(), e.getId());
 		GUARD(editor, CAN_UPDATE_ENTITY, "type", e.getType(), "instance", existing_instance);
+	
 		validate_update(e);
-		return updateEntity(e);
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_UPDATE, "candidate",e);
+		Entity ue =  updateEntity(e);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_UPDATE, "candidate",e,"instance",ue);
+		return ue;
 	}
 	
 	private void validate_update(Entity e) throws WebApplicationException
@@ -314,12 +329,16 @@ public class CmsModule extends WebStoreModule
 	}
 
 	@Export(ParameterNames = { "entity" })
+	@TransactionProtect
 	public Entity DeleteEntity(UserApplicationContext uctx, Entity e)
 			throws WebApplicationException, PersistenceException
 	{
 		Entity deleter = (Entity) uctx.getUser();
 		GUARD(deleter, CAN_DELETE_ENTITY, "type", e.getType(), "instance", e);
-		return deleteEntity(e);
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_DELETE, "candidate",e);
+		Entity de =  deleteEntity(e);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_DELETE, "candidate",e,"instance",de);
+		return de;
 	}
 
 	public Entity deleteEntity(Entity e) throws PersistenceException
