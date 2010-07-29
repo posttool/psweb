@@ -159,7 +159,7 @@ public class FileInfo
 			return SIMPLE_TYPE_VIDEO_STRING;
 		case SIMPLE_TYPE_DOCUMENT:	
 			return SIMPLE_TYPE_DOCUMENT_STRING;
-		case SWF:
+		case SIMPLE_TYPE_SWF:
 			return SIMPLE_TYPE_SWF_STRING;
 		}
 		return "????";
