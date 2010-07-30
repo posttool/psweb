@@ -41,7 +41,7 @@ public class JsonEncoder
 	public static String encode(Object o)
 	{
 		if (o == null)
-			return "NULL";
+			return "null";
 		JSONStringer js = new JSONStringer();
 		try
 		{
