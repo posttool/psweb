@@ -101,7 +101,7 @@ public class CatalogModule extends CMSParticipantModule
 		
 		 String name = (String)warehouse.getAttribute(WAREHOUSE_FIELD_NAME);
 		 String code = (String)warehouse.getAttribute(WAREHOUSE_FIELD_CODE);
-		
+
 		return CreateWarehouse(uctx,name,code);
 	}
 	
@@ -118,10 +118,11 @@ public class CatalogModule extends CMSParticipantModule
 		return createWarehouse(caller,name,code);
 
 	}
+
 	
 	public Entity createWarehouse(Entity creator,String name,String code) throws WebApplicationException,PersistenceException
 	{
-
+		
 		Entity warehouse =	doCreate(WAREHOUSE_ENTITY,
 	    				creator,
 		 	WAREHOUSE_FIELD_NAME,name,
