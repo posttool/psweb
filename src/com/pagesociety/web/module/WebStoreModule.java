@@ -927,6 +927,7 @@ public class WebStoreModule extends WebModule
 		return SAVE_ENTITY(store,instance);
 	}
 	
+
 	public QueryResult QUERY(Query q) throws PersistenceException
 	{
 		return QUERY(store, q);
