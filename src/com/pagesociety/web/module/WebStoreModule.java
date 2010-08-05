@@ -436,6 +436,7 @@ public class WebStoreModule extends WebModule
 	public static final String[] EMPTY_STRING_ARRAY = new String[0];
 	public static final String[] FILL_ALL_FIELDS    = EMPTY_STRING_ARRAY;
 	public static final String[] FILL_NO_FIELDS    	= null;
+	public static final String[] MASK_NO_FIELDS    	= EMPTY_STRING_ARRAY;
 	public static String[] MASK(String... fieldnames)
 	{
 		return fieldnames;
@@ -1002,6 +1003,10 @@ public class WebStoreModule extends WebModule
 		return FILL_DEEP_AND_MASK(store, e,fill_fields,mask_fields);
 	}
 
+	public Entity FILL_DEEP(Entity e) throws PersistenceException
+	{
+		return FILL_DEEP_AND_MASK(store, e,FILL_ALL_FIELDS,MASK_NO_FIELDS);
+	}
 	
 	public int COUNT(Query q) throws PersistenceException
 	{

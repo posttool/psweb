@@ -276,7 +276,7 @@ public class CmsModule extends WebStoreModule
 		q.pageSize(page_size);
 		if (order_by_attribute != null)
 			q.orderBy(order_by_attribute, asc ? Query.ASC : Query.DESC);
-		q.cacheResults(false);
+		q.cacheResults(true);
 		return PAGING_QUERY_FILL(q);
 	}
 
