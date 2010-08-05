@@ -28,7 +28,7 @@ public class CmsModule extends WebStoreModule
 	private static final String SLOT_PERMISSIONS_MODULE = "permissions-module";
 	public static final String CAN_READ_SCHEMA = "CAN_READ_SCHEMA";
 	public static final String CAN_CREATE_ENTITY = "CAN_CREATE_ENTITY";
-	public static final String CAN_READ_ENTITY = "CAN_READ_ENTITY";
+	public static final String CAN_READ_ENTITY 	= "CAN_READ_ENTITY";
 	public static final String CAN_UPDATE_ENTITY = "CAN_UPDATE_ENTITY";
 	public static final String CAN_DELETE_ENTITY = "CAN_DELETE_ENTITY";
 	public static final String CAN_BROWSE_ENTITY = "CAN_BROWSE_ENTITY";
