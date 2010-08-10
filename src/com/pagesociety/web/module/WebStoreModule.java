@@ -462,6 +462,7 @@ public class WebStoreModule extends WebModule
 	{
 		if(e == null || c == d)
 			return;
+		
 
 		EntityDefinition def = store.getEntityDefinition(e.getType());		
 		String[] fields_to_fill;
@@ -501,14 +502,14 @@ public class WebStoreModule extends WebModule
 				if(l == null)
 					continue;
 				for(int ii = 0;ii < l.size();ii++)
-					do_fill_deep(store,l.get(ii),c,d,fill_fields);
+					do_fill_deep(store,l.get(ii),c,d,fill_fields,mask_fields);
 
 			}
 			else
 			{
 				
 				Entity val = (Entity)e.getAttribute(ref_field_name);
-				do_fill_deep(store,val, ++c, d,fill_fields);
+				do_fill_deep(store,val, ++c, d,fill_fields,mask_fields);
 			}
 		}
 	}

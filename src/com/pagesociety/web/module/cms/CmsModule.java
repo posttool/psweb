@@ -22,6 +22,7 @@ import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
 import com.pagesociety.web.module.permissions.PermissionsModule;
+import com.pagesociety.web.module.tree.TreeModule;
 
 public class CmsModule extends WebStoreModule
 {
@@ -353,7 +354,7 @@ public class CmsModule extends WebStoreModule
 		Entity getter = (Entity) uctx.getUser();
 		Entity e = GET(entity_type, entity_id);
 		GUARD(getter, CAN_READ_ENTITY, "entity_type", entity_type, "instance", e);
-		return FILL_DEEP_AND_MASK(e, FILL_ALL_FIELDS, EMPTY_STRING_ARRAY);
+		return FILL_DEEP_AND_MASK(e, FILL_ALL_FIELDS, new String[]{ TreeModule.TREE_NODE_FIELD_TREE, TreeModule.TREE_NODE_FIELD_PARENT_NODE });
 	//	return FILL_REFS(e);
 	}
 

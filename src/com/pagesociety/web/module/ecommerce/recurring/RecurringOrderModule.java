@@ -470,7 +470,30 @@ public class RecurringOrderModule extends ResourceModule
 		MODULE_LOG(0,"CREATED RECURRING ORDER "+recurring_order.getId()+" OK");
 		return recurring_order;
 	}
-
+	
+	
+	public void attachPromo(Entity target_user, Entity order, String promo_code) throws PersistenceException, WebApplicationException
+	{
+		Entity promotion_instance = promotion_module.getCouponPromotionByPromoCode(target_user,promo_code.trim());
+		List<Entity> promotions = (List<Entity>) order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
+		if (promotions==null)
+			promotions = new ArrayList<Entity>();
+		promotions.add(promotion_instance);
+		UPDATE(order,
+				RECURRING_ORDER_FIELD_PROMOTIONS,promotions);
+	}
+	
+	public void removePromo(Entity order, Entity promo_instance) throws PersistenceException, WebApplicationException
+	{
+		List<Entity> promotions = (List<Entity>) order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
+		if (promotions==null)
+			throw new WebApplicationException("NO PROMOTIONS ON ORDER "+order+" "+promo_instance);
+		boolean ok = promotions.remove(promo_instance);
+		if (!ok)
+			throw new WebApplicationException("CANNOT FIND PROMO INSTANCE IN ORDER "+order+" "+promo_instance);
+		UPDATE(order,
+				RECURRING_ORDER_FIELD_PROMOTIONS,promotions);
+	}
 
 	@Export
 	public Entity DeleteRecurringOrder(UserApplicationContext uctx,long recurring_order_id) throws WebApplicationException,PersistenceException
@@ -760,12 +783,12 @@ public class RecurringOrderModule extends ResourceModule
 	}
 
 	@Export
-	public PagingQueryResult GetTransactionHistoryByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
+	public PagingQueryResult GetTransactionHistoryByUser(UserApplicationContext uctx,long user_id,int offset,int page_size, boolean asc) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(user_id);
 					
-		return getTransactionHistoryByUser(target_user,offset,page_size);
+		return getTransactionHistoryByUser(target_user,offset,page_size,asc);
 	}
 	
 	public List<Entity> getTransactionHistoryByUser(Entity user) throws PersistenceException
@@ -774,12 +797,12 @@ public class RecurringOrderModule extends ResourceModule
 		return QUERY(q).getEntities();
 	}
 	
-	public PagingQueryResult getTransactionHistoryByUser(Entity user,int offset,int page_size) throws WebApplicationException,PersistenceException
+	public PagingQueryResult getTransactionHistoryByUser(Entity user,int offset,int page_size, boolean asc) throws WebApplicationException,PersistenceException
 	{
 		Query q = logger_module.getLogMessagesByUserQ(user);
 		q.offset(offset);
 		q.pageSize(page_size);
-		q.orderBy(FIELD_LAST_MODIFIED, Query.DESC);
+		q.orderBy(FIELD_LAST_MODIFIED, asc ? Query.ASC : Query.DESC);
 		PagingQueryResult pqr = PAGING_QUERY(q);
 		return pqr;
 	}
