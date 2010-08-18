@@ -48,6 +48,7 @@ public class RecurringOrderModule extends ResourceModule
 	private static final String PARAM_EXPIRED_TRIAL_REAP_PERIOD = "expired-trial-reap-period";
 	private static final String PARAM_BILLING_FAILED_GRACE_PERIOD = "billing-failed-grace-period";//how many days after billing fails before we lockout public site
 	private static final String PARAM_BILLING_FAILED_REAP_PERIOD  = "billing-failed-reap-period";//how many days after grace period expires do we reap the user
+	private static final String PARAM_SEND_EMAIL_IF_BILLING_NOT_CONFIGURED   = "send-email-if-billing-not-configured";	
 	
 	
 	public static final int ORDER_STATUS_INIT 										 = 0x0000;
@@ -102,7 +103,7 @@ public class RecurringOrderModule extends ResourceModule
 	private int					   	   expired_trial_reap_period_in_days;
 	private int					   	   billing_failed_grace_period_in_days;
 	private int					   	   billing_failed_grace_period_expired_reap_period_in_days;
-	
+	private boolean					   send_email_if_billing_not_configured;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
@@ -116,8 +117,9 @@ public class RecurringOrderModule extends ResourceModule
 		logger_module 			= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
 		notification_module 	= (SystemNotificationModule)getSlot(SLOT_NOTIFICATION_MODULE);
 		promotion_module 		= (PromotionModule)getSlot(SLOT_PROMOTION_MODULE);
-		billing_failed_grace_period_in_days 			  		 = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_FAILED_GRACE_PERIOD, config));
-		billing_failed_grace_period_expired_reap_period_in_days = Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_FAILED_REAP_PERIOD, config));
+		billing_failed_grace_period_in_days 			  		 	= Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_FAILED_GRACE_PERIOD, config));
+		billing_failed_grace_period_expired_reap_period_in_days 	= Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_FAILED_REAP_PERIOD, config));
+		send_email_if_billing_not_configured 						= GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(PARAM_SEND_EMAIL_IF_BILLING_NOT_CONFIGURED, false, config);
 		
 		String s_has_tp = GET_OPTIONAL_CONFIG_PARAM(PARAM_HAS_TRIAL_PERIOD, config);
 		if(("yes").equalsIgnoreCase(s_has_tp) || "true".equalsIgnoreCase(s_has_tp))
@@ -950,8 +952,8 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.");
 			ERROR("ERROR: ABORTING BILLING CYCLE DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.");
-			//make function that takes no template and just a body//
-			//email_module.sendEmail(from, to, subject, template_name, template_data);
+			if (send_email_if_billing_not_configured)
+				send_billing_not_configured();
 			return;
 		}
 		
@@ -1687,6 +1689,21 @@ public class RecurringOrderModule extends ResourceModule
 		String message = "Hey Dudes. There was a script exception at "+new Date()+
 		"("+e1.getMessage()+ ") while applying promotions to order "+recurring_order+
 		". The order was not billed it needs to be looked in to";
+		MODULE_LOG(message);
+		Map<String,Object> data = new HashMap<String,Object>();
+		data.put("message", message);
+		try {
+			email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "script exception", "generic.fm", data);
+		} catch (WebApplicationException e) {
+			ERROR(e);
+		}
+
+	}
+	
+	public void send_billing_not_configured()
+	{
+		//script exception//
+		String message = "Hey Dudes. Billing is not configured ... ERROR: ABORTING BILLING CYCLE DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.";
 		MODULE_LOG(message);
 		Map<String,Object> data = new HashMap<String,Object>();
 		data.put("message", message);
