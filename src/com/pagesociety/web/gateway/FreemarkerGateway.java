@@ -3,7 +3,6 @@ package com.pagesociety.web.gateway;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,7 +27,8 @@ public class FreemarkerGateway
 	public static final String REQUEST_SERVER_NAME = "request_server_name";
 	public static final String REQUEST_PARAMS_KEY = "params";
 	public static final String WEB_URL_KEY = "web_url";
-	public static final String WEB_URL_SECURE_KEY = "web_url_secure";
+    public static final String WEB_URL_SECURE_KEY = "web_url_secure";
+    public static final String WEB_APP_VERSION_KEY = "version";
 	public static final String MODULE_DATA_KEY = "data";
 	public static final String EXCEPTION_KEY = "exception";
 	public static final String EXCEPTION_STRING_KEY = "exceptionString";
@@ -121,16 +121,15 @@ public class FreemarkerGateway
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private Map<String, Object> setup_template_context_object(
-			UserApplicationContext user_context, String request_path, String host_name,Map params)
+			UserApplicationContext user_context, String request_path, String host_name,@SuppressWarnings("rawtypes") Map params)
 	{
 		Map<String, Object> data = new HashMap<String, Object>();
 		data.put(APPLICATION_KEY, _web_application);
 		data.put(CONTEXT_KEY, user_context);
 		//
 		Map<Object, Object> params0 = new HashMap<Object, Object>();
-		Iterator i = params.keySet().iterator();
+		@SuppressWarnings("rawtypes") Iterator i = params.keySet().iterator();
 		while (i.hasNext())
 		{
 			Object k = i.next();
@@ -144,7 +143,8 @@ public class FreemarkerGateway
 		data.put(REQUEST_URL_KEY, request_path);
 		data.put(REQUEST_SERVER_NAME, host_name);
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
-		data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
+        data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
+        data.put(WEB_APP_VERSION_KEY, _web_application.getConfig().getVersion());
 		data.put("statics", BeansWrapper.getDefaultInstance().getStaticModels());
 		//
 		return data;
