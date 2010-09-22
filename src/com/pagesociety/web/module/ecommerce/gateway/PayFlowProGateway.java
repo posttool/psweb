@@ -475,7 +475,7 @@ import com.pagesociety.web.module.util.Validator;
  		return TRANSLATE_PPF_RESPONSE(ppf_response);
  	}
  	
- 	/*Transaction credits apply a negative amount to the cardholder’s card.
+ 	/*Transaction credits apply a negative amount to the cardholderï¿½s card.
  	 *In most situations, credits are disabled as transaction refunds should
  	 *be used instead.*/	
  	public BillingGatewayResponse doCredit(Entity billing_record,double amount) 	throws BillingGatewayException
@@ -932,10 +932,15 @@ import com.pagesociety.web.module.util.Validator;
         return acct_no.replaceAll("[^\\d]", "" );
   	}
     
-  	private String decrypt_cc_no(String ccno)
+  	private String decrypt_cc_no(String ccno) throws BillingGatewayException
   	{
   		try{
   			return encryption_module.decryptString(ccno);
+  		
+  		}catch(WebApplicationException wae)
+  		{
+  			//this can happen when the encryption module is not configured//
+  			throw new BillingGatewayException(wae.getMessage());
   		}catch(Exception e)
   		{
   			ERROR(e);
