@@ -524,7 +524,7 @@ public class ResourceModule extends WebStoreModule
 			return false;
 		}
 		
-		String path_token = path_provider.getPathToken(user, upload.getFileName());
+		String path_token = path_provider.getPathToken(user, Text.makeUrlSafe(upload.getFileName()));
 
 		System.out.println("UPLOADING PATH TOKEN IS "+path_token);
 		upload.setMaxUploadItemSize(upload_max_file_size);		
@@ -738,7 +738,7 @@ public class ResourceModule extends WebStoreModule
 		try{
 			INFO("CREATING RESOURCE FROM FILE "+f.getAbsolutePath()+" ("+(f.length()/1024)+" kb)");
 			String filename = f.getName();
-			String path_token 	   = path_provider.getPathToken(creator, filename);
+			String path_token 	   = path_provider.getPathToken(creator, Text.makeUrlSafe(filename));
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
 			INFO("CONTENT TYPE IS "+content_type);
 			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, f.length()) ;
@@ -769,7 +769,7 @@ public class ResourceModule extends WebStoreModule
 	{
 		try{
 			int length = content.length;
-			String path_token 	   = path_provider.getPathToken(creator, filename);
+			String path_token 	   = path_provider.getPathToken(creator, Text.makeUrlSafe(filename));
 			String content_type 	= mime_type;
 			OutputStream[] os 	   = path_provider.getOutputStreams(path_token, content_type, length);
 
