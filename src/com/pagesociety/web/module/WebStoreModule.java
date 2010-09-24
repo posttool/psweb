@@ -449,21 +449,21 @@ public class WebStoreModule extends WebModule
 	
 	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d) throws PersistenceException
 	{
-		do_fill_deep(store, e, c, d, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY);
+		do_fill_deep(store, e, c, d, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY,new HashMap<Entity,Entity>());
 	}
 	
 	public static void do_fill_deep(PersistentStore store,Entity e,int c, int d,String... fill_fields) throws PersistenceException
 	{
-		do_fill_deep(store, e, c, d, fill_fields, EMPTY_STRING_ARRAY);
+		do_fill_deep(store, e, c, d, fill_fields, EMPTY_STRING_ARRAY,new HashMap<Entity,Entity>());
 	}
 	
 	/*pass EMPTY_STRING_ARRAY for mask fields to mask none and FILL_ALL_FIELDS && FILL_NO_FIELDS to fill none for fill)fields to fill all */
-	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields) throws PersistenceException
+	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields,Map<Entity,Entity> seen_references) throws PersistenceException
 	{
 		if(e == null || c == d)
 			return;
-		
 
+		seen_references.put(e,e);
 		EntityDefinition def = store.getEntityDefinition(e.getType());		
 		String[] fields_to_fill;
 		if(fill_fields.length == 0)
@@ -502,14 +502,24 @@ public class WebStoreModule extends WebModule
 				if(l == null)
 					continue;
 				for(int ii = 0;ii < l.size();ii++)
-					do_fill_deep(store,l.get(ii),c,d,fill_fields,mask_fields);
-
+				{
+					Entity val = l.get(ii);
+					if(val != null && seen_references.get(val) != null)
+					{
+						l.set(ii, seen_references.get(val));
+						continue;
+					}
+					do_fill_deep(store,l.get(ii),c,d,fill_fields,mask_fields,seen_references);
+				}
 			}
 			else
 			{
 				
 				Entity val = (Entity)e.getAttribute(ref_field_name);
-				do_fill_deep(store,val, ++c, d,fill_fields,mask_fields);
+				if(val != null && seen_references.get(val) != null)
+					e.setAttribute(ref_field_name, seen_references.get(val));
+				else
+					do_fill_deep(store,val, ++c, d,fill_fields,mask_fields,seen_references);
 			}
 		}
 	}
@@ -636,7 +646,7 @@ public class WebStoreModule extends WebModule
 		for(int i = 0; i < s;i++)
 		{
 			Entity e = entities.get(i);
-			do_fill_deep(store, e,0,Integer.MAX_VALUE,fill_fields,mask_fields);
+			do_fill_deep(store, e,0,Integer.MAX_VALUE,fill_fields,mask_fields, new HashMap<Entity,Entity>());
 		}
 		return results;
 	}
@@ -727,7 +737,7 @@ public class WebStoreModule extends WebModule
 	
 	public static Entity FILL_DEEP_AND_MASK(PersistentStore store,Entity e,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
-		do_fill_deep(store,e,0,Integer.MAX_VALUE,fill_fields,mask_fields);
+		do_fill_deep(store,e,0,Integer.MAX_VALUE,fill_fields,mask_fields,new HashMap<Entity,Entity>());
 		return e;
 	}
 	
