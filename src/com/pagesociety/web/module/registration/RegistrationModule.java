@@ -153,13 +153,15 @@ public class RegistrationModule extends WebStoreModule
 			user_module.unlockUser(user);
 			DELETE(activation_record);
 			// log them in//
-			uctx.setUser(user);
+			if(uctx != null)
+				uctx.setUser(user);
 			DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_ACTIVATED,
 				       	   REGISTRATION_EVENT_USER,user);
 
 		}catch(Exception e)
 		{
-			uctx.setUser(null);
+			if(uctx != null)
+				uctx.setUser(null);
 			WAE(e);
 		}
 		return user;
