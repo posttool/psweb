@@ -152,7 +152,7 @@ public class RegistrationModule extends WebStoreModule
 			System.out.println("ACTIVATING USER "+user);
 			user_module.unlockUser(user);
 			DELETE(activation_record);
-			// log them in//
+			// log them in...uctx can be null when we are using a script to activate an account//
 			if(uctx != null)
 				uctx.setUser(user);
 			DISPATCH_EVENT(REGISTRATION_EVENT_ACCOUNT_ACTIVATED,
