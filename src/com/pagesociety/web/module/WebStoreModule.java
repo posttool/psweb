@@ -685,12 +685,7 @@ public class WebStoreModule extends WebModule
 	public static PagingQueryResult PAGING_QUERY(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY(store,q);
-		Integer tid = CURRENT_TRANSACTION_ID();
-		int total_count = 0;
-		//if(tid == null)
-			total_count 	= COUNT(store,q);//store.count(q);
-		//else
-		//	total_count 	= store.count(tid,q);
+		int total_count 	= COUNT(store,q);//store.count(q);
 		return new PagingQueryResult(results.getEntities(),total_count,q.getOffset(),q.getPageSize());
 	}
 	
