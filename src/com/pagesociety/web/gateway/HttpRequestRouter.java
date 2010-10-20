@@ -134,10 +134,14 @@ public class HttpRequestRouter extends HttpServlet
 			out.close();
 			return;
 		}
-		// STATIC
+		// STATIC RESOURCE SERVING
 		String requestPath = request.getRequestURI().substring(request.getContextPath().length());
 		String completeUrl = getUrl(request);
 		String mime_type = _servlet_config.getServletContext().getMimeType(requestPath);
+		
+		System.out.println("RequestPath is "+requestPath);
+		System.out.println("completeUrl is "+completeUrl);
+		System.out.println("mime_type is "+mime_type);
 		if (mime_type != null)
 		{
 			for (int i = 0; i < GatewayConstants.MIME_TYPE_PREFIXES.length; i++)
@@ -184,14 +188,25 @@ public class HttpRequestRouter extends HttpServlet
 			raw_gateway.doService(uctx, request, response);
 			return;
 		}
-		// MAPPED
-
+		//registered gateways
+		
+		
+		// MAPPED from config file or module//
 		Object[] url_mapped_request = _web_application.getMapping(completeUrl);
 		if (url_mapped_request != null)
 		{
 			UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
 			String path = (String)url_mapped_request[1];
-			System.out.println("MATCHED "+path);
+			_web_application.INFO("MATCHED "+path);
+			
+			//TODO here we are hackinginto the gateway and letting a module i.e. SiteConfigModule
+			//handle the whole request. need to refactor gateways and session managers into modules
+			if(url_map_info.getHandler() != null)
+			{
+				if(url_map_info.getHandler().handleRequest(uctx, request, response))
+					return;
+			}
+			
 			if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
 			{
 				response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
@@ -206,11 +221,16 @@ public class HttpRequestRouter extends HttpServlet
 //this might work, but it might match make everything forward forever, too!
 			else 
 			{
+
+				
 				RequestDispatcher dispatcher = request.getRequestDispatcher(path);
 				dispatcher.forward(request, response);
 				return;
 			}
 		}
+		
+		
+		
 		// FREEMARKER
 		if (is_freemarker_path(requestPath))
 		{
@@ -349,7 +369,7 @@ public class HttpRequestRouter extends HttpServlet
         return b.toString();
 	}
 	
-	private String getUrl(HttpServletRequest req)
+	public static String getUrl(HttpServletRequest req)
 	{
         String scheme = req.getScheme();             // http
         String serverName = req.getServerName();     // hostname.com
@@ -452,16 +472,16 @@ static class UserAgentTools {
 		      while (a_position < a_userAgent.length()) {
 		          char c = a_userAgent.charAt(a_position);
 		          switch (status) {
-		            case 0: //<SPAN class="codecomment"> No valid digits encountered yet</span>
+		            case 0: 
 		              if (c == ' ' || c=='/') break;
 		              if (c == ';' || c==')') return "";
 		              status = 1;
-		            case 1: //<SPAN class="codecomment"> Version number in progress</span>
+		            case 1: 
 		              if (c == ';' || c=='/' || c==')' || c=='(' || c=='[') return res.toString().trim();
 		              if (c == ' ') status = 2;
 		              res.append(c);
 		              break;
-		            case 2: //<SPAN class="codecomment"> Space encountered - Might need to end the parsing</span>
+		            case 2: 
 		              if ((Character.isLetter(c) && 
 		                   Character.isLowerCase(c)) ||
 		                  Character.isDigit(c)) {
@@ -556,7 +576,7 @@ static class UserAgentTools {
 		        if ((pos=userAgent.indexOf("Windows NT;"))>-1) {
 		            res = getArray("Win","WinNT","WinNT");
 		        } else
-		        res = getArray("Win","<B>WinNT?</B>","<B>WinNT?</B>");
+		        res = getArray("Win","WinNT?","WinNT?");
 		    } else
 		    if (userAgent.indexOf("Win")>-1) {
 		        if (userAgent.indexOf("Windows")>-1) {
@@ -581,9 +601,6 @@ static class UserAgentTools {
 		            if ((pos=userAgent.indexOf("Windows 3.1"))>-1) {
 		                res = getArray("Win","Win31","Win"+getVersionNumber(userAgent,pos+7));
 		            }
-		            //<SPAN class="codecomment"> If no version was found, rely on the following code to detect "WinXX"</span>
-		            //<SPAN class="codecomment"> As some User-Agents include two references to Windows</span>
-		            //<SPAN class="codecomment"> Ex: Mozilla/5.0 (Windows; U; Win98; en-US; rv:1.5)</span>
 		        }
 		        if (res == null) {
 		            if ((pos=userAgent.indexOf("Win98"))>-1) {
@@ -607,21 +624,31 @@ static class UserAgentTools {
 		        }
 		        if (res == null) {
 		            if ((pos=userAgent.indexOf("Windows"))>-1) {
-		              res = getArray("Win","<B>Win?</B>","<B>Win?"+getVersionNumber(userAgent,pos+7)+"</B>");
+		              res = getArray("Win","Win?","Win?"+getVersionNumber(userAgent,pos+7));
 		            } else
 		            if ((pos=userAgent.indexOf("Win"))>-1) {
-		              res = getArray("Win","<B>Win?</B>","<B>Win?"+getVersionNumber(userAgent,pos+3)+"</B>");
+		              res = getArray("Win","Win?","Win?"+getVersionNumber(userAgent,pos+3));
 		            } else
 		              //<SPAN class="codecomment"> Should not happen at this point</span>
-		              res = getArray("Win","<B>Win?</B>","<B>Win?</B>");
+		              res = getArray("Win","Win?","Win?");
 		        }
 		    } else
 		    if ((pos=userAgent.indexOf("Mac OS X"))>-1) {
 		        if ((userAgent.indexOf("iPhone"))>-1) {
 		            pos = userAgent.indexOf("iPhone OS");
-		            res = getArray("Mac","MacOSX-iPhone","MacOS-iPhone "+((pos<0)?"":getVersionNumber(userAgent,pos+9)));
+		            res = getArray("iPhone","IOS","IOS"+((pos<0)?"":getVersionNumber(userAgent,pos+9)));
 		        } else
-		            res = getArray("Mac","MacOSX","MacOS "+getVersionNumber(userAgent,pos+8));
+		            res = getArray("iPhone","IOS","IOS?");
+		        if ((userAgent.indexOf("iPod"))>-1) {
+		            pos = userAgent.indexOf("iPhone OS");
+		            res = getArray("iPod","IOS","IOS"+((pos<0)?"":getVersionNumber(userAgent,pos+9)));
+		        } else
+		            res = getArray("iPod","IOS","IOS?");
+		        if ((userAgent.indexOf("iPad"))>-1) {
+		            pos = userAgent.indexOf("CPU OS");
+		            res = getArray("iPad","IOS","IOS"+((pos<0)?"":getVersionNumber(userAgent,pos+6)));
+		        } else
+		            res = getArray("iPad","IOS","IOS?");
 		    } else
 		    if ((pos=userAgent.indexOf("Mac_PowerPC"))>-1) {
 		        res = getArray("Mac","MacPPC","MacOS "+getVersionNumber(userAgent,pos+3));
@@ -677,10 +704,13 @@ static class UserAgentTools {
 		    if ((pos=userAgent.indexOf("BeOS"))>-1) {
 		        res = getArray("BeOS","BeOS","BeOS");
 		    } else
-		    if ((pos=userAgent.indexOf("Nintendo Wii"))>-1) {
-		        res = getArray("Nintendo Wii","Nintendo Wii","Nintendo Wii"+getVersionNumber(userAgent,pos+10));
-		    } else
-		    res = getArray("<b>?</b>","<b>?</b>","<b>?</b>");
+			if ((pos=userAgent.indexOf("Nintendo Wii"))>-1) {
+			        res = getArray("Nintendo Wii","Nintendo Wii","Nintendo Wii"+getVersionNumber(userAgent,pos+10));
+			} else
+			if ((pos=userAgent.indexOf("Android"))>-1) {
+				        res = getArray("Android","Android","Android"+getVersionNumber(userAgent,pos+7));
+			} else
+		    res = getArray("?","?","?");
 		    return res;
 		  }
 
@@ -718,7 +748,7 @@ static class UserAgentTools {
 		        if ((pos=userAgent.indexOf("MSIE 8"))>-1 || userAgent.indexOf("Trident/4.0")>-1) {
 		            res = getArray("MSIE","MSIE8","MSIE"+getVersionNumber(userAgent,pos+4));
 		        } else
-		        res = getArray("MSIE","<B>MSIE?</B>","<B>MSIE?"+getVersionNumber(userAgent,userAgent.indexOf("MSIE")+4)+"</B>");
+		        res = getArray("MSIE","MSIE?","MSIE?"+getVersionNumber(userAgent,userAgent.indexOf("MSIE")+4)+"</B>");
 		    } else
 		    if ((pos=userAgent.indexOf("Gecko/"))>-1) {
 		        res = getArray("Gecko","Gecko","Gecko"+getFirstVersionNumber(userAgent,pos+5,4));
@@ -788,7 +818,7 @@ static class UserAgentTools {
 		        userAgent.indexOf("Mozilla/4.5 ")<0) {
 		        res = getArray("Communicator","Communicator","Communicator"+getVersionNumber(userAgent,pos+8));
 		    } else
-		    return getArray("<B>?</B>","<B>?</B>","<B>?</B>");
+		    	return getArray("?","?","?");
 		    return res;
 		  }
 		}  
