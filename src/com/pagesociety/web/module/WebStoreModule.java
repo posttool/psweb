@@ -687,51 +687,51 @@ public class WebStoreModule extends WebModule
 		QueryResult results = QUERY(store,q);
 		Integer tid = CURRENT_TRANSACTION_ID();
 		int total_count = 0;
-		if(tid == null)
-			total_count 	= store.count(q);
-		else
-			total_count 	= store.count(tid,q);
+		//if(tid == null)
+			total_count 	= COUNT(store,q);//store.count(q);
+		//else
+		//	total_count 	= store.count(tid,q);
 		return new PagingQueryResult(results.getEntities(),total_count,q.getOffset(),q.getPageSize());
 	}
 	
 	public static PagingQueryResult PAGING_QUERY_FILL(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL(store,q);
-		int total_count = store.count(q);
+		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
 	public static PagingQueryResult PAGING_QUERY_FILL_DEEP(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_DEEP(store,q);
-		int total_count = store.count(q);
+		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
 	public static PagingQueryResult PAGING_QUERY_FILL(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL(store,q,fill_fields);
-		int total_count = store.count(q);
+		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
 	public static PagingQueryResult PAGING_QUERY_FILL_DEEP(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_DEEP(store,q,fill_fields);
-		int total_count = store.count(q);
+		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
 	public static PagingQueryResult PAGING_QUERY_FILL_AND_MASK(PersistentStore store,Query q,String... args) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_AND_MASK(store,q);
-		int total_count = store.count(q);
+		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	public static PagingQueryResult PAGING_QUERY_FILL_DEEP_AND_MASK(PersistentStore store,Query q,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_DEEP_AND_MASK(store,q,fill_fields,mask_fields);
-		int total_count = store.count(q);
+		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
 	
