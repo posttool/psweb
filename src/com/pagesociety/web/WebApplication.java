@@ -18,6 +18,7 @@ import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SlotException;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.gateway.IHttpRequestHandler;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.ModuleDefinition;
 import com.pagesociety.web.module.ModuleRegistry;
@@ -368,14 +369,25 @@ public abstract class WebApplication
 			matcher = url_map.matcher(url);
 			if (matcher.matches())
 			{
+				String template_path = url_map.getTemplatePath();
+				
 				Object[] ret = new Object[2];
 				ret[0] = url_map;
-				ret[1] = matcher.replaceAll(url_map.getTemplatePath());
+				ret[1] = (template_path == null)?null:matcher.replaceAll(template_path);
 				return ret;
 			}
 		}
 		return null;
 	}
+	
+	//pass in null for the handler to have the httprequestrouter class handle the request
+	//for you. having the handler enables you to register a mapping that you will handle
+	
+	public void registerUrlMapping(String regexp,String template_path,boolean secure,IHttpRequestHandler handler) throws WebApplicationException
+	{
+		_config.getUrlMapInfo().addUrlMapping(regexp, template_path, secure,handler);
+	}
+	
 
 	public String getErrorMapping()
 	{
