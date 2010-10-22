@@ -25,6 +25,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.config.UrlMapInitParams;
 import com.pagesociety.web.config.UrlMapInitParams.UrlMapInfo;
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.WebModule;
 
 public class HttpRequestRouter extends HttpServlet
 {
@@ -190,46 +191,53 @@ public class HttpRequestRouter extends HttpServlet
 		}
 		//registered gateways
 		
-		
+
 		// MAPPED from config file or module//
 		Object[] url_mapped_request = _web_application.getMapping(completeUrl);
+		
+		
 		if (url_mapped_request != null)
 		{
 			UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
-			String path = (String)url_mapped_request[1];
-			_web_application.INFO("MATCHED "+path);
-			
 			//TODO here we are hackinginto the gateway and letting a module i.e. SiteConfigModule
 			//handle the whole request. need to refactor gateways and session managers into modules
+
 			if(url_map_info.getHandler() != null)
 			{
+				_web_application.INFO("MATCHED HANDLER "+((WebModule)url_map_info.getHandler()).getName());			
 				if(url_map_info.getHandler().handleRequest(uctx, request, response))
+				{
+					_web_application.INFO("HANDLER HANDLED");
 					return;
+				}
+				_web_application.INFO("HANDLER PASSED");
 			}
-			
-			if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
+			else
 			{
-				response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
-				return;
-			}
-			else if (url_map_info.isSecure()==UrlMapInitParams.NOT_SECURE && !completeUrl.startsWith(_web_url))
-			{
-				response.sendRedirect( get_path(_web_url,getContextPathEtc(request),uctx) );
-				return;
-			}
-//TODO
-//this might work, but it might match make everything forward forever, too!
-			else 
-			{
-
-				
-				RequestDispatcher dispatcher = request.getRequestDispatcher(path);
-				dispatcher.forward(request, response);
-				return;
+				String path = (String)url_mapped_request[1];
+				_web_application.INFO("MATCHED "+path);			
+				if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
+				{
+					response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
+					return;
+				}
+				else if (url_map_info.isSecure()==UrlMapInitParams.NOT_SECURE && !completeUrl.startsWith(_web_url))
+				{
+					response.sendRedirect( get_path(_web_url,getContextPathEtc(request),uctx) );
+					return;
+				}
+	//TODO
+	//this might work, but it might match make everything forward forever, too!
+				else 
+				{
+	
+					
+					RequestDispatcher dispatcher = request.getRequestDispatcher(path);
+					dispatcher.forward(request, response);
+					return;
+				}
 			}
 		}
-		
-		
 		
 		// FREEMARKER
 		if (is_freemarker_path(requestPath))
@@ -237,7 +245,7 @@ public class HttpRequestRouter extends HttpServlet
 			freemarker_gateway.doService(uctx, requestPath, request, response);
 			return;
 		}
-
+		
 		// UNKNOWN
 		File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
 		static_gateway.serveFile(request_file, mime_type, request, response);
