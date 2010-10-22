@@ -336,7 +336,8 @@ public class TreeModule extends WebStoreModule
 		node = EXPAND(node);
 		delete_functor df = new delete_functor(delete_data,delete_data_deep,data_delete_deep_policy);
 		Entity tree = null;
-		if(node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)
+
+		if(node.getAttribute(TREE_NODE_FIELD_PARENT_NODE) == null)//if is root//
 		{
 			tree = (Entity)node.getAttribute(TREE_NODE_FIELD_TREE);
 		}
@@ -609,6 +610,32 @@ public class TreeModule extends WebStoreModule
 			return_path.add(parent);
 			getPathToRoot(parent, return_path);
 		}
+	}
+	
+	public List<Integer> getIndexFromRoot(Entity tree_node) throws PersistenceException
+	{
+		
+		List<Entity> path_to_root = new ArrayList<Entity>();
+		getPathToRoot(tree_node, path_to_root);
+		path_to_root.add(0, tree_node);
+		List<Integer> ret = new ArrayList<Integer>(path_to_root.size());
+		ret.add(0);
+		
+		for(int i = path_to_root.size()-2;i >=0;i--)
+		{
+			Entity n  		= path_to_root.get(i);
+			Entity p  		= EXPAND((Entity)n.getAttribute(TREE_NODE_FIELD_PARENT_NODE));
+			List<Entity> pc = (List<Entity>)p.getAttribute(TREE_NODE_FIELD_CHILDREN);  
+			for(int ii = 0;ii < pc.size();ii++)
+			{
+				if(pc.get(ii).equals(n))
+				{
+					ret.add(ii);
+					break;
+				}
+			}
+		}	
+		return ret;
 	}
 	
 	///////////////////////////////////
