@@ -9,6 +9,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.gateway.IHttpRequestHandler;
+
 public class UrlMapInitParams
 {
 	public static final String URL_KEY = "url";
@@ -85,19 +88,41 @@ public class UrlMapInitParams
 		return v;
 	}
 
+	public void addUrlMapping(String regexp,String template_path,boolean secure,IHttpRequestHandler handler) throws WebApplicationException
+	{
+		try{
+			UrlMapInfo map = new UrlMapInfo(regexp, template_path, secure ? SECURE :  NOT_SECURE,handler );
+			_url_map_info.add(map);
+		}catch(Exception e)
+		{
+			throw new WebApplicationException(e.getMessage());
+		}	
+	
+	}
+	
 	public class UrlMapInfo
 	{
 		private String url;
 		private String templatePath;
 		private int secure;
 		private Pattern urlPattern;
+		private IHttpRequestHandler handler;
 
 		public UrlMapInfo(String url, String templatePath, int security_type)
+		{
+			//when we say null for the handler we mean httprequestrouter class 					//
+			//should handle the mapping for the time being. need to factor 					//
+			//out all the http gateways and make httprequestrouter more the web application class //
+			this(url,templatePath,security_type,null);
+		}
+		
+		public UrlMapInfo(String url, String templatePath, int security_type,IHttpRequestHandler handler)
 		{
 			this.url = url;
 			this.urlPattern = Pattern.compile(url);
 			this.templatePath = templatePath;
 			this.secure = security_type;
+			this.handler = handler;
 		}
 
 		public String getUrl()
@@ -120,6 +145,11 @@ public class UrlMapInitParams
 			return this.urlPattern.matcher(s);
 		}
 
+		public IHttpRequestHandler getHandler()
+		{
+			return handler;
+		}
+		
 		public String toString()
 		{
 			return "UrlMapInfo " + url + " " + templatePath + " " + secure;
