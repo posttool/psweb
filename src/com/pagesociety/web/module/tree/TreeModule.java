@@ -882,6 +882,8 @@ public class TreeModule extends WebStoreModule
 	
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
+		super.defineEntities(config);
+		
 		DEFINE_ENTITY(TREE_ENTITY,
 			TREE_FIELD_NAME,Types.TYPE_STRING,null,
 			TREE_FIELD_ROOT_NODE,Types.TYPE_REFERENCE, TREE_NODE_ENTITY,null);
@@ -901,6 +903,8 @@ public class TreeModule extends WebStoreModule
 	public static final String IDX_BY_TREE_BY_NODE_ID		    			= "byTreeByNodeId";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
+		super.defineIndexes(config);
+		
 		DEFINE_ENTITY_INDICES
 		(
 				TREE_ENTITY,

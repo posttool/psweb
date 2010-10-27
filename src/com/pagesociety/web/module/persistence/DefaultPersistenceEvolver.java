@@ -164,6 +164,9 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			EntityDefinition proposed_def) throws SyncException
 	{
 		try{
+			boolean go_on = confirm("REALLY EVOLVE "+proposed_def.getName());
+			if(!go_on)
+				return;
 			List<FieldDefinition> delete_fields = new ArrayList<FieldDefinition>();
 			List<FieldDefinition> add_fields	= new ArrayList<FieldDefinition>();
 			calc_added_and_deleted_fields(old_def, proposed_def, delete_fields, add_fields);
@@ -174,7 +177,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					FieldDefinition f;
 					f = add_fields.get(i);
 					try{
-						boolean go_on = confirm("ADD FIELD "+f.getName()+" DEFINED BY "+resolver.getDeclaringModuleForEntityField(old_def.getName(), f.getName()) +" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"?");
+						go_on = confirm("ADD FIELD "+f.getName()+" DEFINED BY "+resolver.getDeclaringModuleForEntityField(old_def.getName(), f.getName()) +" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"?");
 						if(go_on)
 							store.addEntityField(old_def.getName(), f);
 						else
@@ -194,7 +197,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					FieldDefinition f;
 					f = delete_fields.get(i);
 					try{
-						boolean go_on = confirm("DELETE FIELD "+f.getName()+" IN "+old_def.getName()+"?");
+						go_on = confirm("DELETE FIELD "+f.getName()+" IN "+old_def.getName()+"?");
 						if(go_on)
 							store.deleteEntityField(old_def.getName(), f.getName());
 						else
@@ -232,7 +235,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							if(answer.equals("0"))
 							{
 								try{
-									boolean go_on = confirm("ADD FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"? ");
+									 go_on = confirm("ADD FIELD "+f.getName()+" DECLARED BY "+resolver.getDeclaringModuleForEntityField(entity_name, f.getName())+" TO "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"? ");
 									if(go_on)
 										store.addEntityField(old_def.getName(), f);
 									else
@@ -254,7 +257,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 									else
 									{
 										//rename field...update delete list.
-										boolean go_on = confirm("RENAME FIELD "+renamed_field+" TO "+f.getName()+"? ");
+										go_on = confirm("RENAME FIELD "+renamed_field+" TO "+f.getName()+"? ");
 										if(go_on)
 											store.renameEntityField(old_def.getName(), renamed_field.getName(), f.getName());
 										else
@@ -273,7 +276,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					{
 						FieldDefinition f = delete_fields.get(i);
 						try{
-							boolean go_on = confirm("DELETE FIELD "+f.getName()+" IN "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"?");
+							go_on = confirm("DELETE FIELD "+f.getName()+" IN "+resolver.getDeclaringModuleForEntity(old_def.getName())+"."+old_def.getName()+"?");
 							if(go_on)
 								store.deleteEntityField(old_def.getName(), f.getName());
 							else

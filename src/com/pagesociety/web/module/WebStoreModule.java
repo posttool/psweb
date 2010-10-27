@@ -94,15 +94,76 @@ public class WebStoreModule extends WebModule
 	}	
 	
 	
+	public static final String PROP_ENTITY 		 			= "WebStoreModuleProp";
+	public static final String PROP_ENTITY_FIELD_KEY  		= "WebStoreModulePropKey";
+	public static final String PROP_ENTITY_FIELD_VALUE  	= "WebStoreModulePropValue";
+
 
 	protected void defineEntities(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
-		/* do nothing by default*/
+		DEFINE_ENTITY(PROP_ENTITY, 
+						PROP_ENTITY_FIELD_KEY,Types.TYPE_STRING,null,
+						PROP_ENTITY_FIELD_VALUE,Types.TYPE_STRING,null);
+		
 	}
-	
+	protected static final String IDX_BY_KEY = "byKey";
 	protected void defineIndexes(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
-		/*do nothing by default */
+		DEFINE_ENTITY_INDEX(PROP_ENTITY, IDX_BY_KEY, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, PROP_ENTITY_FIELD_KEY);
+	}
+	
+	
+	protected String SET_PROP(String key,String value) throws PersistenceException
+	{
+		Entity prop 	= getPropByKey(key);
+		if(prop == null)
+		{
+			prop = NEW(PROP_ENTITY,
+								null,
+								PROP_ENTITY_FIELD_KEY,key,
+								PROP_ENTITY_FIELD_VALUE,value);
+			return null;
+		}
+		else
+		{
+			String ret = (String)prop.getAttribute(PROP_ENTITY_FIELD_VALUE);
+			UPDATE(prop,PROP_ENTITY_FIELD_VALUE,value);
+			return ret;
+		}
+	}
+	
+	protected String CLEAR_PROP(String key) throws PersistenceException
+	{
+		Entity prop 	= getPropByKey(key);
+		if(prop != null)
+		{
+			String ret = (String)prop.getAttribute(PROP_ENTITY_FIELD_VALUE);
+			DELETE(prop);
+			return ret;
+		}
+		return null;
+	}
+	
+	protected String GET_PROP(String key) throws PersistenceException
+	{
+		Entity prop 	= getPropByKey(key);
+		if(prop == null)
+			return null;
+		else
+			return (String)prop.getAttribute(PROP_ENTITY_FIELD_VALUE);
+	}
+	
+	protected Entity getPropByKey(String key) throws PersistenceException
+	{
+		Query q = new Query(PROP_ENTITY);
+		q.idx(IDX_BY_KEY);
+		q.eq(Query.VAL_GLOB);
+		QueryResult r = QUERY(q);
+		List<Entity> ee = r.getEntities();
+		if(ee.size() == 0)
+			return null;
+		else
+			return ee.get(0);
 	}
 	
 	protected void defineRelationships(Map<String,Object> config)throws PersistenceException,InitializationException

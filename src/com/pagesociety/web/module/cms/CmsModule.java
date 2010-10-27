@@ -288,15 +288,15 @@ public class CmsModule extends WebStoreModule
 	{
 		Entity creator = (Entity) uctx.getUser();
 		GUARD(creator, CAN_CREATE_ENTITY, "type", e.getType(), "instance", e);
-		DISPATCH_EVENT(EVENT_ENTITY_PRE_CREATE, "candidate",e);
-		Entity ce =  createEntity(creator, e);
-		DISPATCH_EVENT(EVENT_ENTITY_POST_CREATE, "candidate",e,"instance",ce);
-		return ce;
+		return createEntity(creator, e);
 	}
 
-	public Entity createEntity(Entity creator, Entity e) throws PersistenceException
+	public Entity createEntity(Entity creator, Entity e) throws PersistenceException,WebApplicationException
 	{
-		return CREATE_ENTITY(creator, e);
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_CREATE, "candidate",e);
+		Entity ce = CREATE_ENTITY(creator, e);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_CREATE, "candidate",e,"instance",ce);
+		return ce;
 	}
 
 	@Export(ParameterNames = { "e" })
@@ -308,11 +308,8 @@ public class CmsModule extends WebStoreModule
 		Entity existing_instance = GET(e.getType(), e.getId());
 		GUARD(editor, CAN_UPDATE_ENTITY, "type", e.getType(), "instance", existing_instance);
 	
-		validate_update(e);
-		DISPATCH_EVENT(EVENT_ENTITY_PRE_UPDATE, "candidate",e);
-		Entity ue =  updateEntity(e);
-		DISPATCH_EVENT(EVENT_ENTITY_POST_UPDATE, "candidate",e,"instance",ue);
-		return ue;
+		validate_update(e);		
+		return updateEntity(e);
 	}
 	
 	private void validate_update(Entity e) throws WebApplicationException
@@ -324,9 +321,12 @@ public class CmsModule extends WebStoreModule
 				throw new WebApplicationException("DIRTY FIELDS CONTAINS A NULL STRING FOR A FIELDNAME");
 	}
 
-	public Entity updateEntity(Entity e) throws PersistenceException
+	public Entity updateEntity(Entity e) throws PersistenceException,WebApplicationException
 	{
-		return SAVE_ENTITY(e);
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_UPDATE, "candidate",e);
+		Entity ue = SAVE_ENTITY(e);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_UPDATE, "candidate",e,"instance",ue);
+		return ue;
 	}
 
 	@Export(ParameterNames = { "entity" })
@@ -335,16 +335,17 @@ public class CmsModule extends WebStoreModule
 			throws WebApplicationException, PersistenceException
 	{
 		Entity deleter = (Entity) uctx.getUser();
-		GUARD(deleter, CAN_DELETE_ENTITY, "type", e.getType(), "instance", e);
-		DISPATCH_EVENT(EVENT_ENTITY_PRE_DELETE, "candidate",e);
-		Entity de =  deleteEntity(e);
-		DISPATCH_EVENT(EVENT_ENTITY_POST_DELETE, "candidate",e,"instance",de);
-		return de;
+		GUARD(deleter, CAN_DELETE_ENTITY, "type", e.getType(), "instance", e);		
+		return deleteEntity(e);
+
 	}
 
-	public Entity deleteEntity(Entity e) throws PersistenceException
+	public Entity deleteEntity(Entity e) throws PersistenceException,WebApplicationException
 	{
-		return DELETE(e);
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_DELETE, "candidate",e);
+		Entity de = DELETE(e);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_DELETE, "candidate",e,"instance",de);
+		return de;
 	}
 
 	@Export(ParameterNames = { "entity_type", "entity_id" })
