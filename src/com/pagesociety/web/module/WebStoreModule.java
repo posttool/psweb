@@ -3,10 +3,12 @@ package com.pagesociety.web.module;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.mail.Store;
 
@@ -1198,7 +1200,7 @@ public class WebStoreModule extends WebModule
 	
 	
 	//clone subsystem/////////
-	
+	//THIS MAKES COPIES IN THE DATABASE SO MKAE SURE THIS IS WHAT YOU WANT!!!
 	public Entity CLONE_DEEP(Entity e) throws PersistenceException
 	{
 		clone_policy default_clone_policy = new clone_policy();
@@ -1231,11 +1233,110 @@ public class WebStoreModule extends WebModule
 
 	public static Entity CLONE_DEEP(PersistentStore store,Entity e,clone_policy f) throws PersistenceException
 	{
+		Entity clone =  CLONE_DEEP(store, e, f,new HashMap<Entity,Entity>());
+		return FILL_DEEP_AND_MASK(store, clone, FILL_ALL_FIELDS, MASK_NO_FIELDS);
+	}
+	
+	//warning: this function is pretty intense. makes a deep clone in the database//
+	public static Entity CLONE_DEEP(PersistentStore store,Entity e,clone_policy f,HashMap<Entity,Entity> clone_map) throws PersistenceException
+	{
 		if(e == null)
 			return null;
+		if(clone_map.containsKey(e))
+		{
+			//see note below about saving dirty references//
+			//return the light reference//
+			Entity c = clone_map.get(e);
+			Entity cr = new Entity();
+			cr.setType(c.getType());
+			cr.setId(c.getId());
+			return cr;
+		}
+		
 		e = EXPAND(store, e);
 
+		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
+		
 		Entity clone = e.cloneShallow();
+		for(int i = 0;i < ref_fields.size();i++)
+		{
+			//we do this becuase the store is picky about saving references to dirty reference
+			//fields. usually we always save a dirty reference before we 'link' it
+			clone.setAttribute(ref_fields.get(i).getName(), null);
+		}
+		clone = CREATE_ENTITY(store,(Entity)clone.getAttribute(FIELD_CREATOR),clone);
+		clone_map.put(e,clone);
+		
+
+		for(int i = 0;i < ref_fields.size();i++)
+		{
+			FieldDefinition ref_field 	 = ref_fields.get(i);
+			String ref_fieldname 		 = ref_field.getName();
+			if(ref_field.isArray())
+			{
+				List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
+				if(vals == null)
+					continue;
+				
+				int s = vals.size();
+				List<Entity> clone_vals = new ArrayList<Entity>(s);
+				for(int j = 0;j <s;j++)
+				{
+					Entity val = vals.get(j);
+					int clone_behavior = f.exec(e, ref_fieldname, val);
+					switch(clone_behavior)
+					{
+						case CLONE_REFERENCE:
+							clone_vals.add(CLONE_DEEP(store,val,f,clone_map));
+							break;
+						case LINK_REFERENCE:
+							clone_vals.add(val);
+							break;
+						case NULLIFY_REFERENCE:
+							clone_vals.add(null);
+							break;
+					}
+				}
+				clone.setAttribute(ref_fieldname, clone_vals);
+			}
+			else
+			{
+				
+				Entity val = GET_REF(store,e,ref_fieldname);
+				int clone_behavior = f.exec(e, ref_fieldname, val);
+				switch(clone_behavior)
+				{
+					case CLONE_REFERENCE:
+						clone.setAttribute(ref_fieldname,CLONE_DEEP(store,val,f,clone_map));
+						break;
+					case LINK_REFERENCE:
+						clone.setAttribute(ref_fieldname,val);
+						break;
+					case NULLIFY_REFERENCE:
+						clone.setAttribute(ref_fieldname,null);
+						break;
+				}
+			}	
+		}
+
+		clone = SAVE_ENTITY(store,clone);
+		clone_map.put(e, clone);
+		return clone;
+	}
+	
+	/*BEFORE I FUCK THIS UP TOO MUCH! remove the clone map stuff to get back to the way it was
+	public static Entity CLONE_DEEP(PersistentStore store,Entity e,clone_policy f,HashMap<Entity,Entity> clone_map) throws PersistenceException
+	{
+		if(e == null)
+			return null;
+		if(clone_map.containsKey(e))
+			return clone_map.get(e);
+		
+		e = EXPAND(store, e);
+
+		
+		Entity clone = e.cloneShallow();
+		
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
 		for(int i = 0;i < ref_fields.size();i++)
 		{
@@ -1256,7 +1357,7 @@ public class WebStoreModule extends WebModule
 					switch(clone_behavior)
 					{
 						case CLONE_REFERENCE:
-							clone_vals.add(CLONE_DEEP(store,val,f));
+							clone_vals.add(CLONE_DEEP(store,val,f,clone_map));
 							break;
 						case LINK_REFERENCE:
 							clone_vals.add(val);
@@ -1276,7 +1377,7 @@ public class WebStoreModule extends WebModule
 				switch(clone_behavior)
 				{
 					case CLONE_REFERENCE:
-						clone.setAttribute(ref_fieldname,CLONE_DEEP(store,val,f));
+						clone.setAttribute(ref_fieldname,CLONE_DEEP(store,val,f,clone_map));
 						break;
 					case LINK_REFERENCE:
 						clone.setAttribute(ref_fieldname,val);
@@ -1288,10 +1389,182 @@ public class WebStoreModule extends WebModule
 			}	
 		}
 
-		return CREATE_ENTITY(store,(Entity)clone.getAttribute(FIELD_CREATOR),clone);
+		clone = CREATE_ENTITY(store,(Entity)clone.getAttribute(FIELD_CREATOR),clone);
+		clone_map.put(e, clone);
+		return clone;
+	}
+	*/
+	
+	public Entity CLONE_IN_MEMORY(Entity e) throws PersistenceException
+	{
+		return CLONE_IN_MEMORY(e, new clone_policy(), new HashMap<Entity, Entity>());
+	}
+	public Entity CLONE_IN_MEMORY(Entity e,clone_policy p,Map<Entity,Entity> clone_map) throws PersistenceException
+	{
+		if(e == null)
+			return null;
+		
+		
+		if(clone_map.containsKey(e))
+			return clone_map.get(e);
+
+		Entity clone = e.clone();
+		clone_map.put(e,clone);
+		if(e.isLightReference())
+			return clone;
+		
+		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
+
+		for(int i = 0;i < ref_fields.size();i++)
+		{
+			FieldDefinition ref_field 	 = ref_fields.get(i);
+			String ref_fieldname 		 = ref_field.getName();
+			if(ref_field.isArray())
+			{
+				//List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
+				List<Entity> vals = (List<Entity>)e.getAttribute(ref_fieldname);
+				
+				if(vals == null)
+					continue;
+				
+				int s = vals.size();
+				List<Entity> clone_vals = new ArrayList<Entity>(s);
+				for(int j = 0;j <s;j++)
+				{
+					Entity val = vals.get(j);
+					int clone_behavior = p.exec(e, ref_fieldname, val);
+					switch(clone_behavior)
+					{
+						case CLONE_REFERENCE:
+							clone_vals.add(CLONE_IN_MEMORY(val,p,clone_map));
+							break;
+						case LINK_REFERENCE:
+							clone_vals.add(val);
+							break;
+						case NULLIFY_REFERENCE:
+							clone_vals.add(null);
+							break;
+					}
+				}
+				clone.setAttribute(ref_fieldname, clone_vals);
+			}
+			else
+			{
+				
+				//Entity val = GET_REF(store,e,ref_fieldname);
+				Entity val = (Entity)e.getAttribute(ref_fieldname);
+				int clone_behavior = p.exec(e, ref_fieldname, val);
+				switch(clone_behavior)
+				{
+					case CLONE_REFERENCE:
+						clone.setAttribute(ref_fieldname,CLONE_IN_MEMORY(val,p,clone_map));
+						break;
+					case LINK_REFERENCE:
+						clone.setAttribute(ref_fieldname,val);
+						break;
+					case NULLIFY_REFERENCE:
+						clone.setAttribute(ref_fieldname,null);
+						break;
+				}
+			}	
+		}
+		clone_map.put(e, clone);
+		return clone;
 	}
 	
 	
+	public void DUMP_ENTITY(Entity e) throws PersistenceException
+	{
+		StringBuilder buf = new StringBuilder();
+		do_print_deep(e,0,new HashMap<Entity,Entity>(),buf);
+		INFO("DUMP\n"+buf.toString());
+	}
+	
+	public String ENTITY_TO_STRING(Entity e) throws PersistenceException
+	{
+		StringBuilder buf = new StringBuilder();
+		do_print_deep(e,0,new HashMap<Entity,Entity>(),buf); 
+		return buf.toString();
+	}
+	
+	public void do_print_deep(Entity e,int indent,Map<Entity,Entity> seen_entities,StringBuilder buf) throws PersistenceException
+	{
+		if(e == null)
+		{
+			buf.append("NULL");
+			return;
+		}
+		String mem_id = "0x"+Integer.toHexString(System.identityHashCode(e));
+		if(seen_entities.containsKey(e))
+		{
+			buf.append(e.getType()+":"+e.getId()+"(CIRCULAR REF "+mem_id+")");	
+			return;
+		}
+		seen_entities.put(e, e);
+		if(e.isLightReference())
+		{
+			buf.append(e.getType()+":"+e.getId()+"(LIGHT REF "+mem_id+")");
+		}
+		else
+		{
+			EntityDefinition def = store.getEntityDefinition(e.getType());
+			buf.append("\n"+get_space(indent)+"{\n");
+			buf.append(get_space(indent)+e.getType()+":"+e.getId()+"("+mem_id+")");
+			buf.append("\n");
+			List<FieldDefinition> ff = def.getFields();
+			for(int i = 0;i < ff.size();i++)
+			{
+				FieldDefinition f = ff.get(i);
+				if((f.getType() & Types.TYPE_REFERENCE) == Types.TYPE_REFERENCE)
+				{
+					if(f.isArray())
+					{
+						List<Entity> vals = (List<Entity>)e.getAttribute(f.getName());	
+						if(vals == null)
+						{
+							buf.append(get_space(indent+1)+f.getName()+" = NULL\n");
+						}
+						else if(vals.size() == 0)
+						{
+							buf.append(get_space(indent+1)+f.getName()+" = []\n");
+						}
+						else
+						{
+						buf.append(get_space(indent+1)+f.getName()+" = [");
+						for(int ii=0;ii< vals.size();ii++)
+						{
+							do_print_deep(vals.get(ii),indent+f.getName().length()+4,seen_entities,buf);
+							if(ii != vals.size()-1)
+								buf.append("\n"+get_space(indent+f.getName().length()+4)+",");
+						}
+						buf.append("\n"+get_space(indent+f.getName().length()+4)+"]\n");
+						}
+					}
+					else
+					{
+						Entity val = (Entity)e.getAttribute(f.getName());
+						buf.append(get_space(indent+1)+f.getName()+" = ");
+						do_print_deep(val,indent+f.getName().length()+4,seen_entities,buf);
+						buf.append("\n");
+					}
+				}
+				else
+				{
+					buf.append(get_space(indent+1)+f.getName()+" = "+e.getAttribute(f.getName())+"\n");			
+				}
+			}
+			buf.append(get_space(indent)+"}/*end - "+e.getType()+":"+e.getId()+"*/");
+		}
+	}
+	
+	private String get_space(int num)
+	{
+		StringBuilder buf = new StringBuilder();
+		for(int i = 0;i < num;i++)
+			buf.append(' ');
+		return buf.toString();
+	}
+
 	//DELETE DEEP SUBSYSTEM...be careful with circular references!!!//
 	public Entity DELETE_DEEP(Entity e) throws PersistenceException
 	{
@@ -1422,7 +1695,7 @@ public class WebStoreModule extends WebModule
 			}
 			
 			FieldDefinition f;
-			if(field_type == Types.TYPE_REFERENCE)
+			if((field_type & ~Types.TYPE_ARRAY) == Types.TYPE_REFERENCE)
 			{
 				ref_type = (String)flat_defs[i+2];
 				f = new FieldDefinition(field_name,field_type,ref_type);

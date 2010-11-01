@@ -19,6 +19,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -368,6 +369,15 @@ public abstract class WebModule extends Module
 		return p.split(",");
 	}
 	
+	protected String[] GET_OPTIONAL_LIST_PARAM(String name,Map<String,Object> config,String... default_value) throws InitializationException
+	{
+		String p = GET_OPTIONAL_CONFIG_PARAM(name, config);
+		if(p==null)
+			return default_value;
+		p = REMOVE_WHITE_SPACE(p);
+		return p.split(",");
+	}
+	
 	
 	protected void DISPATCH_EVENT(int event_type,Object... event_context) throws WebApplicationException
 	{
@@ -465,6 +475,11 @@ public abstract class WebModule extends Module
 			for(int i = 0;i < args.length;i+=2)
 				put((String)args[i],args[i+1]);			
 		}
+	}
+
+	public  OBJECT OBJECT(Object... args)
+	{
+		return new OBJECT(args);
 	}
 
 
@@ -598,6 +613,21 @@ public abstract class WebModule extends Module
     	return ret;
     }
     
+    
+    public static <T> T[] CONCAT(T[] first, T[]... rest) {
+    	  int totalLength = first.length;
+    	  for (T[] array : rest) {
+    	    totalLength += array.length;
+    	  }
+    	  T[] result = Arrays.copyOf(first, totalLength);
+    	  int offset = first.length;
+    	  for (T[] array : rest) {
+    	    System.arraycopy(array, 0, result, offset, array.length);
+    	    offset += array.length;
+    	  }
+    	  return result;
+    	}
+
     
     public Map<String,Object> JSON_CONFIG_TO_MAP(File f) throws InitializationException
 	{

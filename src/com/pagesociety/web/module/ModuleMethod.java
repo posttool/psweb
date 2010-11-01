@@ -19,6 +19,7 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.Form;
 import com.pagesociety.web.gateway.RawCommunique;
+import com.pagesociety.web.module.WebModule.OBJECT;
 import com.pagesociety.web.upload.MultipartForm;
 
 public class ModuleMethod
@@ -347,6 +348,7 @@ public class ModuleMethod
 			(c == List.class)  		||
 			(c == ArrayList.class)	||
 			(c == Map.class)		||
+			(c == OBJECT.class)		||
 			(c == HashMap.class)	||
 			(c == Date.class)		||
 			(c == Boolean.class)	||
