@@ -865,6 +865,28 @@ public class TreeModule extends WebStoreModule
 		}
 	};
 	
+	public class dump_functor implements TreeFunctor
+	{
+
+		public dump_functor()
+		{
+
+		}
+		
+		public void apply(Entity entity_node) throws Exception
+		{
+			System.out.println("DUMPED NODE IS "+entity_node);
+		}
+
+		public int getIterationStyle() {
+			return ITERATE_STYLE_PREORDER;
+		}
+
+		public Object getReturnObject() {
+			return null;
+		}
+	};
+	
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 		
 	public static final String TREE_ENTITY 				= "Tree";
