@@ -68,6 +68,7 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	public String get_resize_geometry_string()
 	{
 		StringBuilder buf = new StringBuilder();
+		buf.append("\"");
 		if(width != 0 )
 			buf.append(String.valueOf(width));
 		if(height != 0 )
@@ -77,7 +78,7 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		}
 		if(width != 0 || height != 0)
 			buf.append(">");
-
+        buf.append("\"");
 		return buf.toString();
 	}
 	
