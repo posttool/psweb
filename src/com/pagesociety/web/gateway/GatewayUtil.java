@@ -38,55 +38,5 @@ public class GatewayUtil
 		return module_request;
 	}
 
-	public static ModuleRequest parseModuleRequestJson(
-			HttpServletRequest servlet_request, String request_path)
-			throws WebApplicationException
-	{
-		ModuleRequest module_request = parseModuleRequest(servlet_request, request_path);
-		//
-		String json = servlet_request.getParameter("args");
-		Object[] args = JsonEncoder.decode(json);
-		Object[] typed_args;
-		try
-		{
-			typed_args = coerceArgs(module_request.getModuleName(), module_request.getMethodName(), args);
-		}
-		catch (Exception e)
-		{
-			throw new WebApplicationException("fillModuleRequest() - CANT COERCE ARGS FOR " + module_request.getModuleName() + " " + module_request.getMethodName() + " " + args, e);
-		}
-		module_request.setArguments(typed_args);
-		return module_request;
-	}
 	
-	public static Object[] coerceArgs(String module_name, String method_name,
-			Object[] args) throws WebApplicationException
-	{
-	
-		ModuleDefinition module_def = ModuleRegistry.getModuleDefinition(module_name);
-		if (module_def == null)
-			throw new RuntimeException("ModuleRegistry NO MODULE " + module_name);
-		List<ModuleMethod> m = module_def.getMethodsForMethodName(method_name);
-		if (m == null)
-			throw new RuntimeException("ModuleRegistry NO METHOD " + method_name);
-
-		int s = m.size();
-		Object[] ca = null;
-		for(int i = 0;i < s;i++)
-		{
-			ModuleMethod mm = m.get(i);
-			if (mm.getParameterTypes().length!=args.length+1)
-				continue;
-			try {
-				ca = mm.coerceArgs(args);
-			} 
-			catch(Exception e)
-			{
-			}
-		}
-		if (ca==null)
-			throw new WebApplicationException("CANT CALL "+module_name+"/"+method_name+" with args "+args);
-
-		return ca;
-	}
 }

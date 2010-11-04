@@ -2,17 +2,32 @@ package com.pagesociety.web.gateway;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.util.Text;
 import com.pagesociety.web.ErrorMessage;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.module.ModuleDefinition;
+import com.pagesociety.web.module.ModuleMethod;
+import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
+import com.pagesociety.web.module.WebModule;
 
 public class JsonGateway
 {
@@ -33,7 +48,11 @@ public class JsonGateway
 		String text_response = null;
 		try
 		{
-			module_request = GatewayUtil.parseModuleRequestJson(request, requestPath);
+			//module_request = parseModuleRequestJson(request, requestPath);
+			module_request 	= GatewayUtil.parseModuleRequest(request, requestPath);
+			String json 	= request.getParameter("args");
+			module_request.setArguments(unpackJSONArgs(json));
+			
 			module_request.setUserContext(user_context);
 			module_return = _web_application.dispatch(module_request);
 			text_response = JsonEncoder.encode(module_return);
@@ -66,6 +85,18 @@ public class JsonGateway
 		out.write(JsonEncoder.encode(new ErrorMessage(e)));
 		out.close();
 	}
-	
+
+	public Object[] unpackJSONArgs(String args_s) throws WebApplicationException
+	{
+		List<Object> l_args = new ArrayList<Object>();
+		try{
+			JSONArray args = new JSONArray(args_s);
+			WebModule.parse_json_list(l_args, args);
+		}catch(JSONException jse)
+		{
+			throw new WebApplicationException("UNABLE TO UNPACK JSON ARGS: "+jse.getMessage());
+		}
+		return l_args.toArray();
+	}
 	
 }
