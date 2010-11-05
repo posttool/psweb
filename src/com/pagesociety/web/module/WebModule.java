@@ -645,9 +645,9 @@ public abstract class WebModule extends Module
 		return map;
 	}
 	
-	private Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws InitializationException
+	public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
 	{
-		try{
+
 			String[] keys = JSONObject.getNames(o);
 			if(keys == null)
 				return ret;
@@ -673,15 +673,10 @@ public abstract class WebModule extends Module
 				}
 			}
 			return ret;
-		}catch(Exception e)
-		{
-			ERROR(e);
-			throw new InitializationException("PROBLEM CONVERTING JSON FILE TO MAP");
-		}
 		
 	}
 	
-	public List<Object> parse_json_list(List<Object> list,JSONArray L) throws JSONException,InitializationException
+	public static List<Object> parse_json_list(List<Object> list,JSONArray L) throws JSONException
 	{
 		
 		for(int ii = 0;ii < L.length();ii++)

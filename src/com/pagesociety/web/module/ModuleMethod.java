@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -164,8 +165,11 @@ public class ModuleMethod
 			Object arg = arguments[i];
 			if(arg == null)
 				continue;
-			if (!compatible_classes(arg.getClass(),ptypes[i]) && !compatible_classes(ptypes[i], arg.getClass()))
+			Class<?> arg_class = arg.getClass();
+			if (!compatible_classes(arg_class,ptypes[i]) && !compatible_classes(ptypes[i], arg_class))
 			{
+				if(coerce_arg(arguments,i,arg_class,ptypes[i]))
+					continue;
 				System.out.println(method.getName()+" NON COMPATIBLE CLASSES FOR METHOD SIG. "+arg.getClass().getSimpleName()+" "+ptypes[i].getSimpleName());
 				return false;
 			}
@@ -173,7 +177,85 @@ public class ModuleMethod
 		return true;
 	}
 	
-	private static boolean compatible_classes(Class c1,Class c2)
+	private boolean coerce_arg(Object[] args,int idx,Class<?> arg_class, Class<?> ptype)
+	{
+		if((arg_class == Double.class || arg_class == double.class) && (ptype == Float.class || ptype == float.class))
+		{
+			args[idx] = new Float((Double)args[idx]);
+			return true;
+		}
+		else if((arg_class == long.class || arg_class == Long.class) && (ptype == Date.class))
+		{
+			args[idx] = new Date((Long)args[idx]);
+			return true;
+		}
+		else if((arg_class == LinkedHashMap.class || arg_class == HashMap.class) && (ptype == Entity.class))
+		{
+			Map arg = (Map)args[idx];
+			String ps_clazz = (String)arg.get("_ps_clazz");
+			if(ps_clazz != null)
+			{
+				if(ps_clazz.equals("Entity"))
+					args[idx] = coerce_json_to_entity(args[idx]);//thos could be coerce to bean if we do it on the client (ps_webapp.js) as well
+				return true;
+			}
+			return false;
+		}
+
+		return false;
+	}
+	
+	//this should be moved to JSONEncoder or something//
+	private Object coerce_json_to_entity(Object o)
+	{
+		if(o instanceof Map)
+		{
+			Map<String,Object> map = (Map<String,Object>)o;
+			String ps_clazz = (String)map.get("_ps_clazz");
+			if(ps_clazz != null)
+			{
+				if(ps_clazz.equals("Entity"))
+				{
+					Map<String,Object> atts = (Map<String,Object>)map.get("attributes");
+					atts.remove("_object_id");
+					if(atts == null)
+						atts = new HashMap<String, Object>();
+					for(String k:atts.keySet())
+					{
+						Object val = atts.get(k);
+						if(val instanceof List)
+						{
+							List<Object> lv = (List<Object>)val;
+							for(int i = 0; i < lv.size();i++)
+								lv.set(i, coerce_json_to_entity(lv.get(i)));
+						}
+						else
+						{
+							atts.put(k,coerce_json_to_entity(val));
+						}
+					}
+					
+					Entity e = new Entity();
+					e.setType((String)map.get("type"));
+					e.setId(new Long((Integer)map.get("id")));
+					e.setAttributes((Map<String,Object>)atts);
+					List<String> dirty_attributes = (List<String>)map.get("dirtyAttributes");
+					if(dirty_attributes != null)
+						e.setDirtyAttributes(dirty_attributes);
+					return e;
+				}
+			}
+			else
+			{
+				System.out.println("RETURNING MAP "+map);
+				return map;
+			}
+		}
+		return o;
+	}
+
+	
+	private static boolean compatible_classes(Class<?> c1,Class<?> c2)
 	{
 		if((c1 == c2) ||//TODO: i dont think we need the rest of these checks anymore
 				(c1 == Long.class 	 && c2 	== long.class) 	   ||
@@ -183,122 +265,13 @@ public class ModuleMethod
 				(c1 == Float.class   && c2 	== float.class)    ||
 				(c1 == Integer.class && c2 	== long.class)     ||
 				(c1 == Float.class && c2 	== double.class)   ||
-				(c1 == HashMap.class && c2  == Map.class))
+				((c1 == HashMap.class || c1 == LinkedHashMap.class) && c2  == Map.class))
 			return true;
 		
 		return false;		
 	}
 
-	public Object[] coerceArgs(Object[] args) throws WebApplicationException
-	{
-		if (args.length != ptypes.length - 1)
-			throw new WebApplicationException("ModuleMethod INCORRECT # OF ARGS");
-		Object[] typed_args = new Object[args.length];
-		Type[] gen_ptypes = method.getGenericParameterTypes();
-		for (int i = 1; i < ptypes.length; i++)
-		{
-			Class<?> ptype = ptypes[i];
-			Object arg = args[i-1];
-			if (arg == null || arg.getClass() == ptype)
-			{
-				typed_args[i-1] = arg;
-			}
-			else if (ptype == List.class)
-			{
-				if (arg instanceof String)
-				{
-					String[] a_args = ((String) arg).split(",");
-					ParameterizedType pgtype = (ParameterizedType) gen_ptypes[i];
-					Class<?> pgclass = (Class<?>) pgtype.getActualTypeArguments()[0];
-					List<Object> typed_array_values = new ArrayList<Object>(a_args.length);
-					for (int j = 0; j < a_args.length; j++)
-					{
-						typed_array_values.add(coerseStringToObject(pgclass, a_args[j]));
-					}
-					typed_args[i-1] = typed_array_values;
-				}
-				else if (arg instanceof JSONArray)
-				{
-					JSONArray a_args = (JSONArray) arg;
-					ParameterizedType pgtype = (ParameterizedType) gen_ptypes[i];
-					Class<?> pgclass = (Class<?>) pgtype.getActualTypeArguments()[0];
-					List<Object> typed_array_values = new ArrayList<Object>(a_args.length());
-					for (int j = 0; j < a_args.length(); j++)
-					{
-						try{
-							typed_array_values.add(coerseStringToObject(pgclass, String.valueOf(a_args.get(j))));
-						}catch(JSONException jse)
-						{
-							jse.printStackTrace();
-							throw new WebApplicationException("GOT A JSON EXCEPTION WHEN COERCING ARGS",jse);
-						}
-					}
-					typed_args[i-1] = typed_array_values;
-				}
-			}
-			else if (ptype.isArray())
-			{
-				throw new WebApplicationException("COERCABLE MODULE METHODS MUST SPECIFY LIST PARAMETERS (NOT ARRAYS). ");
-			}
-			else if (arg.getClass() == String.class)
-			{
-				typed_args[i-1] = coerseStringToObject(ptype, (String) arg);
-			}
-			else if (ptype == Date.class && arg.getClass() == Long.class)
-			{
-				typed_args[i-1] = new Date((Long) arg);
-			}
-			else
-			{
-				typed_args[i-1] = arg;
-			}
-		}
-		return typed_args;
-	}
-
-	private static Object coerseStringToObject(Class<?> ptype, String arg) throws WebApplicationException
-	{
-		try
-		{
-			if (ptype == boolean.class || ptype == Boolean.class)
-			{
-				return Boolean.parseBoolean(arg);
-			}
-			else if (ptype == int.class || ptype == Integer.class)
-			{
-				return Integer.parseInt(arg);
-			}
-			else if (ptype == long.class || ptype == Long.class)
-			{
-				return Long.parseLong(arg);
-			}
-			else if (ptype == float.class || ptype == Float.class)
-			{
-				return Float.parseFloat(arg);
-			}
-			else if (ptype == String.class)
-			{
-				return arg;
-			}
-			else if (ptype == Date.class)
-			{
-				return new Date(Long.parseLong(arg));
-			}
-			else if (ptype == Entity.class)
-			{
-				// String[] eid = arg.split("_");
-				// EntityDefinition def = _store.getEntityDefinition(eid[0]);
-				// long id = Long.parseLong(eid[1]);
-				// return new Entity(def, id);
-				throw new WebApplicationException("COERCABLE MODULE METHODS CANT SPECIFY ENTITIES YET");
-			}
-			return null;
-		}
-		catch (Exception e)
-		{
-			throw new RuntimeException("UNABLE TO COERSE '" + arg + "' TO '" + ptype.getName() + "'", e);
-		}
-	}
+	
 
 	public String toString()
 	{
@@ -331,7 +304,7 @@ public class ModuleMethod
 	
 
 	
-	public static boolean isValidParamType(Class c) 
+	public static boolean isValidParamType(Class<?> c) 
 	{
 
 		if((c == UserApplicationContext.class)||
@@ -350,6 +323,7 @@ public class ModuleMethod
 			(c == Map.class)		||
 			(c == OBJECT.class)		||
 			(c == HashMap.class)	||
+			(c == LinkedHashMap.class)	||
 			(c == Date.class)		||
 			(c == Boolean.class)	||
 			(c == boolean.class)	||
