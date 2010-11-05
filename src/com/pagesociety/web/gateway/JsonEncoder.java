@@ -52,6 +52,8 @@ public class JsonEncoder
 			js.value(true);
 			if(o instanceof Entity)
 			{
+				js.key("_ps_clazz");
+				js.value("Entity");
 				js.key("type");
 				js.value(((Entity)o).getType());
 				js.key("id");
@@ -113,11 +115,9 @@ public class JsonEncoder
 				Object field_val = bean.getProperty(o, name);
 				js.key(name);
 				encode_json(js, field_val,seen);
-				if(o instanceof Entity)
-				{
-					js.key("_is_entity");
-					js.value(true);
-				}
+				js.key("_ps_clazz");
+				js.value(o.getClass().getSimpleName());
+
 				js.key("_object_id");
 				js.value(mem_id);
 			}
