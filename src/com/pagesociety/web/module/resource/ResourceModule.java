@@ -432,7 +432,7 @@ public class ResourceModule extends WebStoreModule
 			//throw new WebApplicationException("COULDN'T CANCEL");
 			ERROR(e);
 		}
-		channel_upload_map.remove(KEY_CURRENT_UPLOAD_MAP);
+		channel_upload_map.remove(channel_name);
 		return ret;
 	}
 	
