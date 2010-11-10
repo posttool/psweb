@@ -67,8 +67,10 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	//on the simple type.
 	public String get_resize_geometry_string()
 	{
+		boolean is_macosx = isMacOSX();
 		StringBuilder buf = new StringBuilder();
-		buf.append("\"");
+		if(is_macosx)
+			buf.append("\"");
 		if(width != 0 )
 			buf.append(String.valueOf(width));
 		if(height != 0 )
@@ -78,8 +80,14 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		}
 		if(width != 0 || height != 0)
 			buf.append(">");
-        buf.append("\"");
+		if(is_macosx)
+			buf.append("\"");
 		return buf.toString();
+	}
+	
+	public static boolean isMacOSX() {
+	    String osName = System.getProperty("os.name");
+	    return osName.startsWith("Mac OS X");
 	}
 	
 	public void sigstart(long id)
