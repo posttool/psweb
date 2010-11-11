@@ -47,6 +47,7 @@ public class HttpRequestRouter extends HttpServlet
 	private FreemarkerGateway freemarker_gateway;
 	private FormGateway form_gateway;
 	private RawGateway  raw_gateway;
+	private String	_session_cookie_domain;
 
 	public void init(ServletConfig cfg) throws ServletException
 	{
@@ -62,6 +63,7 @@ public class HttpRequestRouter extends HttpServlet
 		_web_url = _web_application.getConfig().getWebRootUrl();
 		_web_url_secure = _web_application.getConfig().getWebRootUrlSecure();
 		_is_closed = false;
+		set_session_cookie_domain();
 		//
 		static_gateway = new StaticHttpGateway();
 		amf_gateway = new AmfGateway(_web_application);
@@ -73,6 +75,17 @@ public class HttpRequestRouter extends HttpServlet
 		logger.info("ServletGateway init complete");
 	}
 
+	
+	private void set_session_cookie_domain() throws ServletException
+	{
+		String url = _web_application.getConfig().getWebRootUrl();
+		String[] domain_parts = url.split("\\."); 
+		if(domain_parts.length < 2)
+			throw new ServletException("SEEMS LIKE YOU HAVE A BAD WEB ROOT URL: "+_web_application.getConfig().getWebRootUrl());
+		_session_cookie_domain = "."+domain_parts[domain_parts.length-2]+'.'+domain_parts[domain_parts.length-1];
+		System.out.println("BASE COOKIE DOMAIN IS "+_session_cookie_domain);
+	}
+	
 	public void open()
 	{
 		_is_closed = false;
@@ -420,11 +433,14 @@ public class HttpRequestRouter extends HttpServlet
 		String http_sess_id = null;
 		Cookie cookie = null;
 		Cookie[] cookies = request.getCookies();
+		
 		if (cookies != null)
 		{
+		
 			int s = cookies.length;
 			for (int i=0; i<s; i++)
 			{
+				System.out.println("!!!!! COOKIE IS "+cookies[i].getName()+" "+cookies[i].getValue());
 				if (cookies[i].getName().equals(GatewayConstants.SESSION_ID_KEY))
 				{
 					cookie = cookies[i];
@@ -452,6 +468,7 @@ public class HttpRequestRouter extends HttpServlet
 		Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_session_id);
 		c.setMaxAge(-1);
 		c.setPath("/");
+		c.setDomain(_session_cookie_domain);
 		response.addCookie(c);
 		return http_session_id;
 	}
