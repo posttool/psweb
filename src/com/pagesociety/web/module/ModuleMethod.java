@@ -240,8 +240,8 @@ public class ModuleMethod
 					e.setId(new Long((Integer)map.get("id")));
 					e.setAttributes((Map<String,Object>)atts);
 					List<String> dirty_attributes = (List<String>)map.get("dirtyAttributes");
-					if(dirty_attributes != null)
-						e.setDirtyAttributes(dirty_attributes);
+					//if(dirty_attributes != null)
+					//	e.setDirtyAttributes(dirty_attributes);
 					return e;
 				}
 			}

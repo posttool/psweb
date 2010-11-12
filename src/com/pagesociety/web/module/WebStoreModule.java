@@ -1190,7 +1190,7 @@ public class WebStoreModule extends WebModule
 	/* be careful with this if you have 1 to many relationships*/
 	public static Entity CLONE_SHALLOW(PersistentStore store,Entity e) throws PersistenceException
 	{
-		return store.saveEntity(e.cloneShallow());
+		return store.saveEntity(e.copy());
 	}
 	
 	public Entity CLONE_SHALLOW(Entity e) throws PersistenceException
@@ -1257,7 +1257,7 @@ public class WebStoreModule extends WebModule
 
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
 		
-		Entity clone = e.cloneShallow();
+		Entity clone = e.copy();
 		for(int i = 0;i < ref_fields.size();i++)
 		{
 			//we do this becuase the store is picky about saving references to dirty reference
@@ -1414,6 +1414,7 @@ public class WebStoreModule extends WebModule
 			return clone;
 		
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
+
 
 		for(int i = 0;i < ref_fields.size();i++)
 		{
