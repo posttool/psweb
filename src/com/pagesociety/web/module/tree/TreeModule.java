@@ -721,7 +721,7 @@ public class TreeModule extends WebStoreModule
 				{
 					if(data != null)
 					{
-						cloned_data = data.cloneShallow();
+						cloned_data = data.copy();
 						cloned_data = CREATE_ENTITY((Entity)cloned_root_node.getAttribute(FIELD_CREATOR), cloned_data);
 					}
 				}
@@ -752,7 +752,7 @@ public class TreeModule extends WebStoreModule
 			{
 				//System.out.println("CLONING ENTITY NODE "+entity_node);
 				
-				Entity cloned_node   = entity_node.cloneShallow();	
+				Entity cloned_node   = entity_node.copy();	
 				if(clone_data)
 				{
 					Entity data = (Entity)entity_node.getAttribute(TREE_NODE_FIELD_DATA);
@@ -769,7 +769,7 @@ public class TreeModule extends WebStoreModule
 					else
 					{
 						if(data != null)
-							cloned_data = data.cloneShallow();
+							cloned_data = data.copy();
 						cloned_data = CREATE_ENTITY((Entity)cloned_node.getAttribute(FIELD_CREATOR), cloned_data);
 					}
 					//System.out.println("CLONED DATA IS "+cloned_data);
