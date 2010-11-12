@@ -325,11 +325,11 @@ public class UserModule extends WebStoreModule
 		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
 		roles.add(role);
 		
-		
+		user = UPDATE(user,
+			  	  UserModule.FIELD_ROLES,roles);						
 		DISPATCH_EVENT(EVENT_USER_ROLES_UPDATED,
 				   USER_EVENT_USER, user);
-		return UPDATE(user,
-				  	  UserModule.FIELD_ROLES,roles);						
+		return user;
 	}
 	
 	@Export(ParameterNames={"user_entity_id","role"})
@@ -351,10 +351,11 @@ public class UserModule extends WebStoreModule
 	{
 		List<Integer> roles = (List<Integer>)user.getAttribute(FIELD_ROLES);
 		roles.remove(role);
+		user =  UPDATE(user,
+				  UserModule.FIELD_ROLES,roles);			
 		DISPATCH_EVENT(EVENT_USER_ROLES_UPDATED,
 				   USER_EVENT_USER, user);
-		return UPDATE(user,
-			  UserModule.FIELD_ROLES,roles);			
+		return user;
 	}
 	
 	
@@ -415,9 +416,10 @@ public class UserModule extends WebStoreModule
 		Entity user = null;
 		//if(isValidEmail(email_or_username))
 			user = loginViaEmail(email, password);
+
 		//else
 		//	user = loginViaUsername(email_or_username, password);
-		
+
 		if(user.getAttribute(FIELD_LOCK).equals(LOCK_LOCKED))
 		{
 			int lock_code = (Integer)user.getAttribute(FIELD_LOCK_CODE);
@@ -427,12 +429,18 @@ public class UserModule extends WebStoreModule
 			
 			throw new AccountLockedException(message);
 		}
-
+		user = UPDATE(user,
+			 	  FIELD_LAST_LOGIN, new Date());	
 		uctx.setUser(user);
+		//we update the user before it get set in the context
+		//because often the context blanks out the password
+		//and with the new dirty mechanism it was causing
+		//the update of last modified to also save the user 
+		//with the blanked out password when the update happend afterwards
+
 		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
 				   		USER_EVENT_USER, user);
-		return UPDATE(user,
-					  FIELD_LAST_LOGIN, new Date());				
+		return user;
 	}
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
@@ -465,6 +473,9 @@ public class UserModule extends WebStoreModule
 	public Entity Logout(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
+		user = GET(USER_ENTITY,user.getId());//get from db so the session one
+											//doesnt side effect the saved one
+											//(ie blanked out password)
 		if(!PermissionEvaluator.IS_LOGGED_IN(user))
 			return null;
 
@@ -588,10 +599,12 @@ public class UserModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity GetUser(UserApplicationContext uctx)
+	public Entity GetUser(UserApplicationContext uctx) throws PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		return user;
+		if(user == null)
+			return null;
+		return getUser(user.getId());
 	}
 	
 
