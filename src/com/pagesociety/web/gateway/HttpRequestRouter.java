@@ -440,7 +440,6 @@ public class HttpRequestRouter extends HttpServlet
 			int s = cookies.length;
 			for (int i=0; i<s; i++)
 			{
-				System.out.println("!!!!! COOKIE IS "+cookies[i].getName()+" "+cookies[i].getValue());
 				if (cookies[i].getName().equals(GatewayConstants.SESSION_ID_KEY))
 				{
 					cookie = cookies[i];
