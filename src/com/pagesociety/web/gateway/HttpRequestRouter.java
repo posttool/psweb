@@ -79,10 +79,23 @@ public class HttpRequestRouter extends HttpServlet
 	private void set_session_cookie_domain() throws ServletException
 	{
 		String url = _web_application.getConfig().getWebRootUrl();
+		String[] protocol_parts = url.split("//"); 
+		if(protocol_parts.length < 2)
+		{
+			throw new ServletException("PROTOCOL SHOULD BE PART OF PROPERTY WEB ROOT URL");
+		}
+		url = "";
+		for(int i = 1;i < protocol_parts.length;i++)
+			url+=protocol_parts[i];
+
 		String[] domain_parts = url.split("\\."); 
 		if(domain_parts.length < 2)
-			throw new ServletException("SEEMS LIKE YOU HAVE A BAD WEB ROOT URL: "+_web_application.getConfig().getWebRootUrl());
-		_session_cookie_domain = "."+domain_parts[domain_parts.length-2]+'.'+domain_parts[domain_parts.length-1];
+		{
+			//throw new ServletException("SEEMS LIKE YOU HAVE A BAD WEB ROOT URL: "+_web_application.getConfig().getWebRootUrl());
+			_session_cookie_domain = null;
+		}
+		else
+			_session_cookie_domain = "."+domain_parts[domain_parts.length-2]+'.'+domain_parts[domain_parts.length-1];
 		System.out.println("BASE COOKIE DOMAIN IS "+_session_cookie_domain);
 	}
 	
@@ -467,7 +480,8 @@ public class HttpRequestRouter extends HttpServlet
 		Cookie c = new Cookie(GatewayConstants.SESSION_ID_KEY, http_session_id);
 		c.setMaxAge(-1);
 		c.setPath("/");
-		c.setDomain(_session_cookie_domain);
+		if(_session_cookie_domain != null)
+			c.setDomain(_session_cookie_domain);
 		response.addCookie(c);
 		return http_session_id;
 	}
