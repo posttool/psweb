@@ -1950,8 +1950,8 @@ public class WebStoreModule extends WebModule
 		
 		public void actualize() throws PersistenceException,InitializationException
 		{
-			actualize_entity_indices();
 			actualize_entity_defs();
+			actualize_entity_indices();
 			actualize_entity_relationships();
 		} 
 		
@@ -2227,8 +2227,21 @@ public class WebStoreModule extends WebModule
 		PersistentStore 	store 			   = p.getStore();
 		IEvolutionProvider 	evolution_provider = p.getEvolutionProvider();
 		List<EntityIndex> ret				= new ArrayList<EntityIndex>();
-		List<EntityIndex> existing_indices	= store.getEntityIndices(entity_name); 
-
+		List<EntityIndex> existing_indices  = null;
+		try{
+			existing_indices	= store.getEntityIndices(entity_name); 
+			
+		}catch(PersistenceException e)
+		{
+			//someone might be defining a new entity that has never existed//
+			//since now we are evloving indexes before entitites that entity
+			//might not exist yet in the store. the store throws an exception
+			//when asked for entities that it doesnt know about
+			//ENTITY OF TYPE WebStoreModuleProp DOES NOT EXIST
+			existing_indices = new ArrayList<EntityIndex>();
+			
+		}
+		
 		if(existing_indices.size() == 0)
 		{
 			for(int i = 0;i < proposed_indices.size();i++)
