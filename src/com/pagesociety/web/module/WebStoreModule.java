@@ -1950,8 +1950,8 @@ public class WebStoreModule extends WebModule
 		
 		public void actualize() throws PersistenceException,InitializationException
 		{
-			actualize_entity_defs();
 			actualize_entity_indices();
+			actualize_entity_defs();
 			actualize_entity_relationships();
 		} 
 		
