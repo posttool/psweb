@@ -872,6 +872,7 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,"PSTRO"+recurring_order.getId(),"[CATCH_UP_BILLING]oid:"+recurring_order.getId()+":user:"+order_user.getAttribute("email")+":uid:"+order_user.getId()+":amt:$"+normalize_amount(amount));
 			log_order_catchup_bill_ok(recurring_order, amount,response);
+			send_billing_ok_email(recurring_order, amount, response);
 		}
 		else
 		{
