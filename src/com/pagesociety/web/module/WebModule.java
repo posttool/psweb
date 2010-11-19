@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -796,4 +797,22 @@ public abstract class WebModule extends Module
 		
 	 ////END MATCHER STUFF//
 	 
+		protected Method LOOKUP_METHOD(Object o,String methodname,Class... params)
+		{
+				try {
+			            //
+			            // We can also get method by their name and parameter types, here we
+			            // are tryinh to get the add(int, int) method.
+			            //
+						Class clazz = o.getClass();
+			            Method method = clazz.getDeclaredMethod(methodname, params);
+			            method.setAccessible(true);
+			           // System.out.println("Method name: " + method.getName());
+			            return method;
+					} catch (NoSuchMethodException e) {
+			            //e.printStackTrace();
+			            return null;
+			        }
+		}
+		
 }
