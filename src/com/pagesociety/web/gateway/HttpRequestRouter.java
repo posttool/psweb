@@ -165,7 +165,7 @@ public class HttpRequestRouter extends HttpServlet
 		String requestPath = request.getRequestURI().substring(request.getContextPath().length());
 		String completeUrl = getUrl(request);
 		String mime_type = _servlet_config.getServletContext().getMimeType(requestPath);
-		
+
 		System.out.println("RequestPath is "+requestPath);
 		System.out.println("completeUrl is "+completeUrl);
 		System.out.println("mime_type is "+mime_type);
@@ -182,100 +182,105 @@ public class HttpRequestRouter extends HttpServlet
 			}
 		}
 		UserApplicationContext uctx = get_user_context(request, response);
-
-		
-		//System.out.println("!!!!>>"+uctx.getId()+" "+completeUrl);
-		// FORM first, because sometimes it uses the ps_session_id and doesn't want the redirect to occur
-		if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
-		{
-			form_gateway.doService(uctx, request, response);
-			return;
-		}
-		// redirect if the session id was included in requests for the following...
-		if (request.getParameter(GatewayConstants.SESSION_ID_KEY)!=null)
-		{
-			response.sendRedirect( getPathWithoutSessionId(request) );
-			return;
-		}
-		// AMF
-		if (requestPath.endsWith(GatewayConstants.SUFFIX_AMF))
-		{
-			amf_gateway.doService(uctx, request, response);
-			return;
-		}
-		// JSON
-		if (requestPath.endsWith(GatewayConstants.SUFFIX_JSON))
-		{
-			json_gateway.doService(uctx, request, response);
-			return;
-		}
-		//RAW
-		if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
-		{
-			raw_gateway.doService(uctx, request, response);
-			return;
-		}
-		//registered gateways
-		
-
-		// MAPPED from config file or module//
-		Object[] url_mapped_request = _web_application.getMapping(completeUrl);
-		
-		
-		if (url_mapped_request != null)
-		{
-			UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
-			//TODO here we are hackinginto the gateway and letting a module i.e. SiteConfigModule
-			//handle the whole request. need to refactor gateways and session managers into modules
-
-			if(url_map_info.getHandler() != null)
+		try{
+			_web_application.setCallingUserContext(uctx);
+			
+			//System.out.println("!!!!>>"+uctx.getId()+" "+completeUrl);
+			// FORM first, because sometimes it uses the ps_session_id and doesn't want the redirect to occur
+			if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
 			{
-				_web_application.INFO("MATCHED HANDLER "+((WebModule)url_map_info.getHandler()).getName());			
-				if(url_map_info.getHandler().handleRequest(uctx, request, response))
-				{
-					_web_application.INFO("HANDLER HANDLED");
-					return;
-				}
-				_web_application.INFO("HANDLER PASSED");
+				form_gateway.doService(uctx, request, response);
+				return;
 			}
-			else
+			// redirect if the session id was included in requests for the following...
+			if (request.getParameter(GatewayConstants.SESSION_ID_KEY)!=null)
 			{
-				String path = (String)url_mapped_request[1];
-				_web_application.INFO("MATCHED "+path);			
-				if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
-				{
-					response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
-					return;
-				}
-				else if (url_map_info.isSecure()==UrlMapInitParams.NOT_SECURE && !completeUrl.startsWith(_web_url))
-				{
-					response.sendRedirect( get_path(_web_url,getContextPathEtc(request),uctx) );
-					return;
-				}
-	//TODO
-	//this might work, but it might match make everything forward forever, too!
-				else 
-				{
+				response.sendRedirect( getPathWithoutSessionId(request) );
+				return;
+			}
+			// AMF
+			if (requestPath.endsWith(GatewayConstants.SUFFIX_AMF))
+			{
+				amf_gateway.doService(uctx, request, response);
+				return;
+			}
+			// JSON
+			if (requestPath.endsWith(GatewayConstants.SUFFIX_JSON))
+			{
+				json_gateway.doService(uctx, request, response);
+				return;
+			}
+			//RAW
+			if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
+			{
+				raw_gateway.doService(uctx, request, response);
+				return;
+			}
+			//registered gateways
+			
 	
-					
-					RequestDispatcher dispatcher = request.getRequestDispatcher(path);
-					dispatcher.forward(request, response);
-					return;
+			// MAPPED from config file or module//
+			Object[] url_mapped_request = _web_application.getMapping(completeUrl);
+			
+			
+			if (url_mapped_request != null)
+			{
+				UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
+				//TODO here we are hackinginto the gateway and letting a module i.e. SiteConfigModule
+				//handle the whole request. need to refactor gateways and session managers into modules
+	
+				if(url_map_info.getHandler() != null)
+				{
+					_web_application.INFO("MATCHED HANDLER "+((WebModule)url_map_info.getHandler()).getName());			
+					if(url_map_info.getHandler().handleRequest(uctx, request, response))
+					{
+						_web_application.INFO("HANDLER HANDLED");
+						return;
+					}
+					_web_application.INFO("HANDLER PASSED");
+				}
+				else
+				{
+					String path = (String)url_mapped_request[1];
+					_web_application.INFO("MATCHED "+path);			
+					if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
+					{
+						response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
+						return;
+					}
+					else if (url_map_info.isSecure()==UrlMapInitParams.NOT_SECURE && !completeUrl.startsWith(_web_url))
+					{
+						response.sendRedirect( get_path(_web_url,getContextPathEtc(request),uctx) );
+						return;
+					}
+		//TODO
+		//this might work, but it might match make everything forward forever, too!
+					else 
+					{
+		
+						
+						RequestDispatcher dispatcher = request.getRequestDispatcher(path);
+						dispatcher.forward(request, response);
+						return;
+					}
 				}
 			}
-		}
-		
-		// FREEMARKER
-		if (is_freemarker_path(requestPath))
-		{
-			freemarker_gateway.doService(uctx, requestPath, request, response);
+			
+			// FREEMARKER
+			if (is_freemarker_path(requestPath))
+			{
+				freemarker_gateway.doService(uctx, requestPath, request, response);
+				return;
+			}
+			
+			// UNKNOWN
+			File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
+			static_gateway.serveFile(request_file, mime_type, request, response);
 			return;
+		}finally
+		{
+			_web_application.removeCallingUserContext();
 		}
-		
-		// UNKNOWN
-		File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
-		static_gateway.serveFile(request_file, mime_type, request, response);
-		return;
 	}
 
 	
