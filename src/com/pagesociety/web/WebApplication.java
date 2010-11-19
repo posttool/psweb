@@ -120,6 +120,11 @@ public abstract class WebApplication
 		calling_user_context.set(uctx);
 	}
 	
+	public void removeCallingUserContext()
+	{
+		calling_user_context.remove();
+	}
+	
 	public Object dispatch(ModuleRequest request) throws WebApplicationException,Throwable
 	{
 		Module module = getModule(request.getModuleName());
@@ -127,13 +132,13 @@ public abstract class WebApplication
 			throw new WebApplicationException("WebApplication.dispatch MODULE " + request.getModuleName() + " DOES NOT EXIST");
 		UserApplicationContext uctx = request.getUserContext();
 		Object return_value = null;
-		try{
-			calling_user_context.set(uctx);
+		//try{
+		//	calling_user_context.set(uctx);
 			return_value = ModuleRegistry.invoke(module, request.getMethodName(), uctx, request.getArguments());
-		}finally
-		{
-			calling_user_context.remove();
-		}
+		//}finally
+		//{
+		//	calling_user_context.remove();
+		//}
 		request.setResult(return_value);
 		return return_value;
 	}
