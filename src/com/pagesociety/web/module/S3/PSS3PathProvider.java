@@ -450,6 +450,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 					fos.close();
 				}catch(IOException ioe){ioe.printStackTrace();}
 			}
+			e.printStackTrace();
 			throw new WebApplicationException("PROBLEM GENERATING PREVIEW FOR "+path_token,e);
 		}
 	}

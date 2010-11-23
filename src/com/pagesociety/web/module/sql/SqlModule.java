@@ -15,23 +15,26 @@ import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebModule;
 
+import freemarker.template.utility.StringUtil;
+
 public class SqlModule extends WebModule
 {
 	private static final String PARAM_DRIVER_NAME = "driver-name";
 	private static final String PARAM_DRIVER_CLASS = "driver-class";
+	private static final String PARAM_ENCODING = "character-encoding";
 	private static final String PARAM_HOST = "host";
 	private static final String PARAM_DATABASE = "database";
 	private static final String PARAM_USERNAME = "username";
 	private static final String PARAM_PASSWORD = "password";
 	private String driver_name = "mysql";
 	private String driver_class = "com.mysql.jdbc.Driver";
+	private String encoding = null;
 	private String host = "localhost";
 	private String database;
 	private String username;
 	private String password;
 
-	public void init(WebApplication app, Map<String, Object> config)
-			throws InitializationException
+	public void init(WebApplication app, Map<String, Object> config) throws InitializationException
 	{
 		super.init(app, config);
 		if (GET_OPTIONAL_CONFIG_PARAM(PARAM_DRIVER_NAME, config) != null)
@@ -40,6 +43,8 @@ public class SqlModule extends WebModule
 			driver_class = GET_OPTIONAL_CONFIG_PARAM(PARAM_DRIVER_CLASS, config);
 		if (GET_OPTIONAL_CONFIG_PARAM(PARAM_HOST, config) != null)
 			host = GET_OPTIONAL_CONFIG_PARAM(PARAM_HOST, config);
+		if (GET_OPTIONAL_CONFIG_PARAM(PARAM_ENCODING, config) != null)
+			encoding = GET_OPTIONAL_CONFIG_PARAM(PARAM_ENCODING, config);
 		database = GET_REQUIRED_CONFIG_PARAM(PARAM_DATABASE, config);
 		username = GET_REQUIRED_CONFIG_PARAM(PARAM_USERNAME, config);
 		password = GET_REQUIRED_CONFIG_PARAM(PARAM_PASSWORD, config);
@@ -50,19 +55,16 @@ public class SqlModule extends WebModule
 			con = get_connection();
 			if (!con.isClosed())
 				INFO("Successfully connected to MySQL server ...");
-		}
-		catch (Exception e)
+		} catch (Exception e)
 		{
 			throw new InitializationException("SQLException", e);
-		}
-		finally
+		} finally
 		{
 			try
 			{
 				if (con != null)
 					con.close();
-			}
-			catch (SQLException e)
+			} catch (SQLException e)
 			{
 				throw new InitializationException("SQLException (on close)", e);
 			}
@@ -72,6 +74,22 @@ public class SqlModule extends WebModule
 	private Connection get_connection() throws SQLException
 	{
 		return DriverManager.getConnection("jdbc:" + driver_name + "://" + host + "/" + database, username, password);
+	}
+
+	public SqlResults select(String table, String where, String orderby) throws WebApplicationException
+	{
+		return executeStatement("SELECT * FROM " + table + " WHERE " + where + " ORDER BY " + orderby);
+	}
+
+	public SqlResults select(String table, String where, String orderby, int offset, int pagesize) throws WebApplicationException
+	{
+		return executeStatement("SELECT * FROM " + table + " WHERE " + where + " ORDER BY " + orderby + " LIMIT " + offset + ","
+				+ pagesize);
+	}
+
+	public SqlResults select(String table, String where, String orderby, int pagesize) throws WebApplicationException
+	{
+		return select(table, where, orderby, 0, pagesize);
 	}
 
 	public SqlResults executeStatement(String sql) throws WebApplicationException
@@ -86,15 +104,6 @@ public class SqlModule extends WebModule
 			ResultSet rs = stmt.getResultSet();
 			ResultSetMetaData rsmd = rs.getMetaData();
 			int n = rsmd.getColumnCount();
-			List<List<Object>> results = new ArrayList<List<Object>>();
-			while (rs.next())
-			{
-				List<Object> res = new ArrayList<Object>();
-				for (int i = 0; i < n; i++)
-					res.add(rs.getObject(i + 1));
-				results.add(res);
-			}
-			sql_results.results = results;
 			sql_results.columns = n;
 			sql_results.columnLabel = new String[n];
 			for (int i = 0; i < n; i++)
@@ -102,19 +111,32 @@ public class SqlModule extends WebModule
 			sql_results.columnType = new String[n];
 			for (int i = 0; i < n; i++)
 				sql_results.columnType[i] = rsmd.getColumnTypeName(i + 1);
-		}
-		catch (Exception e)
+			List<List<Object>> results = new ArrayList<List<Object>>();
+			while (rs.next())
+			{
+				List<Object> res = new ArrayList<Object>();
+				for (int i = 0; i < n; i++)
+				{
+					Object o = rs.getObject(i + 1);
+					if (encoding != null && o != null && (sql_results.columnType[i].equals("VARCHAR")
+							|| sql_results.columnType[i].equals("CHAR")))
+						res.add(new String(rs.getBytes(i + 1), encoding));
+					else
+						res.add(o);
+				}
+				results.add(res);
+			}
+			sql_results.results = results;
+		} catch (Exception e)
 		{
 			throw new WebApplicationException("SQLException", e);
-		}
-		finally
+		} finally
 		{
 			try
 			{
 				if (con != null)
 					con.close();
-			}
-			catch (SQLException e)
+			} catch (SQLException e)
 			{
 				throw new WebApplicationException("SQLException (on close)", e);
 			}
@@ -128,5 +150,39 @@ public class SqlModule extends WebModule
 		public int columns;
 		public String[] columnLabel;
 		public String[] columnType;
+
+		public String toString()
+		{
+			StringBuilder b = new StringBuilder();
+			for (int i = 0; i < columns; i++)
+			{
+				b.append(col(columnLabel[i]));
+				b.append("\t");
+			}
+			b.append("\n");
+			for (int r = 0; r < results.size(); r++)
+			{
+				for (int i = 0; i < columns; i++)
+				{
+					Object o = results.get(r).get(i);
+					b.append(col(o));
+					b.append("\t");
+				}
+				b.append("\n");
+			}
+			return b.toString();
+		}
+
+		private static final int CL = 15;
+
+		private String col(Object o)
+		{
+			if (o == null)
+				return StringUtil.rightPad("NULL", CL);
+			String s = o.toString();
+			if (s.length() > CL - 1)
+				s = s.substring(0, CL - 1);
+			return StringUtil.rightPad(s, CL);
+		}
 	}
 }
