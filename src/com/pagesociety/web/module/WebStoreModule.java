@@ -313,8 +313,10 @@ public class WebStoreModule extends WebModule
 	
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Object ...attribute_name_values) throws PersistenceException
 	{
-		
-		Entity e = store.getEntityDefinition(entity_type).createInstance();
+		EntityDefinition def = store.getEntityDefinition(entity_type);
+		if (def==null)
+			throw new PersistenceException("NO SUCH ENTITY TYPE IN STORE ["+entity_type+"]");
+		Entity e = def.createInstance();
 		set_attributes(e, attribute_name_values);
 		Date now = new Date();
 		e.setAttribute(FIELD_CREATOR,creator);
