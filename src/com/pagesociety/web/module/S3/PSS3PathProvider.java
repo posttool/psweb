@@ -656,6 +656,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		{
 			Response r = new Response(c);
 			int code = r.connection.getResponseCode();
+			c.getInputStream().close();
 			// System.out.println("RESPONSE STATUS "+path_token+" IS "+code+" "+r.connection.getResponseMessage());
 		}
 		catch (IOException ioe)
