@@ -96,12 +96,14 @@ public class SqlModule extends WebModule
 	{
 		SqlResults sql_results = new SqlResults();
 		Connection con = null;
+		ResultSet rs = null;
+		Statement stmt = null;
 		try
 		{
 			con = get_connection();
-			Statement stmt = con.createStatement();
+			stmt = con.createStatement();
 			stmt.execute(sql);
-			ResultSet rs = stmt.getResultSet();
+			rs = stmt.getResultSet();
 			ResultSetMetaData rsmd = rs.getMetaData();
 			int n = rsmd.getColumnCount();
 			sql_results.columns = n;
@@ -118,8 +120,8 @@ public class SqlModule extends WebModule
 				for (int i = 0; i < n; i++)
 				{
 					Object o = rs.getObject(i + 1);
-					if (encoding != null && o != null && (sql_results.columnType[i].equals("VARCHAR")
-							|| sql_results.columnType[i].equals("CHAR")))
+					if (encoding != null && o != null
+							&& (sql_results.columnType[i].equals("VARCHAR") || sql_results.columnType[i].equals("CHAR")))
 						res.add(new String(rs.getBytes(i + 1), encoding));
 					else
 						res.add(o);
@@ -127,6 +129,7 @@ public class SqlModule extends WebModule
 				results.add(res);
 			}
 			sql_results.results = results;
+			rs.close();
 		} catch (Exception e)
 		{
 			throw new WebApplicationException("SQLException", e);
@@ -134,12 +137,26 @@ public class SqlModule extends WebModule
 		{
 			try
 			{
-				if (con != null)
-					con.close();
-			} catch (SQLException e)
+				rs.close();
+			} catch (SQLException se)
 			{
-				throw new WebApplicationException("SQLException (on close)", e);
+				se.printStackTrace();
 			}
+			try
+			{
+				stmt.close();
+			} catch (SQLException se)
+			{
+				se.printStackTrace();
+			}
+			try
+			{
+				con.close();
+			} catch (SQLException se)
+			{
+				se.printStackTrace();
+			}
+
 		}
 		return sql_results;
 	}
