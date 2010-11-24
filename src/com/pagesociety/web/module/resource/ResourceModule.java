@@ -756,7 +756,7 @@ public class ResourceModule extends WebStoreModule
 				os[i].close();
 			if(delete)
 				f.delete();
-			
+			path_provider.endParse(path_token);
 			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), f.length(), path_token);
 		}catch(Exception e)
 		{
@@ -779,7 +779,7 @@ public class ResourceModule extends WebStoreModule
 			for(int i = 0;i < os.length;i++)
 				os[i].close();
 			INFO("CREATING RESOURCE FROM TEXT ("+(length/1024)+" kb) "+path_token);
-			
+			path_provider.endParse(path_token);		
 			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), length, path_token);
 		}catch(Exception e)
 		{
