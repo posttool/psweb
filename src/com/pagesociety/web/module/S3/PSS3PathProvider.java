@@ -660,7 +660,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			// System.out.println("RESPONSE STATUS "+path_token+" IS "+code+" "+r.connection.getResponseMessage());
 		}
 		catch (IOException ioe)
-		{
+		{ 
 			current_transfer_map.remove(path_token);
 			throw new WebApplicationException("COULDNT END PARSE. MIGHT BE CANCELLED. MESSAGE WAS: "+ioe.getMessage());
 			//ERROR(ioe);
