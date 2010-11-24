@@ -779,6 +779,14 @@ public class ResourceModule extends WebStoreModule
 			for(int i = 0;i < os.length;i++)
 				os[i].close();
 			INFO("CREATING RESOURCE FROM TEXT ("+(length/1024)+" kb) "+path_token);
+			//TODO: we should change path provider interface
+			//to have a method releaseOutputStreams which will
+			//replace end parse. we will do the same thing
+			//in this method that we currently do in endparse
+			//but will also close both input andoutput streams.
+			//seems like you need to close both to force a close
+			//on the url connection object in order to avoid
+			//too many open file handles error on linux
 			path_provider.endParse(path_token);	 	
 			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), length, path_token);
 		}catch(Exception e)
