@@ -230,6 +230,11 @@ public class ExcelDumpModule extends WebStoreModule
 					else
 					{
 						FieldDefinition f = def.getField(field_names[j]);
+						if(f == null)
+						{
+							INFO("IGNORING FIELD "+field_names[j]+" ON "+entity_type);	
+							continue;
+						}
 						if(cell == null)
 						{
 							//this is a work around for open office
@@ -245,8 +250,10 @@ public class ExcelDumpModule extends WebStoreModule
 							INFO(" THIS SHOULD NOT BE HAPPENING");
 							continue;
 						}
+
 						
-						entity.setAttribute(field_names[j], parse_field_value(f, cell));
+						else
+							entity.setAttribute(field_names[j], parse_field_value(f, cell));
 					}
 				}
 				entities.add(entity);
@@ -374,6 +381,7 @@ public class ExcelDumpModule extends WebStoreModule
 
 	private Object parse_simple_value(FieldDefinition f, String s)
 	{
+		
 		if (s.equalsIgnoreCase(NULL_VALUE))
 			return null;
 		switch (f.getBaseType())
