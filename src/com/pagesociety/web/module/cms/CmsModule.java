@@ -114,17 +114,17 @@ public class CmsModule extends WebStoreModule
 			"offset", "page_size" })
 	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
 			String entity_type, List<Object> query, String order_by_attribute,
-			boolean asc, int offset, int page_size) throws WebApplicationException,
+			boolean asc, int offset, int page_size, boolean fill) throws WebApplicationException,
 			PersistenceException
 	{
 		Entity user = (Entity) ctx.getUser();
 		GUARD(user, CAN_BROWSE_ENTITY, "entity_type", entity_type);
-		PagingQueryResult result = browseEntities(entity_type, query, order_by_attribute, asc, offset, page_size);
+		PagingQueryResult result = browseEntities(entity_type, query, order_by_attribute, asc, offset, page_size, fill);
 		return result;
 	}
 
 	private PagingQueryResult browseEntities(String entity_type, List<Object> query,
-			String order_by_attribute, boolean asc, int offset, int page_size)
+			String order_by_attribute, boolean asc, int offset, int page_size, boolean fill)
 			throws PersistenceException
 	{
 		Query q = new Query(entity_type);
@@ -251,23 +251,26 @@ public class CmsModule extends WebStoreModule
 		if (order_by_attribute != null)
 			q.orderBy(order_by_attribute, asc ? Query.ASC : Query.DESC);
 		q.cacheResults(false);
-		return PAGING_QUERY_FILL(q);
+		if (fill)
+			return PAGING_QUERY_FILL(q);
+		else
+			return PAGING_QUERY(q);
 	}
 
 	@Export(ParameterNames = { "entity_type", "order_by_attribute", "asc", "offset",
 			"page_size" })
 	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
 			String entity_type, String order_by_attribute, boolean asc, int offset,
-			int page_size) throws WebApplicationException, PersistenceException
+			int page_size, boolean fill) throws WebApplicationException, PersistenceException
 	{
 		Entity user = (Entity) ctx.getUser();
 		GUARD(user, CAN_BROWSE_ENTITY, "entity_type", entity_type);
-		PagingQueryResult result = browseEntities(entity_type, order_by_attribute, asc, offset, page_size);
+		PagingQueryResult result = browseEntities(entity_type, order_by_attribute, asc, offset, page_size, fill);
 		return result;
 	}
 
 	public PagingQueryResult browseEntities(String entity_type,
-			String order_by_attribute, boolean asc, int offset, int page_size)
+			String order_by_attribute, boolean asc, int offset, int page_size, boolean fill)
 			throws PersistenceException
 	{
 		Query q = new Query(entity_type);
@@ -278,7 +281,10 @@ public class CmsModule extends WebStoreModule
 		if (order_by_attribute != null)
 			q.orderBy(order_by_attribute, asc ? Query.ASC : Query.DESC);
 		q.cacheResults(true);
-		return PAGING_QUERY_FILL(q);
+		if (fill)
+			return PAGING_QUERY_FILL(q);
+		else
+			return PAGING_QUERY(q);
 	}
 
 	@Export(ParameterNames = { "entity" })
