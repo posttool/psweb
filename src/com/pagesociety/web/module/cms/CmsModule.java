@@ -325,6 +325,24 @@ public class CmsModule extends WebStoreModule
 		DISPATCH_EVENT(EVENT_ENTITY_POST_CREATE, "candidate",e,"instance",ce);
 		return ce;
 	}
+	
+	@Export(ParameterNames = { "type","map" })
+	@TransactionProtect
+	public Entity CreateEntity(UserApplicationContext uctx, String type, Map<String,Object> value_map)
+			throws WebApplicationException, PersistenceException
+	{
+		Entity creator = (Entity) uctx.getUser();
+		GUARD(creator, CAN_CREATE_ENTITY, "type", type, "values", value_map);
+		return createEntity(creator, type,value_map);
+	}
+
+	public Entity createEntity(Entity creator, String type, Map<String,Object> value_map) throws PersistenceException,WebApplicationException
+	{
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_CREATE,"type",type, "values",value_map);
+		Entity ce = NEW(type,creator,value_map);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_CREATE, "type",type,"values",value_map,"instance",ce);
+		return ce;
+	}
 
 	@Export(ParameterNames = { "e" })
 	@TransactionProtect
@@ -335,20 +353,35 @@ public class CmsModule extends WebStoreModule
 		Entity existing_instance = GET(e.getType(), e.getId());
 		GUARD(editor, CAN_UPDATE_ENTITY, "type", e.getType(), "instance", existing_instance);
 	
-		validate_update(e);		
+
 		return updateEntity(e);
 	}
 	
-	private void validate_update(Entity e) throws WebApplicationException
-	{
-
-	}
 
 	public Entity updateEntity(Entity e) throws PersistenceException,WebApplicationException
 	{
 		DISPATCH_EVENT(EVENT_ENTITY_PRE_UPDATE, "candidate",e);
 		Entity ue = SAVE_ENTITY(e);
 		DISPATCH_EVENT(EVENT_ENTITY_POST_UPDATE, "candidate",e,"instance",ue);
+		return ue;
+	}
+	
+	@Export(ParameterNames = { "type","id","map" })
+	@TransactionProtect
+	public Entity UpdateEntity(UserApplicationContext uctx, String type,long id,Map<String,Object> update_map)
+			throws WebApplicationException, PersistenceException
+	{
+		Entity editor = (Entity) uctx.getUser();
+		//Entity existing_instance = GET(e.getType(), e.getId());
+		GUARD(editor, CAN_UPDATE_ENTITY, "type", type, "values", update_map);
+		return updateEntity(type,id,update_map);
+	}
+	
+	public Entity updateEntity(String type,long id,Map<String,Object> update_map) throws PersistenceException,WebApplicationException
+	{
+		DISPATCH_EVENT(EVENT_ENTITY_PRE_UPDATE, "type",type,"id",id,"values",update_map);
+		Entity ue = UPDATE(type, id, update_map);
+		DISPATCH_EVENT(EVENT_ENTITY_POST_UPDATE, "type",type,"id",id,"values",update_map,"instance",ue);
 		return ue;
 	}
 
