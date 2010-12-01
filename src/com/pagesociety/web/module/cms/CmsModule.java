@@ -114,6 +114,16 @@ public class CmsModule extends WebStoreModule
 			"offset", "page_size" })
 	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
 			String entity_type, List<Object> query, String order_by_attribute,
+			boolean asc, int offset, int page_size) throws WebApplicationException,
+			PersistenceException
+	{
+		return BrowseEntities(ctx,entity_type,query,order_by_attribute,asc,offset,page_size,true);
+	}
+	
+	@Export(ParameterNames = { "entity_type", "index_info", "order_by_attribute", "asc",
+			"offset", "page_size", "fill_deep" })
+	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
+			String entity_type, List<Object> query, String order_by_attribute,
 			boolean asc, int offset, int page_size, boolean fill) throws WebApplicationException,
 			PersistenceException
 	{
@@ -257,6 +267,17 @@ public class CmsModule extends WebStoreModule
 			return PAGING_QUERY(q);
 	}
 
+	@Export(ParameterNames = { "entity_type", "order_by_attribute", "asc", "offset",
+	"page_size" })
+	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
+		String entity_type, String order_by_attribute, boolean asc, int offset,
+		int page_size) throws WebApplicationException, PersistenceException
+	{
+		return BrowseEntities( ctx,
+				 entity_type,  order_by_attribute,  asc,  offset,
+				 page_size,  true);
+	}
+		
 	@Export(ParameterNames = { "entity_type", "order_by_attribute", "asc", "offset",
 			"page_size" })
 	public PagingQueryResult BrowseEntities(UserApplicationContext ctx,
