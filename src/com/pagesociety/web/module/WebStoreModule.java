@@ -313,45 +313,48 @@ public class WebStoreModule extends WebModule
 	
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Object ...attribute_name_values) throws PersistenceException
 	{
-		EntityDefinition def = store.getEntityDefinition(entity_type);
-		if (def==null)
-			throw new PersistenceException("NO SUCH ENTITY TYPE IN STORE ["+entity_type+"]");
-		Entity e = def.createInstance();
-		set_attributes(e, attribute_name_values);
+		//EntityDefinition def = store.getEntityDefinition(entity_type);
+		//if (def==null)
+		//	throw new PersistenceException("NO SUCH ENTITY TYPE IN STORE ["+entity_type+"]");
+		//Entity e = def.createInstance();
+		//set_attributes(e, attribute_name_values);
+		
+		Map<String,Object> value_map = KEY_VALUE_PAIRS_TO_MAP(attribute_name_values);
+		
 		Date now = new Date();
-		e.setAttribute(FIELD_CREATOR,creator);
-		e.setAttribute(FIELD_DATE_CREATED,now);
-		e.setAttribute(FIELD_LAST_MODIFIED,now);
+		value_map.put(FIELD_CREATOR,creator);
+		value_map.put(FIELD_DATE_CREATED,now);
+		value_map.put(FIELD_LAST_MODIFIED,now);
 		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
 		Integer tid = CURRENT_TRANSACTION_ID();
 		if(tid == null)
-			return store.saveEntity(e);
+			return store.createEntity(entity_type, value_map);
 		else
-			return store.saveEntity(tid,e);
+			return store.createEntity(tid, entity_type, value_map);
 	}
 	
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Map<String,Object> entity_atts) throws PersistenceException
 	{
-		EntityDefinition def = store.getEntityDefinition(entity_type);
-		if (def==null)
-			throw new PersistenceException("NO SUCH ENTITY TYPE IN STORE ["+entity_type+"]");
-		Entity e = def.createInstance();
-		Iterator<String> keys = entity_atts.keySet().iterator();
-		while(keys.hasNext())
-		{
-			String key = keys.next();
-			e.setAttribute(key, entity_atts.get(key));
-		}
+		//EntityDefinition def = store.getEntityDefinition(entity_type);
+		//if (def==null)
+		//	throw new PersistenceException("NO SUCH ENTITY TYPE IN STORE ["+entity_type+"]");
+		//Entity e = def.createInstance();
+		//Iterator<String> keys = entity_atts.keySet().iterator();
+		//while(keys.hasNext())
+		//{
+		//	String key = keys.next();
+		//	e.setAttribute(key, entity_atts.get(key));
+		//}
 		Date now = new Date();
-		e.setAttribute(FIELD_CREATOR,creator);
-		e.setAttribute(FIELD_DATE_CREATED,now);
-		e.setAttribute(FIELD_LAST_MODIFIED,now);
+		entity_atts.put(FIELD_CREATOR,creator);
+		entity_atts.put(FIELD_DATE_CREATED,now);
+		entity_atts.put(FIELD_LAST_MODIFIED,now);
 		//e.setAttribute("reverse_last_modified",new Date(Long.MAX_VALUE-now.getTime()));
 		Integer tid = CURRENT_TRANSACTION_ID();
 		if(tid == null)
-			return store.saveEntity(e);
+			return store.createEntity(entity_type,entity_atts);
 		else
-			return store.saveEntity(tid,e);
+			return store.createEntity(tid,entity_type,entity_atts);
 	}
 	
 	public static void set_attributes(Entity e,Object[] attribute_name_values)
@@ -373,6 +376,7 @@ public class WebStoreModule extends WebModule
 	}
 	
 	/*SAVE NEW*/
+	//this should be deprecated...use NEW
 	public static Entity CREATE_ENTITY(PersistentStore store,Entity creator,Entity e) throws PersistenceException
 	{			
 		Date now = new Date();
@@ -386,6 +390,22 @@ public class WebStoreModule extends WebModule
 			return store.saveEntity(tid,e);
 
 	}
+	
+	/*SAVE NEW*/
+	public static Entity CREATE_ENTITY(PersistentStore store,Entity creator,String type,Map<String,Object> value_map) throws PersistenceException
+	{			
+		Date now = new Date();
+		value_map.put(FIELD_CREATOR,creator);
+		value_map.put(FIELD_DATE_CREATED,now);
+		value_map.put(FIELD_LAST_MODIFIED,now);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.createEntity(type,value_map);
+		else
+			return store.createEntity(tid,type,value_map);
+
+	}
+	
 	
 	public static Entity EXPAND(PersistentStore store, Entity e) throws PersistenceException
 	{
@@ -601,14 +621,13 @@ public class WebStoreModule extends WebModule
 		return (Entity)instance;
 	}
 	
-	public static Entity UPDATE(PersistentStore store,String entity_type,long entity_id,Object... name_value_pairs) throws PersistenceException,WebApplicationException
-	{
-		Entity e = GET(store,entity_type,entity_id);
-		return UPDATE(store,e,name_value_pairs);
-	}
-	
+
 	public static Entity UPDATE(PersistentStore store,Entity instance,Map<String,Object> entity_atts) throws PersistenceException
 	{
+		//we do this setting of the attributes to 
+		//make sure the local copy attributes get updated
+		//sometimes we do UPDATE(instance,NAME,"foo"
+		//and we expect foo to be in the NAME field of instance
 		Entity e = instance;
 		Iterator<String> keys = entity_atts.keySet().iterator();
 		while(keys.hasNext())
@@ -616,13 +635,11 @@ public class WebStoreModule extends WebModule
 			String key = keys.next();
 			e.setAttribute(key, entity_atts.get(key));
 		}
+		
 		Date now = new Date();
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
-		Integer tid = CURRENT_TRANSACTION_ID();
-		if(tid == null)
-			return store.saveEntity(e);	
-		else
-			return store.saveEntity(tid,e);	
+		entity_atts.put(FIELD_LAST_MODIFIED,now);
+		return UPDATE(store,instance.getType(),instance.getId(),entity_atts);
 	}
 
 	public static Entity UPDATE(PersistentStore store,Entity instance,Object... name_value_pairs) throws PersistenceException
@@ -631,17 +648,27 @@ public class WebStoreModule extends WebModule
 			throw new PersistenceException("BAD UPDATE.CANNOT UPDATE A NULL ENTITY");
 
 		set_attributes(instance, name_value_pairs);
+		Map<String,Object> update_vals = KEY_VALUE_PAIRS_TO_MAP(name_value_pairs);
 		Date now = new Date();
 		instance.setAttribute(FIELD_LAST_MODIFIED,now);
-		Integer tid = CURRENT_TRANSACTION_ID();
-		if(tid == null)
-			return store.saveEntity(instance);	
-		else
-			return store.saveEntity(tid,instance);	
-	
+		update_vals.put(FIELD_LAST_MODIFIED,now);
+		return UPDATE(store,instance.getType(),instance.getId(),update_vals);
+
 	}
 
+	public static Entity UPDATE(PersistentStore store,String entity_type,long entity_id,Map<String,Object> update_values) throws PersistenceException
+	{
+		Date now = new Date();
+		update_values.put(FIELD_LAST_MODIFIED,now);
+		Integer tid = CURRENT_TRANSACTION_ID();
+		if(tid == null)
+			return store.updateEntity(entity_type,entity_id,update_values);	
+		else
+			return store.updateEntity(tid,entity_type,entity_id,update_values);	
+	}
+	
 	/*SAVE UPDATE */
+	//THIS SHOULD BE DEPRECATED USE NEW UPDATE//
 	public static Entity SAVE_ENTITY(PersistentStore store,Entity instance) throws PersistenceException
 	{
 		if(instance == null)
@@ -907,10 +934,16 @@ public class WebStoreModule extends WebModule
 	{
 		return NEW(store,entity_type,creator,attribute_name_values);
 	}
-	
+
+	//DEPRECATE THIS
 	public Entity CREATE_ENTITY(Entity creator,Entity instance) throws PersistenceException
 	{
 		return CREATE_ENTITY(store,creator,instance);
+	}
+	
+	public Entity CREATE_ENTITY(Entity creator,String type,Map<String,Object> value_map) throws PersistenceException
+	{
+		return CREATE_ENTITY(store,creator,type,value_map);
 	}
 	
 	public Entity EXPAND(Entity e) throws PersistenceException
@@ -978,9 +1011,9 @@ public class WebStoreModule extends WebModule
 		return FILL_REFS(store, instance);
 	}
 	
-	public Entity UPDATE(String entity_type,long entity_id,Object... name_value_pairs) throws PersistenceException,WebApplicationException
+	public Entity UPDATE(String entity_type,long entity_id,Map<String,Object> value_map) throws PersistenceException,WebApplicationException
 	{
-		return UPDATE(store,entity_type,entity_id,name_value_pairs);
+		return UPDATE(store,entity_type,entity_id,value_map);
 	}
 	
 	
@@ -995,6 +1028,7 @@ public class WebStoreModule extends WebModule
 	}
 	
 	/*UPDATE for Entity*/
+	//TODO: DEPRECATE THIS
 	public Entity SAVE_ENTITY(Entity instance) throws PersistenceException
 	{
 		return SAVE_ENTITY(store,instance);
