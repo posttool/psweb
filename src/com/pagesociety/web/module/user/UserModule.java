@@ -473,6 +473,8 @@ public class UserModule extends WebStoreModule
 	public Entity Logout(UserApplicationContext uctx) throws PersistenceException,WebApplicationException
 	{
 		Entity user = (Entity)uctx.getUser();
+		if(user == null)
+			return null;
 		user = GET(USER_ENTITY,user.getId());//get from db so the session one
 											//doesnt side effect the saved one
 											//(ie blanked out password)
