@@ -581,12 +581,30 @@ public abstract class WebModule extends Module
     
     public static Map<String,Object> KEY_VALUE_PAIRS_TO_MAP(Object... kvp)
     {
+    
+    		
     	Map<String,Object> map = new HashMap<String,Object>();
-    	for(int i = 0;i < kvp.length;i+=2)
-    	{
-    		map.put((String)kvp[i],kvp[i+1]);
-    	}
+    	kvp_helper(map,kvp);
+    	
+    
     	return map;
+    }
+    
+    private static void kvp_helper(Map<String,Object> map,Object[] kvp)
+    {
+    	for(int i = 0;i < kvp.length;)
+    	{
+    		if(kvp[i].getClass() == Object[].class)
+			{
+				kvp_helper(map,(Object[]) kvp[i]);
+				i++;
+			}
+    		else
+    		{
+    			map.put((String)kvp[i],kvp[i+1]);	
+    			i+=2;
+    		}
+    	}
     }
     
     public static Object[] MAP_TO_KEY_VALUE_PAIRS(Map<String,Object> map)

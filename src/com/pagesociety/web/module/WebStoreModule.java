@@ -311,7 +311,7 @@ public class WebStoreModule extends WebModule
 
 
 	
-	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Object ...attribute_name_values) throws PersistenceException
+	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Object...attribute_name_values) throws PersistenceException
 	{
 		//EntityDefinition def = store.getEntityDefinition(entity_type);
 		//if (def==null)
@@ -930,7 +930,7 @@ public class WebStoreModule extends WebModule
 	{
 		return NEW(store,entity_type,creator,atts);
 	}
-	public Entity NEW(String entity_type,Entity creator,Object ...attribute_name_values) throws PersistenceException
+	public Entity NEW(String entity_type,Entity creator,Object... attribute_name_values) throws PersistenceException
 	{
 		return NEW(store,entity_type,creator,attribute_name_values);
 	}
