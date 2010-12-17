@@ -77,12 +77,18 @@ public class JsonGateway
 	}
 
 	private void doError(Throwable e, UserApplicationContext user_context,
-			HttpServletRequest servlet_request, String request_path,
+			HttpServletRequest request, String request_path,
 			ServletResponse response) throws IOException
 	{
+		String text_response = JsonEncoder.encode(new ErrorMessage(e));
+		if (request.getParameter("callback") != null)
+			text_response = request.getParameter("callback")+"("+text_response+");";
+		if (request.getParameter("encode") != null)
+			text_response = Text.encodeURIComponent(text_response);
+
 		PrintWriter out = response.getWriter();
 		response.setContentType(GatewayConstants.MIME_TYPE_JS);
-		out.write(JsonEncoder.encode(new ErrorMessage(e)));
+		out.write(text_response);
 		out.close();
 	}
 
