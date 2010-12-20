@@ -250,6 +250,24 @@ public abstract class WebModule extends Module
 		}
 		return data_file;
 	}
+	
+	protected  File GET_MODULE_DATA_DIR(WebApplication app,String dirname,boolean create) throws WebApplicationException
+	{
+		File data_dir  =  GET_MODULE_DATA_DIRECTORY(app);
+		File data_file = new File(data_dir,dirname);
+		if(!data_file.exists() && create)
+		{
+			System.out.println("CREATING DATA DIRECTORY FOR MODULE: "+getName()+"\n\t"+data_file.getAbsolutePath());
+			boolean success = data_file.mkdirs();
+			if(!success)
+				throw new WebApplicationException("UNABLE TO CREATE "+data_file);
+		}
+		else if(!data_file.exists() && ! create)
+		{
+			return null;
+		}
+		return data_file;
+	}
 
 	
 	protected  FileReader GET_MODULE_DATA_FILE_READER(WebApplication app,String filename,boolean create) throws WebApplicationException
@@ -831,6 +849,32 @@ public abstract class WebModule extends Module
 			            //e.printStackTrace();
 			            return null;
 			        }
+		}
+		
+		
+		protected Process EXEC(String cmd,String... args) throws WebApplicationException
+		{
+			
+			Runtime rt = Runtime.getRuntime();
+			String[] cmd_array = new String[1+args.length];
+			cmd_array[0] = cmd;
+			for(int i = 0;i < args.length;i++)
+			{
+				cmd_array[i+1] = args[i];
+			}
+			try{
+				Process pr = rt.exec(cmd_array);
+				return pr;
+			}catch(IOException e)
+			{
+				StringBuilder buf = new StringBuilder();
+				for(int i = 0;i < cmd_array.length;i++)
+				{
+					buf.append(cmd_array[i]+" ");
+				}
+				throw new WebApplicationException("FAILED EXECUTING CMD "+buf.toString());
+			}
+
 		}
 		
 }
