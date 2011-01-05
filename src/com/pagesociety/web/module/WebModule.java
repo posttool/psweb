@@ -877,7 +877,7 @@ public abstract class WebModule extends Module
 
 		}
 		
-		private static boolean DELETE_DIR(File dir) 
+		public static boolean DELETE_DIR(File dir) 
 		{
 			if (dir.isDirectory())
 			{
