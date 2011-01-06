@@ -67,7 +67,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 						}catch(PersistenceException p)
 						{
 							ERROR(p);
-							throw new SyncException(getName()+": FAILED ADDING INDEX "+idx+" TO "+entity_name);
+							throw new SyncException(getName()+": FAILED DELETING INDEX "+idx+" TO "+entity_name);
 						}
 					}
 				}
