@@ -57,7 +57,7 @@ public class SqlModule extends WebModule
 				INFO("Successfully connected to MySQL server ...");
 		} catch (Exception e)
 		{
-			throw new InitializationException("SQLException", e);
+			ERROR(e);
 		} finally
 		{
 			try
