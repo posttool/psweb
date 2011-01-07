@@ -73,6 +73,7 @@ public class SqlModule extends WebModule
 
 	private Connection get_connection() throws SQLException
 	{
+		DriverManager.setLoginTimeout(10);
 		return DriverManager.getConnection("jdbc:" + driver_name + "://" + host + "/" + database, username, password);
 	}
 
