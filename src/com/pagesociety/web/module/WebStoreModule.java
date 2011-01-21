@@ -1441,8 +1441,7 @@ public class WebStoreModule extends WebModule
 	{
 		if(e == null)
 			return null;
-		
-		
+			
 		if(clone_map.containsKey(e))
 			return clone_map.get(e);
 
@@ -1452,8 +1451,6 @@ public class WebStoreModule extends WebModule
 			return clone;
 		
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
-
-
 		for(int i = 0;i < ref_fields.size();i++)
 		{
 			FieldDefinition ref_field 	 = ref_fields.get(i);
@@ -2420,6 +2417,47 @@ public class WebStoreModule extends WebModule
 			return PAGING_QUERY_FILL_DEEP_AND_MASK(q, fill_fields, mask_fields);
 	}
 
+	//STEPPING THROUGH ALL ENTITIES OF A TYPE
+	
+	public static final Object CALLBACK_VOID = new Object();
+	public class CALLBACK
+	{
+
+		public Object exec(Object... args) throws Exception
+		{
+			return CALLBACK_VOID;
+		}
+	}
+	
+	protected void PAGE_APPLY(String type,CALLBACK c) throws PersistenceException,WebApplicationException
+	{
+		int page_size 	= 100;
+		int num_results = page_size;
+		int page = 0;
+		do
+		{
+			Query q = new Query(type);
+			q.idx(Query.PRIMARY_IDX);
+			q.eq(Query.VAL_GLOB);
+			q.offset(page*page_size);
+			q.pageSize(page_size);
+			QueryResult result = QUERY(q);
+			num_results 		= result.size();
+			List<Entity> ee 	= result.getEntities();
+			for(int i = 0;i < ee.size();i++)
+			{
+				try{
+					c.exec(ee.get(i));
+				}catch(Exception e)
+				{
+					e.printStackTrace();
+					throw new WebApplicationException("PROBLEM APPLYING FUNCTION "+e.getMessage());
+				}
+			}
+			page++;
+		}while(num_results >= page_size);
+	}
+	
 	
 	//TRANSACTIONS///
 	private static ThreadLocal<List<Integer>> current_transaction_id_list = new ThreadLocal<List<Integer>>();
