@@ -32,6 +32,10 @@ public class ModuleEvent
 		event_context.put(prop,val);
 	}
 	
+	public Map<String,Object> getProperties()
+	{
+		return event_context;
+	}
 	
 	public String toString()
 	{
