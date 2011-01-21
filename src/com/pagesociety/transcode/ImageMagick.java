@@ -67,10 +67,8 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	//on the simple type.
 	public String get_resize_geometry_string()
 	{
-		boolean is_macosx = isMacOSX();
+		//boolean is_macosx = isMacOSX();
 		StringBuilder buf = new StringBuilder();
-		if(is_macosx)
-			buf.append("\"");
 		if(width != 0 )
 			buf.append(String.valueOf(width));
 		if(height != 0 )
@@ -80,8 +78,6 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 		}
 		if(width != 0 || height != 0)
 			buf.append(">");
-		if(is_macosx)
-			buf.append("\"");
 		return buf.toString();
 	}
 	
@@ -127,10 +123,10 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	//
 	public static void main(String[] args)
 	{
-		String bp1 = "C:\\Users\\Public\\Pictures\\Sample Pictures\\VAIO Sample Pictures\\";
-		File f1 = new File(bp1 + "2007VAIO_SS04.jpg");
-		File f2 = new File(bp1 + "2007VAIO_SS04.png");
-		ImageMagick.setRuntimeExecPath("C:\\Program Files\\ImageMagick-6.3.5-Q16\\convert.exe");
+		String bp1 = "/Users/posttool/Pictures";
+		File f1 = new File(bp1 , "daya.jpg");
+		File f2 = new File(bp1 , "daya_1.jpg");
+		ImageMagick.setRuntimeExecPath("/Applications/ImageMagick-6.6.3/bin/convert");
 		ImageMagick i = new ImageMagick(f1, f2);
 		i.setSize(150, 150);
 		try{

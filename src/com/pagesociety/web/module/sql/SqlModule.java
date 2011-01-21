@@ -202,5 +202,6 @@ public class SqlModule extends WebModule
 				s = s.substring(0, CL - 1);
 			return StringUtil.rightPad(s, CL);
 		}
+		
 	}
 }

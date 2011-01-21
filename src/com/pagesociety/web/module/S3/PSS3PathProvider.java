@@ -305,7 +305,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	public List<ListEntry> list(String prefix, String marker, Integer max_keys)
 			throws WebApplicationException
 	{
-		if (prefix.equals("*"))
+		if (prefix != null && prefix.equals("*"))
 			prefix = null;
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key);
 		try

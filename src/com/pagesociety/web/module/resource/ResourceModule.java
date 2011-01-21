@@ -38,6 +38,7 @@ import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.S3.amazon.ListEntry;
 import com.pagesociety.web.upload.MultipartForm;
 import com.pagesociety.web.upload.MultipartFormConstants;
 import com.pagesociety.web.upload.MultipartFormException;
@@ -762,6 +763,18 @@ public class ResourceModule extends WebStoreModule
 		{
 			ERROR(e);
 			throw new WebApplicationException("PROBLEM ADDING RESOURCE FROM FILE");
+		}
+	}
+	
+	public Entity createResource(Entity creator,String filename, String path_token, long size) throws WebApplicationException,PersistenceException
+	{
+		try{
+			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(filename);
+			return do_add_resource(null, creator, content_type, FileInfo.getSimpleTypeAsString(filename), filename, FileInfo.getExtension(filename), size, path_token);
+		}catch(Exception ex)
+		{
+			ERROR(ex);
+			throw new WebApplicationException("PROBLEM ADDING RESOURCE FROM PATH_TOKEN");
 		}
 	}
 	
