@@ -184,7 +184,7 @@ public class HttpRequestRouter extends HttpServlet
 		UserApplicationContext uctx = get_user_context(request, response);
 		try{
 			_web_application.setCallingUserContext(uctx);
-			
+			set_uctx_system_info(uctx,request,response);
 			//System.out.println("!!!!>>"+uctx.getId()+" "+completeUrl);
 			// FORM first, because sometimes it uses the ps_session_id and doesn't want the redirect to occur
 			if (requestPath.endsWith(GatewayConstants.SUFFIX_FORM))
@@ -293,8 +293,11 @@ public class HttpRequestRouter extends HttpServlet
 	private void set_uctx_user_agent_info(UserApplicationContext uctx,HttpServletRequest request,HttpServletResponse response)
 	{
 		String agent_string = request.getHeader("user-agent");
+		uctx.setProperty("USER-AGENT", agent_string);
+		
 		//TODO: check out the UserAgentTools below and put that crap
 		//in the usercontext
+		
 		String[] os_info 	  = UserAgentTools.getOS(agent_string);
 		String[] browser_info = UserAgentTools.getBrowser(agent_string);
 	}
