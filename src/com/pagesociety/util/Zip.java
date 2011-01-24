@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -33,18 +34,56 @@ public class Zip
 				origin = new BufferedInputStream(fi, BUFFER);
 				ZipEntry entry = new ZipEntry(files[i]);
 				out.putNextEntry(entry);
-				int count;
-				while ((count = origin.read(data, 0, BUFFER)) != -1)
+				int total = 0;
+				int c;
+				while ((c = origin.read(data, 0, BUFFER)) != -1)
 				{
-					out.write(data, 0, count);
+					out.write(data, 0, c);
+					total += c;
 				}
 				origin.close();
 			}
 			out.close();
-		}
-		catch (Exception e)
+		} catch (Exception e)
 		{
 			e.printStackTrace();
+		}
+	}
+
+	public static void zipDir(File dir, File zip) throws Exception
+	{
+		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+		System.out.println("Creating : " + zip);
+		addDir(dir, dir, out);
+		out.close();
+	}
+
+	public static void addDir(File root, File dirObj, ZipOutputStream out) throws IOException
+	{
+		File[] files = dirObj.listFiles();
+		byte[] tmpBuf = new byte[1024];
+		int split_idx = root.getAbsolutePath().length() + 1;
+
+		for (int i = 0; i < files.length; i++)
+		{
+			String path = files[i].getAbsolutePath().substring(split_idx) ;
+			if (files[i].isDirectory())
+			{
+				System.out.println(" Adding directory: " + path);
+				out.putNextEntry(new ZipEntry(path+ "/"));
+				addDir(root, files[i], out);
+				continue;
+			}
+			System.out.println(" Adding file: " + path);
+			FileInputStream in = new FileInputStream(files[i]);
+			out.putNextEntry(new ZipEntry(path));
+			int len;
+			while ((len = in.read(tmpBuf)) > 0)
+			{
+				out.write(tmpBuf, 0, len);
+			}
+			out.closeEntry();
+			in.close();
 		}
 	}
 
@@ -75,10 +114,10 @@ public class Zip
 				dest.close();
 			}
 			zis.close();
-		}
-		catch (Exception e)
+		} catch (Exception e)
 		{
 			e.printStackTrace();
 		}
 	}
+
 }
