@@ -61,6 +61,7 @@ public class CommentModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
+		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
 	}
 	
 	protected void defineSlots()
@@ -156,7 +157,7 @@ public class CommentModule extends WebStoreModule
 		return false;
 	}
 	
-	public Entity createComment(Entity creator,String title,String comment,Entity target,Map<String,Object> rating_data) throws WebApplicationException,PersistenceException,BillingGatewayException
+	public Entity createComment(Entity creator,String title,String comment,Entity target,Map<String,Object> rating_data) throws WebApplicationException,PersistenceException
 	{
 
 		Entity c =  NEW(COMMENT_ENTITY,
@@ -487,13 +488,8 @@ public class CommentModule extends WebStoreModule
 	private void notify_evolution(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		rating_module		 = (ICommentRatingModule)getSlot(SLOT_COMMENT_RATING_MODULE);
-		commentable_entities = GET_REQUIRED_LIST_PARAM(PARAM_COMMENTABLE_ENTITIES, config);		
-		if(rating_module != null)
-		{
-		//	EVOLVE_IGNORE_FIELD(COMMENT_ENTITY, rating_module.getCommentRatingFields(COMMENT_ENTITY));
-		//	for(int i = 0;i < commentable_entities.length;i++)
-		//		EVOLVE_IGNORE_FIELD(commentable_entities[i], rating_module.getCommentTargetRatingFields(commentable_entities[i]));
-		}
+
+
 	}
 
 
