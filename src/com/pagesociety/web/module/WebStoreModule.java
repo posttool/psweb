@@ -413,7 +413,9 @@ public class WebStoreModule extends WebModule
 			return null;
 		if(!e.isLightReference())
 			return e;
-		return GET(store,e.getType(),e.getId());
+		Entity ee =  GET(store,e.getType(),e.getId());
+		e.setAttributes(ee.getAttributes());
+		return ee;
 	}
 	
 	public static Entity FORCE_EXPAND(PersistentStore store, Entity e) throws PersistenceException
@@ -547,6 +549,7 @@ public class WebStoreModule extends WebModule
 	/*pass EMPTY_STRING_ARRAY for mask fields to mask none and FILL_ALL_FIELDS && FILL_NO_FIELDS to fill none for fill)fields to fill all */
 	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields,Map<Entity,Entity> seen_references) throws PersistenceException
 	{
+		EXPAND(store,e);
 		if(e == null || c == d)
 			return;
 
@@ -1108,11 +1111,13 @@ public class WebStoreModule extends WebModule
 
 	public Entity FILL_DEEP_AND_MASK(Entity e,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
+		
 		return FILL_DEEP_AND_MASK(store, e,fill_fields,mask_fields);
 	}
 
 	public Entity FILL_DEEP(Entity e) throws PersistenceException
 	{
+		e = EXPAND(e);
 		return FILL_DEEP_AND_MASK(store, e,FILL_ALL_FIELDS,MASK_NO_FIELDS);
 	}
 	
