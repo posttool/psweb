@@ -577,11 +577,18 @@ public class WebStoreModule extends WebModule
 			if(fd == null)//this can hapen when you use the explict fill since all fieldnames will not be in all entities
 				continue;
 		
-			for(int m = 0;m < mask_fields.length;m++)
-			{
-				if(mask_fields[m].equals(ref_field_name))
-					continue;
-			}
+			//for(int m = 0;m < mask_fields.length;m++)
+			//{
+			//	if(mask_fields[m].equals(ref_field_name))
+			//		continue;
+			//}
+			/* I replaced the above routine with the one below
+			 * They should be finctionally equivalent since
+			 * we are nulling out the masked fields above
+			 */
+			if(e.getAttribute(ref_field_name) == null)
+				continue;
+			
 			FILL_REF(store,e,ref_field_name);
 			
 			if(fd.isArray())
