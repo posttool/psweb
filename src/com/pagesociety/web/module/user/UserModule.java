@@ -601,7 +601,7 @@ public class UserModule extends WebStoreModule
 	}
 	
 	@Export
-	public Entity GetUser(UserApplicationContext uctx) throws PersistenceException
+	public Entity GetUser(UserApplicationContext uctx) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		if(user == null)
