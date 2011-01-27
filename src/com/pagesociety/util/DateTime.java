@@ -10,6 +10,7 @@ public class DateTime {
 	private static SimpleDateFormat dateFormatDB = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static SimpleDateFormat dateFormatMessage = new SimpleDateFormat("HH:mm, d MMM yyyy");
 	private static SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss");
+	private static SimpleDateFormat timestamp_no_underscore = new SimpleDateFormat("yyyyMMddHHmmss");
 
 	public static Date toDate(String s, boolean dayFirst) {
 		String sep = " ";
@@ -67,5 +68,10 @@ public class DateTime {
 	public static String getTimeStamp()
 	{
 		return timestamp.format(new Date());
+	}
+	
+	public static String getTimeStampNoUnderscore()
+	{
+		return timestamp_no_underscore.format(new Date());
 	}
 }

@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.PersistenceException;
@@ -21,7 +19,6 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.AccountLockedException;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.LoginFailedException;
-import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.GatewayConstants;
 import com.pagesociety.web.module.Export;
@@ -29,7 +26,6 @@ import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.TransactionProtect;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.permissions.PermissionEvaluator;
-import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.util.Util;
 import com.pagesociety.web.module.util.Validator;
 
