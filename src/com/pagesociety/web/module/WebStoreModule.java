@@ -2431,15 +2431,7 @@ public class WebStoreModule extends WebModule
 
 	//STEPPING THROUGH ALL ENTITIES OF A TYPE
 	
-	public static final Object CALLBACK_VOID = new Object();
-	public class CALLBACK
-	{
 
-		public Object exec(Object... args) throws Exception
-		{
-			return CALLBACK_VOID;
-		}
-	}
 	
 	protected void PAGE_APPLY(String type,CALLBACK c) throws PersistenceException,WebApplicationException
 	{
@@ -2568,4 +2560,7 @@ public class WebStoreModule extends WebModule
 		}
 		
 	}
+	
+	
+
 }

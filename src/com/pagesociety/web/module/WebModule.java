@@ -895,4 +895,15 @@ public abstract class WebModule extends Module
 			return dir.delete();
 		} 
 		
+		
+		public static final Object CALLBACK_VOID = new Object();
+		public class CALLBACK
+		{
+
+			public Object exec(Object... args) throws Exception
+			{
+				return CALLBACK_VOID;
+			}
+		}
+		
 }
