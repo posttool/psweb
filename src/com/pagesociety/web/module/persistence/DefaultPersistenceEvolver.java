@@ -1,16 +1,16 @@
 package com.pagesociety.web.module.persistence;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityDefinition;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
-import com.pagesociety.persistence.PersistentStore;
-import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
@@ -150,7 +150,12 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					}
 				}
 				
-		}catch(Exception e)
+		}
+		catch (SyncException se)
+		{
+			throw se;
+		}
+		catch(Exception e)
 		{
 			System.out.println("@@@@@@@@@@@@BAH!!!");
 			e.printStackTrace();
@@ -163,13 +168,33 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 	public void evolveEntity(WebStoreModule.schema_receiver resolver,EntityDefinition old_def,
 			EntityDefinition proposed_def) throws SyncException
 	{
+		
 		try{
 			boolean go_on = confirm("REALLY EVOLVE "+proposed_def.getName());
 			if(!go_on)
 				return;
-			List<FieldDefinition> delete_fields = new ArrayList<FieldDefinition>();
-			List<FieldDefinition> add_fields	= new ArrayList<FieldDefinition>();
-			calc_added_and_deleted_fields(old_def, proposed_def, delete_fields, add_fields);
+			List<FieldDefinition> delete_fields 	= new ArrayList<FieldDefinition>();
+			List<FieldDefinition> add_fields		= new ArrayList<FieldDefinition>();
+			List<FieldDefinition[]> changed_fields	= new ArrayList<FieldDefinition[]>();
+			calc_added_and_deleted_and_changed_fields(old_def, proposed_def, delete_fields, add_fields,changed_fields);
+
+			if(changed_fields.size() != 0)
+			{
+				StringBuilder incompatible_buf = new StringBuilder();
+				for(int i = 0;i < changed_fields.size();i++)
+				{
+					FieldDefinition of = changed_fields.get(i)[0];
+					FieldDefinition nf = changed_fields.get(i)[1];
+					boolean handled = false;//handle_field_def_change(old_def,proposed_def,of,nf);
+					
+					if(!handled)
+						incompatible_buf.append("FIELD "+of.getName()+" default_values: "+of.getDefaultValue()+" -> "+nf.getDefaultValue()+" types:"+FieldDefinition.typeAsString(of.getType())+" -> "+FieldDefinition.typeAsString(nf.getType())+"\n");
+				}
+				if(incompatible_buf.length() > 0)
+					force_abort("INCOMPATIBLE CHANGES FOR FIELD EVOLUTION:\n"+incompatible_buf.toString());
+				
+			}
+			
 			if(delete_fields.size() == 0)
 			{
 				for(int i = 0;i < add_fields.size();i++)
@@ -325,10 +350,32 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		return false;
 	}
 	
-	private void calc_added_and_deleted_fields(EntityDefinition old_def,EntityDefinition new_def,List<FieldDefinition> delete_fields,List<FieldDefinition> add_fields)
+	private void force_abort(String message) throws InitializationException
+	{
+		String answer = null;
+		while(answer == null)
+		{
+			try{
+				answer = GET_CONSOLE_INPUT(message+"\n\t[A] Abort\n");
+			}catch(WebApplicationException wae)
+			{
+				ERROR(wae);
+				throw new InitializationException("BARFED IN EVO!!!");
+			}
+			answer = answer.toLowerCase();
+			if(answer.equals("a"))
+				throw new InitializationException("USER WAS FORCED TO ABORT.");
+			else
+				answer = null;
+		}
+
+	}
+	
+	private void calc_added_and_deleted_and_changed_fields(EntityDefinition old_def,EntityDefinition new_def,List<FieldDefinition> delete_fields,List<FieldDefinition> add_fields,List<FieldDefinition[]> changed_fields)
 	{
 		List<FieldDefinition> old_fields = old_def.getFields();
 		List<FieldDefinition> new_fields = new_def.getFields();
+
 		for(int i = 0; i < old_fields.size();i++)
 		{
 			FieldDefinition old_field = old_fields.get(i);
@@ -336,16 +383,35 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				continue;
 			else
 			{
-				//System.out.println("EVOLVE IGNORE MAP FOR "+old_def.getName()+old_field.getName()+" IS "+evolve_ignore_map.get(old_def.getName()+old_field.getName()));
-				if(evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
-					delete_fields.add(old_field);
+				for(int ii = 0;ii < new_fields.size();ii++)
+				{
+					
+					if(old_field.getName().equals(new_fields.get(ii).getName()))
+					{
+						if(evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
+						{
+							changed_fields.add(new FieldDefinition[]{old_field,new_fields.get(ii)});
+							break;
+						}
+					}
+					else
+					{
+						//System.out.println("EVOLVE IGNORE MAP FOR "+old_def.getName()+old_field.getName()+" IS "+evolve_ignore_map.get(old_def.getName()+old_field.getName()));
+						if(evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
+						{
+							delete_fields.add(old_field);
+							break;
+						}
+					}
+				}
+
 			}
 		}
 		
 		for(int i = 0; i < new_fields.size();i++)
 		{
 			FieldDefinition new_field = new_fields.get(i);
-			if(old_fields.contains(new_field))
+			if(old_fields.contains(new_field) || changed_fields.contains(new_field))
 				continue;
 			else
 			{
@@ -435,5 +501,78 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		return store.addEntityIndex(entity_name, field_names, index_type, index_name,index_atts);	
 	}
 
+
+	
+	private boolean handle_field_def_change(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws PersistenceException,WebApplicationException
+	{
+		
+		return true;
+	}
+
+	private boolean handle_same_type_different_defaults(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws PersistenceException,WebApplicationException
+	{
+		if(of.getType()==nf.getType() &&
+			((of.getDefaultValue() == null && nf.getDefaultValue() != null) ||
+			  !of.getDefaultValue().equals(nf.getDefaultValue())))
+		{
+			String entity_name = old_def.getName();	
+			final String tempname = of.getName()+String.valueOf(new Date().getTime());
+			//add new field to store
+			INFO("ADDING "+tempname+" TO STORE");
+			store.addEntityField(tempname, nf);
+			//copy old values into temp field name
+			PAGE_APPLY(entity_name, new CALLBACK(){
+				public Object exec(Object... args)
+				{
+					Entity e = (Entity)args[0];
+					e.setAttribute(tempname, (String)e.getAttribute(of.getName()));
+					return CALLBACK_VOID;
+				}		
+			});
+			List<EntityIndex> idxs = delete_indexes_for_field(old_def, of);
+			INFO("REMOVING "+of.getName());
+			store.deleteEntityField(entity_name, of.getName());
+			INFO("RENAMING "+tempname+" TO "+of.getName());
+			store.renameEntityField(entity_name, tempname, of.getName() );
+			restore_indexes(old_def, idxs);
+			return true;
+		}
+		return false;
+	}
+	
+	private List<EntityIndex> delete_indexes_for_field(EntityDefinition def, FieldDefinition f) throws PersistenceException
+	{
+		List<EntityIndex> idxs = store.getEntityIndices(def.getName());
+		List<EntityIndex> delete_idxs = new ArrayList<EntityIndex>();
+		for(int i = 0;i < idxs.size();i++)
+		{
+			EntityIndex idx = idxs.get(i);
+			if(idx.getFields().contains(f))
+			{
+				store.deleteEntityIndex(def.getName(), idx.getName());
+				delete_idxs.add(idx);
+				INFO("DELETED IDX "+def.getName()+" "+idx.getName());
+			}
+		}		
+		return delete_idxs;
+	}
+	
+	private void restore_indexes(EntityDefinition def,List<EntityIndex> idxs) throws PersistenceException
+	{
+		
+		for(int i = 0;i < idxs.size();i++)
+		{
+			EntityIndex idx = idxs.get(i);
+			List<FieldDefinition> fields = idx.getFields();
+			List<String> fieldnames = new ArrayList<String>();
+			for(int ii = 0;ii < fields.size();ii++)
+				fieldnames.add(fields.get(i).getName());
+			
+			store.addEntityIndex(def.getName(), fieldnames.toArray(new String[0]), idx.getType(), idx.getName(), idx.getAttributes());
+			INFO("CREATED IDX "+def.getName()+" "+idx.getName());
+		}
+		
+	
+	}
 
 }
