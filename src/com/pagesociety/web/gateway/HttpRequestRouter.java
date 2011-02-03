@@ -275,8 +275,17 @@ public class HttpRequestRouter extends HttpServlet
 			
 			// UNKNOWN
 			File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
-			static_gateway.serveFile(request_file, mime_type, request, response);
-			return;
+			if(request_file.exists())
+			{
+				static_gateway.serveFile(request_file, mime_type, request, response);
+				return;
+			}
+			else
+			{
+				response.setStatus(404);	
+				return;
+			}	
+			
 		}finally
 		{
 			_web_application.removeCallingUserContext();
