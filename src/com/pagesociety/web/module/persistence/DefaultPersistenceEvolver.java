@@ -177,7 +177,10 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			List<FieldDefinition> add_fields		= new ArrayList<FieldDefinition>();
 			List<FieldDefinition[]> changed_fields	= new ArrayList<FieldDefinition[]>();
 			calc_added_and_deleted_and_changed_fields(old_def, proposed_def, delete_fields, add_fields,changed_fields);
-
+			System.out.println("ADDED CHANGED AND DELETED FIELDS");
+			System.out.println("ADD FIELDS "+add_fields);
+			System.out.println("DELETE FIELDS "+delete_fields);
+			System.out.println("CHANGE FIELDS "+changed_fields);
 			if(changed_fields.size() != 0)
 			{
 				StringBuilder incompatible_buf = new StringBuilder();
@@ -185,14 +188,16 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				{
 					FieldDefinition of = changed_fields.get(i)[0];
 					FieldDefinition nf = changed_fields.get(i)[1];
-					boolean handled = false;//handle_field_def_change(old_def,proposed_def,of,nf);
+					boolean handled = handle_field_def_change(old_def,proposed_def,of,nf);
 					
 					if(!handled)
 						incompatible_buf.append("FIELD "+of.getName()+" default_values: "+of.getDefaultValue()+" -> "+nf.getDefaultValue()+" types:"+FieldDefinition.typeAsString(of.getType())+" -> "+FieldDefinition.typeAsString(nf.getType())+"\n");
 				}
 				if(incompatible_buf.length() > 0)
+				{
+
 					force_abort("INCOMPATIBLE CHANGES FOR FIELD EVOLUTION:\n"+incompatible_buf.toString());
-				
+				}
 			}
 			
 			if(delete_fields.size() == 0)
@@ -371,11 +376,22 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 
 	}
 	
+	private boolean changed_fields_contains(List<FieldDefinition[]> changed_fields,FieldDefinition field)
+	{
+		for(int i = 0;i < changed_fields.size();i++)
+		{
+			FieldDefinition[] ffdd = changed_fields.get(i);
+			if(ffdd[0].equals(field) || ffdd[1].equals(field))
+				return true;
+		}
+		return false;
+	}
+	
 	private void calc_added_and_deleted_and_changed_fields(EntityDefinition old_def,EntityDefinition new_def,List<FieldDefinition> delete_fields,List<FieldDefinition> add_fields,List<FieldDefinition[]> changed_fields)
 	{
 		List<FieldDefinition> old_fields = old_def.getFields();
 		List<FieldDefinition> new_fields = new_def.getFields();
-
+		
 		for(int i = 0; i < old_fields.size();i++)
 		{
 			FieldDefinition old_field = old_fields.get(i);
@@ -385,7 +401,6 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			{
 				for(int ii = 0;ii < new_fields.size();ii++)
 				{
-					
 					if(old_field.getName().equals(new_fields.get(ii).getName()))
 					{
 						if(evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
@@ -394,15 +409,14 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							break;
 						}
 					}
-					else
-					{
-						//System.out.println("EVOLVE IGNORE MAP FOR "+old_def.getName()+old_field.getName()+" IS "+evolve_ignore_map.get(old_def.getName()+old_field.getName()));
-						if(evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
-						{
-							delete_fields.add(old_field);
-							break;
-						}
-					}
+				}
+
+				//System.out.println("EVOLVE IGNORE MAP FOR "+old_def.getName()+old_field.getName()+" IS "+evolve_ignore_map.get(old_def.getName()+old_field.getName()));
+				if(!changed_fields_contains(changed_fields, old_field) &&
+				   evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
+				{
+					delete_fields.add(old_field);
+					break;
 				}
 
 			}
@@ -411,7 +425,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		for(int i = 0; i < new_fields.size();i++)
 		{
 			FieldDefinition new_field = new_fields.get(i);
-			if(old_fields.contains(new_field) || changed_fields.contains(new_field))
+			if(old_fields.contains(new_field) || changed_fields_contains(changed_fields,new_field))
 				continue;
 			else
 			{
@@ -503,39 +517,50 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 
 
 	
-	private boolean handle_field_def_change(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws PersistenceException,WebApplicationException
+	private boolean handle_field_def_change(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
 	{
 		
-		return true;
+		if(handle_same_type_different_defaults(old_def, new_def, of, nf))
+			return true;
+		return false;
 	}
 
-	private boolean handle_same_type_different_defaults(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws PersistenceException,WebApplicationException
+	private boolean handle_same_type_different_defaults(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
 	{
+		
 		if(of.getType()==nf.getType() &&
 			((of.getDefaultValue() == null && nf.getDefaultValue() != null) ||
 			  !of.getDefaultValue().equals(nf.getDefaultValue())))
 		{
-			String entity_name = old_def.getName();	
-			final String tempname = of.getName()+String.valueOf(new Date().getTime());
-			//add new field to store
-			INFO("ADDING "+tempname+" TO STORE");
-			store.addEntityField(tempname, nf);
-			//copy old values into temp field name
-			PAGE_APPLY(entity_name, new CALLBACK(){
-				public Object exec(Object... args)
-				{
-					Entity e = (Entity)args[0];
-					e.setAttribute(tempname, (String)e.getAttribute(of.getName()));
-					return CALLBACK_VOID;
-				}		
-			});
-			List<EntityIndex> idxs = delete_indexes_for_field(old_def, of);
-			INFO("REMOVING "+of.getName());
-			store.deleteEntityField(entity_name, of.getName());
-			INFO("RENAMING "+tempname+" TO "+of.getName());
-			store.renameEntityField(entity_name, tempname, of.getName() );
-			restore_indexes(old_def, idxs);
-			return true;
+			boolean go_on = confirm("CHANGE DEFAULT VALUE OF "+old_def.getName()+" "+of.getName()+" FROM "+of.getDefaultValue()+" TO "+nf.getDefaultValue());
+			if(go_on)
+			{			
+				FieldDefinition cnf = nf.clone();//dont want to muck with field definition in the store//
+				
+				String entity_name = old_def.getName();	
+				final String tempname = of.getName()+String.valueOf(new Date().getTime());
+				//add new field to store
+				INFO("ADDING "+tempname+" TO "+entity_name);
+				cnf.setName(tempname);
+				store.addEntityField(entity_name, cnf);
+				//copy old values into temp field name
+				PAGE_APPLY(entity_name, new CALLBACK(){
+					public Object exec(Object... args)
+					{
+						Entity e = (Entity)args[0];
+						e.setAttribute(tempname, e.getAttribute(of.getName()));
+						return CALLBACK_VOID;
+					}		
+				});
+				List<EntityIndex> idxs = delete_indexes_for_field(old_def, of);
+				INFO("REMOVING "+of.getName());
+				store.deleteEntityField(entity_name, of.getName());
+				INFO("RENAMING "+tempname+" TO "+of.getName());
+				store.renameEntityField(entity_name, tempname, of.getName() );
+				INFO("RESTORING INDEXES FOR "+of.getName());
+				restore_indexes(old_def, idxs);
+				return true;
+			}
 		}
 		return false;
 	}
