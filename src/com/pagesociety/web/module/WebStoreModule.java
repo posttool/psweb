@@ -2231,6 +2231,16 @@ public class WebStoreModule extends WebModule
 		EntityDefinition 		existing_def;			
 		existing_def = store.getEntityDefinition(entity_name);
 
+		//check the proposed def//
+		List<FieldDefinition> ff = proposed_def.getFields();
+		//validate fields//
+		for(int i=0;i < ff.size();i++)
+		{
+			FieldDefinition f = ff.get(i);
+			if(!f.isValidValue(f.getDefaultValue()))
+				throw new InitializationException("ENTITY "+proposed_def.getName()+". FIELD  "+f.getName()+" HAS A DEFAULT VALUE OF THE WRONG TYPE. TYPE SHOULD BE "+FieldDefinition.typeAsString(f.getType())+" AND IS "+f.getDefaultValue().getClass().getName()+".");
+		}
+		
 		/*create it if it doesnt exist*/
 		if(existing_def == null)
 		{
@@ -2254,6 +2264,9 @@ public class WebStoreModule extends WebModule
 						resolver.made_backup_during_evolution = true;
 					}
 				}
+				
+				
+				
 				evolution_provider.evolveEntity(resolver, existing_def, proposed_def);
 			}
 			/* add any additional default system fields...deletes of system fields 
