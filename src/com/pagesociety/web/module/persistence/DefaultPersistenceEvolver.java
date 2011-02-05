@@ -11,6 +11,7 @@ import com.pagesociety.persistence.EntityDefinition;
 import com.pagesociety.persistence.EntityIndex;
 import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
+import com.pagesociety.persistence.Types;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
@@ -177,10 +178,10 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			List<FieldDefinition> add_fields		= new ArrayList<FieldDefinition>();
 			List<FieldDefinition[]> changed_fields	= new ArrayList<FieldDefinition[]>();
 			calc_added_and_deleted_and_changed_fields(old_def, proposed_def, delete_fields, add_fields,changed_fields);
-			System.out.println("ADDED CHANGED AND DELETED FIELDS");
-			System.out.println("ADD FIELDS "+add_fields);
-			System.out.println("DELETE FIELDS "+delete_fields);
-			System.out.println("CHANGE FIELDS "+changed_fields);
+			//System.out.println("ADDED CHANGED AND DELETED FIELDS");
+			//System.out.println("ADD FIELDS "+add_fields);
+			//System.out.println("DELETE FIELDS "+delete_fields);
+			//System.out.println("CHANGE FIELDS "+changed_fields);
 			if(changed_fields.size() != 0)
 			{
 				StringBuilder incompatible_buf = new StringBuilder();
@@ -195,7 +196,11 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				}
 				if(incompatible_buf.length() > 0)
 				{
-
+					for(int i = 0;i < changed_fields.size();i++)
+					{
+						FieldDefinition[] fd = changed_fields.get(i);
+						System.out.println("OLD FIELD "+fd[0]+"\nNEW FIELD "+fd[1]);
+					}
 					force_abort("INCOMPATIBLE CHANGES FOR FIELD EVOLUTION:\n"+incompatible_buf.toString());
 				}
 			}
@@ -522,14 +527,17 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		
 		if(handle_same_type_different_defaults(old_def, new_def, of, nf))
 			return true;
+		if(handle_same_name_different_types(old_def, new_def, of, nf))
+			return true;
 		return false;
 	}
 
 	private boolean handle_same_type_different_defaults(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
 	{
 		
-		if(of.getType()==nf.getType() &&
-			((of.getDefaultValue() == null && nf.getDefaultValue() != null) ||
+		if(of.getType()== nf.getType() &&
+			((of.getDefaultValue() == null && 
+			  nf.getDefaultValue() != null) ||
 			  !of.getDefaultValue().equals(nf.getDefaultValue())))
 		{
 			boolean go_on = confirm("CHANGE DEFAULT VALUE OF "+old_def.getName()+" "+of.getName()+" FROM "+of.getDefaultValue()+" TO "+nf.getDefaultValue());
@@ -545,10 +553,10 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				store.addEntityField(entity_name, cnf);
 				//copy old values into temp field name
 				PAGE_APPLY(entity_name, new CALLBACK(){
-					public Object exec(Object... args)
+					public Object exec(Object... args) throws PersistenceException
 					{
 						Entity e = (Entity)args[0];
-						e.setAttribute(tempname, e.getAttribute(of.getName()));
+						UPDATE(e,tempname, e.getAttribute(of.getName()));
 						return CALLBACK_VOID;
 					}		
 				});
@@ -563,6 +571,240 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			}
 		}
 		return false;
+	}
+	
+	
+	private boolean handle_same_name_different_types(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
+	{
+		if(of.getType()!=nf.getType())
+			{
+				boolean go_on = confirm("CHANGE TYPE OF "+old_def.getName()+" "+of.getName()+" FROM "+FieldDefinition.typeAsString(of.getType())+" TO "+FieldDefinition.typeAsString(nf.getType()));
+				if(go_on)
+				{			
+			
+					final FieldDefinition cnf = nf.clone();//dont want to muck with field definition in the store//
+					final int answer 				  = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce old values to new type"});
+					
+					
+					String entity_name    = old_def.getName();	
+					final String tempname = of.getName()+String.valueOf(new Date().getTime());
+					try{
+						//add new field to store
+						INFO("ADDING "+tempname+" TO "+entity_name);
+						cnf.setName(tempname);	
+						store.addEntityField(entity_name, cnf);
+						//copy old values into temp field name
+
+						PAGE_APPLY(entity_name, new CALLBACK(){
+							public Object exec(Object... args) throws Exception
+							{
+								Entity e = (Entity)args[0];
+								if(is_primative(of.getType()) && is_primative(nf.getType()))
+								{
+									if(answer == 1)//coerce
+									{
+										UPDATE(e,tempname, coearce_primative_value_for_field_change(of, cnf,e.getAttribute(of.getName())));
+									}
+									else
+									{
+										UPDATE(e,tempname, cnf.getDefaultValue());
+									}
+								}
+								return CALLBACK_VOID;
+							}		
+						});
+					}catch(Exception e)
+					{
+						e.printStackTrace();
+						throw new InitializationException("ERROR IN COPY WHEN CHANGING TYPE OF FIELD");
+					}
+					List<EntityIndex> idxs = delete_indexes_for_field(old_def, of);
+					INFO("REMOVING "+of.getName());
+					store.deleteEntityField(entity_name, of.getName());
+					INFO("RENAMING "+tempname+" TO "+of.getName());
+					store.renameEntityField(entity_name, tempname, of.getName() );
+					INFO("RESTORING INDEXES FOR "+of.getName());
+					restore_indexes(old_def, idxs);
+					return true;
+				}
+			}
+			return false;
+	}
+	
+	private Object coearce_primative_value_for_field_change(FieldDefinition of, FieldDefinition nf,Object val) throws Exception
+	{
+		if(val == null)
+			return null;
+		
+		int ot = of.getType();
+		int nt = nf.getType();
+		
+		if(ot == nt)
+			return val;
+		
+		if(nt == Types.TYPE_TEXT || nt == Types.TYPE_STRING)
+			return String.valueOf(val);
+
+		
+		if(ot == Types.TYPE_LONG)
+		{
+			long lval = (Long)val;
+			switch (nt)
+			{
+			case Types.TYPE_BOOLEAN:
+				return (lval != 0)?true:false; 
+			case Types.TYPE_DATE:
+				return new Date(lval);
+			case Types.TYPE_DOUBLE:
+				return new Double(lval);
+			case Types.TYPE_FLOAT:
+				return new Float(lval);
+			case Types.TYPE_INT:
+				return new Integer((int)lval);
+			}
+		}
+		
+		
+		if(ot == Types.TYPE_DOUBLE)
+		{
+			double dval = (Double)val;
+			switch (nt)
+			{
+			case Types.TYPE_BOOLEAN:
+				return (dval != 0) ?true:false;
+			case Types.TYPE_DATE:
+				return new Date((long) dval);
+			case Types.TYPE_FLOAT:
+				return new Float((float) dval);
+			case Types.TYPE_INT:
+				return new Integer((int) dval);
+			case Types.TYPE_LONG:
+				return (long) dval;
+			}
+		}
+
+		
+		if(ot == Types.TYPE_FLOAT)
+		{
+			float fval = (Float)val;
+			switch (nt)
+			{
+			case Types.TYPE_BOOLEAN:
+				return (fval != 0) ?true:false;
+			case Types.TYPE_DATE:
+				return new Date((long)(fval));
+			case Types.TYPE_DOUBLE:
+				return new Double(fval);
+			case Types.TYPE_INT:
+				return (int)fval;
+			case Types.TYPE_LONG:
+				return (long)fval;
+			}
+		}
+
+		
+		if(ot == Types.TYPE_BOOLEAN)
+		{
+			boolean bval = (Boolean)val;
+			switch (nt)
+			{
+			case Types.TYPE_DATE:
+				return bval ? new Date(Long.MAX_VALUE):new Date(Long.MIN_VALUE);
+			case Types.TYPE_DOUBLE:
+				return bval?new Double(1):new Double(0);	
+			case Types.TYPE_FLOAT:
+				return bval?new Float(1):new Float(0);	
+			case Types.TYPE_INT:
+				return bval?new Integer(1):new Integer(0);	
+			case Types.TYPE_LONG:
+				return bval?new Long(1):new Long(0);	
+			}
+		}
+		
+		if(ot == Types.TYPE_INT)
+		{
+			int ival = (Integer)val;
+			switch (nt)
+			{
+			case Types.TYPE_BOOLEAN:
+				return ival != 0?true:false;
+			case Types.TYPE_DATE:
+				return new Date((long)ival);
+			case Types.TYPE_DOUBLE:
+				return new Double(ival);
+			case Types.TYPE_FLOAT:
+				return new Float(ival);
+			case Types.TYPE_LONG:
+				return new Long(ival);
+			}				
+		}
+		
+
+		if(ot == Types.TYPE_DATE)
+		{
+			Date dtval = (Date)val;
+			switch (nt)
+			{
+			case Types.TYPE_BOOLEAN:
+				return (dtval.getTime() > 0)?true:false;
+			case Types.TYPE_INT:
+				return (int)dtval.getTime();
+			case Types.TYPE_DOUBLE:
+				return (double)dtval.getTime();
+			case Types.TYPE_FLOAT:
+				return (float)dtval.getTime();
+			case Types.TYPE_LONG:
+				return (long)dtval.getTime();
+			}				
+		}
+		
+		if(ot == Types.TYPE_STRING)
+		{
+			String sval = (String)val;
+			
+			switch (nt)
+			{
+			case Types.TYPE_BOOLEAN:
+				if("true".equals(sval)) return true;
+				if("false".equals(sval)) return false;
+				if(sval.length() > 0) return true;
+				return false;
+				
+			case Types.TYPE_INT:
+				int iret = 0;
+				try{
+					iret = Integer.parseInt(sval);
+				}catch(NumberFormatException nfe){}
+				return iret;
+			case Types.TYPE_DOUBLE:
+				double dret = 0;
+				try{
+					dret = Double.parseDouble(sval);
+				}catch(NumberFormatException nfe){}
+				return dret;
+			case Types.TYPE_FLOAT:
+				float fret = 0;
+				try{
+					fret = Float.parseFloat(sval);
+				}catch(NumberFormatException nfe){}
+				return fret;
+			case Types.TYPE_LONG:
+				long lret = 0L;
+				try{
+					lret = Long.parseLong(sval);
+				}catch(NumberFormatException nfe){}
+				return lret;
+			}				
+		}
+		
+		throw new Exception("CANT COERCE");
+	}
+	
+	private boolean is_primative(int type)
+	{
+		return type != Types.TYPE_ARRAY && 
+			   type != Types.TYPE_REFERENCE && 
+			   type != Types.TYPE_BLOB;
 	}
 	
 	private List<EntityIndex> delete_indexes_for_field(EntityDefinition def, FieldDefinition f) throws PersistenceException
@@ -599,5 +841,32 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		
 	
 	}
-
+	
+	private int ask_question(String q,String[] options) throws WebApplicationException
+	{
+		
+		StringBuilder question = new StringBuilder(q+" choose option:");
+		for(int j = 0;j < options.length;j++)
+		{						
+			question.append("\n\t["+j+"]"+options[j]);
+		}
+		question.append("?\n"); 
+		String answer = null;
+		while(answer == null)
+		{
+			answer = GET_CONSOLE_INPUT(question.toString()).toLowerCase();
+			boolean legitimate = false;
+			for(int i = 0;i < options.length;i++)
+			{
+				if(answer.equals(String.valueOf(i)))
+				{
+					legitimate = true;
+					break;
+				}
+			}
+			if(!legitimate)
+				answer = null;
+		}
+		return Integer.parseInt(answer);
+	}
 }
