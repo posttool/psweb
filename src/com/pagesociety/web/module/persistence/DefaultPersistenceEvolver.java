@@ -81,7 +81,6 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				
 						EntityIndex idx;
 						idx = add_indices.get(i);
-						System.out.println("PROBLEM EVOLVING "+entity_name+" INDEX "+idx.getName()+" DECLARED BY "+resolver.getDeclaringModuleForIndex(entity_name, idx.getName()));
 						StringBuilder question = new StringBuilder("Do you mean to:\n\t[0] Add index "+idx.getName()+" to "+resolver.getDeclaringModuleForEntity(entity_name)+"."+entity_name);
 						for(int j = 0;j < delete_indices.size();j++)
 						{						
@@ -196,11 +195,6 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				}
 				if(incompatible_buf.length() > 0)
 				{
-					for(int i = 0;i < changed_fields.size();i++)
-					{
-						FieldDefinition[] fd = changed_fields.get(i);
-						System.out.println("OLD FIELD "+fd[0]+"\nNEW FIELD "+fd[1]);
-					}
 					force_abort("INCOMPATIBLE CHANGES FOR FIELD EVOLUTION:\n"+incompatible_buf.toString());
 				}
 			}
@@ -524,7 +518,6 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 	
 	private boolean handle_field_def_change(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
 	{
-		
 		if(handle_same_type_different_defaults(old_def, new_def, of, nf))
 			return true;
 		if(handle_same_name_different_types(old_def, new_def, of, nf))
@@ -534,6 +527,9 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 
 	private boolean handle_same_type_different_defaults(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
 	{
+		
+		if(of.getDefaultValue() == null && nf.getDefaultValue() == null)
+			return false;
 		
 		if(of.getType()== nf.getType() &&
 			((of.getDefaultValue() == null && 
@@ -576,15 +572,103 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 	
 	private boolean handle_same_name_different_types(EntityDefinition old_def,EntityDefinition new_def,final FieldDefinition of,final FieldDefinition nf) throws InitializationException,PersistenceException,WebApplicationException
 	{
-		if(of.getType()!=nf.getType())
+		if(of.getType()!=nf.getType() || (of.getType() == Types.TYPE_REFERENCE && nf.getType() == Types.TYPE_REFERENCE && !of.getReferenceType().equals(nf.getReferenceType())))
 			{
 				boolean go_on = confirm("CHANGE TYPE OF "+old_def.getName()+" "+of.getName()+" FROM "+FieldDefinition.typeAsString(of.getType())+" TO "+FieldDefinition.typeAsString(nf.getType()));
 				if(go_on)
 				{			
 			
-					final FieldDefinition cnf = nf.clone();//dont want to muck with field definition in the store//
-					final int answer 				  = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce old values to new type"});
 					
+					final FieldDefinition cnf = nf.clone();//dont want to muck with field definition in the store//
+					final int answer;
+					int answer2;
+					String 			ref_coerce_fieldname 	= "";
+					FieldDefinition ref_coerce_field_def 	= null;
+					List<FieldDefinition[]> ref2ref_field_mappings = new ArrayList<FieldDefinition[]>();
+					
+					if(is_primative(of.getType()) && is_primative(nf.getType()))
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce old values to new type"});
+					else if(is_single_reference(of.getType()) && is_primative(nf.getType()))
+					{
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce old values to new type"});
+						if(answer == 1)
+						{
+							List<String> pop_fields = new ArrayList<String>();
+							String ref_type = of.getReferenceType();							
+							List<FieldDefinition> ff = store.getEntityDefinition(ref_type).getFields();
+							for(int i = 0;i < ff.size();i++)
+							{
+								FieldDefinition f = ff.get(i);
+								if(is_primative(f.getType()))
+									pop_fields.add(f.getName());
+							}
+							answer2 			 = ask_question("coerce from what field of old val", pop_fields.toArray(EMPTY_STRING_ARRAY));
+							ref_coerce_fieldname = pop_fields.get(answer2);
+						}
+					}
+					else if(is_primative(of.getType()) && is_single_reference(nf.getType()))
+					{
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"use old field values as attribute value of newly constructed instances of type "+cnf.getReferenceType()});
+						if(answer == 1)
+						{
+							List<String> pop_fields = new ArrayList<String>();
+							String ref_type = cnf.getReferenceType();							
+							List<FieldDefinition> ff = store.getEntityDefinition(ref_type).getFields();
+							for(int i = 0;i < ff.size();i++)
+							{
+								FieldDefinition f = ff.get(i);
+								if(is_primative(f.getType()))
+									pop_fields.add(f.getName());
+							}
+							answer2 			 = ask_question("coerce old values to what attribute of new val", pop_fields.toArray(EMPTY_STRING_ARRAY));
+							ref_coerce_fieldname = pop_fields.get(answer2);
+							ref_coerce_field_def = store.getEntityDefinition(ref_type).getField(pop_fields.get(answer2));
+						}
+					}
+					else if(is_single_reference(of.getType()) && is_single_reference(nf.getType()))
+					{
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"use old field ref attribute values from "+of.getReferenceType()+" as attribute values  newly constructed instances of type "+cnf.getReferenceType()});
+						if(answer == 1)
+						{
+							List<String> origin_fields = new ArrayList<String>();
+							String origin_ref_type = of.getReferenceType();
+							
+							List<String> target_fields = new ArrayList<String>();
+							String target_ref_type = cnf.getReferenceType();							
+							
+							List<FieldDefinition> origin_field_defs = store.getEntityDefinition(origin_ref_type).getFields();
+							for(int i = 0;i < origin_field_defs.size();i++)
+							{
+								FieldDefinition f = origin_field_defs.get(i);
+								origin_fields.add(f.getName());
+							}
+							
+							List<FieldDefinition> target_field_defs = store.getEntityDefinition(target_ref_type).getFields();
+							for(int i = 0;i < target_field_defs.size();i++)
+							{
+								FieldDefinition f = target_field_defs.get(i);
+								target_fields.add(f.getName());
+							}
+							
+							
+							while((answer2 = ask_question("",new String[]{"add field mapping","done"})) != 1)
+							{
+								int f1 = ask_question("choose origin field",origin_fields.toArray(EMPTY_STRING_ARRAY));
+								FieldDefinition fd1 = origin_field_defs.get(f1);
+								int f2 = ask_question("choose target field",target_fields.toArray(EMPTY_STRING_ARRAY));
+								FieldDefinition fd2 = target_field_defs.get(f2);
+								
+								ref2ref_field_mappings.add(new FieldDefinition[]{fd1,fd2});
+							}
+							
+							if(ref2ref_field_mappings.size() == 0)
+								return false;
+						}
+					}
+					else//shouldnt get here ultimatley once we are taking care of every case
+					{
+						return false;
+					}
 					
 					String entity_name    = old_def.getName();	
 					final String tempname = of.getName()+String.valueOf(new Date().getTime());
@@ -594,25 +678,118 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 						cnf.setName(tempname);	
 						store.addEntityField(entity_name, cnf);
 						//copy old values into temp field name
-
-						PAGE_APPLY(entity_name, new CALLBACK(){
-							public Object exec(Object... args) throws Exception
-							{
-								Entity e = (Entity)args[0];
-								if(is_primative(of.getType()) && is_primative(nf.getType()))
+						
+						if(is_primative(of.getType()) && is_primative(nf.getType()))
+						{
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
 								{
+									Entity e = (Entity)args[0];
+	
+										if(answer == 1)//coerce
+										{
+											UPDATE(e,tempname, coearce_primative_value_for_field_change(of, cnf,e.getAttribute(of.getName())));
+										}
+										else
+										{
+											UPDATE(e,tempname, cnf.getDefaultValue());
+										}
+																
+									return CALLBACK_VOID;
+								}		
+							});
+						}
+						else if(is_single_reference(of.getType()) && is_primative(nf.getType()))
+						{
+							final String rcf = ref_coerce_fieldname; 
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
+	
+										if(answer == 1)//coerce
+										{
+											Entity ref = EXPAND((Entity)e.getAttribute(of.getName()));		
+											UPDATE(e,tempname, coearce_primative_value_for_field_change(of, cnf,ref.getAttribute(rcf)));
+										}
+										else
+										{
+											UPDATE(e,tempname, cnf.getDefaultValue());
+										}
+		
+									return CALLBACK_VOID;
+								}		
+							});	
+						}
+						else if(is_primative(of.getType()) && is_single_reference(nf.getType()))
+						{
+							final String rcf 			= ref_coerce_fieldname; 
+							final FieldDefinition rcfd  = ref_coerce_field_def; 
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
 									if(answer == 1)//coerce
 									{
-										UPDATE(e,tempname, coearce_primative_value_for_field_change(of, cnf,e.getAttribute(of.getName())));
+										Object val 		= coearce_primative_value_for_field_change(of, rcfd,e.getAttribute(of.getName()));
+										Entity new_ref  = NEW(cnf.getReferenceType(),
+															 (Entity)e.getAttribute(FIELD_CREATOR),
+															  rcf,val);						
+										UPDATE(e,tempname, new_ref);
 									}
 									else
 									{
 										UPDATE(e,tempname, cnf.getDefaultValue());
 									}
-								}
-								return CALLBACK_VOID;
-							}		
-						});
+	
+									return CALLBACK_VOID;
+								}		
+							});	
+						}
+						else if(is_single_reference(of.getType()) && is_single_reference(nf.getType()))
+						{
+							final List<FieldDefinition[]> r2r = ref2ref_field_mappings; 
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
+									if(answer == 1)//coerce
+									{
+										Map<String,Object> vals = new HashMap<String, Object>();
+										for(int i = 0;i < r2r.size();i++)
+										{
+											FieldDefinition origin = r2r.get(i)[0];
+											FieldDefinition target = r2r.get(i)[1];
+											if(origin.getType() == Types.TYPE_REFERENCE && target.getType() == Types.TYPE_REFERENCE)
+											{
+												if(origin.getReferenceType() != target.getReferenceType())
+													throw new Exception("origin ref type is different from target ref type for field mapping "+origin.getName()+" TO "+target.getName());
+												
+												vals.put(target.getName(), e.getAttribute(origin.getName()));
+											}
+											else
+											{
+												vals.put(target.getName(), coearce_primative_value_for_field_change(origin,target ,e.getAttribute(of.getName())));
+											}
+										}
+
+										Entity new_ref  = NEW(cnf.getReferenceType(),
+															 (Entity)e.getAttribute(FIELD_CREATOR),
+															  vals);						
+
+										UPDATE(e,tempname, new_ref);
+									}
+									else
+									{
+										UPDATE(e,tempname, cnf.getDefaultValue());
+									}
+	
+									return CALLBACK_VOID;
+								}		
+							});	
+							
+						}
+						
 					}catch(Exception e)
 					{
 						e.printStackTrace();
@@ -807,6 +984,12 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			   type != Types.TYPE_BLOB;
 	}
 	
+	private boolean is_single_reference(int type)
+	{
+		return type != Types.TYPE_ARRAY && 
+			   type == Types.TYPE_REFERENCE;
+	}
+	
 	private List<EntityIndex> delete_indexes_for_field(EntityDefinition def, FieldDefinition f) throws PersistenceException
 	{
 		List<EntityIndex> idxs = store.getEntityIndices(def.getName());
@@ -845,12 +1028,14 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 	private int ask_question(String q,String[] options) throws WebApplicationException
 	{
 		
-		StringBuilder question = new StringBuilder(q+" choose option:");
+		StringBuilder question = new StringBuilder(q);
+		if(q == null || "".equals(q))
+			question.append("choose option:");
 		for(int j = 0;j < options.length;j++)
 		{						
 			question.append("\n\t["+j+"]"+options[j]);
 		}
-		question.append("?\n"); 
+
 		String answer = null;
 		while(answer == null)
 		{
