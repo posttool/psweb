@@ -588,6 +588,12 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 					
 					if(is_primative(of.getType()) && is_primative(nf.getType()))
 						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce old values to new type"});
+					else if(is_primative(of.getType()) && is_primative_array(nf.getType()))
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"use old values as first element of new array"});
+					else if(is_primative_array(of.getType()) && is_primative_array(nf.getType()))
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"copy/coerce old values into new array"});
+					else if(is_primative_array(of.getType()) && is_primative(nf.getType()))
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce first value of old array to new value"});
 					else if(is_single_reference(of.getType()) && is_primative(nf.getType()))
 					{
 						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue(),"coerce old values to new type"});
@@ -665,6 +671,17 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 								return false;
 						}
 					}
+					else if( 
+							(is_reference_array(of.getType()) && is_reference_array(nf.getType()))	||
+							(is_primative(of.getType()) && is_reference_array(nf.getType())) 		||
+							(is_reference_array(of.getType()) && is_primative(nf.getType()))		||
+							(is_primative_array(of.getType()) && is_reference_array(nf.getType()))	||
+							(is_reference_array(of.getType()) && is_primative_array(nf.getType()))
+					)
+					{
+						//these ones are all not handled in an advanced way for now//
+						answer = ask_question("", new String[]{"use default value "+nf.getDefaultValue()+"(only option)"});
+					}
 					else//shouldnt get here ultimatley once we are taking care of every case
 					{
 						return false;
@@ -698,6 +715,97 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 									return CALLBACK_VOID;
 								}		
 							});
+						}
+						else if(is_primative(of.getType()) && is_primative_array(nf.getType()))
+						{
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
+	
+										if(answer == 1)//coerce
+										{											
+											Object v = coearce_primative_value_for_field_change(of, cnf,e.getAttribute(of.getName()));
+											
+											List<Object> val = new ArrayList<Object>();
+											if(v != null)
+												val.add(v);
+											UPDATE(e,tempname, val);
+										}
+										else
+										{
+											UPDATE(e,tempname, cnf.getDefaultValue());
+										}
+																
+									return CALLBACK_VOID;
+								}		
+							});
+							
+						}
+						else if(is_primative_array(of.getType()) && is_primative_array(nf.getType()))
+						{
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
+	
+										if(answer == 1)//coerce
+										{											
+											
+											List<Object> old_vals = (List<Object>)e.getAttribute(of.getName());
+											List<Object> new_vals = null;
+											if(old_vals != null)
+											{
+												new_vals = new ArrayList<Object>();
+												for(int i = 0;i < old_vals.size();i++)
+												{
+													Object v = coearce_primative_value_for_field_change(of, cnf,old_vals.get(i));
+													new_vals.add(v);
+												}
+											}
+											UPDATE(e,tempname, new_vals);
+										}
+										else
+										{
+											UPDATE(e,tempname, cnf.getDefaultValue());
+										}
+																
+									return CALLBACK_VOID;
+								}		
+							});
+							
+						}
+						else if(is_primative_array(of.getType()) && is_primative(nf.getType()))
+						{
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
+	
+										if(answer == 1)//coerce
+										{											
+											
+											List<Object> old_vals = (List<Object>)e.getAttribute(of.getName());
+											Object v = null;
+											if(old_vals != null)	
+											{
+												if(old_vals.size() > 0)
+												{
+													v = coearce_primative_value_for_field_change(of, cnf,old_vals.get(0));
+												}
+											}
+
+											UPDATE(e,tempname, v);
+										}
+										else
+										{
+											UPDATE(e,tempname, cnf.getDefaultValue());
+										}
+																
+									return CALLBACK_VOID;
+								}		
+							});
+							
 						}
 						else if(is_single_reference(of.getType()) && is_primative(nf.getType()))
 						{
@@ -789,6 +897,25 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 							});	
 							
 						}
+						else if( 
+								(is_reference_array(of.getType()) && is_reference_array(nf.getType()))	||
+								(is_primative(of.getType()) && is_reference_array(nf.getType())) 		||
+								(is_reference_array(of.getType()) && is_primative(nf.getType()))		||
+								(is_primative_array(of.getType()) && is_reference_array(nf.getType()))	||
+								(is_reference_array(of.getType()) && is_primative_array(nf.getType()))
+						)
+						{
+							PAGE_APPLY(entity_name, new CALLBACK(){
+								public Object exec(Object... args) throws Exception
+								{
+									Entity e = (Entity)args[0];
+									{
+										UPDATE(e,tempname, cnf.getDefaultValue());
+									}	
+									return CALLBACK_VOID;
+								}		
+							});	
+						}
 						
 					}catch(Exception e)
 					{
@@ -813,8 +940,12 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 		if(val == null)
 			return null;
 		
-		int ot = of.getType();
-		int nt = nf.getType();
+		//we are using basetype here because
+		//we use this to coerce elements of primative arrays as well
+		//we above the case where of is primative and nf is primative array
+		
+		int ot = of.getBaseType();
+		int nt = nf.getBaseType();
 		
 		if(ot == nt)
 			return val;
@@ -983,7 +1114,23 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			   type != Types.TYPE_REFERENCE && 
 			   type != Types.TYPE_BLOB;
 	}
+
+	private boolean is_primative_array(int type)
+	{
+		
+		return (type & Types.TYPE_ARRAY) == Types.TYPE_ARRAY &&
+			   is_primative((type &~ Types.TYPE_ARRAY));
+
+	}
 	
+	private boolean is_reference_array(int type)
+	{
+		
+		return (type & Types.TYPE_ARRAY) 	== Types.TYPE_ARRAY &&
+			   (type &~ Types.TYPE_ARRAY) 	== Types.TYPE_REFERENCE;
+
+	}
+
 	private boolean is_single_reference(int type)
 	{
 		return type != Types.TYPE_ARRAY && 
