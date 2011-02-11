@@ -199,7 +199,7 @@ public abstract class WebModule extends Module
 	protected String GUARD_BROWSE_INDEX		= "browse_index";
 	protected String GUARD_BROWSE_OP		= "browse_op";
 	protected String GUARD_BROWSE_VALUE		= "browse_value";
-	protected void GUARD(Entity user,String permission_id,Object... flattened_context) throws PermissionsException,PersistenceException
+	public void GUARD(Entity user,String permission_id,Object... flattened_context) throws PermissionsException,PersistenceException
 	{
 		Map<String,Object> context = new HashMap<String, Object>();
 		for(int i = 0;i < flattened_context.length;i+=2)

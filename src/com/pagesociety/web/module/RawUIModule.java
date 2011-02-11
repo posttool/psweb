@@ -1299,7 +1299,7 @@ public class RawUIModule extends WebModule
 	private Map<Integer,Class<?>> submode_renderer_map = new HashMap<Integer,Class<?>>();
 	protected void declareSubmode(int submode_id,String method_name,Class<?> renderer_class) throws WebApplicationException
 	{
-		Method[] mm = this.getClass().getDeclaredMethods();
+		Method[] mm = this.getClass().getMethods();
 		for(int i = 0;i < mm.length;i++)
 		{
 			Method m = mm[i];
