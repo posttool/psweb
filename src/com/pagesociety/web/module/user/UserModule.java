@@ -48,8 +48,8 @@ public class UserModule extends WebStoreModule
 	public static final int EVENT_USER_DELETED 	 	 = 0x1008;
 	public static final int EVENT_USER_ROLES_UPDATED = 0x1010;
 	
-	public static final String USER_EVENT_USER = "user";
-	public static final String USER_EVENT_USER_CONTEXT = "user-context";
+	public static final String USER_EVENT_USER 			= "user";
+	public static final String USER_EVENT_USER_CONTEXT 	= "user-context";
 	
 	public static final int USER_ROLE_WHEEL 				 = 0x1000;
 	public static final int USER_ROLE_SYSTEM_USER	 		 = 0x0001;
@@ -62,6 +62,7 @@ public class UserModule extends WebStoreModule
 	{
 		super.init(app,config);	
 		String euu = GET_OPTIONAL_CONFIG_PARAM(PARAM_ENFORCE_UNIQUE_USERNAME, config);
+
 		if(euu != null && !euu.equals("false"))
 			enforce_unique_username = true;
 	}
@@ -437,6 +438,17 @@ public class UserModule extends WebStoreModule
 		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
 				   		USER_EVENT_USER, user);
 		return user;
+	}
+	
+	
+	@Export(ParameterNames={"email_or_username", "password","sent_as_md5"})
+	public Entity Login(UserApplicationContext uctx,String email,String password,boolean md5) throws WebApplicationException,PersistenceException
+	{
+		
+		if(md5)
+			return Login(uctx, email, password);
+		else
+			return Login(uctx, email, Util.stringToHexEncodedMD5(password));
 	}
 	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
