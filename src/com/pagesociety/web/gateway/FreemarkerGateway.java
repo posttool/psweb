@@ -25,6 +25,7 @@ public class FreemarkerGateway
 	public static final String CONTEXT_KEY = "user_context";
 	public static final String REQUEST_URL_KEY = "request_url";
 	public static final String REQUEST_SERVER_NAME = "request_server_name";
+	public static final String REQUEST_HOSTNAME = "hostname";
 	public static final String REQUEST_PARAMS_KEY = "params";
 	public static final String WEB_URL_KEY = "web_url";
     public static final String WEB_URL_SECURE_KEY = "web_url_secure";
@@ -142,6 +143,7 @@ public class FreemarkerGateway
 		data.put(REQUEST_PARAMS_KEY, params0);
 		data.put(REQUEST_URL_KEY, request_path);
 		data.put(REQUEST_SERVER_NAME, host_name);
+		data.put(REQUEST_HOSTNAME, host_name);
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
         data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
         data.put(WEB_APP_VERSION_KEY, _web_application.getConfig().getVersion());

@@ -15,21 +15,33 @@ import com.pagesociety.web.bean.BeanRegistry;
 public class JsonEncoder
 {
 	
-	public static String encode(Object o)
+	public static String encode(Object o,boolean wrapwithvalue)
 	{
 		JSONStringer js = new JSONStringer();
 		try
 		{
-			js.object();
-			js.key("value");
-			encode_json(js, o, new HashMap<Object,String>());
-			js.endObject();
+			if(wrapwithvalue)
+			{
+				js.object();
+				js.key("value");
+				encode_json(js, o, new HashMap<Object,String>());
+				js.endObject();
+			}
+			else
+			{
+				encode_json(js, o, new HashMap<Object,String>());
+			}
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
 		return js.toString();
+	}
+	
+	public static String encode(Object o)
+	{
+		return encode(o,true);
 	}
 
 	@SuppressWarnings("unchecked")

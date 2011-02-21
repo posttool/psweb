@@ -28,6 +28,8 @@ import com.pagesociety.web.module.ModuleMethod;
 import com.pagesociety.web.module.ModuleRegistry;
 import com.pagesociety.web.module.ModuleRequest;
 import com.pagesociety.web.module.WebModule;
+import com.pagesociety.web.upload.MultipartForm;
+import com.pagesociety.web.upload.MultipartFormException;
 
 public class JsonGateway
 {
@@ -48,14 +50,45 @@ public class JsonGateway
 		String text_response = null;
 		try
 		{
-			//module_request = parseModuleRequestJson(request, requestPath);
-			module_request 	= GatewayUtil.parseModuleRequest(request, requestPath);
-			String json 	= request.getParameter("args");
-			module_request.setArguments(unpackJSONArgs(json));
+			module_request 		= GatewayUtil.parseModuleRequest(request, requestPath);
+			String json_args 	= request.getParameter("args");
+			boolean isform = false;
+			if(json_args == null)//assume form submit
+			{
+				String content_type = request.getContentType();
+				Object[] args = new Object[1];
+				if (content_type != null && content_type.startsWith("multipart"))
+				{
+					try{
+						args[0] = new MultipartForm(request);
+					}catch(MultipartFormException mfe)
+					{
+						throw new WebApplicationException(mfe.getMessage());
+					}
+				}
+				else
+				{
+					args[0] = new Form(request.getParameterMap());
+				}
+				module_request.setArguments(args);
+				isform = true;
+			}
+			else
+			{
+				module_request.setArguments(unpackJSONArgs(json_args));
+			}
 			
 			module_request.setUserContext(user_context);
 			module_return = _web_application.dispatch(module_request);
-			text_response = JsonEncoder.encode(module_return);
+			if(isform)
+			{
+				text_response = JsonEncoder.encode(module_return,false);
+			}
+			else
+			{
+				text_response = JsonEncoder.encode(module_return);	
+			}
+			
 			if (request.getParameter("callback") != null)
 				text_response = request.getParameter("callback")+"("+text_response+");";
 			if (request.getParameter("encode") != null)
