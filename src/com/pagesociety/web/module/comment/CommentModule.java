@@ -70,20 +70,24 @@ public class CommentModule extends WebStoreModule
 		DEFINE_SLOT(SLOT_COMMENT_RATING_MODULE,ICommentRatingModule.class,false,null);
 	}
 
-	public static final String CAN_CREATE_COMMENT  = "CAN_CREATE_COMMENT";
-	public static final String CAN_READ_COMMENT    = "CAN_READ_COMMENT";
-	public static final String CAN_UPDATE_COMMENT  = "CAN_UPDATE_COMMENT";
-	public static final String CAN_DELETE_COMMENT  = "CAN_DELETE_COMMENT";
-	public static final String CAN_BROWSE_COMMENTS = "CAN_BROWSE_COMMENTS";
-	public static final String CAN_BROWSE_FLAGGED_COMMENTS = "CAN_BROWSE_FLAGGED_COMMENTS";
-	public static final String CAN_FLAG_COMMENT 		   = "CAN_BROWSE_FLAG_COMMENT";
-	public static final String CAN_UNFLAG_COMMENT 		   = "CAN_BROWSE_UNFLAG_COMMENT";
+	public static final String CAN_CREATE_COMMENT  				= "CAN_CREATE_COMMENT";
+	public static final String CAN_READ_COMMENT    				= "CAN_READ_COMMENT";
+	public static final String CAN_UPDATE_COMMENT  				= "CAN_UPDATE_COMMENT";
+	public static final String CAN_DELETE_COMMENT  				= "CAN_DELETE_COMMENT";
+	
+	public static final String CAN_BROWSE_COMMENTS 				= "CAN_BROWSE_COMMENTS";
+	public static final String CAN_BROWSE_FLAGGED_COMMENTS 		= "CAN_BROWSE_FLAGGED_COMMENTS";
+	public static final String CAN_FLAG_COMMENT 		   		= "CAN_BROWSE_FLAG_COMMENT";
+	public static final String CAN_UNFLAG_COMMENT 		   		= "CAN_BROWSE_UNFLAG_COMMENT";
+
+	
 	protected void exportPermissions()
 	{
 		EXPORT_PERMISSION(CAN_CREATE_COMMENT);
 		EXPORT_PERMISSION(CAN_READ_COMMENT);
 		EXPORT_PERMISSION(CAN_UPDATE_COMMENT);
 		EXPORT_PERMISSION(CAN_DELETE_COMMENT);
+		
 		EXPORT_PERMISSION(CAN_BROWSE_COMMENTS);
 		EXPORT_PERMISSION(CAN_BROWSE_FLAGGED_COMMENTS);
 		EXPORT_PERMISSION(CAN_FLAG_COMMENT);
@@ -492,6 +496,24 @@ public class CommentModule extends WebStoreModule
 
 	}
 
+	
+	//implements SiteManagerUserActions//
+	
+	public OBJECT getGlobalActions(Entity user)
+	{
+		return null;		
+	}
 
+	public OBJECT getUserPermissionsForEntityType(Entity user,String entity_type) 
+	{
+		return null;
+	}
+
+	public OBJECT getUserPermissionsForEntityInstance(Entity user, Entity e)
+	{
+		
+		return null;
+	}
+	
 	
 }

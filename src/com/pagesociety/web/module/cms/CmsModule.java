@@ -51,6 +51,9 @@ public class CmsModule extends WebStoreModule
 		EXPORT_PERMISSION(CAN_DELETE_ENTITY);
 		EXPORT_PERMISSION(CAN_BROWSE_ENTITY);
 	}
+	
+	
+	
 
 	public void init(WebApplication app, Map<String, Object> config)
 			throws InitializationException
