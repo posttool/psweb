@@ -22,13 +22,15 @@ public class StaticHttpGateway
 
 	
 	//
-	//
+	//TODO add headers
 	// response.setHeader("Expires", "0");
 	// response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
 	// response.setHeader("Pragma", "public");
+	// see http://www.mnot.net/cache_docs/
 	//
 	// add this to make it download
 	// response.setHeader("Content-disposition", "attachment; filename=" + f.getName());
+	// 
 
 	public static void serveFile(File file, String mimeType, HttpServletRequest request,
 			HttpServletResponse response) throws IOException, ServletException

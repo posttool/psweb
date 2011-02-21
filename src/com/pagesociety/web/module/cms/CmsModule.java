@@ -308,6 +308,7 @@ public class CmsModule extends WebStoreModule
 			return PAGING_QUERY(q);
 	}
 
+	@Deprecated
 	@Export(ParameterNames = { "entity" })
 	@TransactionProtect
 	public Entity CreateEntity(UserApplicationContext uctx, Entity e)
@@ -317,7 +318,9 @@ public class CmsModule extends WebStoreModule
 		GUARD(creator, CAN_CREATE_ENTITY, "type", e.getType(), "instance", e);
 		return createEntity(creator, e);
 	}
+	//TODO call createEntity(creator, e.getType(), e.getAttributes()) and fix SWA event that looks for "candidate"
 
+	@Deprecated
 	public Entity createEntity(Entity creator, Entity e) throws PersistenceException,WebApplicationException
 	{
 		DISPATCH_EVENT(EVENT_ENTITY_PRE_CREATE, "candidate",e);
@@ -344,6 +347,7 @@ public class CmsModule extends WebStoreModule
 		return ce;
 	}
 
+	@Deprecated
 	@Export(ParameterNames = { "e" })
 	@TransactionProtect
 	public Entity UpdateEntity(UserApplicationContext uctx, Entity e)
@@ -353,11 +357,10 @@ public class CmsModule extends WebStoreModule
 		Entity existing_instance = GET(e.getType(), e.getId());
 		GUARD(editor, CAN_UPDATE_ENTITY, "type", e.getType(), "instance", existing_instance);
 	
-
 		return updateEntity(e);
 	}
 	
-
+	@Deprecated
 	public Entity updateEntity(Entity e) throws PersistenceException,WebApplicationException
 	{
 		DISPATCH_EVENT(EVENT_ENTITY_PRE_UPDATE, "candidate",e);
