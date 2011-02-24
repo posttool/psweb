@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityIndex;
+import com.pagesociety.persistence.FieldDefinition;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
@@ -124,6 +125,13 @@ public class UserModule extends WebStoreModule
 		return createPrivilegedUser(user, email, password, username, roles);
 	}	
 	
+	public Entity createPrivilegedUser(Entity creator,String email,String password,boolean pwd_is_md5,String username,List<Integer> roles,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
+	{
+		if(pwd_is_md5)
+			return createPrivilegedUser(creator, email, password, username, roles, xtra_event_context_params);
+		else
+			return createPrivilegedUser(creator, email, Util.stringToHexEncodedMD5(password), username, roles, xtra_event_context_params);
+	}
 	public Entity createPrivilegedUser(Entity creator,String email,String password,String username,List<Integer> roles,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
 	{
 		Entity existing_user = getUserByEmail(email);
@@ -297,10 +305,24 @@ public class UserModule extends WebStoreModule
 		return updated_user;
 	}
 	
+	public Entity updatePassword(Entity user,String password,boolean md5_password) throws PersistenceException
+	{
+		if(md5_password)
+			return updatePassword(user, password);
+		else
+			return updatePassword(user, Util.stringToHexEncodedMD5(password));
+	}
+	
 	public Entity updatePassword(Entity user,String password) throws PersistenceException
 	{
 		return UPDATE(user,
 				  UserModule.FIELD_PASSWORD,password);				
+	}
+	
+	public Entity setUserObject(Entity user,Entity user_object) throws PersistenceException
+	{
+		return UPDATE(user,
+				  UserModule.FIELD_USER_OBJECT,user_object);				
 	}
 	
 	@Export(ParameterNames={"user_entity_id","role"})
@@ -646,6 +668,16 @@ public class UserModule extends WebStoreModule
 		throw new WebApplicationException("MORE THAN ONE USER WITH EMAIL "+email+" EXISTS! FIX DATA.");			
 	}
 	
+	public List<Entity> getUsersByUserObject(Entity user_object) throws PersistenceException,WebApplicationException
+	{
+		Query q = new Query(USER_ENTITY);
+		q.idx(INDEX_BY_USER_OBJECT);
+		q.eq(user_object);
+		q.cacheResults(false);
+		QueryResult result = QUERY(q);
+		return result.getEntities();
+
+	}
 	public Entity getUserByUniqueUsername(String username) throws PersistenceException,WebApplicationException
 	{
 		if(enforce_unique_username)
@@ -741,6 +773,7 @@ public class UserModule extends WebStoreModule
 	public static String FIELD_LOCK						=   "lock";
 	public static String FIELD_LOCK_CODE				=   "lock_code";
 	public static String FIELD_LOCK_NOTES				=   "lock_notes";
+	public static String FIELD_USER_OBJECT				=   "user_object";
 	
 
 	private List<Integer>DEFAULT_ROLES = new ArrayList<Integer>(); 
@@ -756,13 +789,15 @@ public class UserModule extends WebStoreModule
 					  FIELD_LAST_LOGOUT,Types.TYPE_DATE,null,
 					  FIELD_LOCK,Types.TYPE_INT,LOCK_UNLOCKED,
 					  FIELD_LOCK_CODE,Types.TYPE_INT,LOCK_CODE_DEFAULT,
-					  FIELD_LOCK_NOTES,Types.TYPE_STRING,null);
+					  FIELD_LOCK_NOTES,Types.TYPE_STRING,null,
+					  FIELD_USER_OBJECT,Types.TYPE_REFERENCE,FieldDefinition.REF_TYPE_UNTYPED_ENTITY,null);
 	}
 
 	public static String INDEX_BY_EMAIL				 	= 	"byEmail";
 	public static String INDEX_BY_LOCK_BY_LOCK_CODE		=   "byLockbyLockCode";
 	public static String INDEX_BY_ROLE					=   "byRoles";
 	public static String INDEX_BY_USERNAME_BY_PASSWORD	=   "byUsernameByPassword";
+	public static String INDEX_BY_USER_OBJECT			=   "byUserObject";
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDICES
@@ -771,7 +806,8 @@ public class UserModule extends WebStoreModule
 				ENTITY_INDEX(INDEX_BY_EMAIL, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_EMAIL),
 				ENTITY_INDEX(INDEX_BY_LOCK_BY_LOCK_CODE, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_LOCK,FIELD_LOCK_CODE),
 				ENTITY_INDEX(INDEX_BY_ROLE, EntityIndex.TYPE_ARRAY_MEMBERSHIP_INDEX, FIELD_ROLES),	
-				ENTITY_INDEX(INDEX_BY_USERNAME_BY_PASSWORD, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_USERNAME,FIELD_PASSWORD)
+				ENTITY_INDEX(INDEX_BY_USERNAME_BY_PASSWORD, EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_USERNAME,FIELD_PASSWORD),
+				ENTITY_INDEX(INDEX_BY_USER_OBJECT, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, FIELD_USER_OBJECT)
 		);	
 	}
 	
