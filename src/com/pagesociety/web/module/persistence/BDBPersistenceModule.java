@@ -215,9 +215,9 @@ public class BDBPersistenceModule extends WebModule implements IPersistenceProvi
 	public void onDestroy() {
 		super.onDestroy();
 		try {
-			System.out.println("STORE IS ABOUT TO BE DESTROYED");
+			System.out.println(getName()+" STORE IS ABOUT TO BE DESTROYED");
 			store.close();
-			System.out.println("STORE IS DESTROYED");
+			System.out.println(getName()+" STORE IS DESTROYED");
 		} catch (PersistenceException e) {
 			ERROR("FAILED CLOSING STORE "+store);
 			e.printStackTrace();
