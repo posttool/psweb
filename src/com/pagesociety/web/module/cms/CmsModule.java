@@ -136,7 +136,7 @@ public class CmsModule extends WebStoreModule
 		return result;
 	}
 
-	private PagingQueryResult browseEntities(String entity_type, List<Object> query,
+	public PagingQueryResult browseEntities(String entity_type, List<Object> query,
 			String order_by_attribute, boolean asc, int offset, int page_size, boolean fill)
 			throws PersistenceException
 	{
@@ -269,6 +269,7 @@ public class CmsModule extends WebStoreModule
 		else
 			return PAGING_QUERY(q);
 	}
+
 
 	@Export(ParameterNames = { "entity_type", "order_by_attribute", "asc", "offset",
 	"page_size" })
