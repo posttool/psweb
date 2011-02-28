@@ -415,7 +415,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 				   evolve_ignore_map_fields.get(old_def.getName()+old_field.getName()) == null)
 				{
 					delete_fields.add(old_field);
-					break;
+					//break;
 				}
 
 			}
