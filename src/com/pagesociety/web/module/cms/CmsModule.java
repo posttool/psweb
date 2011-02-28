@@ -380,7 +380,7 @@ public class CmsModule extends WebStoreModule
 	{
 		Entity editor = (Entity) uctx.getUser();
 		//Entity existing_instance = GET(e.getType(), e.getId());
-		GUARD(editor, CAN_UPDATE_ENTITY, "type", type, "values", update_map);
+		GUARD(editor, CAN_UPDATE_ENTITY, "type", type, "values", update_map,"id",id);
 		return updateEntity(type,id,update_map);
 	}
 	
