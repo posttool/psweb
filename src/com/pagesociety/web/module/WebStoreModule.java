@@ -526,6 +526,7 @@ public class WebStoreModule extends WebModule
 	public static final String[] FILL_ALL_FIELDS    = EMPTY_STRING_ARRAY;
 	public static final String[] FILL_NO_FIELDS    	= null;
 	public static final String[] MASK_NO_FIELDS    	= EMPTY_STRING_ARRAY;
+	public static final String[] MASK_CREATOR    	= new String[]{FIELD_CREATOR};
 	public static String[] MASK(String... fieldnames)
 	{
 		return fieldnames;
@@ -959,6 +960,14 @@ public class WebStoreModule extends WebModule
 	public Entity EXPAND(Entity e) throws PersistenceException
 	{
 		return EXPAND(store,e);
+	}
+	
+	public List<Entity> EXPAND(List<Entity> ee) throws PersistenceException
+	{
+		for(int i = 0;i < ee.size();i++)
+			EXPAND(ee.get(i));
+
+		return ee;
 	}
 	
 	public Entity FORCE_EXPAND(Entity e) throws PersistenceException
