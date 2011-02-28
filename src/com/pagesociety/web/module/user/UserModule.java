@@ -668,7 +668,7 @@ public class UserModule extends WebStoreModule
 		throw new WebApplicationException("MORE THAN ONE USER WITH EMAIL "+email+" EXISTS! FIX DATA.");			
 	}
 	
-	public List<Entity> getUsersByUserObject(Entity user_object) throws PersistenceException,WebApplicationException
+	public List<Entity> getUsersByUserObject(Entity user_object) throws PersistenceException
 	{
 		Query q = new Query(USER_ENTITY);
 		q.idx(INDEX_BY_USER_OBJECT);
