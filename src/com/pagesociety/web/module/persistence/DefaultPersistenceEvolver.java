@@ -1163,7 +1163,7 @@ public class DefaultPersistenceEvolver extends WebStoreModule implements IEvolut
 			List<FieldDefinition> fields = idx.getFields();
 			List<String> fieldnames = new ArrayList<String>();
 			for(int ii = 0;ii < fields.size();ii++)
-				fieldnames.add(fields.get(i).getName());
+				fieldnames.add(fields.get(ii).getName());
 			
 			store.addEntityIndex(def.getName(), fieldnames.toArray(new String[0]), idx.getType(), idx.getName(), idx.getAttributes());
 			INFO("CREATED IDX "+def.getName()+" "+idx.getName());
