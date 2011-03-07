@@ -2452,9 +2452,55 @@ public class WebStoreModule extends WebModule
 	}
 
 	//STEPPING THROUGH ALL ENTITIES OF A TYPE
+	protected void PAGE_APPLY_INTERRUPTABLE(Object synchronization_obj,String type,CALLBACK c) throws PersistenceException,WebApplicationException,InterruptedException
+	{
+		int page_size 	= 100;
+		int num_results = page_size;
+		int page = 0;
+		do
+		{
+			List<Entity> ee = null;
+			//whoever is doing the interrupting should synchronize on the same object//
+			synchronized(synchronization_obj)
+			{
+				if(Thread.interrupted())
+					throw new InterruptedException();
+				
+				Query q = new Query(type);
+				q.idx(Query.PRIMARY_IDX);
+				q.eq(Query.VAL_GLOB);
+				q.offset(page*page_size);
+				q.pageSize(page_size);
+				QueryResult result = QUERY(q);
+				num_results 		= result.size();
+				ee 	= result.getEntities();
+			}
+			
+			for(int i = 0;i < ee.size();i++)
+			{
+				try{
+					synchronized(synchronization_obj)
+					{
+						if(Thread.interrupted())
+							throw new InterruptedException();
+						c.exec(ee.get(i));
+					}
+				}
+				catch(InterruptedException ie)
+				{
+					throw ie;
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+					throw new WebApplicationException("PROBLEM APPLYING FUNCTION "+e.getMessage());
+				}
+			}
+			page++;
+		}while(num_results >= page_size);
+	}
 	
 
-	
 	protected void PAGE_APPLY(String type,CALLBACK c) throws PersistenceException,WebApplicationException
 	{
 		int page_size 	= 100;
@@ -2474,7 +2520,8 @@ public class WebStoreModule extends WebModule
 			{
 				try{
 					c.exec(ee.get(i));
-				}catch(Exception e)
+				}
+				catch(Exception e)
 				{
 					e.printStackTrace();
 					throw new WebApplicationException("PROBLEM APPLYING FUNCTION "+e.getMessage());
