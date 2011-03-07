@@ -2,6 +2,8 @@ package com.pagesociety.web;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +29,7 @@ import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.Module.SlotDescriptor;
 import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
 import com.pagesociety.web.module.permissions.PermissionsModule;
+import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
 
 public abstract class WebApplication
@@ -502,9 +505,29 @@ public abstract class WebApplication
 		System.out.println(new Date());
 		System.out.println("******************************************************************");
 		System.out.println();
+		
+		List<Module> _persistence_providers = new ArrayList<Module>();
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
+			if(m instanceof IPersistenceProvider)
+			{
+				_persistence_providers.add(m);
+				_module_list.remove(i);
+				i--;
+			}
+		}
+		
+		for(int i = 0;i < _module_list.size();i++)
+		{
+			Module m = _module_list.get(i);
+			m.onDestroy();
+		}
+		
+		//destroy these last//
+		for(int i = 0;i < _persistence_providers.size();i++)
+		{
+			Module m = _persistence_providers.get(i);
 			m.onDestroy();
 		}
 		System.out.println("APPLICATION "+_config.getName()+" IS NOW DESTROYED");
