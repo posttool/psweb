@@ -2452,7 +2452,7 @@ public class WebStoreModule extends WebModule
 	}
 
 	//STEPPING THROUGH ALL ENTITIES OF A TYPE
-	protected void PAGE_APPLY_INTERRUPTABLE(Object synchronization_obj,String type,CALLBACK c) throws PersistenceException,WebApplicationException,InterruptedException
+	protected void PAGE_APPLY_INTERRUPTABLE(Object synchronization_obj,int throttle,String type,CALLBACK c) throws PersistenceException,WebApplicationException,InterruptedException
 	{
 		int page_size 	= 100;
 		int num_results = page_size;
@@ -2485,6 +2485,8 @@ public class WebStoreModule extends WebModule
 							throw new InterruptedException();
 						c.exec(ee.get(i));
 					}
+					if(throttle != 0)
+						Thread.sleep(throttle);
 				}
 				catch(InterruptedException ie)
 				{
