@@ -287,16 +287,17 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	    	
 		     //Set the host smtp address
 		     Properties props = new Properties();
-		     props.put("mail.transport.protocol", "smtp");
 		     props.put("mail.smtp.host", smtp_server);
 		
 		    // create some properties and get the default Session
 		    Session session = Session.getDefaultInstance(props, null);
-		    session.setDebug(debug);
+		 
+
 	
 		    // create a message
 		    MimeMessage msg = new MimeMessage(session); 
 		    msg.setSubject(subject);
+		    session.setDebug(debug);
 		    
 		    // set the from and to address
 		    
@@ -306,7 +307,7 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		    InternetAddress[] tos = new InternetAddress[to.length];
 		    for(int i = 0;i < to.length;i++)
 		    {
-		    	tos[i] = new InternetAddress(to[i]); 
+		    	tos[i] = new InternetAddress(to[i],false); 
 		    }
 		    msg.setRecipients(Message.RecipientType.TO,tos);
 			
@@ -369,8 +370,9 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		    msg.setContent( content );
 		    msg.setHeader("MIME-Version" , "1.0" );
 		    msg.setHeader("Content-Type" , content.getContentType() );
-		    msg.setHeader("X-Mailer", "Page Society Mailer Beeatch V1.0");
+		    msg.setHeader("X-Mailer", "Page Society Mailer  V1.0");
 		    msg.setSentDate(new Date());
+
 
 		    Transport.send(msg);
 		    
@@ -438,5 +440,27 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		email_thread.interrupt();			
 
 	}
+	
+	public static void main(String[] args)
+	{
+		   Properties props = new Properties();  
+		   props.put("mail.smtp.host", "www.topher.com");  
+		   Session mailSession = javax.mail.Session.getDefaultInstance(props, null);  
+		   Message msg = new MimeMessage(mailSession);  
+		   try {  
+		        msg.setFrom(new InternetAddress("topher@topher.com"));  
+		        msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse("topher@topher.com", false));  
+		       
+		        msg.setSubject("TestEmail from WEB1");  
+		        msg.setText("If you can see this, stop taking Tylenol");  
+		       Date timeStamp = new Date();  
+		       msg.setSentDate(timeStamp);  
+		       Transport.send(msg);  
+		   } catch (Exception me) {  
+		       me.printStackTrace();
+		   }  
+		
+	}
+	
 
 }
