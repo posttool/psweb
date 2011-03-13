@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
+import com.pagesociety.web.gateway.HttpRequestRouter.UserAgentTools;
 import com.pagesociety.web.template.FreemarkerRenderer;
 
 import freemarker.ext.beans.BeansWrapper;
@@ -33,6 +34,10 @@ public class FreemarkerGateway
 	public static final String MODULE_DATA_KEY = "data";
 	public static final String EXCEPTION_KEY = "exception";
 	public static final String EXCEPTION_STRING_KEY = "exceptionString";
+	public static final String STATICS_STRING_KEY = "statics";
+	public static final String USER_AGENT_KEY = "user_agent";
+	public static final String USER_OS_KEY = "user_os";
+	public static final String USER_BROWSER_KEY = "user_browser";
 	//
 	private WebApplication _web_application;
 	private FreemarkerRenderer _fm_renderer;
@@ -129,6 +134,16 @@ public class FreemarkerGateway
 		data.put(APPLICATION_KEY, _web_application);
 		data.put(CONTEXT_KEY, user_context);
 		//
+		String user_agent = (String) user_context.getProperty(HttpRequestRouter.USER_AGENT_UCTX_KEY);
+		String[] os_info 	  = UserAgentTools.getOS(user_agent);
+		String[] browser_info = UserAgentTools.getBrowser(user_agent);
+
+		data.put(USER_AGENT_KEY, user_agent);
+		if (os_info!=null && os_info.length!=0)
+			data.put(USER_OS_KEY, os_info[0]);
+		if (browser_info!=null && browser_info.length!=0)
+			data.put(USER_BROWSER_KEY, browser_info[0]);
+		//
 		Map<Object, Object> params0 = new HashMap<Object, Object>();
 		@SuppressWarnings("rawtypes") Iterator i = params.keySet().iterator();
 		while (i.hasNext())
@@ -147,7 +162,8 @@ public class FreemarkerGateway
 		data.put(WEB_URL_KEY, _web_application.getConfig().getWebRootUrl());
         data.put(WEB_URL_SECURE_KEY, _web_application.getConfig().getWebRootUrlSecure());
         data.put(WEB_APP_VERSION_KEY, _web_application.getConfig().getVersion());
-		data.put("statics", BeansWrapper.getDefaultInstance().getStaticModels());
+		data.put(STATICS_STRING_KEY, BeansWrapper.getDefaultInstance().getStaticModels());
+		data.put(STATICS_STRING_KEY, BeansWrapper.getDefaultInstance().getStaticModels());
 		//
 		return data;
 	}
