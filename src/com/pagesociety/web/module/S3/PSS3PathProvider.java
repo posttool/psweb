@@ -681,7 +681,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	private void start_scratch_cleaner()
 	{
-		Thread t = new Thread()
+		Thread t = new Thread("PSS3PathProvider Scratch Cleaner")
 		{
 			public void run()
 			{
@@ -707,7 +707,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	private void start_s3_delete_consumer()
 	{
-		delete_consumer_thread = new Thread()
+		delete_consumer_thread = new Thread("PSS3PathProvider S3 Delete Consumer")
 		{
 			public void run()
 			{

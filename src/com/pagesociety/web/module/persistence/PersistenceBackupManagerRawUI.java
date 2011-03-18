@@ -256,7 +256,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	private boolean full_backup_for_day_is_done = false;
 	private void start_backup_thread()
 	{
-		Thread t = new Thread()
+		Thread t = new Thread("PersistenceBackupManager")
 		{
 			public void run()
 			{
