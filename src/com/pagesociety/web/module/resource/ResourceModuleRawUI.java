@@ -1,5 +1,6 @@
 package com.pagesociety.web.module.resource;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,12 +10,15 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.imageio.ImageIO;
+
 import org.apache.commons.io.FileUtils;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.util.DateTime;
+import com.pagesociety.util.FileInfo;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
@@ -38,6 +42,7 @@ public class ResourceModuleRawUI extends RawUIModule
 	public static final int SM_LIST_S3 = 0x05;
 	public static final int SM_DELETE_S3_NO_RECORD_FILES = 0x06;
 	public static final int SM_BACKUP_S3 = 0x07;
+	public static final int SM_ADD_SIZES = 0x08;
 	public static final String PROP_PT = "resource_module_raw_ui_path_token";
 	public static final String PROP_DEL_ALL_STATE = "resource_module_raw_ui_delete_all_state";
 	public static final String PROP_S3_DB_COMPARE = "resource_module_raw_ui_s3_db_compare";
@@ -78,6 +83,7 @@ public class ResourceModuleRawUI extends RawUIModule
 			declareSubmode(SM_LIST_S3, "list_s3");
 			declareSubmode(SM_DELETE_S3_NO_RECORD_FILES, "delete_no_record_files");
 			declareSubmode(SM_BACKUP_S3, "backup_s3");
+			declareSubmode(SM_ADD_SIZES, "add_sizes");
 		}
 		catch (Exception e)
 		{
@@ -121,6 +127,8 @@ public class ResourceModuleRawUI extends RawUIModule
 		A_GET(uctx, getName(), SM_DELETE_PREVIEWS_ALL, "[ DELETE ALL PREVIEWS ]");
 		BR(uctx);
 		A_GET(uctx, getName(), SM_LIST_RESOURCES, "[ LIST RESOURCES ]");
+		BR(uctx);
+		A_GET(uctx, getName(), SM_ADD_SIZES, "[ ADD SIZES ]");
 		BR(uctx);
 		if (path_provider instanceof PSS3PathProvider)
 		{
@@ -565,6 +573,40 @@ public class ResourceModuleRawUI extends RawUIModule
 		}
 	}
 
+	
+	public void add_sizes(UserApplicationContext uctx, Map<String, Object> params)
+	throws WebApplicationException, PersistenceException
+	{
+		PagingQueryResult resources = get_resources(0, Query.ALL_RESULTS);
+		for (Entity res : resources.getEntities())
+		{
+			BufferedImage img = get_img((String)res.getAttribute(ResourceModule.RESOURCE_FIELD_SIMPLE_TYPE),
+					(String)res.getAttribute(ResourceModule.RESOURCE_FIELD_PATH_TOKEN));
+			if (img==null)
+				continue;
+			res.setAttribute(ResourceModule.RESOURCE_FIELD_WIDTH, img.getWidth());
+			res.setAttribute(ResourceModule.RESOURCE_FIELD_HEIGHT, img.getHeight());
+			store.getStore().saveEntity(res);
+			System.out.println("SAVED "+res.getId()+" "+img.getWidth()+" "+img.getHeight());
+		}
+
+	}
+	
+	protected BufferedImage get_img(String simple_type, String path_token) throws  WebApplicationException
+	{
+		if (!simple_type.equals(FileInfo.SIMPLE_TYPE_IMAGE_STRING))
+			return null;
+		BufferedImage img;
+		try
+		{
+			img = ImageIO.read(path_provider.getInputStream(path_token));
+		} catch (IOException e)
+		{
+			throw new WebApplicationException("Can't get width/height of image.",e);
+		}
+		return img;
+	}
+	
 	// //////////////// util
 	private PagingQueryResult get_resources(int offset, int pagesize)
 			throws PersistenceException

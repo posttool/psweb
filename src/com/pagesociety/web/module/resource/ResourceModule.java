@@ -2,6 +2,7 @@ package com.pagesociety.web.module.resource;
 
 
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -22,7 +22,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import javax.activation.MimetypesFileTypeMap;
-
+import javax.imageio.ImageIO;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
@@ -32,16 +32,12 @@ import com.pagesociety.util.Text;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.RawCommunique;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.Module;
 import com.pagesociety.web.module.WebStoreModule;
-import com.pagesociety.web.module.S3.amazon.ListEntry;
 import com.pagesociety.web.upload.MultipartForm;
-import com.pagesociety.web.upload.MultipartFormConstants;
-import com.pagesociety.web.upload.MultipartFormException;
 import com.pagesociety.web.upload.UploadProgressInfo;
 
 public class ResourceModule extends WebStoreModule 
@@ -813,7 +809,7 @@ public class ResourceModule extends WebStoreModule
 	protected Entity do_add_resource(MultipartForm upload,Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
 
-		Object[] annotations = annotate(upload,creator,content_type,simple_type,filename,ext,file_size);
+		Object[] annotations = annotate(upload,creator,content_type,simple_type,filename,ext,file_size,path_token);
 		Entity resource = NEW(resource_entity_name,
 				creator,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
@@ -832,7 +828,7 @@ public class ResourceModule extends WebStoreModule
 	{
 		//DONT NEED THIS ANYMORE SINCE THE STREAM SHOULD WRITE RIGHT OVER THE FILE
 		// path_provider.delete((String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN));
-		Object[] annotations = annotate(upload, (Entity)resource.getAttribute(FIELD_CREATOR), content_type, simple_type, filename, ext, file_size);
+		Object[] annotations = annotate(upload, (Entity)resource.getAttribute(FIELD_CREATOR), content_type, simple_type, filename, ext, file_size,path_token);
 		Entity r = UPDATE(resource,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
 				RESOURCE_FIELD_SIMPLE_TYPE,simple_type,
@@ -847,13 +843,14 @@ public class ResourceModule extends WebStoreModule
 	
 	/* this gives a subclass a chance to add some extra fields to the resource...this
 	 * is sort of a special case */
-	private static final Object[] EMPTY_ANNOTATIONS = new Object[0];
+	static final Object[] EMPTY_ANNOTATIONS = new Object[0];
 	protected Object[] annotate(MultipartForm upload,
 		    Entity creator, String content_type, String simple_type,
-		    String filename, String ext, long file_size) throws WebApplicationException
+		    String filename, String ext, long file_size,String path_token) throws WebApplicationException
 	{
 		return EMPTY_ANNOTATIONS;
 	}
+
 
 
 	private static final void copy_input_stream(InputStream in, OutputStream out) throws IOException
@@ -892,6 +889,8 @@ public class ResourceModule extends WebStoreModule
 	public static String RESOURCE_FIELD_EXTENSION 		=   "extension";
 	public static String RESOURCE_FIELD_FILE_SIZE 		=   "filesize";
 	public static String RESOURCE_FIELD_PATH_TOKEN 		=   "path-token";
+	public static String RESOURCE_FIELD_WIDTH 			=   "width";
+	public static String RESOURCE_FIELD_HEIGHT 			=   "height";
 
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
@@ -902,7 +901,9 @@ public class ResourceModule extends WebStoreModule
 					  RESOURCE_FIELD_FILENAME,		Types.TYPE_STRING,null,
 					  RESOURCE_FIELD_EXTENSION, 	Types.TYPE_STRING,null,
 					  RESOURCE_FIELD_FILE_SIZE,		Types.TYPE_LONG,null,
-					  RESOURCE_FIELD_PATH_TOKEN,	Types.TYPE_STRING,null);
+					  RESOURCE_FIELD_PATH_TOKEN,	Types.TYPE_STRING,null,
+					  RESOURCE_FIELD_WIDTH,			Types.TYPE_INT,-1,
+					  RESOURCE_FIELD_HEIGHT,		Types.TYPE_INT,-1);
 	}
 
 }
