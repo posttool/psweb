@@ -309,28 +309,22 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		TR_END(uctx);
 			for(int i = 0;i < backup_identifiers.size();i++ )
 			{
-				String identifier = backup_identifiers.get(i);
-				BackupInfo last_backup_date = last_backup_map.get(identifier);
-				String short_identifier=null;
-				if(identifier.lastIndexOf('\\') != -1)
-					short_identifier = identifier.substring(identifier.lastIndexOf('\\')+1);
-				if(identifier.lastIndexOf('/') != -1)
-					short_identifier = identifier.substring(identifier.lastIndexOf('/')+1);
+				BackupInfo b = new BackupInfo(backup_identifiers.get(i));
 				TR_START(uctx);
 					TD_START(uctx);
-						SPAN(uctx, short_identifier);
+						SPAN(uctx, b.id());
 					TD_END(uctx);
 					TD_START(uctx);
-						SPAN(uctx, last_backup_date.date.toString());
+						SPAN(uctx, b.dateString());
 					TD_END(uctx);
 					TD_START(uctx);
-						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ download ]","do_download",true,"id",identifier);
+						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ download ]","do_download",true,"id",b.path);
 					TD_END(uctx);
 					TD_START(uctx);
-						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ restore ]","do_restore",true,"id",identifier);
+						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ restore ]","do_restore",true,"id",b.path);
 					TD_END(uctx);
 					TD_START(uctx);
-						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ delete ]","do_delete",true,"id",identifier);
+						A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ delete ]","do_delete",true,"id",b.path);
 					TD_END(uctx);
 				TR_END(uctx);
 			}
@@ -351,32 +345,33 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	
 	private boolean backup_thread_is_running = false;
 	private boolean full_backup_for_day_is_done = false;
+
 	private void start_backup_thread()
 	{
 		Thread t = new Thread("PersistenceBackupManager")
 		{
 			public void run()
 			{
-				while(true)
+				while (true)
 				{
-					
-					
+
 					backup_thread_is_running = true;
 					BackupInfo b = new BackupInfo();
 
-					int now_hr  	= b.date.get(Calendar.HOUR_OF_DAY);
-					int now_min 	= b.date.get(Calendar.MINUTE);
-					full_backup_for_day_is_done = last_backup_map.get(b.id())!=null;
-					
-					if(now_hr >= backup_time_hr && now_min >= backup_time_min && !full_backup_for_day_is_done)
+					int now_hr = b.date.get(Calendar.HOUR_OF_DAY);
+					int now_min = b.date.get(Calendar.MINUTE);
+					full_backup_for_day_is_done = last_backup_map.get(b.id()) != null;
+
+					if (now_hr >= backup_time_hr && now_min >= backup_time_min && !full_backup_for_day_is_done)
 					{
-						try{
+						try
+						{
 							String id = pp.doFullBackup();
 							full_backup_for_day_is_done = true;
 							b = new BackupInfo(id);
 							last_backup_map.put(b.id(), b);
 							write_backup_map();
-						}catch(Exception pe)
+						} catch (Exception pe)
 						{
 							pe.printStackTrace();
 						}
@@ -385,27 +380,26 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 							remove_old_backups();
 						} catch (Exception e)
 						{
-							ERROR("Couldnt remove old backup",e);
+							ERROR("Couldnt remove old backup", e);
 						}
 					}
-					
 
 					backup_thread_is_running = false;
-					try{
+					try
+					{
 						Thread.sleep(60000);
-					}catch(InterruptedException ie)
+					} catch (InterruptedException ie)
 					{
 						ie.printStackTrace();
-						//not much to do.
+						// not much to do.
 					}
-				}	
-				
-		
+				}
+
 			}
 		};
 		t.setDaemon(true);
 		t.start();
-		
+
 	}
 	
 	class BackupInfo implements Serializable {
@@ -440,26 +434,29 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 				e.printStackTrace();
 			}
 		}
-		
+
 		public String id()
 		{
-//			int now_hr  	= date.get(Calendar.HOUR_OF_DAY);
-//			int now_min 	= date.get(Calendar.MINUTE);
-			int year 		= date.get(Calendar.YEAR);
-			int day_of_year = date.get(Calendar.DAY_OF_YEAR);
-			return year+"_"+day_of_year;
+			return date.get(Calendar.YEAR) + "_" + date.get(Calendar.DAY_OF_YEAR);
 		}
 		
+		public String dateString()
+		{
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy MM dd HH:mm"); 
+			return formatter.format(date.getTime());
+		}
+
 		private void writeObject(ObjectOutputStream out) throws IOException
-	   {
-	     out.writeObject(date);
-	     out.writeObject(path);
-	   }
-	   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
-	   {
-	    this.date = (Calendar) in.readObject();
-	    this.path = (String) in.readObject();
-	   }
+		{
+			out.writeObject(date);
+			out.writeObject(path);
+		}
+
+		private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+		{
+			this.date = (Calendar) in.readObject();
+			this.path = (String) in.readObject();
+		}
 		
 		
 	}
