@@ -610,6 +610,11 @@ public class ResourceModuleRawUI extends RawUIModule
 			ERROR("Can't get width/height of image: "+path_provider.getUrl(path_token));
 			return null;
 		}
+		catch (OutOfMemoryError o)
+		{
+			ERROR("Can't read - too big: "+path_provider.getUrl(path_token));
+			return null;
+		}
 		return img;
 	}
 	
