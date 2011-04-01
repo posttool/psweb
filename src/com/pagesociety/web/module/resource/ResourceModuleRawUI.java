@@ -605,9 +605,9 @@ public class ResourceModuleRawUI extends RawUIModule
 		try
 		{
 			img = ImageIO.read(path_provider.getInputStream(path_token));
-		} catch (IOException e)
+		} catch (Exception e)
 		{
-			ERROR("Can't get width/height of image.",e);
+			ERROR("Can't get width/height of image: "+path_provider.getUrl(path_token));
 			return null;
 		}
 		return img;
