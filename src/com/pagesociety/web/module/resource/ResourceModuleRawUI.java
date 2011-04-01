@@ -577,9 +577,14 @@ public class ResourceModuleRawUI extends RawUIModule
 	public void add_sizes(UserApplicationContext uctx, Map<String, Object> params)
 	throws WebApplicationException, PersistenceException
 	{
+		//I would use APPLY_PAGE... but I am not a WebStoreModule
 		PagingQueryResult resources = get_resources(0, Query.ALL_RESULTS);
 		for (Entity res : resources.getEntities())
 		{
+			int w = (Integer) res.getAttribute(ResourceModule.RESOURCE_FIELD_WIDTH);
+			int h = (Integer) res.getAttribute(ResourceModule.RESOURCE_FIELD_HEIGHT);
+			if (w != -1 && h != -1)
+				continue;
 			BufferedImage img = get_img((String)res.getAttribute(ResourceModule.RESOURCE_FIELD_SIMPLE_TYPE),
 					(String)res.getAttribute(ResourceModule.RESOURCE_FIELD_PATH_TOKEN));
 			if (img==null)
@@ -602,7 +607,8 @@ public class ResourceModuleRawUI extends RawUIModule
 			img = ImageIO.read(path_provider.getInputStream(path_token));
 		} catch (IOException e)
 		{
-			throw new WebApplicationException("Can't get width/height of image.",e);
+			ERROR("Can't get width/height of image.",e);
+			return null;
 		}
 		return img;
 	}
