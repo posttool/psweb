@@ -1,6 +1,7 @@
 package com.pagesociety.web;
 
 import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -78,6 +79,11 @@ public class SessionManager
 			return null;
 		eo.time = System.currentTimeMillis();
 		return eo.object;
+	}
+	
+	public Set<String> keySet()
+	{
+		return _session_map.keySet();
 	}
 
 	public void put(String sess_id, Object sess_obj)
