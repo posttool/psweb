@@ -30,7 +30,6 @@ import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.S3.amazon.AWSAuthConnection;
 import com.pagesociety.web.module.S3.amazon.GetResponse;
@@ -38,9 +37,9 @@ import com.pagesociety.web.module.S3.amazon.ListAllMyBucketsResponse;
 import com.pagesociety.web.module.S3.amazon.ListBucketResponse;
 import com.pagesociety.web.module.S3.amazon.ListEntry;
 import com.pagesociety.web.module.S3.amazon.Response;
-import com.pagesociety.web.module.S3.amazon.S3Object;
 import com.pagesociety.web.module.S3.amazon.Utils;
 import com.pagesociety.web.module.resource.IResourcePathProvider;
+import com.pagesociety.web.module.resource.PathProviderUtil;
 
 public class PSS3PathProvider extends WebStoreModule implements IResourcePathProvider
 {
@@ -343,9 +342,17 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	public String getPreviewUrl(String path_token, int width, int height) throws WebApplicationException
 	{
-		INFO("GETTING PREVIEW URL FOR " + path_token + " AT " + width + " " + height);
+		Map<String,String> options = new HashMap<String, String>();
+		options.put(PathProviderUtil.WIDTH,Integer.toString(width));
+		options.put(PathProviderUtil.HEIGHT,Integer.toString(height));
+		return getPreviewUrl(path_token,options);
+	}
+	
+	public String getPreviewUrl(String path_token, Map<String,String> options) throws WebApplicationException
+	{
+		INFO("GETTING PREVIEW URL FOR " + path_token + " WITH " + options);
 		PSAWSAuthConnection conn = new PSAWSAuthConnection(s3_api_key, s3_secret_key);
-		String preview_key = get_preview_file_relative_path(path_token, width, height);
+		String preview_key = get_preview_file_relative_path(path_token, options);
 		INFO("PREVIEW KEY IS " + preview_key);
 		Object lock 		   = null;
 		boolean resized_exists = false;
@@ -354,7 +361,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			resized_exists = conn.checkKeyExists(s3_bucket, preview_key);
 			if (resized_exists)
 			{
-				INFO("FOUND " + preview_key + " PREVIEW AT " + width + " " + height);
+				INFO("FOUND " + preview_key + " PREVIEW AT " + options);
 				return base_s3_url +"/"+ preview_key;
 			}
 			lock = current_thumbnail_generator_locks.putIfAbsent(preview_key,L);
@@ -386,7 +393,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		try{
 	
 			active_thumbnail_generator_locks.add(lock);
-			do_generate_preview(conn, path_token, preview_key, width, height);
+			do_generate_preview(conn, path_token, preview_key, options);
 			return base_s3_url +"/"+ preview_key;		
 		}catch(WebApplicationException e)
 		{		
@@ -405,7 +412,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	
 	}
 
-	public void do_generate_preview(PSAWSAuthConnection conn,String path_token,String preview_key, int width, int height) throws WebApplicationException
+	public void do_generate_preview(PSAWSAuthConnection conn,String path_token,String preview_key, Map<String,String> options) throws WebApplicationException
 	{
 		
 		FileOutputStream fos = null;
@@ -430,7 +437,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			//now it exists in the scratch directory...lets make a preview//	
 			File preview = new File(scratch_directory, preview_key);
 			preview.getParentFile().mkdirs();
-			create_preview(original_file, preview, width, height);
+			create_preview(original_file, preview, options);
 			
 			//put the preview on amazon
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
@@ -573,14 +580,14 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		return f.exists();
 	}
 
-	private static void create_preview(File original, File dest, int w, int h)
+	private static void create_preview(File original, File dest, Map<String,String> options)
 			throws WebApplicationException
 	{
 		int type = FileInfo.getSimpleType(original);
 		switch (type)
 		{
 		case FileInfo.SIMPLE_TYPE_IMAGE:
-			create_image_preview(original, dest, w, h);
+			create_image_preview(original, dest, options);
 			break;
 		case FileInfo.SIMPLE_TYPE_DOCUMENT:
 			throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
@@ -595,14 +602,14 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 	}
 
-	private static void create_image_preview(File original, File dest, int w, int h)
+	private static void create_image_preview(File original, File dest, Map<String,String> options)
 			throws WebApplicationException
 	{
 		ImageMagick i = new ImageMagick(original, dest);
-		i.setSize(w, h);
+		i.setOptions(options);
 		try
 		{
-			i.exec();
+			PathProviderUtil.process(i.getCmd(), i.getArgs());
 		}
 		catch (Exception e)
 		{
@@ -610,7 +617,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 	}
 
-	private String get_preview_file_relative_path(String path_token, int width, int height)
+	private String get_preview_file_relative_path(String path_token, Map<String,String> options)
 			throws WebApplicationException
 	{
 		int dot_idx = path_token.lastIndexOf('.');
@@ -622,10 +629,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 		StringBuilder preview_name = new StringBuilder();
 		preview_name.append(path_token);
-		preview_name.append('_');
-		preview_name.append(String.valueOf(width));
-		preview_name.append('x');
-		preview_name.append(String.valueOf(height));
+		preview_name.append(PathProviderUtil.getOptionsSuffix(options));
 		preview_name.append('.');
 		preview_name.append(ext);
 		return preview_name.toString();

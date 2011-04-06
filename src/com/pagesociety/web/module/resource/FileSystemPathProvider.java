@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -210,7 +211,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	/* this should take preview params */
 	public String getPreviewUrl(String path_token,int width,int height)	throws WebApplicationException
 	{
-		String preview_relative_path = get_preview_file_relative_path(path_token, width, height);
+		Map<String,String> options = new HashMap<String, String>();
+		options.put(PathProviderUtil.WIDTH,Integer.toString(width));
+		options.put(PathProviderUtil.HEIGHT,Integer.toString(height));
+
+		String preview_relative_path = get_preview_file_relative_path(path_token, options);
 		StringBuilder buf = new StringBuilder();
 		buf.append(base_dir);
 		buf.append(C_SLASH);
@@ -222,14 +227,36 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		//there we would create a new queue item and put it on.//
 		
 		if(!preview.exists())
-			create_preview(getFile(path_token),preview,width,height);
+			create_preview(getFile(path_token),preview,options);
 
 		buf.setLength(0);
 		buf.append(base_url);
 		buf.append(C_SLASH);
 		buf.append(preview_relative_path);
 		return buf.toString();			
+	}
+	
+	public String getPreviewUrl(String path_token,Map<String,String> options)	throws WebApplicationException
+	{
+		String preview_relative_path = get_preview_file_relative_path(path_token, options);
+		StringBuilder buf = new StringBuilder();
+		buf.append(base_dir);
+		buf.append(C_SLASH);
+		buf.append(preview_relative_path);
+		File preview = new File(buf.toString());
+		
+		//TODO: right here we could queue this stuff up and return a //
+		//preview not ready. we would look in the queue and if it wasnt in//
+		//there we would create a new queue item and put it on.//
+		
+		if(!preview.exists())
+			create_preview(getFile(path_token),preview,options);
 
+		buf.setLength(0);
+		buf.append(base_url);
+		buf.append(C_SLASH);
+		buf.append(preview_relative_path);
+		return buf.toString();			
 	}
 
 	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_length) throws WebApplicationException
@@ -271,13 +298,13 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 
 	
 
-	private static void create_preview(File original,File dest,int w, int h) throws WebApplicationException
+	private static void create_preview(File original,File dest,Map<String,String> options) throws WebApplicationException
 	{
 		int type = FileInfo.getSimpleType(original);
 		switch(type)
 		{
 			case FileInfo.SIMPLE_TYPE_IMAGE:
-				create_image_preview(original, dest, w, h);
+				create_image_preview(original, dest, options);
 				break;
 			case FileInfo.SIMPLE_TYPE_DOCUMENT:
 				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
@@ -293,10 +320,10 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	}
 	
 	
-	private static void create_image_preview(File original,File dest,int w, int h) throws WebApplicationException
+	private static void create_image_preview(File original,File dest,Map<String,String> options) throws WebApplicationException
 	{
 		ImageMagick i = new ImageMagick(original,dest);
-		i.setSize(w, h);
+		i.setOptions(options);
 		
 		try{
 			i.exec();
@@ -306,7 +333,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		}		
 	}
 	
-	private String get_preview_file_relative_path(String path_token,int width,int height) throws WebApplicationException
+	
+	private String get_preview_file_relative_path(String path_token,Map<String,String> options) throws WebApplicationException
 	{
 		File original_file 				 = getFile(path_token);
 		if(original_file == null)
@@ -328,16 +356,9 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		preview_name.append(dir);
 		preview_name.append(C_SLASH);
 		preview_name.append(original_file_name);
-		preview_name.append('_');
-		preview_name.append(String.valueOf(width));
-		preview_name.append('x');
-		preview_name.append(String.valueOf(height));
-		//if(ext != null)
-		//{
-			preview_name.append('.');
-			//preview_name.append(FileInfo.EXTENSIONS[FileInfo.JPG][0]);
-			preview_name.append(ext);
-		//}
+		preview_name.append(PathProviderUtil.getOptionsSuffix(options));
+		preview_name.append('.');
+		preview_name.append(ext);
 		return preview_name.toString();
 	}
 

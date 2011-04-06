@@ -1,15 +1,17 @@
 package com.pagesociety.transcode;
 
 import java.io.File;
+import java.util.Map;
 
-import com.pagesociety.cmd.CmdWork;
-import com.pagesociety.cmd.CmdWorkListener;
-import com.pagesociety.cmd.CmdWorker;
-
-public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
+public class ImageMagick extends TranscodeWorkImpl
 {
 	private static String EXEC_PATH = "convert";
-	private static final boolean DEBUG = false;
+
+	public static final String WIDTH = "width";
+	public static final String HEIGHT = "height";
+	public static final String QUALITY = "quality";
+	public static final String GRAYSCALE = "grayscale";
+	
 
 	public static void setRuntimeExecPath(String path)
 	{
@@ -41,17 +43,46 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	{
 		this.gray = b;
 	}
+	
+	public void setOptions(Map<String, String> options)
+	{
+		if (options.containsKey(WIDTH))
+			width = Integer.parseInt( options.get(WIDTH) );
+		if (options.containsKey(HEIGHT))
+			height = Integer.parseInt( options.get(HEIGHT));
+		if (options.containsKey(QUALITY))
+			quality = Integer.parseInt( options.get(QUALITY));
+		if (options.containsKey(GRAYSCALE))
+			gray =  options.get(GRAYSCALE).equals("true");
+	}
 
 	public void exec() throws Exception 
 	{
-		String[] cmds = new String[] { EXEC_PATH, // convert
+//		String[] cmds = new String[] { EXEC_PATH, // convert
+//				input.getAbsolutePath(), // input
+//				"-resize", get_resize_geometry_string(), // -resize 
+//				"-quality", String.valueOf(quality), 	// -quality
+//				"-colorspace", gray ? "Gray" : "RGB", 	// -colorspace
+//				output.getAbsolutePath() };
+//		CmdWork w = new CmdWork(this, cmds);
+//		CmdWorker.doWork(w);
+		throw new Exception("ImageMagick.exec should not be called");
+	}
+	
+	public String getCmd()
+	{
+		return EXEC_PATH;
+	}
+	
+	public String[] getArgs()
+	{
+		return new String[]{
 				input.getAbsolutePath(), // input
 				"-resize", get_resize_geometry_string(), // -resize 
 				"-quality", String.valueOf(quality), 	// -quality
 				"-colorspace", gray ? "Gray" : "RGB", 	// -colorspace
-				output.getAbsolutePath() };
-		CmdWork w = new CmdWork(this, cmds);
-		CmdWorker.doWork(w);
+				output.getAbsolutePath()
+			};
 	}
 	
 	//TODO: This is a placeholder for now.
@@ -86,39 +117,6 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 	    return osName.startsWith("Mac OS X");
 	}
 	
-	public void sigstart(long id)
-	{
-		if (DEBUG)
-			System.out.println("sigstart received for " + id);
-		fireWorkStart();
-	}
-
-	public void sigcomplete(long id)
-	{
-		if (DEBUG)
-			System.out.println("sigcomplete received for " + id);
-		fireWorkComplete(output);
-	}
-
-	public void stdout(long id, String s)
-	{
-		if (DEBUG)
-			System.out.println("stdout received for " + id + "\n\t" + s);
-		fireWorkProgress(s);
-	}
-
-	public void stderr(long id, String err)
-	{
-		if (DEBUG)
-			System.out.println("stderr received for " + id + ".\n\tError: " + err);
-	}
-
-	public void sigerr(long id, String err)
-	{
-		if (DEBUG)
-			System.out.println("sigerr received for " + id + ".\n\tError: " + err);
-		fireWorkError(err);
-	}
 
 	//
 	public static void main(String[] args)
@@ -136,4 +134,6 @@ public class ImageMagick extends TranscodeWorkImpl implements CmdWorkListener
 			e.printStackTrace();
 		}
 	}
+
+	
 }

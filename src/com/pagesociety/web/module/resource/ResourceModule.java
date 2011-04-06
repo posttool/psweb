@@ -296,6 +296,18 @@ public class ResourceModule extends WebStoreModule
 		return getResourcePreviewUrlWithDim( resource, w, h);
 	
 	}
+	
+	
+	@Export(ParameterNames={"resource_id", "options"})
+	public String GetResourcePreviewURL(UserApplicationContext uctx,long resource_id,Map<String,String> options) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity resource = GET(resource_entity_name,resource_id);
+		GUARD(user, CAN_GET_RESOURCE_URL,
+				 GUARD_INSTANCE,resource);
+		return getResourcePreviewUrl( resource, options);
+	
+	}
 	 
 	//@Export 
 	public void TestPreviewConcurrency(UserApplicationContext uctx,RawCommunique c) throws WebApplicationException,PersistenceException
@@ -344,6 +356,23 @@ public class ResourceModule extends WebStoreModule
 		String url = null;
 		try{
 			url = path_provider.getPreviewUrl(path_token,w,h);
+		}catch(WebApplicationException wae)
+		{
+			ERROR(wae); 
+		}
+		return url;
+	}
+	
+	
+	public String getResourcePreviewUrl(Entity resource,Map<String,String>options) throws WebApplicationException
+	{
+		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
+		if(path_token == null)
+			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
+		
+		String url = null;
+		try{
+			url = path_provider.getPreviewUrl(path_token,options);
 		}catch(WebApplicationException wae)
 		{
 			ERROR(wae); 
