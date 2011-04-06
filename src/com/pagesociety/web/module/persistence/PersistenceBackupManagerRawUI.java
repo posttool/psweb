@@ -421,8 +421,11 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		
 		private void get_date_from_path()
 		{
-			String[] parts = path.split(File.separator);
-			String dir_name = parts[parts.length-1];
+			//String[] parts = path.split(File.separator);
+			File f = new File(path);
+			//String dir_name = parts[parts.length-1];
+			String dir_name = f.getName();
+			
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss"); // from bdbstore dobackup
 		    Date d;
 			try
