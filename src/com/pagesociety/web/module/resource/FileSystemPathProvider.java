@@ -324,10 +324,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	{
 		ImageMagick i = new ImageMagick(original,dest);
 		i.setOptions(options);
-		
-		try{
-			i.exec();
-		}catch(Exception e)
+		try
+		{
+			PathProviderUtil.process(i.getCmd(), i.getArgs());
+		}
+		catch(Exception e)
 		{
 			throw new WebApplicationException("PROBLEM CREATING PREVIEW "+dest.getAbsolutePath(),e);
 		}		
