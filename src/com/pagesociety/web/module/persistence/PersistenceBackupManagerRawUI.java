@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
+import com.pagesociety.util.Text;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
@@ -440,7 +441,9 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 
 		public String id()
 		{
-			return date.get(Calendar.YEAR) + "_" + date.get(Calendar.DAY_OF_YEAR);
+			String doy = "000"+date.get(Calendar.DAY_OF_YEAR);
+			doy = doy.substring(doy.length()-3);
+			return date.get(Calendar.YEAR) + "_" + doy;
 		}
 		
 		public String dateString()
