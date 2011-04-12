@@ -145,7 +145,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	{
 		int c = 0;
 		int s = last_backup_map.size() - max_days ;
-		if (s<1)
+		if (s < max_days)
 			return;
 		List<String> delete_list = new ArrayList<String>();
 		for (String k : last_backup_map.keySet())
