@@ -266,6 +266,8 @@ public class Text
 		}
 		return b.toString().trim();
 	}
+	
+	
 
 	public static String shorten(String string, int i)
 	{
