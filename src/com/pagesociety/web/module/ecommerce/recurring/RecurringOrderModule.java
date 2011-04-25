@@ -32,25 +32,25 @@ import com.pagesociety.web.module.resource.ResourceModule;
 import com.pagesociety.web.module.user.UserModule;
 
 
-public class RecurringOrderModule extends ResourceModule 
+public class RecurringOrderModule extends ResourceModule
 {
-	
+
 	protected static final String SLOT_USER_MODULE  		  = "user-module";
 	private static final String SLOT_BILLING_MODULE 		  = "billing-module";
 	private static final String SLOT_EMAIL_MODULE 		  	  = "email-module";
 	private static final String SLOT_LOGGER_MODULE 		  	  = "logger-module";
 	private static final String SLOT_NOTIFICATION_MODULE 	  = "notification-module";
 	private static final String SLOT_PROMOTION_MODULE 	  	  = "promotion-module";
-	
-	private static final String PARAM_BILLING_THREAD_INTERVAL   = "billing-thread-interval";	
+
+	private static final String PARAM_BILLING_THREAD_INTERVAL   = "billing-thread-interval";
 	private static final String PARAM_HAS_TRIAL_PERIOD		    = "has-trial-period";
 	private static final String PARAM_TRIAL_PERIOD			    = "trial-period";
 	private static final String PARAM_EXPIRED_TRIAL_REAP_PERIOD = "expired-trial-reap-period";
 	private static final String PARAM_BILLING_FAILED_GRACE_PERIOD = "billing-failed-grace-period";//how many days after billing fails before we lockout public site
 	private static final String PARAM_BILLING_FAILED_REAP_PERIOD  = "billing-failed-reap-period";//how many days after grace period expires do we reap the user
-	private static final String PARAM_SEND_EMAIL_IF_BILLING_NOT_CONFIGURED   = "send-email-if-billing-not-configured";	
-	
-	
+	private static final String PARAM_SEND_EMAIL_IF_BILLING_NOT_CONFIGURED   = "send-email-if-billing-not-configured";
+
+
 	public static final int ORDER_STATUS_INIT 										 = 0x0000;
 	public static final int ORDER_STATUS_OPEN 										 = 0x0001;
 	public static final int ORDER_STATUS_CLOSED  									 = 0x0002;
@@ -85,10 +85,10 @@ public class RecurringOrderModule extends ResourceModule
 		default:
 			return "UNKNOWN";
 		}
-		
+
 	}
-	
-	
+
+
 	protected UserModule 			   user_module;
 	protected BillingModule 		   billing_module;
 	protected IBillingGateway 		   billing_gateway;
@@ -111,7 +111,7 @@ public class RecurringOrderModule extends ResourceModule
 		super.setResourceEntityName(RECURRING_SKU_RESOURCE_ENTITY);
 		user_module 			= (UserModule)getSlot(SLOT_USER_MODULE);
 		billing_module  		= (BillingModule)getSlot(SLOT_BILLING_MODULE);
-		billing_gateway 		= billing_module.getBillingGateway(); 
+		billing_gateway 		= billing_module.getBillingGateway();
 		billing_thread_interval = Long.parseLong(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_THREAD_INTERVAL, config));
 		email_module 			= (IEmailModule)getSlot(SLOT_EMAIL_MODULE);
 		logger_module 			= (LoggerModule)getSlot(SLOT_LOGGER_MODULE);
@@ -120,7 +120,7 @@ public class RecurringOrderModule extends ResourceModule
 		billing_failed_grace_period_in_days 			  		 	= Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_FAILED_GRACE_PERIOD, config));
 		billing_failed_grace_period_expired_reap_period_in_days 	= Integer.parseInt(GET_REQUIRED_CONFIG_PARAM(PARAM_BILLING_FAILED_REAP_PERIOD, config));
 		send_email_if_billing_not_configured 						= GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(PARAM_SEND_EMAIL_IF_BILLING_NOT_CONFIGURED, false, config);
-		
+
 		String s_has_tp = GET_OPTIONAL_CONFIG_PARAM(PARAM_HAS_TRIAL_PERIOD, config);
 		if(("yes").equalsIgnoreCase(s_has_tp) || "true".equalsIgnoreCase(s_has_tp))
 		{
@@ -133,15 +133,15 @@ public class RecurringOrderModule extends ResourceModule
 				throw new InitializationException("COME ON YOU NOOB.");
 			}
 		}
-		
+
 	}
-	
+
 	public void loadbang(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
-		start_billing_thread();	
-		
+		start_billing_thread();
 
-		
+
+
 	}
 
 
@@ -155,23 +155,23 @@ public class RecurringOrderModule extends ResourceModule
 		DEFINE_SLOT(SLOT_PROMOTION_MODULE, com.pagesociety.web.module.ecommerce.promo.PromotionModule.class, true);
 		DEFINE_SLOT(SLOT_USER_MODULE, com.pagesociety.web.module.user.UserModule.class, true);
 	}
-	
 
-	
+
+
 	public static final String CAN_CREATE_RECURRING_SKU			= "CAN_CREATE_RECURRING_SKU";
 	public static final String CAN_READ_RECURRING_SKU 			= "CAN_READ_RECURRING_SKU";
 	public static final String CAN_UPDATE_RECURRING_SKU 	    = "CAN_UPDATE_RECURRING_SKU";
 	public static final String CAN_DELETE_RECURRING_SKU 		= "CAN_DELETE_RECURRING_SKU";
 	public static final String CAN_BROWSE_RECURRING_SKUS 	    = "CAN_BROWSE_RECURRING_SKUS";
-	
+
 	public static final String CAN_CREATE_RECURRING_ORDER		= "CAN_CREATE_RECURRING_ORDER";
 	public static final String CAN_READ_RECURRING_ORDER			= "CAN_READ_RECURRING_ORDER";
 	public static final String CAN_UPDATE_RECURRING_ORDER 	    = "CAN_UPDATE_RECURRING_ORDER";
 	public static final String CAN_DELETE_RECURRING_ORDER		= "CAN_DELETE_RECURRING_ORDER";
 	public static final String CAN_BROWSE_RECURRING_ORDERS 	    = "CAN_BROWSE_RECURRING_ORDERS";
 	public static final String CAN_BROWSE_RECURRING_ORDERS_BY_USER = "CAN_BROWSE_RECURRING_ORDERS_BY_USER";
-	
-	
+
+
 	protected  void exportPermissions()
 	{
 		super.exportPermissions();
@@ -180,17 +180,17 @@ public class RecurringOrderModule extends ResourceModule
 		EXPORT_PERMISSION(CAN_UPDATE_RECURRING_SKU);
 		EXPORT_PERMISSION(CAN_DELETE_RECURRING_SKU);
 		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_SKUS);
-		EXPORT_PERMISSION(CAN_CREATE_RECURRING_ORDER); 
-		EXPORT_PERMISSION(CAN_READ_RECURRING_ORDER); 	
-		EXPORT_PERMISSION(CAN_UPDATE_RECURRING_ORDER); 
-		EXPORT_PERMISSION(CAN_DELETE_RECURRING_ORDER); 
+		EXPORT_PERMISSION(CAN_CREATE_RECURRING_ORDER);
+		EXPORT_PERMISSION(CAN_READ_RECURRING_ORDER);
+		EXPORT_PERMISSION(CAN_UPDATE_RECURRING_ORDER);
+		EXPORT_PERMISSION(CAN_DELETE_RECURRING_ORDER);
 		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_ORDERS);
 		EXPORT_PERMISSION(CAN_BROWSE_RECURRING_ORDERS_BY_USER);
 	}
-	
+
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
-	
+
 	///RECURRING SKU
 	@Export
 	public PagingQueryResult GetActiveRecurringSKUs(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
@@ -198,23 +198,23 @@ public class RecurringOrderModule extends ResourceModule
 		//Potential guard here...but active ones shoud be public or at least have the person logged in so no big deal//
 		return getRecurringSKUs(offset, page_size,RECURRING_SKU_CATALOG_STATE_ACTIVE,null);
 	}
-	
+
 	@Export
 	public PagingQueryResult GetAllRecurringSKUs(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
 		GUARD(user,CAN_BROWSE_RECURRING_SKUS);
 		PagingQueryResult result =  getRecurringSKUs(offset, page_size,Query.VAL_GLOB,null);
-		
+
 		return result;
 	}
-	
+
 	public PagingQueryResult getRecurringSKUs(int offset,int page_size,Object state,String order_by) throws PersistenceException
 	{
 		Query q = new Query(RECURRING_SKU_ENTITY);
 		q.idx(IDX_RECURRING_SKU_BY_CATALOG_STATE);
 		q.eq(state);
-		
+
 		if(order_by != null)
 			q.orderBy(order_by);
 		q.offset(offset);
@@ -236,12 +236,12 @@ public class RecurringOrderModule extends ResourceModule
 		return result.getEntities().get(0);
 	}
 
-	
+
 	@Export
 	public Entity CreateRecurringSKU(UserApplicationContext uctx,Entity recurring_sku) throws WebApplicationException,PersistenceException
 	{
 		VALIDATE_TYPE(RECURRING_SKU_ENTITY, recurring_sku);
-		
+
 		String product_name 	   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_TITLE);
 		String product_description = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_DESCRIPTION);
 		double  initial_fee        = (Double)recurring_sku.getAttribute(RECURRING_SKU_FIELD_INITIAL_FEE);
@@ -249,7 +249,7 @@ public class RecurringOrderModule extends ResourceModule
 		String  catalog_no		   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_NUMBER);
 		Integer catalog_state	   = (Integer)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_STATE);
 		Entity user_data		   = (Entity)recurring_sku.getAttribute(RECURRING_SKU_FIELD_USER_DATA);
-		
+
 		long 	recurring_sku_resource_id 	= 0;
 		String 	user_data_type		   		= null;
 		long 	user_data_id			   	= 0;
@@ -265,26 +265,26 @@ public class RecurringOrderModule extends ResourceModule
 			VALIDATE_TYPE(RECURRING_SKU_RESOURCE_ENTITY, sku_resource);
 			recurring_sku_resource_id = sku_resource.getId();
 		}
-		
+
 		if(catalog_state == null)
 			catalog_state = RECURRING_SKU_CATALOG_STATE_ACTIVE;
-		
+
 		return CreateRecurringSKU(uctx,product_name, product_description,initial_fee,product_price,catalog_no,recurring_sku_resource_id,user_data_type,user_data_id,catalog_state);
 
 	}
-	
-	@Export 
+
+	@Export
 	public Entity CreateRecurringSKU(UserApplicationContext uctx,String product_name,String product_description,double initial_fee,double  product_price,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity user_data 	= null;
 		if(user_data_type  != null)
 			user_data = GET(user_data_type,user_data_id);
-		
+
 		Entity recurring_sku_resource = null;
 		if(recurring_sku_resource_id != 0)//0 for a ref pointer means null//
 			recurring_sku_resource = GET(RECURRING_SKU_ENTITY,recurring_sku_resource_id);
-		GUARD(user,CAN_CREATE_RECURRING_SKU,GUARD_TYPE, RECURRING_SKU_ENTITY, 
+		GUARD(user,CAN_CREATE_RECURRING_SKU,GUARD_TYPE, RECURRING_SKU_ENTITY,
 											RECURRING_SKU_FIELD_TITLE,product_name,
 											RECURRING_SKU_FIELD_DESCRIPTION,product_description,
 											RECURRING_SKU_FIELD_INITIAL_FEE,initial_fee,
@@ -293,11 +293,11 @@ public class RecurringOrderModule extends ResourceModule
 											RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
 											RECURRING_SKU_FIELD_USER_DATA,user_data,
 											RECURRING_SKU_FIELD_CATALOG_STATE,catalog_state);
-		
+
 		return createRecurringSKU(user,product_name, product_description,initial_fee,product_price,catalog_no,recurring_sku_resource,user_data,catalog_state);
 	}
-	
-	
+
+
 	public Entity createRecurringSKU(Entity creator,String product_name,String product_description,double initial_fee,double product_price,String catalog_no,Entity recurring_sku_resource,Entity user_data,int catalog_state) throws PersistenceException
 	{
 		return NEW(RECURRING_SKU_ENTITY,
@@ -318,14 +318,14 @@ public class RecurringOrderModule extends ResourceModule
 	{
 
 		VALIDATE_TYPE(RECURRING_SKU_ENTITY, recurring_sku);
-		
+
 		String product_name 	   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_TITLE);
 		String product_description = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_DESCRIPTION);
 		double product_price       = (Double)recurring_sku.getAttribute(RECURRING_SKU_FIELD_RECURRING_PRICE);
 		String catalog_no		   = (String)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_NUMBER);
 		Entity user_data		   = (Entity)recurring_sku.getAttribute(RECURRING_SKU_FIELD_USER_DATA);
 		Integer catalog_state	   = (Integer)recurring_sku.getAttribute(RECURRING_SKU_FIELD_CATALOG_STATE);
-		
+
 		long 	recurring_sku_resource_id 	= 0;
 		String 	user_data_type		   		= null;
 		long 	user_data_id			   	= 0;
@@ -344,11 +344,11 @@ public class RecurringOrderModule extends ResourceModule
 
 		if(catalog_state == null)
 			catalog_state = RECURRING_SKU_CATALOG_STATE_ACTIVE;
-		
+
 		return UpdateRecurringSKU(uctx,recurring_sku.getId(), product_name, product_description, product_price,catalog_no,recurring_sku_resource_id, user_data_type,user_data_id,catalog_state);
 	}
-	
-	
+
+
 	@Export
 	public Entity UpdateRecurringSKU(UserApplicationContext uctx,long recurring_sku_id,String product_name,String product_description,double product_price,String catalog_no,long recurring_sku_resource_id,String user_data_type,long user_data_id,int catalog_state) throws WebApplicationException,PersistenceException
 	{
@@ -358,11 +358,11 @@ public class RecurringOrderModule extends ResourceModule
 		Entity user_data 	= null;
 		if(user_data_type  != null)
 			user_data = GET(user_data_type,user_data_id);
-		
+
 		Entity recurring_sku_resource = null;
 		if(recurring_sku_resource_id != 0)//0 for a ref pointer means null//
 			recurring_sku_resource = GET(RECURRING_SKU_ENTITY,recurring_sku_resource_id);
-		GUARD(user,CAN_UPDATE_RECURRING_SKU,GUARD_INSTANCE, recurring_sku, 
+		GUARD(user,CAN_UPDATE_RECURRING_SKU,GUARD_INSTANCE, recurring_sku,
 											RECURRING_SKU_FIELD_TITLE,product_name,
 											RECURRING_SKU_FIELD_DESCRIPTION,product_description,
 											RECURRING_SKU_FIELD_RECURRING_PRICE,product_price,
@@ -370,17 +370,17 @@ public class RecurringOrderModule extends ResourceModule
 											RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
 											RECURRING_SKU_FIELD_USER_DATA,user_data,
 											RECURRING_SKU_FIELD_CATALOG_STATE,catalog_state);
-		
+
 		return updateRecurringSKU(recurring_sku,product_name, product_description, product_price,catalog_no, recurring_sku_resource,user_data,catalog_state);
 	}
-	
-	
+
+
 	public Entity updateRecurringSKU(Entity recurring_sku,String product_name,String product_description,double product_price,String catalog_no,Entity recurring_sku_resource,Entity user_data,int catalog_state) throws WebApplicationException,PersistenceException
 	{
 		Entity old_resource = (Entity)GET(RECURRING_SKU_ENTITY,recurring_sku.getId()).getAttribute(RECURRING_SKU_FIELD_RESOURCE);
 		if(old_resource != null && !old_resource.equals(recurring_sku_resource))
 			deleteResource(old_resource);
-	
+
 		return UPDATE(recurring_sku,
 				RECURRING_SKU_FIELD_TITLE,product_name,
 				RECURRING_SKU_FIELD_DESCRIPTION,product_description,
@@ -388,18 +388,18 @@ public class RecurringOrderModule extends ResourceModule
 				RECURRING_SKU_FIELD_CATALOG_NUMBER,catalog_no,
 				RECURRING_SKU_FIELD_RESOURCE,recurring_sku_resource,
 				RECURRING_SKU_FIELD_USER_DATA,user_data,
-				RECURRING_SKU_FIELD_CATALOG_STATE,catalog_state);	
+				RECURRING_SKU_FIELD_CATALOG_STATE,catalog_state);
 	}
-	
+
 	@Export
 	public Entity DeleteRecurringSKU(UserApplicationContext uctx,long recurring_sku_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   	= (Entity)uctx.getUser();
 		Entity recurring_sku = GET(RECURRING_SKU_ENTITY,recurring_sku_id);
 		GUARD(user,CAN_DELETE_RECURRING_SKU,GUARD_INSTANCE, recurring_sku);
-		return deleteRecurringSKU(recurring_sku);		
+		return deleteRecurringSKU(recurring_sku);
 	}
-	
+
 	public Entity deleteRecurringSKU(Entity recurring_sku) throws WebApplicationException,PersistenceException
 	{
 		Entity old_resource = (Entity)recurring_sku.getAttribute(RECURRING_SKU_FIELD_RESOURCE);
@@ -407,42 +407,42 @@ public class RecurringOrderModule extends ResourceModule
 			deleteResource(old_resource);
 		return DELETE(recurring_sku);
 	}
-	
-	///////RECURRING ORDER///////////	
+
+	///////RECURRING ORDER///////////
 	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
 		List<Entity> recurring_skus  = (List<Entity>)recurring_order.getAttribute("skus");
 		List<Entity> promotions 	 = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
-		
+
 		VALIDATE_TYPE_LIST(RECURRING_SKU_ENTITY, recurring_skus);
 		VALIDATE_TYPE_LIST(promotion_module.PROMOTION_INSTANCE_ENTITY, promotions);
 		int recurring_unit   = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_UNIT);
 		int recurring_period = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_PERIOD);
-		
+
 		return CreateRecurringOrder(uctx,target_user_id,recurring_unit,recurring_period,ENTITIES_TO_IDS(recurring_skus),ENTITIES_TO_IDS(promotions));
 	}
-	
-	@Export 
+
+	@Export
 	public Entity CreateRecurringOrder(UserApplicationContext uctx,long target_user_id,int recurring_unit,int recurring_period,List<Long> recurring_sku_ids,List<Long> promotion_ids) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(target_user_id);
-		
+
 		List <Entity>skus 		= IDS_TO_ENTITIES(RECURRING_SKU_ENTITY,recurring_sku_ids);
 		List<Entity> promotions = IDS_TO_ENTITIES(PromotionModule.PROMOTION_INSTANCE_ENTITY, promotion_ids);
 
-	
+
 		GUARD(user,CAN_CREATE_RECURRING_ORDER,GUARD_TYPE,RECURRING_ORDER_ENTITY,
 												  RECURRING_ORDER_FIELD_SKUS,skus,
 												  RECURRING_ORDER_FIELD_USER,user,
 												  RECURRING_ORDER_FIELD_PROMOTIONS,promotions,
 												  RECURRING_ORDER_FIELD_RECURRING_UNIT,recurring_unit,
 												  RECURRING_ORDER_FIELD_RECURRING_PERIOD,recurring_period);
-													
+
 		return createRecurringOrder(user,target_user,recurring_unit,recurring_period,skus,promotions);
 
 	}
-	
+
 	public Entity createRecurringOrder(Entity creator,Entity user,int recurring_unit,int recurring_period,List<Entity> skus,List<Entity> promotions) throws PersistenceException
 	{
 		List<Entity> line_items = new ArrayList<Entity>();
@@ -456,8 +456,8 @@ public class RecurringOrderModule extends ResourceModule
 								   RECURRING_ORDER_LINE_ITEM_FIELD_SKU,sku);
 			line_items.add(line_item);
 		}
-		
-		
+
+
 		Entity recurring_order =  NEW(RECURRING_ORDER_ENTITY,
 									  creator,
 									  RECURRING_ORDER_FIELD_LINE_ITEMS,line_items,
@@ -472,8 +472,8 @@ public class RecurringOrderModule extends ResourceModule
 		MODULE_LOG(0,"CREATED RECURRING ORDER "+recurring_order.getId()+" OK");
 		return recurring_order;
 	}
-	
-	
+
+
 	public void attachPromo(Entity target_user, Entity order, String promo_code) throws PersistenceException, WebApplicationException
 	{
 		Entity promotion_instance = promotion_module.getCouponPromotionByPromoCode(target_user,promo_code.trim());
@@ -484,7 +484,7 @@ public class RecurringOrderModule extends ResourceModule
 		UPDATE(order,
 				RECURRING_ORDER_FIELD_PROMOTIONS,promotions);
 	}
-	
+
 	public void removePromo(Entity order, Entity promo_instance) throws PersistenceException, WebApplicationException
 	{
 		List<Entity> promotions = (List<Entity>) order.getAttribute(RECURRING_ORDER_FIELD_PROMOTIONS);
@@ -502,11 +502,11 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Entity user 	   = (Entity)uctx.getUser();
 		Entity recurring_order = GET(RECURRING_ORDER_ENTITY,recurring_order_id);
-		
+
 		GUARD(user, CAN_DELETE_RECURRING_ORDER, recurring_order);
 		return deleteRecurringOrder(recurring_order);
 	}
-	
+
 	public Entity deleteRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
 		List<Entity> line_items = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_LINE_ITEMS);
@@ -525,18 +525,18 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		notification_module.createAlertNotificationForUser(null, user, notification_text);
 	}
-	
+
 	public Entity openRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
 		if(!billing_module.isConfigured())
 			throw new WebApplicationException("ERROR:CANNOT OPEN ORDER DUE TO BILLING MODULE NOT BEING CONFIGURED.MAKE SURE ENCRYPTION MODULE IS CONFIGURED.");
-		
+
 
 		recurring_order = EXPAND(recurring_order);
 		Entity order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 		FILL_REFS(recurring_order);
 		int status 		= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
-		
+
 		//GET PREFERRED BILLING RECORD AND CHECK CONDITIONS SURROUNDING FREE FOR LIFE WITH NO BILLING RECORD\\
 		Entity billing_record = billing_module.getPreferredBillingRecord(order_user);
 		if(billing_record == null)
@@ -558,13 +558,13 @@ public class RecurringOrderModule extends ResourceModule
 				return recurring_order;
 			}
 		}
-		
+
 		//SEE HOW THE ORDER IS COMING IN \\
 		switch(status)
 		{
 		case ORDER_STATUS_INIT:
 		case ORDER_STATUS_IN_TRIAL_PERIOD:
-		case ORDER_STATUS_TRIAL_EXPIRED:	
+		case ORDER_STATUS_TRIAL_EXPIRED:
 		case ORDER_STATUS_INITIAL_BILL_FAILED:
 			recurring_order.setAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE, new Date());
 			try{
@@ -573,7 +573,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					throw new WebApplicationException("UNABLE TO OPEN ORDER. FAILED INITIAL FEE BILLING");
 				}
-				
+
 			try{
 				double amount = 0;
 				try{
@@ -585,12 +585,12 @@ public class RecurringOrderModule extends ResourceModule
 					send_promo_script_failed_email(wae, recurring_order);
 					break;
 				}
-				do_regular_billing(order_user,recurring_order,billing_record,amount);				
+				do_regular_billing(order_user,recurring_order,billing_record,amount);
 			}catch(BillingGatewayException bge2)
 			{
-				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD);	
+				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD);
 				throw new WebApplicationException("UNABLE TO OPEN ORDER. FAILED BILLING");
-			}				
+			}
 			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_OPEN);
 			break;
 		case ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED:
@@ -602,27 +602,27 @@ public class RecurringOrderModule extends ResourceModule
 					throw new WebApplicationException("UNABLE TO OPEN ORDER. FAILED BILLING");
 				}
 				updateRecurringOrderStatus(recurring_order, ORDER_STATUS_OPEN);
-				break;				
+				break;
 		}
-		return recurring_order; 
+		return recurring_order;
 	}
-	
+
 	@Export
 	public Entity CloseRecurringOrder(UserApplicationContext uctx,long recurring_order_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user 	   		= (Entity)uctx.getUser();
 		Entity recurring_order 	= GET(RECURRING_ORDER_ENTITY,recurring_order_id);
-		
+
 		GUARD(user, CAN_UPDATE_RECURRING_ORDER,GUARD_INSTANCE,recurring_order,
 											 	RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_CLOSED);
 		return closeRecurringOrder(recurring_order);
 	}
-	
+
 	public Entity closeRecurringOrder(Entity recurring_order) throws WebApplicationException,PersistenceException
 	{
 		return updateRecurringOrderStatus(recurring_order, ORDER_STATUS_CLOSED);
 	}
-	
+
 	public Entity updateRecurringOrderStatus(Entity recurring_order,int status,Object... args) throws PersistenceException
 	{
 		int old_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
@@ -663,7 +663,7 @@ public class RecurringOrderModule extends ResourceModule
 				send_billing_failed_email(recurring_order, "Please login and update billing information.");
 				log_order_suspended(recurring_order, old_status);
 				break;
-			case ORDER_STATUS_INITIAL_BILL_FAILED:				
+			case ORDER_STATUS_INITIAL_BILL_FAILED:
 				log_order_init_bill_failed(recurring_order, tally_order(recurring_order),(String)args[0]);
 				MODULE_LOG(1,"ERROR: RECURRING ORDER "+recurring_order.getId()+" INITIAL BILLING FAILED. FOR USER: "+order_user);
 				send_system_alert_notification(order_user,"There was a problem with your order. Please make sure you have a valid billing record.");
@@ -682,10 +682,10 @@ public class RecurringOrderModule extends ResourceModule
 				//this needs to be in a seperate function???\\
 				UPDATE(recurring_order,
 						RECURRING_ORDER_FIELD_LAST_BILL_DATE,now,
-						RECURRING_ORDER_FIELD_NEXT_BILL_DATE, calculate_next_bill_date(recurring_order,now),					
+						RECURRING_ORDER_FIELD_NEXT_BILL_DATE, calculate_next_bill_date(recurring_order,now),
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(amount,2),
 						RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS,now);
-				
+
 				send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
 				send_billing_failed_email(recurring_order, (String)args[0]);
 				log_order_delinquent(recurring_order, old_status);
@@ -706,10 +706,10 @@ public class RecurringOrderModule extends ResourceModule
 				log_order_trial_expired(recurring_order);
 				break;
 		}
-			
-		return recurring_order;	
+
+		return recurring_order;
 	}
-	
+
 	private double tally_order(Entity recurring_order)
 	{
 		List<Entity> line_items 	 = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_LINE_ITEMS);
@@ -721,7 +721,7 @@ public class RecurringOrderModule extends ResourceModule
 		}
 		return amount;
 	}
-	
+
 	private double get_order_amount_with_promotions_applied(Entity recurring_order) throws WebApplicationException
 	{
 		Double a= null;
@@ -732,8 +732,8 @@ public class RecurringOrderModule extends ResourceModule
 		recurring_order.setAttribute("cached_amt",amt);
 		return amt;
 	}
-	
-	
+
+
 	@Export
 	public PagingQueryResult GetRecurringOrdersByStatus(UserApplicationContext uctx,int status,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
@@ -742,7 +742,7 @@ public class RecurringOrderModule extends ResourceModule
 		PagingQueryResult result =  getRecurringOrdersByStatus(status, page_size, offset);
 		return result;
 	}
-	
+
 	public PagingQueryResult getRecurringOrdersByStatus(int status,int page_size,int offset) throws WebApplicationException,PersistenceException
 	{
 		Query q = new Query(RECURRING_ORDER_ENTITY);
@@ -752,7 +752,7 @@ public class RecurringOrderModule extends ResourceModule
 		q.pageSize(page_size);
 		return PAGING_QUERY(q);
 	}
-	
+
 	@Export
 	public PagingQueryResult GetRecurringOrdersByUser(UserApplicationContext uctx,long user_id,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
@@ -760,11 +760,11 @@ public class RecurringOrderModule extends ResourceModule
 		Entity target_user = user_module.getUser(user_id);
 		GUARD(user,CAN_BROWSE_RECURRING_ORDERS_BY_USER, GUARD_USER,user);
 		PagingQueryResult result =  getRecurringOrdersByUser(target_user,offset,page_size);
-		
+
 		return result;
 	}
-	
-	
+
+
 	public PagingQueryResult getRecurringOrdersByUser(Entity user,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
 		Query q = new Query(RECURRING_ORDER_ENTITY);
@@ -789,16 +789,16 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity target_user = user_module.getUser(user_id);
-					
+
 		return getTransactionHistoryByUser(target_user,offset,page_size,asc);
 	}
-	
+
 	public List<Entity> getTransactionHistoryByUser(Entity user) throws PersistenceException
 	{
 		Query q = logger_module.getLogMessagesByUserQ(user);
 		return QUERY(q).getEntities();
 	}
-	
+
 	public PagingQueryResult getTransactionHistoryByUser(Entity user,int offset,int page_size, boolean asc) throws WebApplicationException,PersistenceException
 	{
 		Query q = logger_module.getLogMessagesByUserQ(user);
@@ -808,20 +808,20 @@ public class RecurringOrderModule extends ResourceModule
 		PagingQueryResult pqr = PAGING_QUERY(q);
 		return pqr;
 	}
-	
-	
+
+
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-	
+
 	private void do_initial_fee_billing(Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException
 	{
 		double initial_fee = tally_initial_fee(recurring_order);
 		if(initial_fee != 0)
 		{
-			BillingGatewayResponse bgr = billing_gateway.doSale(billing_record, initial_fee,null,"PSTRO"+recurring_order.getId(),"[INITIAL FEE]oid:"+recurring_order.getId()+"uid:"+((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER)).getId()+":initial_fee:"+normalize_amount(initial_fee));		
+			BillingGatewayResponse bgr = billing_gateway.doSale(billing_record, initial_fee,null,"PSTRO"+recurring_order.getId(),"[INITIAL FEE]oid:"+recurring_order.getId()+"uid:"+((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER)).getId()+":initial_fee:"+normalize_amount(initial_fee));
 			log_order_init_bill_ok(recurring_order, initial_fee, bgr);
 		}
 	}
-	
+
 	private double tally_initial_fee(Entity recurring_order) throws PersistenceException,BillingGatewayException
 	{
 		List<Entity> line_items 	 = (List<Entity>)recurring_order.getAttribute(RECURRING_ORDER_FIELD_LINE_ITEMS);
@@ -833,8 +833,8 @@ public class RecurringOrderModule extends ResourceModule
 		}
 		return initial_fee;
 	}
-	
- 
+
+
 	private double do_regular_billing(Entity order_user,Entity recurring_order,Entity billing_record,double amount) throws PersistenceException,BillingGatewayException
 	{
 		Date next_bill_date = (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_NEXT_BILL_DATE);
@@ -845,7 +845,7 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG(0,"WARNING: SKIPPING BILLING RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER: "+recurring_order.getId()+" user:"+order_user);
 			//throw new WebApplicationException(" CANT BILL RECURRING ORDER BECAUSE NEXT BILL DATE IS IN THE FUTURE.RECURRING ORDER");
 		}
-		
+
 		if(amount > 0)
 		{
 			BillingGatewayResponse response = billing_gateway.doSale(billing_record, amount,null,String.valueOf("PSTRO"+recurring_order.getId()),"[MONTHLY_BILLING]oid:"+recurring_order.getId()+":user:"+order_user.getAttribute("email")+":uid:"+order_user.getId()+":amt:$"+normalize_amount(amount));
@@ -885,14 +885,14 @@ public class RecurringOrderModule extends ResourceModule
 
 	private Date calculate_next_bill_date(Entity recurring_order, Date now)
 	{
-		Calendar c1 = Calendar.getInstance(); 
+		Calendar c1 = Calendar.getInstance();
 		c1.setTime(now);
 		int recurring_unit 		= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_UNIT);
 		int recurring_period 	= (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_RECURRING_PERIOD);
 		c1.add(recurring_unit,recurring_period);
 		return c1.getTime();
 	}
-	
+
 	Thread billing_thread;
 	private boolean billing_thread_running;
 	private Object BILLING_LOCK = new Object();
@@ -904,17 +904,17 @@ public class RecurringOrderModule extends ResourceModule
 			{
 				while(billing_thread_running)
 				{
-					
+
 					MODULE_LOG(0,"\nSTARTING BILLING CYCLE.");
 					System.out.println(getName()+" STARTING BILLING THREAD.");
 					synchronized (BILLING_LOCK)
 					{
 						System.out.println(getName()+" BILLING THREAD RUNNING.");
-						billing_thread_run();	
+						billing_thread_run();
 					}
 					System.out.println(getName()+" BILLING THREAD COMPLETE.");
 					MODULE_LOG(0,"BILLING CYCLE COMPLETE.\n");
-					
+
 					if(!billing_thread_running)
 						break;
 					try{
@@ -945,7 +945,7 @@ public class RecurringOrderModule extends ResourceModule
 		}
 		return false;
 	}
-	
+
 	private void billing_thread_run()
 	{
 		//JUST COMPLAIN IF THE BILLING MODULE ISNT CONFIGURED YET
@@ -957,8 +957,8 @@ public class RecurringOrderModule extends ResourceModule
 				send_billing_not_configured();
 			return;
 		}
-		
-		
+
+
 		Entity recurring_order 	= null;
 		Entity order_user 		= null;
 		Entity billing_record 	= null;
@@ -966,7 +966,8 @@ public class RecurringOrderModule extends ResourceModule
 		QueryResult result 		= null;
 
 		try{
-			START_TRANSACTION();
+			START_TRANSACTION(getName()+" billing_thread_run");
+			INFO("BILLING THREAD -- STARTING");
 		}catch(PersistenceException pe)
 		{
 			ERROR("FAILED STARTING TRANSACTION IN BILLING THREAD");
@@ -989,12 +990,12 @@ public class RecurringOrderModule extends ResourceModule
 			{
 				ERROR("FAILED ROLLING BACK TRANSACTION",p2);
 			}
-			
+
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
 		}
-		
+
 
 		List<Entity> orders_that_need_to_be_billed = result.getEntities();
 		for(int i = 0;i < orders_that_need_to_be_billed.size();i++)
@@ -1003,7 +1004,7 @@ public class RecurringOrderModule extends ResourceModule
 				recurring_order = orders_that_need_to_be_billed.get(i);
 				FILL_REFS(recurring_order);
 				order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
-				
+
 				double amount_after_promotions = 0;
 				try {
 					amount_after_promotions = get_order_amount_with_promotions_applied(recurring_order);
@@ -1020,13 +1021,13 @@ public class RecurringOrderModule extends ResourceModule
 						;
 					else
 					{
-						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,"Need user credit card info.");	
+						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,"Need user credit card info.");
 						MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 						MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
 						continue;
 					}
 				}
-				
+
 				MODULE_LOG("ABOUT TO APPL PROMOTIONS ON ORDER\n"+recurring_order);
 				double amount_before_promotions = tally_order(recurring_order);
 				MODULE_LOG("\tBEFORE PROMOTIONS ORDER AMOUNT \n"+amount_before_promotions);
@@ -1048,8 +1049,8 @@ public class RecurringOrderModule extends ResourceModule
 				}
 
 				MODULE_LOG("\tAFTER  PROMOTIONS ORDER AMOUNT \n"+amount_after_promotions);
-				
-				
+
+
 
 			}catch(PersistenceException pe)
 			{
@@ -1059,7 +1060,7 @@ public class RecurringOrderModule extends ResourceModule
 				{
 					ERROR("FAILED ROLLING BACK TXN "+pe3);
 				}
-				
+
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
 				break;//break out of for loop//
@@ -1077,12 +1078,13 @@ public class RecurringOrderModule extends ResourceModule
 
 		try{
 			COMMIT_TRANSACTION();
+		INFO("BILLING THREAD -- DONE");
 		}catch(PersistenceException pe5)
 		{
 			ERROR("FAILED COMMITING TRANSACTION "+pe5);
 		}
 	}
-	
+
 	private void handle_monthly_failed_billings()
 	{
 		Entity order_user		= null;
@@ -1108,7 +1110,7 @@ public class RecurringOrderModule extends ResourceModule
 		List<Entity> failed_orders = result.getEntities();
 		for(int i = 0;i < failed_orders.size();i++)
 		{
-			
+
 			recurring_order = failed_orders.get(i);
 			try {
 				FILL_REFS(recurring_order);
@@ -1138,7 +1140,7 @@ public class RecurringOrderModule extends ResourceModule
 					    RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(balance,2));
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info!");
 				check_billing_failed_grace_period_expired(now, recurring_order);
-				
+
 			}catch(PersistenceException pe2)
 			{
 				MODULE_LOG("FAILED UPDATING FAILED ORDER "+recurring_order+" "+order_user);
@@ -1146,15 +1148,15 @@ public class RecurringOrderModule extends ResourceModule
 				continue;
 			}
 		}
-			
+
 	}
 
 	private void check_billing_failed_grace_period_expired(Date now,Entity recurring_order) throws PersistenceException
 	{
 		Date billing_failed_genesis  =  (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
-		
+
 		long grace_period_in_ms = (long)billing_failed_grace_period_in_days * (long)(1000 * 60 * 60 * 24);
-		
+
 		if(now.getTime() > billing_failed_genesis.getTime()+grace_period_in_ms)
 		{
 			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED);
@@ -1164,7 +1166,7 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 	}
-	
+
 	private void purge_billing_failed_users()
 	{
 		Entity order_user		= null;
@@ -1208,7 +1210,7 @@ public class RecurringOrderModule extends ResourceModule
 				ERROR(wae);
 				continue;
 			}
-			
+
 			try{
 				Date now = new Date();
 				double balance = (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
@@ -1219,7 +1221,7 @@ public class RecurringOrderModule extends ResourceModule
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(balance,2));
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info! account in danger of being closed.");
 				check_chuck_billing_failed_user(now, recurring_order);
-				
+
 			}catch(PersistenceException pe2)
 			{
 				MODULE_LOG("FAILED UPDATING FAILED ORDER "+recurring_order+" "+order_user);
@@ -1228,18 +1230,18 @@ public class RecurringOrderModule extends ResourceModule
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	private void check_chuck_billing_failed_user(Date now,Entity failed_order) throws PersistenceException
 	{
-		
+
 		Date failed_genesis  				= (Date)failed_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
 		long grace_period_in_ms 			= (long)billing_failed_grace_period_in_days * (long)(1000 * 60 *60 * 24);
 		long failed_billing_clean_period 	= grace_period_in_ms + (long)billing_failed_grace_period_expired_reap_period_in_days * (long)(1000 * 60 * 60 * 24);
 		if(now.getTime() > failed_genesis.getTime()+failed_billing_clean_period)
 		{
-			updateRecurringOrderStatus(failed_order, ORDER_STATUS_CLOSED);				
+			updateRecurringOrderStatus(failed_order, ORDER_STATUS_CLOSED);
 			Entity user = (Entity)failed_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 			MODULE_LOG( 2,"Deleting user and reaping order.grace period for failed billing expired: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
 			try{
@@ -1255,8 +1257,8 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 	}
-	
-	
+
+
 	private void handle_trials()
 	{
 		Query q 				= null;
@@ -1275,7 +1277,7 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 
-		
+
 		List<Entity> in_trial_orders = result.getEntities();
 		Entity trial_order = null;
 		Date now = new Date();
@@ -1291,10 +1293,10 @@ public class RecurringOrderModule extends ResourceModule
 				break;
 			}
 		}
-		
+
 	}
-	
-	
+
+
 	private void purge_expired_trial_users()
 	{
 		Query q 				= null;
@@ -1313,7 +1315,7 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 
-		
+
 		List<Entity> expired_trial_orders = result.getEntities();
 		Entity expired_trial_order = null;
 		Date now = new Date();
@@ -1330,17 +1332,17 @@ public class RecurringOrderModule extends ResourceModule
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	private void check_expired_trial(Date now,Entity trial_order) throws PersistenceException
 	{
-		
+
 		Date trial_create_date  =  (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
 		long trial_period_in_ms = (long)trial_period_in_days * (long)(1000 * 60*60*24);
 		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
 		{
-			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);				
+			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);
 			String additional_info = "Trial expired on: "+new Date(trial_create_date.getTime()+trial_period_in_ms);
 			send_trial_expired_email(trial_order, additional_info);
 			Entity user = EXPAND((Entity)trial_order.getAttribute(RECURRING_ORDER_FIELD_USER));
@@ -1351,16 +1353,16 @@ public class RecurringOrderModule extends ResourceModule
 			return;
 		}
 	}
-	
+
 	private void check_chuck_trial_user(Date now,Entity trial_order) throws PersistenceException
 	{
-		
+
 		Date trial_create_date  		= (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
 		long trial_period_in_ms 			= (long)trial_period_in_days * (long)(1000 * 60 *60*24);
 		long expired_trial_clean_period 	= (long)trial_period_in_ms + (long)expired_trial_reap_period_in_days * (1000 * 60*60*24);
 		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
 		{
-			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);				
+			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);
 			Entity user = (Entity)trial_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 			MODULE_LOG( 2,"reaping trial for user: "+user.getAttribute(UserModule.FIELD_EMAIL)+" "+user);
 			try{
@@ -1379,7 +1381,7 @@ public class RecurringOrderModule extends ResourceModule
 	}
 
 	private void send_welcome_email(Entity recurring_order,String additional_info)
-	{		
+	{
 		Entity user = null;
 		String user_email = null;
 		try{
@@ -1389,7 +1391,7 @@ public class RecurringOrderModule extends ResourceModule
 			if(username == null || username.trim() == "")
 				username = (String)user.getAttribute(UserModule.FIELD_EMAIL);
 			template_data.put("username",username);
-				
+
 			if(additional_info == null)
 				template_data.put("additional_information","");
 			else
@@ -1402,9 +1404,9 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG("EMAIL MODULE FAILED SENDING WELCOME EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
-	
+
 	private void send_billing_ok_email(Entity recurring_order,double amount,BillingGatewayResponse bgr)
-	{		
+	{
 		Entity user = null;
 		String user_email = null;
 		Entity billing_record = null;
@@ -1452,9 +1454,9 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG("EMAIL MODULE FAILED SENDING WELCOME EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
-	
+
 	private void send_billing_failed_email(Entity recurring_order,String additional_info)
-	{		
+	{
 		Entity user = null;
 		String user_email = null;
 		try{
@@ -1480,7 +1482,7 @@ public class RecurringOrderModule extends ResourceModule
 	}
 
 	private void send_billing_failed_grace_period_expired_email(Entity recurring_order,String additional_info)
-	{		
+	{
 		Entity user = null;
 		String user_email = null;
 		try{
@@ -1522,7 +1524,7 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG("EMAIL MODULE FAILED SENDING ACCOUNT CLOSED GRACE PERIOD EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
-	
+
 	public void send_account_closed_email(Entity recurring_order,String additional_info)
 	{
 		Entity user = null;
@@ -1543,10 +1545,10 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG("EMAIL MODULE FAILED SENDING ACCOUNT CLOSED GRACE PERIOD EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
-	
+
 	private void send_trial_expired_email(Entity recurring_order,String additional_info)
 	{
-		
+
 		Entity user = null;
 		String user_email = null;
 		try{
@@ -1565,17 +1567,17 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG("EMAIL MODULE FAILED SENDING TRIAL EXPIRED EMAIL TO USER "+user.getId()+" "+user_email);
 		}
 	}
-	
+
 	///TRANSACTION LOGGING STUFF
-	private static final int LOG_ORDER_OPENED 	      		= 0x10;	
-	private static final int LOG_ORDER_SUSPENDED 	      	= 0x20;	
-	private static final int LOG_ORDER_CLOSED 	      		= 0x30;	
-	private static final int LOG_INIT_BILLING_OK 	      	= 0x40;	
-	private static final int LOG_INIT_BILLING_FAILED    	= 0x50;	
-	private static final int LOG_MONTHLY_BILLING_OK 	  	= 0x60;	
-	private static final int LOG_BILLING_FAILED 			= 0x70;	
-	private static final int LOG_TRIAL_STARTED				= 0x80;	
-	private static final int LOG_TRIAL_EXPIRED	 			= 0x90;	
+	private static final int LOG_ORDER_OPENED 	      		= 0x10;
+	private static final int LOG_ORDER_SUSPENDED 	      	= 0x20;
+	private static final int LOG_ORDER_CLOSED 	      		= 0x30;
+	private static final int LOG_INIT_BILLING_OK 	      	= 0x40;
+	private static final int LOG_INIT_BILLING_FAILED    	= 0x50;
+	private static final int LOG_MONTHLY_BILLING_OK 	  	= 0x60;
+	private static final int LOG_BILLING_FAILED 			= 0x70;
+	private static final int LOG_TRIAL_STARTED				= 0x80;
+	private static final int LOG_TRIAL_EXPIRED	 			= 0x90;
 
 	private void log_order_opened(Entity recurring_order,boolean reopend) throws PersistenceException
 	{
@@ -1586,7 +1588,7 @@ public class RecurringOrderModule extends ResourceModule
 			msg = "opened";
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_OPENED, "Order "+recurring_order.getId()+" "+msg+" OK.", recurring_order);
 	}
-	
+
 	private void log_order_suspended(Entity recurring_order,int old_status) throws PersistenceException
 	{
 		int current_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
@@ -1599,7 +1601,7 @@ public class RecurringOrderModule extends ResourceModule
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_SUSPENDED, "Order "+recurring_order.getId()+" is now delinquent. Order status was "+OSS(old_status)+" and is now "+OSS(current_status)+". Please update your billing info.", recurring_order);
 	}
 
-	
+
 	private void log_order_closed(Entity recurring_order) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_ORDER_CLOSED, "Order "+recurring_order.getId()+" has been closed.", recurring_order);
@@ -1609,37 +1611,37 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_INIT_BILLING_OK, "Order "+recurring_order.getId()+" was billed for an initial fee of $"+normalize_amount(amount)+". REF:"+bgr.getRefCode()+" AUTH:"+bgr.getAuthCode(), recurring_order);
 	}
-	
+
 	private void log_order_init_bill_failed(Entity recurring_order,double amount,String fail_message) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_INIT_BILLING_FAILED, "Order "+recurring_order.getId()+" failed initial billing for the amount of $"+normalize_amount(amount)+". MSG:"+fail_message, recurring_order);
 	}
-	
+
 	private void log_order_monthly_bill_ok(Entity recurring_order,double amount,BillingGatewayResponse bgr) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for a monthly fee of $"+normalize_amount(amount)+". REF:"+bgr.getRefCode()+" AUTH:"+bgr.getAuthCode(), recurring_order);
 	}
-	
+
 	private void log_order_catchup_bill_ok(Entity recurring_order,double amount,BillingGatewayResponse bgr) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_MONTHLY_BILLING_OK, "Order "+recurring_order.getId()+" was billed for a fee of $"+normalize_amount(roundDouble(amount,2))+". REF:"+bgr.getRefCode()+" AUTH:"+bgr.getAuthCode(), recurring_order);
 	}
-	
+
 	private void log_order_billing_failed(Entity recurring_order,double amount,String fail_msg) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_BILLING_FAILED, "Order "+recurring_order.getId()+" failed monthly billing for the amount of $"+normalize_amount(amount)+". MSG:"+fail_msg, recurring_order);
 	}
-	
+
 	private void log_order_trial_started(Entity recurring_order) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_TRIAL_STARTED, "Trial order "+recurring_order.getId()+" was opened.", recurring_order);
 	}
-	
+
 	private void log_order_trial_expired(Entity recurring_order) throws PersistenceException
 	{
 		logger_module.createLogMessage((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER), LOG_TRIAL_EXPIRED, "Trial order "+recurring_order.getId()+" has expired.",recurring_order);
 	}
-	
+
  	private static String normalize_amount(double amt)
   	{
     	DecimalFormat df = new DecimalFormat("#####.00");
@@ -1655,31 +1657,31 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		return trial_period_in_days;
 	}
-	
+
 	public int getExpiredTrialReapPeriodInDays()
 	{
 		return expired_trial_reap_period_in_days;
 	}
-	
+
 	public BillingModule getBillingModule()
 	{
 		return billing_module;
 	}
-	
+
 	public boolean isConfigured()
 	{
 		return billing_module.isConfigured();
 	}
-	
+
 
 	public void onDestroy()
 	{
 		super.onDestroy();
-		
-		synchronized (BILLING_LOCK) 
+
+		synchronized (BILLING_LOCK)
 		{
 			billing_thread_running = false;
-			billing_thread.interrupt();			
+			billing_thread.interrupt();
 		}
 
 	}
@@ -1700,7 +1702,7 @@ public class RecurringOrderModule extends ResourceModule
 		}
 
 	}
-	
+
 	public void send_billing_not_configured()
 	{
 		//script exception//
@@ -1715,7 +1717,7 @@ public class RecurringOrderModule extends ResourceModule
 		}
 
 	}
-	
+
 	///BEGIN DDL STUFF
 	public static String RECURRING_SKU_ENTITY 			  		= "RecurringSKU";
 	public static String RECURRING_SKU_FIELD_TITLE 			 	= "title";
@@ -1726,7 +1728,7 @@ public class RecurringOrderModule extends ResourceModule
 	public static String RECURRING_SKU_FIELD_CATALOG_NUMBER 	= "catalog_number";/*application provides(optional)*/
 	public static String RECURRING_SKU_FIELD_USER_DATA 	  	  	= "data";	/*application provides(optional)*/
 	public static String RECURRING_SKU_FIELD_CATALOG_STATE 		= "catalog_state";/*application provides(optional)*/
-	
+
 	public static String RECURRING_SKU_RESOURCE_ENTITY 				= "RecurringSKUResource";
 	public static String RECURRING_SKU_RESOURCE_FIELD_CONTENT_TYPE 	= RESOURCE_FIELD_CONTENT_TYPE;
 	public static String RECURRING_SKU_RESOURCE_FIELD_SIMPLE_TYPE 	= RESOURCE_FIELD_SIMPLE_TYPE;
@@ -1755,8 +1757,8 @@ public class RecurringOrderModule extends ResourceModule
 	public static String RECURRING_ORDER_LINE_ITEM_FIELD_CODE		 = "code";
 
 
-	public static final int RECURRING_SKU_CATALOG_STATE_INACTIVE   = 0; 
-	public static final int RECURRING_SKU_CATALOG_STATE_ACTIVE     = 1; 
+	public static final int RECURRING_SKU_CATALOG_STATE_INACTIVE   = 0;
+	public static final int RECURRING_SKU_CATALOG_STATE_ACTIVE     = 1;
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
@@ -1769,7 +1771,7 @@ public class RecurringOrderModule extends ResourceModule
 					  RECURRING_SKU_FIELD_CATALOG_NUMBER,Types.TYPE_STRING,null,
 					  RECURRING_SKU_FIELD_USER_DATA,Types.TYPE_REFERENCE,FieldDefinition.REF_TYPE_UNTYPED_ENTITY,null,
 					  RECURRING_SKU_FIELD_CATALOG_STATE,Types.TYPE_INT,RECURRING_SKU_CATALOG_STATE_INACTIVE);
-				
+
 		DEFINE_ENTITY(RECURRING_SKU_RESOURCE_ENTITY,
 				RECURRING_SKU_RESOURCE_FIELD_CONTENT_TYPE,Types.TYPE_STRING,null,
 				RECURRING_SKU_RESOURCE_FIELD_SIMPLE_TYPE,Types.TYPE_STRING,null,
@@ -1777,14 +1779,14 @@ public class RecurringOrderModule extends ResourceModule
 				RECURRING_SKU_RESOURCE_FIELD_EXTENSION,Types.TYPE_STRING,null,
 				RECURRING_SKU_RESOURCE_FIELD_FILE_SIZE,Types.TYPE_LONG,null,
 				RECURRING_SKU_RESOURCE_FIELD_PATH_TOKEN,Types.TYPE_STRING,null);
-		
+
 		DEFINE_ENTITY(RECURRING_ORDER_ENTITY,
 				  	  RECURRING_ORDER_FIELD_USER,Types.TYPE_REFERENCE, UserModule.USER_ENTITY,null,
 				  	  RECURRING_ORDER_FIELD_SKUS,Types.TYPE_ARRAY | Types.TYPE_REFERENCE,RECURRING_SKU_ENTITY,null,
 				  	  RECURRING_ORDER_FIELD_LINE_ITEMS,Types.TYPE_ARRAY | Types.TYPE_REFERENCE,RECURRING_ORDER_LINE_ITEM_ENTITY,null,
 					  RECURRING_ORDER_FIELD_STATUS,Types.TYPE_INT,ORDER_STATUS_INIT,
 					  RECURRING_ORDER_FIELD_LAST_BILL_DATE,Types.TYPE_DATE,null,
-					  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,Types.TYPE_DATE,null,					  
+					  RECURRING_ORDER_FIELD_NEXT_BILL_DATE,Types.TYPE_DATE,null,
 					  RECURRING_ORDER_FIELD_PROMOTIONS,Types.TYPE_REFERENCE|Types.TYPE_ARRAY, promotion_module.PROMOTION_INSTANCE_ENTITY,new ArrayList<Entity>(),
 					  RECURRING_ORDER_FIELD_RECURRING_UNIT,Types.TYPE_INT,Calendar.DATE,
 					  RECURRING_ORDER_FIELD_RECURRING_PERIOD,Types.TYPE_INT,Integer.MAX_VALUE,
@@ -1804,14 +1806,14 @@ public class RecurringOrderModule extends ResourceModule
 	public static final String IDX_RECURRING_ORDER_BY_USER			 		   = "byUser";
 	public static final String IDX_RECURRING_ORDER_BY_STATUS		 		   = "byStatus";
 	public static final String IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE = "byStatusByNextBillDate";
-	
-	
+
+
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_STATE 			 = "byCatalogState";
 	public static final String IDX_RECURRING_SKU_BY_CATALOG_NUMBER_BY_CATALOG_STATE = "byCatalogNumberByCatalogState";
 
-	
 
-	
+
+
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDICES
@@ -1821,7 +1823,7 @@ public class RecurringOrderModule extends ResourceModule
 				ENTITY_INDEX(IDX_RECURRING_ORDER_BY_USER, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_USER),
 				ENTITY_INDEX(IDX_RECURRING_ORDER_BY_STATUS, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX,RECURRING_ORDER_FIELD_STATUS)
 		);
-		
+
 		DEFINE_ENTITY_INDICES
 		(
 				RECURRING_SKU_ENTITY,

@@ -20,14 +20,14 @@ import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.email.IEmailModule;
 
 
-public class CouponPromotionManagerModule extends WebStoreModule 
+public class CouponPromotionManagerModule extends WebStoreModule
 {
 	//TODO: i think we need to be able to delete billing records as well..perhaps
 	//ones that are not preferred...evaluate what things would point to them. i dont
 	//think any really do. they are not stored with the order//
-	private static final String SLOT_PROMOTION_MODULE  	 = "promotion-module"; 
-	private static final String SLOT_EMAIL_MODULE  		 = "email-module"; 
-	
+	private static final String SLOT_PROMOTION_MODULE  	 = "promotion-module";
+	private static final String SLOT_EMAIL_MODULE  		 = "email-module";
+
 	private static final String PARAM_TEMPLATE_NAME		= "email-template-name";
 	private static final String PARAM_EMAIL_SENDER		= "promo-sender-address";
 
@@ -35,7 +35,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 
 	PromotionModule 	promotion_module;
 	IEmailModule		email_module;
-	
+
 	private String template_name;
 	private String promo_sender_address;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -56,14 +56,14 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		DEFINE_SLOT(SLOT_EMAIL_MODULE,IEmailModule.class,true);
 	}
 
-	
+
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 	public Entity createCouponPromotionCampaign(Entity creator,String title,String promo_prefix,long promotion_id,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2,int expr_in_days,String subject,String link,String presslink,String message,List<String> promo_list) throws PersistenceException
 	{
 			try{
-				START_TRANSACTION();
+				START_TRANSACTION(getName()+" createCouponPromotionCampaign");
 				Entity promotion = GET(PromotionModule.PROMOTION_ENTITY,promotion_id);
-				
+
 				List<Entity> recips = new ArrayList<Entity>();
 				for(int i = 0;i < promo_list.size();i++)
 				{
@@ -76,7 +76,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 								   			COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE,null);
 					recips.add(recipient);
 				}
-				
+
 				Entity cp = NEW(COUPON_PROMOTION_CAMPAIGN_ENTITY,
 								creator,
 								COUPON_PROMOTION_CAMPAIGN_TITLE,title,
@@ -98,15 +98,15 @@ public class CouponPromotionManagerModule extends WebStoreModule
 								COUPON_PROMOTION_CAMPAIGN_FPR1,fpr1,
 								COUPON_PROMOTION_CAMPAIGN_FPR2,fpr2);
 				COMMIT_TRANSACTION();
-				return cp;  
-				
+				return cp;
+
 			}catch(PersistenceException e)
 			{
 				ROLLBACK_TRANSACTION();
 				throw e;
 			}
 	}
-	
+
 	public List<Entity> activateCouponPromotionCampaign(long promo_id) throws WebApplicationException,PersistenceException
 	{
 		Entity promotion 		= FILL_REFS(GET(COUPON_PROMOTION_CAMPAIGN_ENTITY,promo_id));
@@ -123,16 +123,16 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				Thread.sleep(1000);
 			}catch(InterruptedException ie)
 			{
-				
+
 			}
 		}
 		return recips;
 	}
-	
+
 	public Entity addRecipient(Entity creator,long promo_id,String name) throws WebApplicationException,PersistenceException
 	{
 		try{
-			START_TRANSACTION();
+			START_TRANSACTION(getName()+" Add Recipient");
 			Entity promotion 		= FILL_REFS(GET(COUPON_PROMOTION_CAMPAIGN_ENTITY,promo_id));
 			List<String> promo_list = (List<String>)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_PROMO_LIST);
 			List<Entity> recips 	= (List<Entity>)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_RECIPIENTS);
@@ -155,7 +155,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 			throw e;
 		}
 	}
-	
+
 	public Entity activateCouponPromotionRecipient(long promo_id,int recip_idx) throws WebApplicationException,PersistenceException
 	{
 		Entity promotion 		= FILL_REFS(GET(COUPON_PROMOTION_CAMPAIGN_ENTITY,promo_id));
@@ -163,12 +163,12 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		Entity recipient 		= recips.get(recip_idx);
 		return activate_recipient(promotion, recipient);
 	}
-	
+
 	private Entity activate_recipient(Entity promotion,Entity recipient) throws PersistenceException,WebApplicationException
 	{
-	
+
 		try{
-			START_TRANSACTION();
+			START_TRANSACTION(getName()+" activate_recipient");
 			String promo_prefix 	= (String)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_CODE_PREFIX);
 			String promotion_code 	= promo_prefix==null?RandomGUID.getGUID().substring(16):promo_prefix+RandomGUID.getGUID().substring(16);
 			Entity the_promotion    = (Entity)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_PROMOTION);
@@ -182,7 +182,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				cal.add(Calendar.DATE, num_days_for_promo);
 				promo_expr = cal.getTime();
 			}
-			Entity coupon_promo = promotion_module.createCouponPromotion(null, promotion_code, 1, the_promotion, promo_expr, 
+			Entity coupon_promo = promotion_module.createCouponPromotion(null, promotion_code, 1, the_promotion, promo_expr,
 													(Long)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_IR1),
 													(Long)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_IR2),
 													(Long)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_IR3),
@@ -191,15 +191,15 @@ public class CouponPromotionManagerModule extends WebStoreModule
 													(String)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_SR2),
 													(Double)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_FPR1),
 													(Double)promotion.getAttribute(COUPON_PROMOTION_CAMPAIGN_FPR2));
-			
+
 			recipient =  UPDATE(recipient,
 					COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATED, true,
 					COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATION_DATE, new Date(),
 					COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE, promotion_code,
 					COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_COUPON_PROMOTION,coupon_promo);
-			
 
-			COMMIT_TRANSACTION();	
+
+			COMMIT_TRANSACTION();
 			sendRecipientEmail(promotion, recipient);
 			return recipient;
 		}catch (PersistenceException e) {
@@ -207,25 +207,25 @@ public class CouponPromotionManagerModule extends WebStoreModule
 			throw e;
 		}
 	}
-	
-	
-	
+
+
+
 	public void sendRecipientEmail(Entity campaign_promo,Entity recipient) throws WebApplicationException
 	{
 		if(!(Boolean)recipient.getAttribute(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATED))
 			throw new WebApplicationException("Recipient "+recipient+" is not activated. Can't send email.");
-		
+
 		String recipient_name = (String)recipient.getAttribute(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_RECIPIENT);
 		if(recipient_name.indexOf('@') != -1)
 		{
 			String recipient_email	=	recipient_name;
 			String subject 			= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_SUBJECT);
 			String message 			= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE);
-			String name = null; 
+			String name = null;
 			if(recipient_name.indexOf('<') != -1)
-				name 			= recipient_name.substring(0, recipient_name.indexOf('<'));		
+				name 			= recipient_name.substring(0, recipient_name.indexOf('<'));
 			else
-				name 			= recipient_name.substring(0, recipient_name.indexOf('@'));	
+				name 			= recipient_name.substring(0, recipient_name.indexOf('@'));
 			String promo_code 		= (String)recipient.getAttribute(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE);
 			String link				= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_LINK);
 			String presslink		= (String)campaign_promo.getAttribute(COUPON_PROMOTION_CAMPAIGN_MESSAGE_PRESSLINK);
@@ -237,22 +237,22 @@ public class CouponPromotionManagerModule extends WebStoreModule
 			template_data.put("presslink",presslink);
 			email_module.sendEmail(promo_sender_address,new String[]{recipient_email}, subject, template_name, template_data);
 
-		}		
+		}
 	}
-	
+
 	public void resendEmail(long c_id,long r_id) throws WebApplicationException,PersistenceException
 	{
 		Entity campaign_promo 		= FILL_REFS(GET(COUPON_PROMOTION_CAMPAIGN_ENTITY,c_id));
 		Entity recipient			= GET(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_ENTITY,r_id);
 		sendRecipientEmail(campaign_promo, recipient);
 	}
-	
+
 	public Entity deleteCouponPromotionCampaign(long coupon_promotion_campaign_id) throws PersistenceException,WebApplicationException
 	{
 		Entity cp = GET(COUPON_PROMOTION_CAMPAIGN_ENTITY,coupon_promotion_campaign_id);
 		return DELETE_DEEP(cp,new delete_policy(FIELD_CREATOR,COUPON_PROMOTION_CAMPAIGN_PROMOTION));
 	}
-	
+
 	public List<Entity> getCouponPromotionCampaigns() throws PersistenceException
 	{
 		Query q = new Query(COUPON_PROMOTION_CAMPAIGN_ENTITY);
@@ -269,7 +269,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		FILL_DEEP_AND_MASK(promo_campaign, new String[]{}, new String[]{});
 		return promo_campaign;
 	}
-	
+
 	public List<Entity> getExistingPromotions() throws PersistenceException
 	{
 		Query q = new Query(PromotionModule.PROMOTION_ENTITY);
@@ -279,17 +279,17 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		QueryResult results = QUERY(q);
 		return results.getEntities();
 	}
-	
+
 	public Entity createPromotion(Entity creator,String title,String description,String program) throws PersistenceException,WebApplicationException
 	{
-		return promotion_module.createPromotion(creator, title, description, program);	
+		return promotion_module.createPromotion(creator, title, description, program);
 	}
-	
-	
-	
-	
+
+
+
+
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-		
+
 	public static String COUPON_PROMOTION_CAMPAIGN_ENTITY 	  		= "CouponPromotionCampaign";
 	public static String COUPON_PROMOTION_CAMPAIGN_TITLE  	  		= "title";
 	public static String COUPON_PROMOTION_CAMPAIGN_PROMOTION  		= "promotion";
@@ -309,7 +309,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 	public static String COUPON_PROMOTION_CAMPAIGN_SR2 				= "sr2";
 	public static String COUPON_PROMOTION_CAMPAIGN_FPR1 			= "fpr1";
 	public static String COUPON_PROMOTION_CAMPAIGN_FPR2 			= "fpr2";
-	
+
 	public static String COUPON_PROMOTION_CAMPAIGN_RECIPIENT_ENTITY	   				= "CouponPromotionCampaignRecipient";
 	public static String COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_RECIPIENT	  	= "recipient";
 	public static String COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATED	   	= "activated";
@@ -330,23 +330,23 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				COUPON_PROMOTION_CAMPAIGN_PROMO_LIST,Types.TYPE_STRING | Types.TYPE_ARRAY,null,
 				COUPON_PROMOTION_CAMPAIGN_EXPIRES_NUM_DAYS,Types.TYPE_INT,null,
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENTS,Types.TYPE_ARRAY | Types.TYPE_REFERENCE,COUPON_PROMOTION_CAMPAIGN_RECIPIENT_ENTITY,EMPTY_LIST,
-				COUPON_PROMOTION_CAMPAIGN_IR1,Types.TYPE_LONG,0L, 
-				COUPON_PROMOTION_CAMPAIGN_IR2,Types.TYPE_LONG,0L,  			
-				COUPON_PROMOTION_CAMPAIGN_IR3,Types.TYPE_LONG,0L, 			
-				COUPON_PROMOTION_CAMPAIGN_IR4,Types.TYPE_LONG,0L, 			
-				COUPON_PROMOTION_CAMPAIGN_SR1,Types.TYPE_STRING,null, 			
-				COUPON_PROMOTION_CAMPAIGN_SR2,Types.TYPE_STRING,null, 		
-				COUPON_PROMOTION_CAMPAIGN_FPR1,Types.TYPE_DOUBLE,0.0, 		
+				COUPON_PROMOTION_CAMPAIGN_IR1,Types.TYPE_LONG,0L,
+				COUPON_PROMOTION_CAMPAIGN_IR2,Types.TYPE_LONG,0L,
+				COUPON_PROMOTION_CAMPAIGN_IR3,Types.TYPE_LONG,0L,
+				COUPON_PROMOTION_CAMPAIGN_IR4,Types.TYPE_LONG,0L,
+				COUPON_PROMOTION_CAMPAIGN_SR1,Types.TYPE_STRING,null,
+				COUPON_PROMOTION_CAMPAIGN_SR2,Types.TYPE_STRING,null,
+				COUPON_PROMOTION_CAMPAIGN_FPR1,Types.TYPE_DOUBLE,0.0,
 				COUPON_PROMOTION_CAMPAIGN_FPR2,Types.TYPE_DOUBLE,0.0);
-	
+
 		DEFINE_ENTITY(COUPON_PROMOTION_CAMPAIGN_RECIPIENT_ENTITY,
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_RECIPIENT,Types.TYPE_STRING,null,
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATED,Types.TYPE_BOOLEAN,false,
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_ACTIVATION_DATE,Types.TYPE_DATE,null,
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE,Types.TYPE_STRING,null,
-				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_COUPON_PROMOTION,Types.TYPE_REFERENCE,PromotionModule.COUPON_PROMOTION_ENTITY,null		
+				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_COUPON_PROMOTION,Types.TYPE_REFERENCE,PromotionModule.COUPON_PROMOTION_ENTITY,null
 		);
-	
+
 	}
 
 	//public static final String IDX_BY_USER_BY_PREFERRED = "byUserByPreferred";
