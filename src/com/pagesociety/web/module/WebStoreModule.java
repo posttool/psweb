@@ -36,23 +36,23 @@ public class WebStoreModule extends WebModule
 {
 
 	public static final String SLOT_STORE 			    = "store";
-	
-	
+
+
 	protected PersistentStore store;
 	protected List<EntityDefinition> associated_entity_definitions;
 
-	
+
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		super.system_init(app, config);		
+		super.system_init(app, config);
 		//TODO: we should have to do this any more//
 		associated_entity_definitions = new ArrayList<EntityDefinition>();
-		
+
 	}
 
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
-		super.init(app, config);		
+		super.init(app, config);
 		IPersistenceProvider store_provider = (IPersistenceProvider)getSlot(SLOT_STORE);
 		//IN RARE CASES THE STORE PROVIDER SLOT IS NULL
 		//MAINLY WHEN A DEFAULT GUARD IS BEING USED. WE MAKE
@@ -62,7 +62,7 @@ public class WebStoreModule extends WebModule
 		//SET SINCE THEY ALWAYS RETURN FALSE FOR EVERY METHOD
 		if(store_provider == null)
 			return;
-		
+
 		//collect entity defs for this web module via store adapter//
 		schema_receiver r = get_schema_receiver_for_store(app,getName(),store_provider);
 		store = r.getStore();
@@ -79,7 +79,7 @@ public class WebStoreModule extends WebModule
 		}
 		r.setWebStoreModuleContext(null);
 		store = store_provider.getStore();
-	
+
 
 	}
 
@@ -87,15 +87,15 @@ public class WebStoreModule extends WebModule
 	{
 		return store;
 	}
-	
+
 	protected void defineSlots()
 	{
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
-		
-	}	
-	
-	
+
+	}
+
+
 	public static final String PROP_ENTITY 		 			= "WebStoreModuleProp";
 	public static final String PROP_ENTITY_FIELD_KEY  		= "WebStoreModulePropKey";
 	public static final String PROP_ENTITY_FIELD_VALUE  	= "WebStoreModulePropValue";
@@ -103,18 +103,18 @@ public class WebStoreModule extends WebModule
 
 	protected void defineEntities(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY(PROP_ENTITY, 
+		DEFINE_ENTITY(PROP_ENTITY,
 						PROP_ENTITY_FIELD_KEY,Types.TYPE_STRING,null,
 						PROP_ENTITY_FIELD_VALUE,Types.TYPE_STRING,null);
-		
+
 	}
 	protected static final String IDX_BY_KEY = "byKey";
 	protected void defineIndexes(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_INDEX(PROP_ENTITY, IDX_BY_KEY, EntityIndex.TYPE_SIMPLE_SINGLE_FIELD_INDEX, PROP_ENTITY_FIELD_KEY);
 	}
-	
-	
+
+
 	protected String SET_PROP(String key,String value) throws PersistenceException
 	{
 		Entity prop 	= getPropByKey(key);
@@ -133,7 +133,7 @@ public class WebStoreModule extends WebModule
 			return ret;
 		}
 	}
-	
+
 	protected String CLEAR_PROP(String key) throws PersistenceException
 	{
 		Entity prop 	= getPropByKey(key);
@@ -145,7 +145,7 @@ public class WebStoreModule extends WebModule
 		}
 		return null;
 	}
-	
+
 	protected String GET_PROP(String key) throws PersistenceException
 	{
 		Entity prop 	= getPropByKey(key);
@@ -154,7 +154,7 @@ public class WebStoreModule extends WebModule
 		else
 			return (String)prop.getAttribute(PROP_ENTITY_FIELD_VALUE);
 	}
-	
+
 	protected Entity getPropByKey(String key) throws PersistenceException
 	{
 		Query q = new Query(PROP_ENTITY);
@@ -167,17 +167,17 @@ public class WebStoreModule extends WebModule
 		else
 			return ee.get(0);
 	}
-	
+
 	protected void defineRelationships(Map<String,Object> config)throws PersistenceException,InitializationException
 	{
 		/*do nothing by default */
 	}
-	
+
 	public List<EntityDefinition> getAssociatedEntityDefinitions()
 	{
 		return associated_entity_definitions;
 	}
-	
+
 	public void VERIFY_MODULE_IS_DEFINER_OF_ENTITY_TYPE(String type) throws WebApplicationException
 	{
 		List<EntityDefinition> defs = getAssociatedEntityDefinitions();
@@ -188,27 +188,27 @@ public class WebStoreModule extends WebModule
 		}
 		throw new WebApplicationException("THIS MODULE DID NOT DEFINE TYPE "+type);
 	}
-	
-	/* system level fields...at some point we will have the app potentially set these up 
+
+	/* system level fields...at some point we will have the app potentially set these up
 	 * when it starts ADD_SYSTEM_LEVEL_FIELD,RENAME_SYSTEM_LEVEL_FIELD etc
 	 */
-	
-	public static String FIELD_CREATOR					=   "creator"; 
+
+	public static String FIELD_CREATOR					=   "creator";
 	public static String FIELD_DATE_CREATED				=   "date_created";
-	public static String FIELD_LAST_MODIFIED			=   "last_modified";	
-	public static FieldDefinition[] FIELDS = new FieldDefinition[] 
+	public static String FIELD_LAST_MODIFIED			=   "last_modified";
+	public static FieldDefinition[] FIELDS = new FieldDefinition[]
 	{
 		(new FieldDefinition(FIELD_CREATOR, Types.TYPE_REFERENCE,"User")),
 		(new FieldDefinition(FIELD_DATE_CREATED, Types.TYPE_DATE)),
 		(new FieldDefinition(FIELD_LAST_MODIFIED, Types.TYPE_DATE)),
-	};	
-	
-	
+	};
+
+
 	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,SyncException
 	{
 		return DEFINE_ENTITY(store, entity_name,null, fields);
 	}
-	
+
 	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,List<FieldDefinition> defs,Object ...fields) throws PersistenceException,SyncException
 	{
 		if(defs == null)
@@ -216,7 +216,7 @@ public class WebStoreModule extends WebModule
 		int i = 0;
 		for(;;)
 		{
-			String fieldname 	= (String)fields[i++]; 
+			String fieldname 	= (String)fields[i++];
 			int type 		 	= (Integer)fields[i++];
 			FieldDefinition f ;
 			if ((type & ~Types.TYPE_ARRAY) != Types.TYPE_REFERENCE)
@@ -224,14 +224,14 @@ public class WebStoreModule extends WebModule
 			else
 				f = new FieldDefinition(fieldname,type,(String)fields[i++]);
 			f.setDefaultValue(fields[i++]);
-			
+
 			defs.add(f);
 			if(i>fields.length - 1)
 				break;
 		}
-		return DEFINE_ENTITY(store, entity_name, defs);	
+		return DEFINE_ENTITY(store, entity_name, defs);
 	}
-	
+
 	public  EntityDefinition DEFINE_ENTITY(PersistentStore store,String entity_name,List<FieldDefinition> defs) throws PersistenceException,SyncException
 	{
 
@@ -248,13 +248,13 @@ public class WebStoreModule extends WebModule
 		store.addEntityDefinition(proposed_def);
 		return proposed_def;
 	}
-	
+
 	public static EntityDefinition ADD_FIELDS(PersistentStore store,String entity_name,Object... fields) throws PersistenceException,InitializationException
 	{
 		int i = 0;
 		for(;;)
 		{
-			String fieldname 	= (String)fields[i++]; 
+			String fieldname 	= (String)fields[i++];
 			int type 		 	= (Integer)fields[i++];
 			FieldDefinition f ;
 			if ((type & ~Types.TYPE_ARRAY) != Types.TYPE_REFERENCE)
@@ -262,16 +262,16 @@ public class WebStoreModule extends WebModule
 			else
 				f = new FieldDefinition(fieldname,type,(String)fields[i++]);
 			f.setDefaultValue(fields[i++]);
-		
+
 			store.addEntityField(entity_name, f);
 			if(i>fields.length - 1)
 				break;
 		}
 		return store.getEntityDefinition(entity_name);
 	}
-	
 
-	
+
+
 	public static void DEFINE_ENTITY_INDEX(PersistentStore store,String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,InitializationException
 	{
 		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
@@ -283,7 +283,7 @@ public class WebStoreModule extends WebModule
 				List<FieldDefinition> fields = idx.getFields();
 				if(fields.size() != field_names.length)
 					throw new SyncException("ENTITY INDEX "+index_name+" ALREADY EXISTS ON ENTITY "+entity_name+" BUT THE DATABASE VERSION HAS A DIFFERENT NUMBER OF FIELDS dbVersion is "+idx);
-					
+
 				for(int j = 0;j < fields.size();j++)
 				{
 					FieldDefinition f = fields.get(j);
@@ -297,7 +297,7 @@ public class WebStoreModule extends WebModule
 			}
 		}
 		//the index didnt exist..create it
-		store.addEntityIndex(entity_name, field_names, index_type, index_name, null);	
+		store.addEntityIndex(entity_name, field_names, index_type, index_name, null);
 	}
 
 	public static void DEFINE_ENTITY_RELATIONSHIP(PersistentStore store,String from_entity_name, String from_entity_field,int relationship_type, String to_entity_name, String to_entity_field) throws PersistenceException,SyncException
@@ -310,7 +310,7 @@ public class WebStoreModule extends WebModule
 	}
 
 
-	
+
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Object...attribute_name_values) throws PersistenceException
 	{
 		//EntityDefinition def = store.getEntityDefinition(entity_type);
@@ -318,9 +318,9 @@ public class WebStoreModule extends WebModule
 		//	throw new PersistenceException("NO SUCH ENTITY TYPE IN STORE ["+entity_type+"]");
 		//Entity e = def.createInstance();
 		//set_attributes(e, attribute_name_values);
-		
+
 		Map<String,Object> value_map = KEY_VALUE_PAIRS_TO_MAP(attribute_name_values);
-		
+
 		Date now = new Date();
 		value_map.put(FIELD_CREATOR,creator);
 		value_map.put(FIELD_DATE_CREATED,now);
@@ -332,7 +332,7 @@ public class WebStoreModule extends WebModule
 		else
 			return store.createEntity(tid, entity_type, value_map);
 	}
-	
+
 	public static Entity NEW(PersistentStore store,String entity_type,Entity creator,Map<String,Object> entity_atts) throws PersistenceException
 	{
 		//EntityDefinition def = store.getEntityDefinition(entity_type);
@@ -356,12 +356,12 @@ public class WebStoreModule extends WebModule
 		else
 			return store.createEntity(tid,entity_type,entity_atts);
 	}
-	
+
 	public static void set_attributes(Entity e,Object[] attribute_name_values)
 	{
 		for(int i = 0;i < attribute_name_values.length;)
 		{
-			Object obj = attribute_name_values[i];			
+			Object obj = attribute_name_values[i];
 			if(obj.getClass() == Object[].class)
 			{
 				set_attributes(e,(Object[])obj);
@@ -374,11 +374,11 @@ public class WebStoreModule extends WebModule
 			}
 		}
 	}
-	
+
 	/*SAVE NEW*/
 	//this should be deprecated...use NEW
 	public static Entity CREATE_ENTITY(PersistentStore store,Entity creator,Entity e) throws PersistenceException
-	{			
+	{
 		Date now = new Date();
 		e.setAttribute(FIELD_CREATOR,creator);
 		e.setAttribute(FIELD_DATE_CREATED,now);
@@ -390,10 +390,10 @@ public class WebStoreModule extends WebModule
 			return store.saveEntity(tid,e);
 
 	}
-	
+
 	/*SAVE NEW*/
 	public static Entity CREATE_ENTITY(PersistentStore store,Entity creator,String type,Map<String,Object> value_map) throws PersistenceException
-	{			
+	{
 		Date now = new Date();
 		value_map.put(FIELD_CREATOR,creator);
 		value_map.put(FIELD_DATE_CREATED,now);
@@ -405,8 +405,8 @@ public class WebStoreModule extends WebModule
 			return store.createEntity(tid,type,value_map);
 
 	}
-	
-	
+
+
 	public static Entity EXPAND(PersistentStore store, Entity e) throws PersistenceException
 	{
 		if(e == null)
@@ -417,7 +417,7 @@ public class WebStoreModule extends WebModule
 		e.setAttributes(ee.getAttributes());
 		return ee;
 	}
-	
+
 	public static Entity FORCE_EXPAND(PersistentStore store, Entity e) throws PersistenceException
 	{
 		if(e == null)
@@ -436,9 +436,9 @@ public class WebStoreModule extends WebModule
 
 		if(e == null)
 			throw new PersistenceException(entity_type+" INSTANCE WITH ID "+entity_id+" DOES NOT EXIST IN STORE.");
-		return e;	
+		return e;
 	}
-	
+
 	public static Entity GET_AND_MASK(PersistentStore store,String entity_type,long entity_id,Object...masked_fieldnames) throws PersistenceException,WebApplicationException
 	{
 		Entity e = store.getEntityById(entity_type, entity_id);
@@ -451,16 +451,16 @@ public class WebStoreModule extends WebModule
 			throw new PersistenceException(entity_type+" INSTANCE WITH ID "+entity_id+" DOES NOT EXIST IN STORE.");
 		for(int i=0;i<masked_fieldnames.length;i++)
 			e.getAttributes().remove(masked_fieldnames[i]);
-		return e;	
+		return e;
 	}
 
 	public static Entity DELETE(PersistentStore store,String entity_type,long entity_id) throws PersistenceException,WebApplicationException
 	{
-		
+
 		Entity e = GET(store,entity_type,entity_id);
 		return DELETE(store,e);
 	}
-	
+
 	public static Entity DELETE(PersistentStore store,Entity e) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -470,14 +470,14 @@ public class WebStoreModule extends WebModule
 			store.deleteEntity(tid,e);
 		return e;
 	}
-	
+
 	public static Entity GET_REF(PersistentStore store,String entity_type,long entity_id, String fieldname) throws PersistenceException,WebApplicationException
 	{
 		Entity e = GET(store,entity_type,entity_id);
 		return GET_REF(store,e,fieldname);
 	}
-	
-	
+
+
 	public static Entity GET_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -493,7 +493,7 @@ public class WebStoreModule extends WebModule
 		Entity e = GET(store,entity_type,entity_id);
 		return GET_LIST_REF(store,e,fieldname);
 	}
-	
+
 	public static List<Entity> GET_LIST_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -503,7 +503,7 @@ public class WebStoreModule extends WebModule
 			store.fillReferenceField(tid,instance,fieldname);
 		return (List<Entity>)instance.getAttribute(fieldname);
 	}
-	
+
 	public static Entity FILL_REF(PersistentStore store,Entity instance, String fieldname) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -513,14 +513,14 @@ public class WebStoreModule extends WebModule
 			store.fillReferenceField(tid,instance,fieldname);
 		return (Entity)instance;
 	}
-	
+
 	public static Entity FILL_REFS(PersistentStore store,Entity instance, String... fieldnames) throws PersistenceException
 	{
 		for(int i = 0;i < fieldnames.length;i++)
 			FILL_REF(store, instance, fieldnames[i]);
 		return instance;
 	}
-	
+
 //do_fill_deep(store,e,0,MAX_INT,FILL(dsfs, sfsf, gdgd, sdgsdg), MASK(password, email))
 	public static final String[] EMPTY_STRING_ARRAY = new String[0];
 	public static final String[] FILL_ALL_FIELDS    = EMPTY_STRING_ARRAY;
@@ -531,22 +531,22 @@ public class WebStoreModule extends WebModule
 	{
 		return fieldnames;
 	}
-	
+
 	public static String[] FILL(String... fieldnames)
 	{
 		return fieldnames;
 	}
-	
+
 	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d) throws PersistenceException
 	{
 		do_fill_deep(store, e, c, d, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY,new HashMap<Entity,Entity>());
 	}
-	
+
 	public static void do_fill_deep(PersistentStore store,Entity e,int c, int d,String... fill_fields) throws PersistenceException
 	{
 		do_fill_deep(store, e, c, d, fill_fields, EMPTY_STRING_ARRAY,new HashMap<Entity,Entity>());
 	}
-	
+
 	/*pass EMPTY_STRING_ARRAY for mask fields to mask none and FILL_ALL_FIELDS && FILL_NO_FIELDS to fill none for fill)fields to fill all */
 	public static void do_fill_deep(PersistentStore store,Entity e,int c,int d,String[] fill_fields,String[] mask_fields,Map<Entity,Entity> seen_references) throws PersistenceException
 	{
@@ -555,7 +555,7 @@ public class WebStoreModule extends WebModule
 			return;
 
 		seen_references.put(e,e);
-		EntityDefinition def = store.getEntityDefinition(e.getType());		
+		EntityDefinition def = store.getEntityDefinition(e.getType());
 		String[] fields_to_fill;
 		if(fill_fields.length == 0)
 		{	//fill all ref fields//
@@ -566,18 +566,18 @@ public class WebStoreModule extends WebModule
 		}
 		else
 			fields_to_fill = fill_fields;
-		
+
 		for(int m = 0;m < mask_fields.length;m++)
 			e.setAttribute(mask_fields[m], null);
-		
+
 		for(int i = 0;i < fields_to_fill.length ;i++)
 		{
 			String ref_field_name = fields_to_fill[i];
 			FieldDefinition fd    = def.getField(ref_field_name);
-			
+
 			if(fd == null)//this can hapen when you use the explict fill since all fieldnames will not be in all entities
 				continue;
-		
+
 			//for(int m = 0;m < mask_fields.length;m++)
 			//{
 			//	if(mask_fields[m].equals(ref_field_name))
@@ -589,9 +589,9 @@ public class WebStoreModule extends WebModule
 			 */
 			if(e.getAttribute(ref_field_name) == null)
 				continue;
-			
+
 			FILL_REF(store,e,ref_field_name);
-			
+
 			if(fd.isArray())
 			{
 				c++;
@@ -612,7 +612,7 @@ public class WebStoreModule extends WebModule
 			}
 			else
 			{
-				
+
 				Entity val = (Entity)e.getAttribute(ref_field_name);
 				if(val != null && seen_references.get(val) != null)
 					e.setAttribute(ref_field_name, seen_references.get(val));
@@ -631,11 +631,11 @@ public class WebStoreModule extends WebModule
 			store.fillReferenceFields(tid,instance);
 		return (Entity)instance;
 	}
-	
+
 
 	public static Entity UPDATE(PersistentStore store,Entity instance,Map<String,Object> entity_atts) throws PersistenceException
 	{
-		//we do this setting of the attributes to 
+		//we do this setting of the attributes to
 		//make sure the local copy attributes get updated
 		//sometimes we do UPDATE(instance,NAME,"foo"
 		//and we expect foo to be in the NAME field of instance
@@ -646,7 +646,7 @@ public class WebStoreModule extends WebModule
 			String key = keys.next();
 			e.setAttribute(key, entity_atts.get(key));
 		}
-		
+
 		Date now = new Date();
 		e.setAttribute(FIELD_LAST_MODIFIED,now);
 		entity_atts.put(FIELD_LAST_MODIFIED,now);
@@ -673,11 +673,11 @@ public class WebStoreModule extends WebModule
 		update_values.put(FIELD_LAST_MODIFIED,now);
 		Integer tid = CURRENT_TRANSACTION_ID();
 		if(tid == null)
-			return store.updateEntity(entity_type,entity_id,update_values);	
+			return store.updateEntity(entity_type,entity_id,update_values);
 		else
-			return store.updateEntity(tid,entity_type,entity_id,update_values);	
+			return store.updateEntity(tid,entity_type,entity_id,update_values);
 	}
-	
+
 	/*SAVE UPDATE */
 	//THIS SHOULD BE DEPRECATED USE NEW UPDATE//
 	public static Entity SAVE_ENTITY(PersistentStore store,Entity instance) throws PersistenceException
@@ -686,15 +686,15 @@ public class WebStoreModule extends WebModule
 			throw new PersistenceException("BAD UPDATE.CANNOT UPDATE A NULL ENTITY");
 
 		Date now = new Date();
-		instance.setAttribute(FIELD_LAST_MODIFIED,now);		
+		instance.setAttribute(FIELD_LAST_MODIFIED,now);
 		Integer tid = CURRENT_TRANSACTION_ID();
 		if(tid == null)
-			return store.saveEntity(instance);	
+			return store.saveEntity(instance);
 		else
-			return store.saveEntity(tid,instance);	
+			return store.saveEntity(tid,instance);
 	}
 
-	
+
 	public static QueryResult QUERY(PersistentStore store,Query q) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -703,7 +703,7 @@ public class WebStoreModule extends WebModule
 		else
 			return store.executeQuery(tid,q);
 	}
-	
+
 	public static QueryResult QUERY_FILL(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -716,7 +716,7 @@ public class WebStoreModule extends WebModule
 		}
 		return results;
 	}
-	
+
 	public static QueryResult QUERY_FILL_DEEP(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -729,7 +729,7 @@ public class WebStoreModule extends WebModule
 		}
 		return results;
 	}
-	
+
 	public static QueryResult QUERY_FILL_DEEP(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -742,7 +742,7 @@ public class WebStoreModule extends WebModule
 		}
 		return results;
 	}
-	
+
 	public static QueryResult QUERY_FILL_DEEP_AND_MASK(PersistentStore store,Query q,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -755,9 +755,9 @@ public class WebStoreModule extends WebModule
 		}
 		return results;
 	}
-	
 
-	
+
+
 	public static QueryResult QUERY_FILL(PersistentStore store,Query q,String... fill_fieldnames) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -770,7 +770,7 @@ public class WebStoreModule extends WebModule
 		}
 		return results;
 	}
-	
+
 	public static QueryResult QUERY_FILL_AND_MASK(PersistentStore store,Query q,String... mask_fields) throws PersistenceException
 	{
 		QueryResult results =  QUERY(store,q);
@@ -785,43 +785,43 @@ public class WebStoreModule extends WebModule
 		}
 		return results;
 	}
-	
-	
+
+
 	public static PagingQueryResult PAGING_QUERY(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY(store,q);
 		int total_count 	= COUNT(store,q);//store.count(q);
 		return new PagingQueryResult(results.getEntities(),total_count,q.getOffset(),q.getPageSize());
 	}
-	
+
 	public static PagingQueryResult PAGING_QUERY_FILL(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL(store,q);
 		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
-	
+
 	public static PagingQueryResult PAGING_QUERY_FILL_DEEP(PersistentStore store,Query q) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_DEEP(store,q);
 		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
-	
+
 	public static PagingQueryResult PAGING_QUERY_FILL(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL(store,q,fill_fields);
 		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
-	
+
 	public static PagingQueryResult PAGING_QUERY_FILL_DEEP(PersistentStore store,Query q,String... fill_fields) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_DEEP(store,q,fill_fields);
 		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
-	
+
 	public static PagingQueryResult PAGING_QUERY_FILL_AND_MASK(PersistentStore store,Query q,String... args) throws PersistenceException
 	{
 		QueryResult results = QUERY_FILL_AND_MASK(store,q);
@@ -834,13 +834,13 @@ public class WebStoreModule extends WebModule
 		int total_count = COUNT(store,q);
 		return new PagingQueryResult(results,total_count,q.getOffset(),q.getPageSize());
 	}
-	
+
 	public static Entity FILL_DEEP_AND_MASK(PersistentStore store,Entity e,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
 		do_fill_deep(store,e,0,Integer.MAX_VALUE,fill_fields,mask_fields,new HashMap<Entity,Entity>());
 		return e;
 	}
-	
+
 	public static int COUNT(PersistentStore store,Query q) throws PersistenceException
 	{
 		Integer tid = CURRENT_TRANSACTION_ID();
@@ -888,16 +888,16 @@ public class WebStoreModule extends WebModule
 				continue;
 			entities.add(entity);
 		}
-		
-		return entities;		
+
+		return entities;
 	}
-	
+
 	public static List<Entity> INT_IDS_TO_ENTITIES(PersistentStore store,String entity_type,List<Integer> ids) throws WebApplicationException,PersistenceException
 	{
-		
+
 		if(ids == null)
 			return null;
-		
+
 		List<Entity> entities = new ArrayList<Entity>();
 		int s = ids.size();
 		Entity entity;
@@ -914,8 +914,8 @@ public class WebStoreModule extends WebModule
 				continue;
 			entities.add(entity);
 		}
-		
-		return entities;		
+
+		return entities;
 	}
 
 	public static void CREATE_QUEUE(PersistentStore store,String queuename,int rec_size,int recs_per_extent) throws PersistenceException
@@ -923,20 +923,20 @@ public class WebStoreModule extends WebModule
 		List<String> app_queues = store.listQueues();
 		if(app_queues.contains(queuename))
 			return;
-		store.createQueue(queuename,rec_size,recs_per_extent);	
+		store.createQueue(queuename,rec_size,recs_per_extent);
 	}
-	
+
 	public static void DELETE_QUEUE(PersistentStore store,String queuename) throws PersistenceException
 	{
 		List<String> app_queues = store.listQueues();
 		if(app_queues.contains(queuename))
 			return;
 		store.deleteQueue(queuename);
-		
+
 	}
-	
+
 	/* convenience stuff for inheritors */
-	
+
 	public Entity NEW(String entity_type,Entity creator,Map<String,Object> atts) throws PersistenceException
 	{
 		return NEW(store,entity_type,creator,atts);
@@ -951,17 +951,17 @@ public class WebStoreModule extends WebModule
 	{
 		return CREATE_ENTITY(store,creator,instance);
 	}
-	
+
 	public Entity CREATE_ENTITY(Entity creator,String type,Map<String,Object> value_map) throws PersistenceException
 	{
 		return CREATE_ENTITY(store,creator,type,value_map);
 	}
-	
+
 	public Entity EXPAND(Entity e) throws PersistenceException
 	{
 		return EXPAND(store,e);
 	}
-	
+
 	public List<Entity> EXPAND(List<Entity> ee) throws PersistenceException
 	{
 		for(int i = 0;i < ee.size();i++)
@@ -969,17 +969,17 @@ public class WebStoreModule extends WebModule
 
 		return ee;
 	}
-	
+
 	public Entity FORCE_EXPAND(Entity e) throws PersistenceException
 	{
 		return FORCE_EXPAND(store,e);
 	}
-	
+
 	public Entity GET( String entity_type,long entity_id) throws PersistenceException//this should throw webapplication exception....not persistence execption duh.
 	{
 		return GET(store,entity_type,entity_id);
 	}
-	
+
 	public Entity GET_AND_MASK(String entity_type,long entity_id,Object...masked_fieldnames) throws PersistenceException,WebApplicationException
 	{
 		return GET_AND_MASK(entity_type, entity_id, masked_fieldnames);
@@ -989,17 +989,17 @@ public class WebStoreModule extends WebModule
 	{
 		return DELETE(store,entity_type,entity_id);
 	}
-	
+
 	public Entity DELETE(Entity e) throws PersistenceException
 	{
 		return DELETE(store,e);
 	}
-	
+
 	public Entity GET_REF(String entity_type,long entity_id, String fieldname) throws PersistenceException,WebApplicationException
 	{
 		return GET_REF(store, entity_type, entity_id, fieldname);
 	}
-	
+
 	public Entity GET_REF(Entity instance, String fieldname) throws PersistenceException
 	{
 		return GET_REF(store, instance, fieldname);
@@ -1009,117 +1009,117 @@ public class WebStoreModule extends WebModule
 	{
 		return GET_LIST_REF(store, entity_type, entity_id, fieldname);
 	}
-	
+
 	public List<Entity> GET_LIST_REF(Entity instance, String fieldname) throws PersistenceException
 	{
 		return GET_LIST_REF(store, instance, fieldname);
 	}
-	
+
 	public Entity FILL_REF(Entity instance, String fieldname) throws PersistenceException
 	{
 		return FILL_REF(store, instance, fieldname);
 	}
-	
+
 	public  Entity FILL_REFS(Entity instance, String... fill_fields) throws PersistenceException
 	{
 		return FILL_REFS(store, instance, fill_fields);
 	}
-	
+
 	public Entity FILL_REFS(Entity instance) throws PersistenceException
 	{
 		return FILL_REFS(store, instance);
 	}
-	
+
 	public Entity UPDATE(String entity_type,long entity_id,Map<String,Object> value_map) throws PersistenceException,WebApplicationException
 	{
 		return UPDATE(store,entity_type,entity_id,value_map);
 	}
-	
-	
+
+
 	public Entity UPDATE(Entity instance,Map<String,Object> entity_data) throws PersistenceException
 	{
 		return UPDATE(store, instance, entity_data);
 	}
-	
+
 	public Entity UPDATE(Entity instance,Object... name_value_pairs) throws PersistenceException
 	{
 		return UPDATE(store, instance, name_value_pairs);
 	}
-	
+
 	/*UPDATE for Entity*/
 	//TODO: DEPRECATE THIS
 	public Entity SAVE_ENTITY(Entity instance) throws PersistenceException
 	{
 		return SAVE_ENTITY(store,instance);
 	}
-	
+
 
 	public QueryResult QUERY(Query q) throws PersistenceException
 	{
 		return QUERY(store, q);
 	}
-	
+
 	public QueryResult QUERY_FILL(Query q) throws PersistenceException
 	{
 		return QUERY_FILL(store, q);
 	}
-	
+
 	public QueryResult QUERY_FILL_DEEP(Query q) throws PersistenceException
 	{
 		return QUERY_FILL_DEEP(store, q);
 	}
-	
+
 	public QueryResult QUERY_FILL(Query q,String... fill_fieldnames) throws PersistenceException
 	{
 		return QUERY_FILL(store,q, fill_fieldnames);
 	}
-	
+
 	public QueryResult QUERY_FILL_DEEP(Query q,String... fill_fieldnames) throws PersistenceException
 	{
 		return QUERY_FILL_DEEP(store,q, fill_fieldnames);
 	}
-	
+
 	/* THIS FILLS ALL THE REFS BY DEFAULT. THE MASK FIELDS ARE APPLIED AFTER*/
 	public QueryResult QUERY_FILL_AND_MASK(Query q,String... mask_fields) throws PersistenceException
 	{
 		return QUERY_FILL_AND_MASK(store, q, mask_fields);
 	}
-	
+
 	public QueryResult QUERY_FILL_DEEP_AND_MASK(Query q,String[] fill_fieldnames,String[] mask_fieldnames) throws PersistenceException
 	{
 		return QUERY_FILL_DEEP_AND_MASK(store,q, fill_fieldnames,mask_fieldnames);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY(Query q) throws PersistenceException
 	{
 		return PAGING_QUERY(store,q);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY_FILL(Query q) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL(store, q);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY_FILL_DEEP(Query q) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL_DEEP(store, q);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY_FILL(Query q,String... fill_fields) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL(store, q, fill_fields);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY_FILL_DEEP(Query q,String... fill_fields) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL(store, q, fill_fields);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY_FILL_AND_MASK(Query q,String... mask_fields) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL_AND_MASK(store, q, mask_fields);
 	}
-	
+
 	public PagingQueryResult PAGING_QUERY_FILL_DEEP_AND_MASK(Query q,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
 		return PAGING_QUERY_FILL_DEEP_AND_MASK(store, q,fill_fields,mask_fields);
@@ -1127,7 +1127,7 @@ public class WebStoreModule extends WebModule
 
 	public Entity FILL_DEEP_AND_MASK(Entity e,String[] fill_fields,String[] mask_fields) throws PersistenceException
 	{
-		
+
 		return FILL_DEEP_AND_MASK(store, e,fill_fields,mask_fields);
 	}
 
@@ -1136,7 +1136,7 @@ public class WebStoreModule extends WebModule
 		e = EXPAND(e);
 		return FILL_DEEP_AND_MASK(store, e,FILL_ALL_FIELDS,MASK_NO_FIELDS);
 	}
-	
+
 	public int COUNT(Query q) throws PersistenceException
 	{
 		return COUNT(store,q);
@@ -1151,25 +1151,25 @@ public class WebStoreModule extends WebModule
 	{
 		return IDS_TO_ENTITIES(store,entity_type, ids);
 	}
-	
+
 	public List<Long> ENTITIES_TO_IDS(List<Entity> entities) throws WebApplicationException,PersistenceException
 	{
 		if(entities == null)
 			return null;
-		
+
 		int s = entities.size();
 		List<Long> ids = new ArrayList<Long>(s);
 		for(int i = 0;i < s;i++)
 			ids.add(entities.get(i).getId());
 		return ids;
 	}
-	
+
 
 	public List<Entity> INT_IDS_TO_ENTITIES(String entity_type,List<Integer> ids) throws WebApplicationException,PersistenceException
 	{
 		return INT_IDS_TO_ENTITIES(store,entity_type, ids);
 	}
-	
+
 
 	public void VALIDATE_TYPE(String type,Entity... instances) throws WebApplicationException
 	{
@@ -1182,13 +1182,13 @@ public class WebStoreModule extends WebModule
 				throw new WebApplicationException("ENTITY ARGUMENT FAILED VALIDATION. EXPECTED TYPE "+type+" BUT ENTITY WAS OF TYPE "+instance.getType());
 		}
 	}
-	
+
 	//validate all in list are of type type
 	public void VALIDATE_TYPE_LIST(String type,List<Entity> entities) throws WebApplicationException
 	{
 		if(entities == null)
 			return;
-		
+
 		int s = entities.size();
 		for(int i = 0;i < s;i++)
 			VALIDATE_TYPE(type, entities.get(i));
@@ -1200,20 +1200,20 @@ public class WebStoreModule extends WebModule
 		if(e.getId() != Entity.UNDEFINED)
 			throw new WebApplicationException("TRYING TO CREATE AN ALREADY INITIALIZED ENTITY. "+e.getType()+" ALREADY HAS ID OF "+e.getId());
 	}
-	
+
 	public void VALIDATE_EXISTING_INSTANCE(Entity e) throws WebApplicationException
 	{
 		if(e.getId() == Entity.UNDEFINED)
 			throw new WebApplicationException("TRYING TO UPDATE AN UNITINIALIZED ENTITY. "+e.getType()+" HAS ID OF "+e.getId());
 	}
-	
+
 	public EntityDefinition DEFINE_ENTITY(String entity_name,List<FieldDefinition> field_defs,Object...args) throws PersistenceException,InitializationException
 	{
 		EntityDefinition d = DEFINE_ENTITY(store,entity_name,field_defs,args);
 		associated_entity_definitions.add(d);
 		return d;
 	}
-	
+
 	public EntityDefinition DEFINE_ENTITY(String entity_name,List<FieldDefinition> field_defs) throws PersistenceException,InitializationException
 	{
 		EntityDefinition d = DEFINE_ENTITY(store,entity_name,field_defs);
@@ -1227,19 +1227,19 @@ public class WebStoreModule extends WebModule
 		associated_entity_definitions.add(d);
 		return d;
 	}
-	
+
 	public EntityDefinition ADD_FIELDS(String entity_name,Object...args) throws PersistenceException,InitializationException
 	{
-		EntityDefinition d = ADD_FIELDS(store,entity_name,args); 
+		EntityDefinition d = ADD_FIELDS(store,entity_name,args);
 		associated_entity_definitions.add(d);
 		return d;
 	}
-	
+
 	public  void DEFINE_ENTITY_INDEX(String entity_name,String index_name,int index_type,String... field_names) throws PersistenceException,InitializationException
 	{
-		DEFINE_ENTITY_INDEX(store,entity_name, index_name, index_type,field_names);	
+		DEFINE_ENTITY_INDEX(store,entity_name, index_name, index_type,field_names);
 	}
-	
+
 	public  void DEFINE_ENTITY_RELATIONSHIP(String from_entity_name,String from_entity_field,int relationship_type,String to_entity_name,String to_entity_field) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY_RELATIONSHIP(store,from_entity_name,from_entity_field,relationship_type,to_entity_name,to_entity_field);
@@ -1251,28 +1251,28 @@ public class WebStoreModule extends WebModule
 	{
 		return store.saveEntity(e.copy());
 	}
-	
+
 	public Entity CLONE_SHALLOW(Entity e) throws PersistenceException
 	{
 		return CLONE_SHALLOW(store,e);
 	}
-	
-	
+
+
 	//clone subsystem/////////
 	//THIS MAKES COPIES IN THE DATABASE SO MKAE SURE THIS IS WHAT YOU WANT!!!
 	public Entity CLONE_DEEP(Entity e) throws PersistenceException
 	{
 		clone_policy default_clone_policy = new clone_policy();
 		return CLONE_DEEP(e,default_clone_policy);
-		
+
 	}
-	
+
 	public Entity CLONE_DEEP(Entity e,clone_policy p) throws PersistenceException
 	{
 		Entity clone = CLONE_DEEP(store,e,p);
 		return clone;
 	}
-	
+
 
 	public  static final int CLONE_REFERENCE  	= 0x01;
 	public  static final int LINK_REFERENCE 	= 0x02;
@@ -1280,13 +1280,13 @@ public class WebStoreModule extends WebModule
 	public  static final int USE_AS_REFERENCE 	= 0x04;
 
 	public class clone_policy
-	{		
+	{
 		public int exec(Entity e,String fieldname,Entity reference_val)
 		{
 			if(fieldname.equals(FIELD_CREATOR))
 				return LINK_REFERENCE;
 			else
-				return CLONE_REFERENCE;			
+				return CLONE_REFERENCE;
 		}
 	}
 
@@ -1295,7 +1295,7 @@ public class WebStoreModule extends WebModule
 		Entity clone =  CLONE_DEEP(store, e, f,new HashMap<Entity,Entity>());
 		return FILL_DEEP_AND_MASK(store, clone, FILL_ALL_FIELDS, MASK_NO_FIELDS);
 	}
-	
+
 	//warning: this function is pretty intense. makes a deep clone in the database//
 	public static Entity CLONE_DEEP(PersistentStore store,Entity e,clone_policy f,HashMap<Entity,Entity> clone_map) throws PersistenceException
 	{
@@ -1311,11 +1311,11 @@ public class WebStoreModule extends WebModule
 			cr.setId(c.getId());
 			return cr;
 		}
-		
+
 		e = EXPAND(store, e);
 
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
-		
+
 		Entity clone = e.copy();
 		for(int i = 0;i < ref_fields.size();i++)
 		{
@@ -1325,7 +1325,7 @@ public class WebStoreModule extends WebModule
 		}
 		clone = CREATE_ENTITY(store,(Entity)clone.getAttribute(FIELD_CREATOR),clone);
 		clone_map.put(e,clone);
-		
+
 
 		for(int i = 0;i < ref_fields.size();i++)
 		{
@@ -1336,7 +1336,7 @@ public class WebStoreModule extends WebModule
 				List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
 				if(vals == null)
 					continue;
-				
+
 				int s = vals.size();
 				List<Entity> clone_vals = new ArrayList<Entity>(s);
 				for(int j = 0;j <s;j++)
@@ -1360,7 +1360,7 @@ public class WebStoreModule extends WebModule
 			}
 			else
 			{
-				
+
 				Entity val = GET_REF(store,e,ref_fieldname);
 				int clone_behavior = f.exec(e, ref_fieldname, val);
 				switch(clone_behavior)
@@ -1375,14 +1375,14 @@ public class WebStoreModule extends WebModule
 						clone.setAttribute(ref_fieldname,null);
 						break;
 				}
-			}	
+			}
 		}
 
 		clone = SAVE_ENTITY(store,clone);
 		clone_map.put(e, clone);
 		return clone;
 	}
-	
+
 	/*BEFORE I FUCK THIS UP TOO MUCH! remove the clone map stuff to get back to the way it was
 	public static Entity CLONE_DEEP(PersistentStore store,Entity e,clone_policy f,HashMap<Entity,Entity> clone_map) throws PersistenceException
 	{
@@ -1390,12 +1390,12 @@ public class WebStoreModule extends WebModule
 			return null;
 		if(clone_map.containsKey(e))
 			return clone_map.get(e);
-		
+
 		e = EXPAND(store, e);
 
-		
+
 		Entity clone = e.cloneShallow();
-		
+
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
 		for(int i = 0;i < ref_fields.size();i++)
 		{
@@ -1406,7 +1406,7 @@ public class WebStoreModule extends WebModule
 				List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
 				if(vals == null)
 					continue;
-				
+
 				int s = vals.size();
 				List<Entity> clone_vals = new ArrayList<Entity>(s);
 				for(int j = 0;j <s;j++)
@@ -1430,7 +1430,7 @@ public class WebStoreModule extends WebModule
 			}
 			else
 			{
-				
+
 				Entity val = GET_REF(store,e,ref_fieldname);
 				int clone_behavior = f.exec(e, ref_fieldname, val);
 				switch(clone_behavior)
@@ -1445,7 +1445,7 @@ public class WebStoreModule extends WebModule
 						clone.setAttribute(ref_fieldname,null);
 						break;
 				}
-			}	
+			}
 		}
 
 		clone = CREATE_ENTITY(store,(Entity)clone.getAttribute(FIELD_CREATOR),clone);
@@ -1453,7 +1453,7 @@ public class WebStoreModule extends WebModule
 		return clone;
 	}
 	*/
-	
+
 	public Entity CLONE_IN_MEMORY(Entity e) throws PersistenceException
 	{
 		return CLONE_IN_MEMORY(e, new clone_policy(), new HashMap<Entity, Entity>());
@@ -1462,7 +1462,7 @@ public class WebStoreModule extends WebModule
 	{
 		if(e == null)
 			return null;
-			
+
 		if(clone_map.containsKey(e))
 			return clone_map.get(e);
 
@@ -1470,7 +1470,7 @@ public class WebStoreModule extends WebModule
 		clone_map.put(e,clone);
 		if(e.isLightReference())
 			return clone;
-		
+
 		List<FieldDefinition> ref_fields = store.getEntityDefinition(e.getType()).getReferenceFields();
 		for(int i = 0;i < ref_fields.size();i++)
 		{
@@ -1480,10 +1480,10 @@ public class WebStoreModule extends WebModule
 			{
 				//List<Entity> vals = GET_LIST_REF(store,e,ref_fieldname);
 				List<Entity> vals = (List<Entity>)e.getAttribute(ref_fieldname);
-				
+
 				if(vals == null)
 					continue;
-				
+
 				int s = vals.size();
 				List<Entity> clone_vals = new ArrayList<Entity>(s);
 				for(int j = 0;j <s;j++)
@@ -1507,7 +1507,7 @@ public class WebStoreModule extends WebModule
 			}
 			else
 			{
-				
+
 				//Entity val = GET_REF(store,e,ref_fieldname);
 				Entity val = (Entity)e.getAttribute(ref_fieldname);
 				int clone_behavior = p.exec(e, ref_fieldname, val);
@@ -1523,27 +1523,27 @@ public class WebStoreModule extends WebModule
 						clone.setAttribute(ref_fieldname,null);
 						break;
 				}
-			}	
+			}
 		}
 		clone_map.put(e, clone);
 		return clone;
 	}
-	
-	
+
+
 	public void DUMP_ENTITY(Entity e) throws PersistenceException
 	{
 		StringBuilder buf = new StringBuilder();
 		do_print_deep(e,0,new HashMap<Entity,Entity>(),buf);
 		INFO("DUMP\n"+buf.toString());
 	}
-	
+
 	public String ENTITY_TO_STRING(Entity e) throws PersistenceException
 	{
 		StringBuilder buf = new StringBuilder();
-		do_print_deep(e,0,new HashMap<Entity,Entity>(),buf); 
+		do_print_deep(e,0,new HashMap<Entity,Entity>(),buf);
 		return buf.toString();
 	}
-	
+
 	public void do_print_deep(Entity e,int indent,Map<Entity,Entity> seen_entities,StringBuilder buf) throws PersistenceException
 	{
 		if(e == null)
@@ -1554,7 +1554,7 @@ public class WebStoreModule extends WebModule
 		String mem_id = "0x"+Integer.toHexString(System.identityHashCode(e));
 		if(seen_entities.containsKey(e))
 		{
-			buf.append(e.getType()+":"+e.getId()+"(CIRCULAR REF "+mem_id+")");	
+			buf.append(e.getType()+":"+e.getId()+"(CIRCULAR REF "+mem_id+")");
 			return;
 		}
 		seen_entities.put(e, e);
@@ -1576,7 +1576,7 @@ public class WebStoreModule extends WebModule
 				{
 					if(f.isArray())
 					{
-						List<Entity> vals = (List<Entity>)e.getAttribute(f.getName());	
+						List<Entity> vals = (List<Entity>)e.getAttribute(f.getName());
 						if(vals == null)
 						{
 							buf.append(get_space(indent+1)+f.getName()+" = NULL\n");
@@ -1607,15 +1607,15 @@ public class WebStoreModule extends WebModule
 				}
 				else
 				{
-					buf.append(get_space(indent+1)+f.getName()+" = "+e.getAttribute(f.getName())+"\n");			
+					buf.append(get_space(indent+1)+f.getName()+" = "+e.getAttribute(f.getName())+"\n");
 				}
 			}
 			buf.append(get_space(indent)+"}/*end - "+e.getType()+":"+e.getId()+"*/");
 		}
 	}
-	
 
-	
+
+
 	private String get_space(int num)
 	{
 		StringBuilder buf = new StringBuilder();
@@ -1630,23 +1630,23 @@ public class WebStoreModule extends WebModule
 		delete_policy default_delete_policy = new delete_policy();
 		return DELETE_DEEP(e, default_delete_policy);
 	}
-	
+
 	public  Entity DELETE_DEEP(Entity e,delete_policy f) throws PersistenceException
 	{
 		return DELETE_DEEP(store,e, f);
 	}
-	
+
 	public  static final int DELETE_REFERENCE  		= 0x01;
 	public  static final int DONT_DELETE_REFERENCE 	= 0x02;
 
 	public class delete_policy
-	{	
+	{
 		String[] protect_fields = new String[0];
 		public delete_policy(String... protect_fields)
 		{
 			this.protect_fields = protect_fields;
 		}
-		
+
 		public int exec(Entity e,String fieldname,Entity reference_val) throws Exception
 		{
 			if(fieldname.equals(FIELD_CREATOR))
@@ -1690,7 +1690,7 @@ public class WebStoreModule extends WebModule
 					}
 				}
 				else
-				{				
+				{
 					Entity val = (Entity)e.getAttribute(ref_fieldname);
 					int delete_behavior = f.exec(e, ref_fieldname, val);
 					switch(delete_behavior)
@@ -1700,9 +1700,9 @@ public class WebStoreModule extends WebModule
 						case DONT_DELETE_REFERENCE:
 							break;
 					}
-				}	
+				}
 			}
-	
+
 			Entity dd=null;
 			try{
 				dd =  DELETE(store,e);
@@ -1720,13 +1720,13 @@ public class WebStoreModule extends WebModule
 		}
 	}
 
-	
+
 	//maybe a usefule util to move up? lets see
 	protected List<FieldDefinition> UNFLATTEN_FIELD_DEFINITIONS(Object... flat_defs)
 	{
 		return UNFLATTEN_FIELD_DEFINITIONS(FROM_OBJECT_LIST,flat_defs);
 	}
-	
+
 	protected static final int FROM_OBJECT_LIST = 0x01;
 	protected static final int FROM_STRING_LIST = 0x02;
 	protected List<FieldDefinition> UNFLATTEN_FIELD_DEFINITIONS(int from,Object... flat_defs)
@@ -1752,7 +1752,7 @@ public class WebStoreModule extends WebModule
 			{
 				field_type  =  (Integer)flat_defs[i+1];
 			}
-			
+
 			FieldDefinition f;
 			if((field_type & ~Types.TYPE_ARRAY) == Types.TYPE_REFERENCE)
 			{
@@ -1770,7 +1770,7 @@ public class WebStoreModule extends WebModule
 				}
 				else
 					default_val = flat_defs[i+3];
-				
+
 				f.setReferenceType(ref_type);
 				f.setDefaultValue(default_val);
 				i++;
@@ -1790,7 +1790,7 @@ public class WebStoreModule extends WebModule
 				}
 				else
 					default_val = flat_defs[i+2];
-			
+
 				f.setDefaultValue(default_val);
 			}
 			ret.add(f);
@@ -1798,25 +1798,25 @@ public class WebStoreModule extends WebModule
 		return ret;
 	}
 
-	
+
 	public List<EntityIndex> DEFINE_ENTITY_INDICES(String entity_name,entity_index_descriptor... indexes) throws PersistenceException,InitializationException
 	{
 		return DEFINE_ENTITY_INDICES(store, entity_name, indexes);
 	}
-	
+
 	public List<EntityIndex> DEFINE_ENTITY_INDICES(PersistentStore store,String entity_name,entity_index_descriptor... proposed_indexes) throws PersistenceException,InitializationException
 	{
 		EntityDefinition def 				= store.getEntityDefinition(entity_name);
 		List<EntityIndex> proposed_indices 	= translate_proposed_indices(def, proposed_indexes);
 		for(int i=0;i < proposed_indices.size();i++)
 		{
-			EntityIndex pro_idx = proposed_indices.get(i);			
+			EntityIndex pro_idx = proposed_indices.get(i);
 			do_define_entity_index(store, entity_name, pro_idx);
 		}
 		return proposed_indices;
 	}
-	
-	
+
+
 	private static List<EntityIndex> translate_proposed_indices(EntityDefinition def, entity_index_descriptor[] proposed_indexes) throws InitializationException
 	{
 		List<EntityIndex> ret = new ArrayList<EntityIndex>();
@@ -1848,18 +1848,18 @@ public class WebStoreModule extends WebModule
 		String[] field_names = new String[index.getFields().size()];
 		for(int i=0;i < index.getFields().size();i++)
 			field_names[i] = index.getFields().get(i).getName();
-	
+
 		List<EntityIndex> idxs = store.getEntityIndices(entity_name);
-		for(int i = 0;i < idxs.size();i++) 
+		for(int i = 0;i < idxs.size();i++)
 		{
 			EntityIndex idx = idxs.get(i);
 			if(idx.getName().equals(index_name))
 			{
 				List<FieldDefinition> fields = idx.getFields();
-				
+
 				if(fields.size() != field_names.length)
 					throw new SyncException("ENTITY INDEX "+index_name+" ALREADY EXISTS ON ENTITY "+entity_name+" BUT THE DATABASE VERSION HAS A DIFFERENT NUMBER OF FIELDS dbVersion is "+idx);
-				
+
 				for(int j = 0;j < fields.size();j++)
 				{
 					FieldDefinition f = fields.get(j);
@@ -1871,10 +1871,10 @@ public class WebStoreModule extends WebModule
 				return idx;//the index exists and it checked out
 			}
 		}
-		//the index didnt exist..create it 
-		return store.addEntityIndex(entity_name, field_names, index_type, index_name,index_atts );	
+		//the index didnt exist..create it
+		return store.addEntityIndex(entity_name, field_names, index_type, index_name,index_atts );
 	}
-	
+
 	public class entity_index_descriptor
 	{
 		String index_name;
@@ -1882,7 +1882,7 @@ public class WebStoreModule extends WebModule
 		String[] field_names;
 		Map<String,Object> attributes;
 	}
-	
+
 	public entity_index_descriptor ENTITY_INDEX(String index_name,int index_type,String... field_names)
 	{
 		entity_index_descriptor d = new entity_index_descriptor();
@@ -1901,9 +1901,9 @@ public class WebStoreModule extends WebModule
 		d.field_names = field_names;
 		d.attributes = attributes;
 		//System.out.println("ATTRIBUTES ARE "+d.attributes+" FOR "+index_name);
-		return d;	
+		return d;
 	}
-	
+
 	/////////SCHEMA//////////////
 
 	//each persistent store has its own schema.
@@ -1911,7 +1911,7 @@ public class WebStoreModule extends WebModule
 	private static  List<schema_receiver> schema_map_as_list;
 	public static void web_store_subsystem_init_start(WebApplication app)
 	{
-		schema_map = new HashMap<String,schema_receiver>();	
+		schema_map = new HashMap<String,schema_receiver>();
 		schema_map_as_list = new ArrayList<schema_receiver>();
 	}
 
@@ -1923,7 +1923,7 @@ public class WebStoreModule extends WebModule
 			s.actualize();
 		}
 	}
-	
+
 
 	public static schema_receiver get_schema_receiver_for_store(WebApplication app,String module_name,IPersistenceProvider p)
 	{
@@ -1939,10 +1939,10 @@ public class WebStoreModule extends WebModule
 
 		return r;
 	}
-	
-	public class schema_receiver extends PersistenceAdapter 
+
+	public class schema_receiver extends PersistenceAdapter
 	{
-		
+
 		WebApplication app;
 		List<EntityDefinition> 				entity_definitions;
 		List<String>						entity_definition_declarers;
@@ -1950,16 +1950,16 @@ public class WebStoreModule extends WebModule
 		//we are using entity def here just because it is a name and a collection of fields//
 		List<EntityDefinition> 				entity_fields;
 		List<String>						entity_field_declarers;
-		
+
 		List<EntityIndex> 	   				entity_indices;
 		List<String>						entity_index_declarers;
-		
+
 		List<EntityRelationshipDefinition> 	entity_relationships;
 		List<String>						entity_relationship_declarers;
-				
+
 		IPersistenceProvider				p;
 
-		
+
 		private WebStoreModule webstore_context;
 		private HashMap<String, String> entity_to_declarer;
 		private HashMap<String, String> entity_index_to_declarer;
@@ -1971,48 +1971,48 @@ public class WebStoreModule extends WebModule
 			this.app = app;
 			this.entity_definitions 		 	 = new ArrayList<EntityDefinition>();
 			this.entity_definition_declarers 	 = new ArrayList<String>();
-			
+
 			this.entity_fields 		 	 	 	 = new ArrayList<EntityDefinition>();
-			this.entity_field_declarers 		 = new ArrayList<String>();			
-			
+			this.entity_field_declarers 		 = new ArrayList<String>();
+
 			this.entity_indices 			 	 = new ArrayList<EntityIndex>();
 			this.entity_index_declarers 	 	 = new ArrayList<String>();
-			
+
 			this.entity_relationships 		 	 = new ArrayList<EntityRelationshipDefinition>();
 			this.entity_relationship_declarers 	 = new ArrayList<String>();
-			
-	
+
+
 			this.p 		 					 	 = p;
 		}
-			
+
 		public String getDeclaringModuleForIndex(String entity_name,String index_name)
 		{
 			return entity_index_to_declarer.get(entity_name+"."+index_name);
 		}
-		
+
 		public String getDeclaringModuleForEntity(String entity_name)
 		{
 			return entity_to_declarer.get(entity_name);
 		}
-		
+
 		public String getDeclaringModuleForEntityField(String entity_name,String fieldname)
 		{
 			return entity_fieldname_to_declarer.get(entity_name+"."+fieldname);
 		}
-		
+
 		public String getDeclaringModuleForEntityRelationship(String entity_name,String fieldname)
 		{
 			//TODO: UNIMPLEMENTED //
 			return null;
 		}
-		
+
 		public void actualize() throws PersistenceException,InitializationException
 		{
 			actualize_entity_defs();
 			actualize_entity_indices();
 			actualize_entity_relationships();
-		} 
-		
+		}
+
 		private void actualize_entity_defs() throws PersistenceException,InitializationException
 		{
 			Map<String,EntityDefinition>  entity_to_def = new LinkedHashMap<String, EntityDefinition>();
@@ -2028,13 +2028,13 @@ public class WebStoreModule extends WebModule
 				for(int j=0;j < d.getFields().size();j++)
 					entity_fieldname_to_declarer.put(entity_name+"."+d.getFields().get(j).getName(),declarer);
 			}
-			
+
 			//entity fields in this case is a list of entity defs with one field and the entity name//
 			//we use entity def becuase field definition does not have an entity name
 			for(int i =0;i < entity_fields.size();i++)
 			{
 				EntityDefinition ff 		  = entity_fields.get(i);
-				String declarer 			  = entity_field_declarers.get(i);	
+				String declarer 			  = entity_field_declarers.get(i);
 				String entity_name 			  = ff.getName();
 				FieldDefinition f 			  = ff.getFields().get(1);//1 here because field 0 is always id
 				EntityDefinition proposed_def = entity_to_def.get(entity_name);
@@ -2050,22 +2050,22 @@ public class WebStoreModule extends WebModule
 				EVOLVE_ENTITY(this, entity_definitions.get(i));
 			}
 		}
-		
+
 		private void actualize_entity_indices() throws PersistenceException,InitializationException
 		{
 
 			if(entity_indices.size() == 0)
 				return;
-			
+
 			Map<String,List<EntityIndex>> entity_to_indices 		= new LinkedHashMap<String, List<EntityIndex>>();
 			entity_index_to_declarer 	= new HashMap<String,String>();
-			
+
 			//entity fields in this case is a list of entity defs with one field and the entity name//
 			//we use entity def becuase field definition does not have an entity name
 			for(int i =0;i < entity_indices.size();i++)
 			{
 				EntityIndex idx 		      	= entity_indices.get(i);
-				String declarer 			  	= entity_index_declarers.get(i);	
+				String declarer 			  	= entity_index_declarers.get(i);
 				String entity_name 			  	= idx.getEntity();
 				List<EntityIndex> proposed_idxs = entity_to_indices.get(entity_name);
 				if(proposed_idxs == null)
@@ -2075,8 +2075,8 @@ public class WebStoreModule extends WebModule
 				}
 				entity_index_to_declarer.put(entity_name+"."+idx.getName(),declarer);
 				proposed_idxs.add(idx);
-			}				
-			
+			}
+
 			Iterator<String> iter = entity_to_indices.keySet().iterator();
 			while(iter.hasNext())
 			{
@@ -2087,7 +2087,7 @@ public class WebStoreModule extends WebModule
 			}
 
 		}
-			
+
 		private void actualize_entity_relationships() throws PersistenceException,InitializationException
 		{
 			for(int i =0;i < entity_relationships.size();i++)
@@ -2100,7 +2100,7 @@ public class WebStoreModule extends WebModule
 				p.getStore().addEntityRelationship(erd);
 			}
 		}
-		
+
 		//////
 		public void addEntityDefinition(EntityDefinition entity_def) throws PersistenceException
 		{
@@ -2108,26 +2108,26 @@ public class WebStoreModule extends WebModule
 			entity_definitions.add(entity_def);
 			entity_definition_declarers.add(webstore_context.getName());
 		}
-		
+
 		public int addEntityField(String entity, FieldDefinition entity_field_def) throws PersistenceException
 		{
 			EntityDefinition def = new EntityDefinition(entity);
-			
+
 			def.addField(entity_field_def);
 			entity_fields.add(def);
 			entity_field_declarers.add(webstore_context.getName());
-			
+
 			//System.out.println(webstore_context.getName()+"ADDING ENTITY FIELD "+def);
 			//System.out.println("EXISTING DEF IS "+getEntityDefinition(entity));
-			
+
 			return 0;
 		}
-		
+
 		public EntityIndex addEntityIndex(String entity, String field_name,int index_type, String index_name, Map<String, Object> attributes)throws PersistenceException
 		{
 			return addEntityIndex(entity, new String[]{field_name}, index_type, index_name, attributes);
 		}
-		
+
 		public EntityIndex addEntityIndex(String entity, String[] field_names,int index_type, String index_name, Map<String, Object> attributes)throws PersistenceException
 		{
 			EntityIndex idx = new EntityIndex(index_name,index_type);
@@ -2148,20 +2148,20 @@ public class WebStoreModule extends WebModule
 			entity_index_declarers.add(webstore_context.getName());
 			return idx;
 		}
-		
+
 		private FieldDefinition get_field(String entity_name,String field_name)
 		{
 			EntityDefinition d = getEntityDefinition(entity_name);
 			FieldDefinition f = d.getField(field_name);
 			return f;
 		}
-		
+
 		public void addEntityRelationship(EntityRelationshipDefinition r)throws PersistenceException
 		{
 			entity_relationships.add(r);
 			entity_relationship_declarers.add(webstore_context.getName());
 		}
-		
+
 		public EntityDefinition getEntityDefinition(String name)
 		{
 			for(int i = 0;i < entity_definitions.size();i++)
@@ -2179,18 +2179,18 @@ public class WebStoreModule extends WebModule
 							d.addField(field_declaration.getFields().get(1));
 					}
 					return d;
-			
-				
+
+
 				}
 			}
 			return null;
 		}
-		
+
 		public List<EntityDefinition> getEntityDefinitions()
 		{
 			return entity_definitions;
 		}
-		
+
 		public List<EntityIndex> getEntityIndices(String entity_name)
 		{
 			List<EntityIndex> ret = new ArrayList<EntityIndex>();
@@ -2202,28 +2202,28 @@ public class WebStoreModule extends WebModule
 			}
 			return ret;
 		}
-		
+
 		public List<EntityRelationshipDefinition> getEntityRelationships()
 		{
 			return entity_relationships;
 		}
-		
+
 		//IPersistenceProvider
 		public PersistentStore getStore()
-		{ 
+		{
 			return this;
 		}
-		
+
 		public String getName()
-		{ 
+		{
 			return "schema receiver";
 		}
 
-		public IEvolutionProvider getEvolutionProvider() 
+		public IEvolutionProvider getEvolutionProvider()
 		{
 			return null;
 		}
-	
+
 		public void setWebStoreModuleContext(WebStoreModule c)
 		{
 			webstore_context = c;
@@ -2237,7 +2237,7 @@ public class WebStoreModule extends WebModule
 		PersistentStore 	store 			   = p.getStore();
 		IEvolutionProvider 	evolution_provider = p.getEvolutionProvider();
 		String entity_name = proposed_def.getName();
-		EntityDefinition 		existing_def;			
+		EntityDefinition 		existing_def;
 		existing_def = store.getEntityDefinition(entity_name);
 
 		//check the proposed def//
@@ -2249,7 +2249,7 @@ public class WebStoreModule extends WebModule
 			if(!f.isValidValue(f.getDefaultValue()))
 				throw new InitializationException("ENTITY "+proposed_def.getName()+". FIELD  "+f.getName()+" HAS A DEFAULT VALUE OF THE WRONG TYPE. TYPE SHOULD BE "+FieldDefinition.typeAsString(f.getType())+" AND IS "+f.getDefaultValue().getClass().getName()+".");
 		}
-		
+
 		/*create it if it doesnt exist*/
 		if(existing_def == null)
 		{
@@ -2258,7 +2258,7 @@ public class WebStoreModule extends WebModule
 		else
 		{
 			/* check it to make sure the version passed in matches the one in the store */
-			
+
 			if(existing_def.equals(proposed_def))
 				return proposed_def;
 			else
@@ -2273,13 +2273,13 @@ public class WebStoreModule extends WebModule
 						resolver.made_backup_during_evolution = true;
 					}
 				}
-				
-				
-				
+
+
+
 				evolution_provider.evolveEntity(resolver, existing_def, proposed_def);
 			}
-			/* add any additional default system fields...deletes of system fields 
-			 * have to be done with an alter for now...also need to take evolution into 
+			/* add any additional default system fields...deletes of system fields
+			 * have to be done with an alter for now...also need to take evolution into
 			 * account when adding system fields */
 			for(int i = 0;i < FIELDS.length;i++)
 			{
@@ -2300,8 +2300,8 @@ public class WebStoreModule extends WebModule
 		List<EntityIndex> ret				= new ArrayList<EntityIndex>();
 		List<EntityIndex> existing_indices  = null;
 		try{
-			existing_indices	= store.getEntityIndices(entity_name); 
-			
+			existing_indices	= store.getEntityIndices(entity_name);
+
 		}catch(PersistenceException e)
 		{
 			//someone might be defining a new entity that has never existed//
@@ -2310,23 +2310,23 @@ public class WebStoreModule extends WebModule
 			//when asked for entities that it doesnt know about
 			//ENTITY OF TYPE WebStoreModuleProp DOES NOT EXIST
 			existing_indices = new ArrayList<EntityIndex>();
-			
+
 		}
-		
+
 		if(existing_indices.size() == 0)
 		{
 			for(int i = 0;i < proposed_indices.size();i++)
 			{
-				EntityIndex pro_idx = proposed_indices.get(i);			
+				EntityIndex pro_idx = proposed_indices.get(i);
 				pro_idx = do_define_entity_index(store, entity_name, pro_idx);
 				ret.add(pro_idx);
 			}
-			return ret; 
-		} 
-		else if(existing_indices.size() == proposed_indices.size() && 
+			return ret;
+		}
+		else if(existing_indices.size() == proposed_indices.size() &&
 				existing_indices.containsAll(proposed_indices))
 		{
-			
+
 			return existing_indices;
 		}
 		else
@@ -2346,19 +2346,19 @@ public class WebStoreModule extends WebModule
 		}
 		return proposed_indices;
 	}
-	
 
-	
+
+
 	public void CREATE_QUEUE(String queuename,int rec_size,int recs_per_extent) throws PersistenceException
 	{
 		CREATE_QUEUE(store,queuename, rec_size, recs_per_extent);
 	}
-	
+
 	public void DELETE_QUEUE(String queuename) throws PersistenceException
 	{
 		DELETE_QUEUE(queuename);
 	}
-	
+
 	private static boolean confirm(String message) throws InitializationException
 	{
 		String answer = null;
@@ -2371,7 +2371,7 @@ public class WebStoreModule extends WebModule
 				wae.printStackTrace();
 			}
 			answer = answer.toLowerCase();
-			
+
 			if(answer.equals("y"))
 				return true;
 			if(answer.equals("n"))
@@ -2383,7 +2383,7 @@ public class WebStoreModule extends WebModule
 		}
 		return false;
 	}
-	
+
 	public PagingQueryResult BROWSE(String entity_type, String index, int op,Object value, int offset, int page_size,String order_by,int order_by_order,String[] fill_fields, String[] mask_fields, boolean cache_results) throws PersistenceException
 	{
 		Query q = new Query(entity_type);
@@ -2416,7 +2416,7 @@ public class WebStoreModule extends WebModule
 				break;
 		case Query.BETWEEN_START_INCLUSIVE_ASC:
 				Object[] vals = (Object[])value;
-				q.betweenStartInclusive(vals[0],vals[1]);	
+				q.betweenStartInclusive(vals[0],vals[1]);
 				break;
 		case Query.BETWEEN_START_INCLUSIVE_DESC:
 				vals = (Object[])value;
@@ -2434,7 +2434,7 @@ public class WebStoreModule extends WebModule
 				vals = (Object[])value;
 				q.between(vals[0],vals[1]);
 				break;
-		case Query.BETWEEN_INCLUSIVE_DESC:	
+		case Query.BETWEEN_INCLUSIVE_DESC:
 				vals = (Object[])value;
 				q.betweenDesc(vals[0],vals[1]);
 				break;
@@ -2465,7 +2465,7 @@ public class WebStoreModule extends WebModule
 			{
 				if(Thread.interrupted())
 					throw new InterruptedException();
-				
+
 				Query q = new Query(type);
 				q.idx(Query.PRIMARY_IDX);
 				q.eq(Query.VAL_GLOB);
@@ -2475,7 +2475,7 @@ public class WebStoreModule extends WebModule
 				num_results 		= result.size();
 				ee 	= result.getEntities();
 			}
-			
+
 			for(int i = 0;i < ee.size();i++)
 			{
 				try{
@@ -2501,7 +2501,7 @@ public class WebStoreModule extends WebModule
 			page++;
 		}while(num_results >= page_size);
 	}
-	
+
 
 	protected void PAGE_APPLY(String type,CALLBACK c) throws PersistenceException,WebApplicationException
 	{
@@ -2532,36 +2532,36 @@ public class WebStoreModule extends WebModule
 			page++;
 		}while(num_results >= page_size);
 	}
-	
-	
+
+
 	//TRANSACTIONS///
 	private static ThreadLocal<List<Integer>> current_transaction_id_list = new ThreadLocal<List<Integer>>();
-	public void START_TRANSACTION() throws PersistenceException
+	public void START_TRANSACTION(String tag) throws PersistenceException
 	{
-		START_TRANSACTION(store);
+		START_TRANSACTION(store,tag);
 	}
-	
-	public static void START_TRANSACTION(PersistentStore store) throws PersistenceException
+
+	public static void START_TRANSACTION(PersistentStore store,String tag) throws PersistenceException
 	{
 		List<Integer> current_tid_list = current_transaction_id_list.get();
 		if(current_tid_list == null)
 		{
 			current_tid_list = new ArrayList<Integer>(4);
-			current_transaction_id_list.set(current_tid_list);		
+			current_transaction_id_list.set(current_tid_list);
 		}
-		
+
 		if(current_tid_list.size()== 0)
-			current_tid_list.add(store.startTransaction());
+			current_tid_list.add(store.startTransaction(tag));
 		else
-			current_tid_list.add(store.startTransaction(current_tid_list.get(current_tid_list.size()-1)));
+			current_tid_list.add(store.startTransaction(current_tid_list.get(current_tid_list.size()-1),tag));
 
 	}
-	
+
 	public void COMMIT_TRANSACTION() throws PersistenceException
 	{
 		COMMIT_TRANSACTION(store);
 	}
-	
+
 	public static void COMMIT_TRANSACTION(PersistentStore store) throws PersistenceException
 	{
 		List<Integer> current_tid_list = current_transaction_id_list.get();
@@ -2569,23 +2569,23 @@ public class WebStoreModule extends WebModule
 		store.commitTransaction(c_tid);
 		current_tid_list.remove(current_tid_list.size()-1);
 	}
-	
+
 	public static Integer CURRENT_TRANSACTION_ID()
 	{
 		List<Integer> current_tid_list = current_transaction_id_list.get();
 		if(current_tid_list == null || current_tid_list.size() == 0)
 			return null;
-		
+
 		int s = current_tid_list.size();
 		int c_tid = current_tid_list.get(s-1);
 		return c_tid;
 	}
-		
+
 	public void ROLLBACK_TRANSACTION() throws PersistenceException
 	{
 		ROLLBACK_TRANSACTION(store);
 	}
-	
+
 	public static void ROLLBACK_TRANSACTION(PersistentStore store) throws PersistenceException
 	{
 		List<Integer> current_tid_list = current_transaction_id_list.get();
@@ -2593,7 +2593,7 @@ public class WebStoreModule extends WebModule
 		store.rollbackTransaction(c_tid);
 		current_tid_list.remove(current_tid_list.size()-1);
 	}
-	
+
 	protected static void ROLLBACK_ALL_ACTIVE_TRANSACTIONS(PersistentStore store) throws PersistenceException
 	{
 		List<Integer> current_tid_list = current_transaction_id_list.get();
@@ -2603,17 +2603,22 @@ public class WebStoreModule extends WebModule
 			store.rollbackTransaction(current_tid_list.get(c_tid_idx));
 			current_tid_list.remove(c_tid_idx);
 			c_tid_idx = current_tid_list.size() - 1;
-		}		
+		}
 	}
-	
-	
+
+
 	protected abstract class TRANSACTION
 	{
+		String tag;
+		public TRANSACTION(String name)
+		{
+			this.tag = name;
+		}
 		public abstract Object T();
 		public Object exec() throws Exception
 		{
 			try{
-				START_TRANSACTION();
+				START_TRANSACTION(this.tag);
 				Object ret = T();
 				COMMIT_TRANSACTION();
 				return ret;
@@ -2629,9 +2634,9 @@ public class WebStoreModule extends WebModule
 				}
 			}
 		}
-		
+
 	}
-	
-	
+
+
 
 }

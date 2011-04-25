@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.PersistentStore;
 import com.pagesociety.web.UserApplicationContext;
@@ -23,16 +24,16 @@ import com.pagesociety.web.upload.MultipartForm;
 /**
  * The module factory is responsible for maintaining a list of named modules.
  * The module factory uses reflection to map all of the public methods by name.
- * 
+ *
  * Use the module factory to instantiate modules. Use it to invoke methods by
  * name on a module. Ex:
- * 
+ *
  * <code>
  * ModuleFactory.register("authenticate", AuthenticationModule.class);
  * Module module = ModuleFactory.instantiate("authenticate");
  * ModuleFactory.invoke(module, "login", new String[] { "name", "pw3d" });
  * </code>
- * 
+ *
  * @see Module
  * @see ModuleDefinition
  */
@@ -52,14 +53,14 @@ public class ModuleRegistry
 	}
 
 	@SuppressWarnings("unchecked")
-	
+
 	public static ModuleDefinition register(String moduleName,String moduleClassName)throws InitializationException
 	{
 			if (moduleClassName == null || moduleName == null)
 				throw new InitializationException("IMPROPER MODULE REGISTRATION:  A module name attribute and module-class tag are required!");
 			if (MODULES.get(moduleName) != null)
 				throw new InitializationException("MODULE " + moduleName + " ALREADY DEFINED ");
-		
+
 			Class<? extends Module> moduleClass;
 			try
 			{
@@ -68,10 +69,10 @@ public class ModuleRegistry
 			catch (ClassNotFoundException e)
 			{
 				throw new InitializationException("ClassNotFound " + moduleClassName, e);
-			}		
+			}
 			return register(moduleName, moduleClass);
 	}
-	
+
 	public static ModuleDefinition register(String moduleName,Class<? extends Module> module_class)throws InitializationException
 
 	{
@@ -118,16 +119,16 @@ public class ModuleRegistry
 		ModuleDefinition module_def = MODULES.get(module.getName());
 		if (module_def == null)
 			throw new WebApplicationException("ModuleRegistry NO MODULE " + module.getName());
-		
+
 		List<ModuleMethod> potential_matches = module_def.getMethodsForMethodName(method_name);
 		if (potential_matches == null)
 			throw new WebApplicationException("ModuleRegistry NO METHOD " + method_name);
 		int s = potential_matches.size();
-		
+
 		Object[] args_with_user = new Object[args.length + 1];
 		System.arraycopy(args, 0, args_with_user, 1, args.length);
 		args_with_user[0] = user_context;
-		
+
 		ModuleMethod resolved_method = null;
 		for(int i = 0;i < s;i++)
 		{
@@ -148,27 +149,39 @@ public class ModuleRegistry
 				if(args[i]==null)
 					args_string.append("null,");
 				args_string.append(args[i].getClass().getSimpleName()+":"+args[i].toString()+", ");
-			
+
 			}
 			if(args_string.length() != 0)
 				args_string.setLength(args_string.length()-1);
-			
+
 			throw new WebApplicationException("NO METHOD NAMED "+method_name+" EXISTS IN "+module.getName()+" WHICH CAN BE CALLED FOR ARGS -\n "+args_string);
 		}
 		if(resolved_method.isTransactionProtected())
 		{
 			PersistentStore store = ((WebStoreModule)module).store;
+			StringBuilder tag = new StringBuilder();
+			if(user_context.getUser()!=null)
+			{
+				Entity user = (Entity)user_context.getUser();
+				tag.append(user.getAttribute("email"));
+				tag.append(':');
+				tag.append(user.getId());
+			}
+			else
+				tag.append("Unknown - "+Thread.currentThread().getName());
+			tag.append(" - "+module.getName()+"/"+method_name);
+
 			try{
-				WebStoreModule.START_TRANSACTION(store);
+				WebStoreModule.START_TRANSACTION(store,tag.toString());
 				Object ret = resolved_method.invoke(module,args_with_user);
 				WebStoreModule.COMMIT_TRANSACTION(store);
 				return ret;
 			}catch(PersistenceException pe)
 			{
 				if(pe.getErrorCode() != PersistenceException.UNABLE_TO_START_TRANSACTION)
-					WebStoreModule.ROLLBACK_ALL_ACTIVE_TRANSACTIONS(store);	
-				
-				
+					WebStoreModule.ROLLBACK_ALL_ACTIVE_TRANSACTIONS(store);
+
+
 				//exc_os.println("SID: "+user_context.getId());
 				//exc_os.println(Thread.currentThread().getName());
 				//pe.printStackTrace(exc_os);
@@ -186,7 +199,7 @@ public class ModuleRegistry
 		else
 			return resolved_method.invoke(module,args_with_user);
 	}
-	
+
 	//private static String EXCEPTION_LOG_FILE = "C:/eclipse_workspace/PosteraServer/EXCEPTION_LOG.TXT";
 	//private static PrintStream exc_os;
 	//private static void open_exception_log_file()
@@ -194,15 +207,15 @@ public class ModuleRegistry
 	//	File f = new File(EXCEPTION_LOG_FILE);
 	//	try{
 	//		exc_os = new PrintStream(new FileOutputStream(f));
-	//		
+	//
 	//	}catch(Exception e)
 	//	{
 	//		e.printStackTrace();
 	//	}
 	//}
-	
 
-	
+
+
 	public static ModuleDefinition getModuleDefinition(String module_name)
 	{
 		return MODULES.get(module_name);
