@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.pagesociety.bdb.BDBStore;
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
@@ -18,11 +19,11 @@ import com.pagesociety.web.module.util.Util;
 public class ServerStatisticsRawUI extends RawUIModule
 {
 	public String SLOT_STORE = "store";
-	
+
 	private IPersistenceProvider store;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
-		super.init(app,config);	
+		super.init(app,config);
 		store = (IPersistenceProvider)getSlot(SLOT_STORE);
 	}
 
@@ -31,7 +32,7 @@ public class ServerStatisticsRawUI extends RawUIModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_STORE, IPersistenceProvider.class, true);
 	}
-	
+
 
 	protected void declareSubmodes(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
@@ -43,15 +44,15 @@ public class ServerStatisticsRawUI extends RawUIModule
 			throw new InitializationException("FAILED BINDING SUBMODE "+e.getMessage());
 		}
 	}
-	
+
 	protected boolean canExecSubmode(Entity user,int submode,Map<String,Object> params)
 	{
 			return true;
 	}
-	
+
 	public void submode_default(UserApplicationContext uctx,Map<String,Object> params)
 	{
-		
+
 		Entity user = (Entity)uctx.getUser();
 		if(!PermissionEvaluator.IS_ADMIN(user))
 		{
@@ -64,6 +65,28 @@ public class ServerStatisticsRawUI extends RawUIModule
 			if(do_gc)
 			{
 				System.gc();
+			}
+			boolean do_abort = params.get("abort") != null;
+			if(do_abort)
+			{
+				try{
+					((BDBStore)store.getStore()).rollbackAllActiveTransactions();
+				}catch(PersistenceException pe)
+				{
+					pe.printStackTrace();
+					SET_ERROR("PERSISTENCE EXCEPTION WHILE ROLLLINGBACK ACTIVE TRANSACTIONS", params);
+				}
+			}
+			boolean do_checkpoint = params.get("checkpoint") != null;
+			if(do_checkpoint)
+			{
+				try{
+					((BDBStore)store.getStore()).checkpoint();
+				}catch(PersistenceException pe)
+				{
+					pe.printStackTrace();
+					SET_ERROR("PERSISTENCE EXCEPTION WHILE CHECKPOINTING", params);
+				}
 			}
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
@@ -89,19 +112,21 @@ public class ServerStatisticsRawUI extends RawUIModule
 				TD(uctx, "num threads:");TD(uctx,get_num_threads(r));
 				TR_END(uctx);
 			TABLE_END(uctx);
-			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ]","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ] ","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Abort Active Transactions] ","abort",true,KEY_UI_MODULE_INFO_KEY,"Did Abort");
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Checkpoint ] ","checkpoint",true,KEY_UI_MODULE_INFO_KEY,"Did Checkpoint");
 			P(uctx);
 			SPAN(uctx,"<PRE>"+store.getStatistics()+"</PRE>",10);
-					
-							
+
+
 			P(uctx);
-			//reload every 1 second//
-			JS_TIMED_REDIRECT(uctx,getName(),RAW_SUBMODE_DEFAULT,3000);
+
+			JS_TIMED_REDIRECT(uctx,getName(),RAW_SUBMODE_DEFAULT,5000);
 			DOCUMENT_END(uctx);
-			
+
 		}
 	}
-	
+
 
 
 	   private String get_free_memory(Runtime r)
@@ -110,29 +135,29 @@ public class ServerStatisticsRawUI extends RawUIModule
 	       Float freeMemoryF = new Float(freeMemory);
 	       return String.valueOf(freeMemoryF.intValue()+" K");
 	   }
-	   
+
 	   private String get_total_memory(Runtime r)
 	   {
 	       float totalMemory = (float) r.totalMemory()/1024;
 	       Float totalMemoryF = new Float(totalMemory);
 	       return String.valueOf(totalMemoryF.intValue()+" K");
 	   }
-	   
+
 	   private String get_max_memory(Runtime r)
 	   {
 	       float maxMemory = (float) r.maxMemory()/1024;
 	       Float maxMemoryF= new Float(maxMemory);
 	       return String.valueOf(maxMemoryF.intValue()+" K");
 	   }
-	   
+
 	   private String get_num_processors(Runtime r)
 	   {
 		   return String.valueOf(r.availableProcessors());
 	   }
-	   
+
 	   private String get_num_threads(Runtime r)
 	   {
 		   return String.valueOf(Thread.activeCount());
 	   }
-	    
+
 }
