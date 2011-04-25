@@ -41,15 +41,15 @@ import com.pagesociety.web.module.permissions.PermissionEvaluator;
 
 
 
-public class PersistenceBackupManagerRawUI extends RawUIModule 
-{	
+public class PersistenceBackupManagerRawUI extends RawUIModule
+{
 	private static final String SLOT_STORE = "store";
 	private static final String PARAM_FULL_BACKUP_TIME 		  		= "full-backup-time";
 	private static final String PARAM_MAX_DAYS		     	  		= "max-days-to-keep-backup";
 	private static final String PARAM_INCREMENTAL_BACKUP_INTERVAL 	= "incremental-backup-interval";
-	
+
 	protected IPersistenceProvider pp;
-	
+
 	private File data_file;
 	private SortedMap<String,BackupInfo> last_backup_map;
 	private int backup_time_hr;
@@ -57,10 +57,10 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 	private int inc_backup_interval;//TODO
 	private int max_days;
 
-	
+
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
-		super.init(app,config);	
+		super.init(app,config);
 		pp = (IPersistenceProvider)getSlot(SLOT_STORE);
 		try
 		{
@@ -69,7 +69,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			throw new InitializationException("Couldnt read init backup map",e);
 		}
-		
+
 		max_days = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_MAX_DAYS, 14, config);
 		try
 		{
@@ -78,7 +78,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			throw new InitializationException("Couldnt remove old backups",e);
 		}
-		
+
 		String[] backup_time	= GET_OPTIONAL_LIST_PARAM(PARAM_FULL_BACKUP_TIME, config);
 		if (backup_time != null)
 		{
@@ -91,7 +91,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		}
 	}
 
-	private void init_last_backup_map() throws WebApplicationException, IOException, PersistenceException 
+	private void init_last_backup_map() throws WebApplicationException, IOException, PersistenceException
 	{
 		data_file = GET_MODULE_DATA_FILE(getApplication(), "last_backup_map", true);
 		try{
@@ -140,7 +140,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		}
 		INFO("BACKUP MAP INIT COMPLETE");
 	}
-	
+
 	private void remove_old_backups() throws PersistenceException, IOException
 	{
 		int c = 0;
@@ -157,26 +157,26 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		for (String k : delete_list)
 			delete_backup_by_id(k);
 	}
-	
+
 	private void delete_backup_by_id(String id) throws PersistenceException, IOException
 	{
 		INFO("DELETING BACKUP "+id);
-		
+
 		pp.deleteBackup(last_backup_map.get(id).path);
 		last_backup_map.remove(id);
 		write_backup_map();
-		
+
 	}
-	
+
 	private void delete_backup_by_path(String path) throws PersistenceException, IOException
 	{
 		BackupInfo b = new BackupInfo(path);
 		INFO("DELETING BACKUP "+b.id());
-		
+
 		pp.deleteBackup(path);
 		last_backup_map.remove(b.id());
 		write_backup_map();
-		
+
 	}
 
 	private void write_backup_map() throws IOException
@@ -186,14 +186,14 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		oos.writeObject(last_backup_map);
 		oos.close();
 	}
-	
+
 	private void read_backup_map() throws Exception
 	{
 		 ObjectInputStream ois = new ObjectInputStream(new FileInputStream(data_file));
 		 Object o = ois.readObject();
 		 last_backup_map = (TreeMap<String,BackupInfo>) o;
 	}
-	
+
 	protected void defineSlots()
 	{
 		super.defineSlots();
@@ -211,14 +211,14 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			throw new InitializationException("FAILED BINDING SUBMODE "+e.getMessage());
 		}
 	}
-	
+
 	public void submode_default(UserApplicationContext uctx,Map<String,Object> params) throws Exception
 	{
 		try{
 		Entity user = (Entity)uctx.getUser();
 		if(!PermissionEvaluator.IS_ADMIN(user))
 		{
-			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,"Coupon promotion manager module requires admin login.");
+			CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,getName()+" manager module requires admin login.");
 			return;
 		}
 		if(params.get("do_full_backup") != null)
@@ -257,17 +257,17 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			String id = (String)params.get("id");
 			File zip = pp.getBackupAsZipFile(id);
-			
+
 			InputStream  is  = new FileInputStream(zip);
 			HttpServletResponse response = (HttpServletResponse)GET_RAW_COMMUNIQUE(uctx).getResponse();
 			OutputStream os  = response.getOutputStream();
 		    response.setContentType("application/octet-stream");
-		    response.setHeader("Content-Disposition", "attachment; filename=" + zip.getName()); 
-		    response.setHeader("Content-Length",String.valueOf(zip.length())); 
+		    response.setHeader("Content-Disposition", "attachment; filename=" + zip.getName());
+		    response.setHeader("Content-Length",String.valueOf(zip.length()));
 		    response.setHeader("Pragma"," no-cache,public");
 		   response.setHeader("Cache-Control", "max-age=0");
 		    response.setStatus(response.SC_OK);
-		    
+
 		    byte[] buf = new byte[16484];
 		    int l = 0;
 		    int total_bytes = 0;
@@ -336,14 +336,14 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 				A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ - CLEAN UNUSED LOG FILES ]","clean_log_files",true);
 
 			DOCUMENT_END(uctx);
-		}	
+		}
 		}catch(Exception e)
 		{
 			e.printStackTrace();
 			ERROR_PAGE(uctx, e);
 		}
 	}
-	
+
 	private boolean backup_thread_is_running = false;
 	private boolean full_backup_for_day_is_done = false;
 
@@ -402,7 +402,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		t.start();
 
 	}
-	
+
 	class BackupInfo implements Serializable {
 
 		private static final long serialVersionUID = -5810397801922315766L;
@@ -412,21 +412,21 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			this.date = Calendar.getInstance();
 		}
-		
+
 		public BackupInfo(String path)
 		{
 			this.path = path;
 			this.date = Calendar.getInstance();
 			get_date_from_path();
 		}
-		
+
 		private void get_date_from_path()
 		{
 			//String[] parts = path.split(File.separator);
 			File f = new File(path);
 			//String dir_name = parts[parts.length-1];
 			String dir_name = f.getName();
-			
+
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss"); // from bdbstore dobackup
 		    Date d;
 			try
@@ -445,10 +445,10 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			doy = doy.substring(doy.length()-3);
 			return date.get(Calendar.YEAR) + "_" + doy;
 		}
-		
+
 		public String dateString()
 		{
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyy MM dd HH:mm"); 
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy MM dd HH:mm");
 			return formatter.format(date.getTime());
 		}
 
@@ -463,8 +463,8 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 			this.date = (Calendar) in.readObject();
 			this.path = (String) in.readObject();
 		}
-		
-		
+
+
 	}
-	
+
 }
