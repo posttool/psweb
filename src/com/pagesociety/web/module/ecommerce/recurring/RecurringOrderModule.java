@@ -968,6 +968,7 @@ public class RecurringOrderModule extends ResourceModule
 		try{
 			START_TRANSACTION(getName()+" billing_thread_run");
 			INFO("BILLING THREAD -- STARTING");
+			store.doFullBackup();
 		}catch(PersistenceException pe)
 		{
 			ERROR("FAILED STARTING TRANSACTION IN BILLING THREAD");
