@@ -2538,7 +2538,7 @@ public class WebStoreModule extends WebModule
 	private static ThreadLocal<List<Integer>> current_transaction_id_list = new ThreadLocal<List<Integer>>();
 	public void START_TRANSACTION(String tag) throws PersistenceException
 	{
-		START_TRANSACTION(store,tag);
+		START_TRANSACTION(store,new Date().toString()+": "+tag);
 	}
 
 	public static void START_TRANSACTION(PersistentStore store,String tag) throws PersistenceException
@@ -2590,8 +2590,9 @@ public class WebStoreModule extends WebModule
 	{
 		List<Integer> current_tid_list = current_transaction_id_list.get();
 		int c_tid = current_tid_list.get(current_tid_list.size()-1);
-		store.rollbackTransaction(c_tid);
 		current_tid_list.remove(current_tid_list.size()-1);
+		store.rollbackTransaction(c_tid);
+
 	}
 
 	protected static void ROLLBACK_ALL_ACTIVE_TRANSACTIONS(PersistentStore store) throws PersistenceException
