@@ -31,29 +31,29 @@ import com.pagesociety.web.module.encryption.EncryptionModule;
 import com.pagesociety.web.module.encryption.IEncryptionModule;
 
 
-public class BillingModule extends WebStoreModule 
+public class BillingModule extends WebStoreModule
 {
 	//TODO: i think we need to be able to delete billing records as well..perhaps
 	//ones that are not preferred...evaluate what things would point to them. i dont
 	//think any really do. they are not stored with the order//
-	private static final String SLOT_ENCRYPTION_MODULE  	 = "encryption-module"; 
-	private static final String SLOT_BILLING_GATEWAY_MODULE  = "billing-gateway"; 
+	private static final String SLOT_ENCRYPTION_MODULE  	 = "encryption-module";
+	private static final String SLOT_BILLING_GATEWAY_MODULE  = "billing-gateway";
 
 
 	IBillingGateway 	billing_gateway;
 	IEncryptionModule   encryption_module;
-	
+
 	public static final int CC_TYPE_VISA 	   = 0x01;
 	public static final int CC_TYPE_MASTERCARD = 0x02;
 	public static final int CC_TYPE_AMEX 	   = 0x03;
 	public static final int CC_TYPE_DISCOVER   = 0x04;
-	public static final int CC_TYPE_DINERS	   = 0x05; 
-	
+	public static final int CC_TYPE_DINERS	   = 0x05;
+
 	public static final int EVENT_BILLING_RECORD_CREATED = 0x1001;
 	public static final int EVENT_BILLING_RECORD_UPDATED = 0x1002;
 	public static final int EVENT_BILLING_RECORD_DELETED = 0x1003;
 	public static final String BILLING_EVENT_BILLING_RECORD = "billling_record";
-	
+
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
@@ -66,14 +66,14 @@ public class BillingModule extends WebStoreModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_BILLING_GATEWAY_MODULE,IBillingGateway.class,true);
 		DEFINE_SLOT(SLOT_ENCRYPTION_MODULE,IEncryptionModule.class,true);
-	
+
 	}
-	
+
 	public IEncryptionModule getEncryptionModule()
 	{
 		return encryption_module;
 	}
-	
+
 	public static final String CAN_CREATE_BILLING_RECORD   		   = "CAN_CREATE_BILLING_RECORD";
 //	public static final String CAN_READ_BILLING_RECORD     		   = "CAN_READ_BILLING_RECORD";
 	public static final String CAN_UPDATE_BILLING_RECORD   		   = "CAN_UPDATE_BILLING_RECORD";
@@ -91,7 +91,7 @@ public class BillingModule extends WebStoreModule
 		EXPORT_PERMISSION(CAN_BROWSE_BILLING_RECORDS);
 		EXPORT_PERMISSION(CAN_BROWSE_BILLING_RECORDS_BY_USER);
 	}
-	
+
 	/////////////////BEGIN  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 
 	@Export
@@ -118,9 +118,9 @@ public class BillingModule extends WebStoreModule
 				   (String)billing_record.getAttribute("ccvn"),
 				   (Boolean)billing_record.getAttribute(BILLINGRECORD_FIELD_PREFERRED)
 				   );
-	
+
 	}
-	
+
 
 	@Export
 	public Entity CreateBillingRecord(UserApplicationContext uctx,
@@ -130,7 +130,7 @@ public class BillingModule extends WebStoreModule
 			  String add_1,
 			  String add_2,
 			  String city,
-			  String state,									  
+			  String state,
 			  String country,
 			  String postal_code,
 			  int cc_type,
@@ -148,21 +148,21 @@ public class BillingModule extends WebStoreModule
 				 								BILLINGRECORD_FIELD_ADDRESS_LINE_1, add_1,
 				 								BILLINGRECORD_FIELD_ADDRESS_LINE_2, add_2,
 				 								BILLINGRECORD_FIELD_CITY, city,
-				 								BILLINGRECORD_FIELD_STATE, state,									  
+				 								BILLINGRECORD_FIELD_STATE, state,
 				 								BILLINGRECORD_FIELD_COUNTRY, country,
 				 								BILLINGRECORD_FIELD_POSTAL_CODE, postal_code,
 				 								BILLINGRECORD_FIELD_CC_TYPE,cc_type,
 				 								BILLINGRECORD_FIELD_CC_NO, cc_no,
 				 								BILLINGRECORD_FIELD_EXP_MONTH, exp_month,
 				 								BILLINGRECORD_FIELD_EXP_YEAR, exp_year);
-		
+
 		exp_year = validate_and_normalize_year(exp_year);
 		if(ccvn != null && ccvn.trim().equals(""))
 			ccvn = null;
 		return createBillingRecord(user,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn,preferred);
-	
+
 	}
-	
+
 	public void validateBillingRecord(Entity billing_record,String ccvn) throws BillingGatewayException,WebApplicationException
 	{
 		   String first_name      = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME);
@@ -179,15 +179,15 @@ public class BillingModule extends WebStoreModule
 		   int exp_month          = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH);
 		   int exp_year           = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR);
 		   exp_year = 			   validate_and_normalize_year(exp_year);
-		   billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);	
+		   billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
 	}
-	
+
 	public Entity createBillingRecord(Entity creator,String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,String ccvn,Boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
 		if(!isConfigured())
 			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
-		
-		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);	
+
+		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
         Matcher matcher = Pattern.compile("[\\s\\.-]").matcher(cc_no);
         cc_no = matcher.replaceAll("");
@@ -208,21 +208,21 @@ public class BillingModule extends WebStoreModule
 				   					BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
 				   					BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 				   					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
-		
+
 
 		if(preferred != null && preferred == true)
 			setPreferredBillingRecord(creator,billing_record);
 
 		DISPATCH_EVENT(EVENT_BILLING_RECORD_CREATED,
 			   	   BILLING_EVENT_BILLING_RECORD,billing_record);
- 		
+
 		return billing_record;
-	
+
 	}
-			  
-	
+
+
 	private int validate_and_normalize_year(int year)  throws WebApplicationException
-	{	
+	{
 		Calendar now = Calendar.getInstance();
 		int now_year = now.get(Calendar.YEAR);
 		if(year < now_year)
@@ -255,7 +255,7 @@ public class BillingModule extends WebStoreModule
 								   );
 
 	}
-	
+
 	@Export
 	@TransactionProtect/*leave cc number null to set it to exisitng cc no */
 	public Entity UpdateBillingRecord(UserApplicationContext uctx,
@@ -266,7 +266,7 @@ public class BillingModule extends WebStoreModule
 									  String add_1,
 									  String add_2,
 									  String city,
-									  String state,									  
+									  String state,
 									  String country,
 									  String postal_code,
 									  int cc_type,
@@ -280,7 +280,7 @@ public class BillingModule extends WebStoreModule
 		Entity user = (Entity)uctx.getUser();
 
 		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
-		GUARD(user,CAN_UPDATE_BILLING_RECORD,GUARD_INSTANCE,billing_record,		
+		GUARD(user,CAN_UPDATE_BILLING_RECORD,GUARD_INSTANCE,billing_record,
 											BILLINGRECORD_FIELD_FIRST_NAME,first_name,
 											BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
 											BILLINGRECORD_FIELD_LAST_NAME,last_name,
@@ -302,8 +302,8 @@ public class BillingModule extends WebStoreModule
 			ccvn = null;
 		return updateBillingRecord(billing_record,first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
 	  }
-	
-	
+
+
 	public Entity updateBillingRecord(Entity billing_record,
 			  						  String first_name,
 			  						  String middle_initial,
@@ -311,7 +311,7 @@ public class BillingModule extends WebStoreModule
 			  						  String add_1,
 			  						  String add_2,
 			  						  String city,
-			  						  String state,									  
+			  						  String state,
 			  						  String country,
 			  						  String postal_code,
 			  						  int cc_type,
@@ -322,12 +322,12 @@ public class BillingModule extends WebStoreModule
 	{
 		if(!isConfigured())
 			throw new WebApplicationException(getName()+" IS NOT CONFIGURED");
-		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);	
+		billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
 		String last_4_digits = cc_no.substring(cc_no.length()-4);
-		
+
 		try
 		{
-			START_TRANSACTION();
+			START_TRANSACTION(getName()+" Update Billing Record");
 			billing_record = UPDATE(billing_record,
 					BILLINGRECORD_FIELD_FIRST_NAME,first_name,
 					BILLINGRECORD_FIELD_MIDDLE_INITIAL,middle_initial,
@@ -343,11 +343,11 @@ public class BillingModule extends WebStoreModule
 					BILLINGRECORD_FIELD_LAST_FOUR_DIGITS,last_4_digits,
 					BILLINGRECORD_FIELD_EXP_MONTH,exp_month,
 					BILLINGRECORD_FIELD_EXP_YEAR,exp_year);
-	
-	
+
+
 			DISPATCH_EVENT(EVENT_BILLING_RECORD_UPDATED,
 			BILLING_EVENT_BILLING_RECORD,billing_record);
-			COMMIT_TRANSACTION();		
+			COMMIT_TRANSACTION();
 			return billing_record;
 		}catch(Exception e)
 		{
@@ -366,17 +366,17 @@ public class BillingModule extends WebStoreModule
 		GUARD(user,CAN_DELETE_BILLING_RECORD,GUARD_INSTANCE,billing_record);
 		return deleteBillingRecord(billing_record);
 	  }
-	
+
 	public Entity deleteBillingRecord(Entity billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
-	{		
+	{
 		DELETE(billing_record);
 		DISPATCH_EVENT(EVENT_BILLING_RECORD_DELETED,
 				   	   BILLING_EVENT_BILLING_RECORD,billing_record);
-		
+
 		return billing_record;
 	}
-		
-	
+
+
 	@Export
 	public PagingQueryResult GetBillingRecords(UserApplicationContext uctx,int offset,int page_size) throws WebApplicationException,PersistenceException
 	{
@@ -387,18 +387,18 @@ public class BillingModule extends WebStoreModule
 		q.offset(offset);
 		q.pageSize(page_size);
 		GUARD(user, CAN_BROWSE_BILLING_RECORDS_BY_USER, GUARD_USER,user);
-		PagingQueryResult result = PAGING_QUERY_FILL_AND_MASK(q,BILLINGRECORD_FIELD_CC_NO);		
+		PagingQueryResult result = PAGING_QUERY_FILL_AND_MASK(q,BILLINGRECORD_FIELD_CC_NO);
 		return result;
 	}
-	
+
 	public List<Entity> getBillingRecords(Entity user) throws WebApplicationException,PersistenceException
-	{	
+	{
 		Query q = new Query(BILLINGRECORD_ENTITY);
 		q.idx(IDX_BY_USER_BY_PREFERRED);
 		q.eq(q.list(user,Query.VAL_GLOB));
 		return QUERY(q).getEntities();
 	}
-	
+
 	@Export
 	public Entity GetPreferredBillingRecord(UserApplicationContext uctx) throws WebApplicationException,PersistenceException
 	{
@@ -409,10 +409,10 @@ public class BillingModule extends WebStoreModule
 			billing_record.setAttribute(BILLINGRECORD_FIELD_CC_NO, null);
 		return billing_record;
 	}
-	
+
 	public Entity getPreferredBillingRecord(Entity user)throws PersistenceException
 	{
-		
+
 		Query q = new Query(BILLINGRECORD_ENTITY);
 		q.idx(IDX_BY_USER_BY_PREFERRED);
 		q.eq(q.list(user,true));
@@ -422,22 +422,22 @@ public class BillingModule extends WebStoreModule
 			return null;
 		else if(n > 1)
 			ERROR("DATA INTEGRETY ISSUE. MORE THAN ONE PREFERRED BILLING RECORD FOR USER "+user);
-		
 
-		Entity billing_record = result.getEntities().get(0);		 
+
+		Entity billing_record = result.getEntities().get(0);
 		return billing_record;
 	}
-	
+
 	@Export
 	public Entity SetPreferredBillingRecord(UserApplicationContext uctx,long billing_record_id) throws WebApplicationException,PersistenceException
 	{
 		Entity user = (Entity)uctx.getUser();
-		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id); 	
-		
+		Entity billing_record = GET(BILLINGRECORD_ENTITY,billing_record_id);
+
 		GUARD(user,CAN_UPDATE_BILLING_RECORD,GUARD_INSTANCE,billing_record);
 		return setPreferredBillingRecord(user,billing_record);
 	}
-	
+
 	public Entity setPreferredBillingRecord(Entity user,Entity billing_record) throws WebApplicationException,PersistenceException
 	{
 		Entity existing_preferred_billing_record = getPreferredBillingRecord(user);
@@ -447,18 +447,18 @@ public class BillingModule extends WebStoreModule
 					  BILLINGRECORD_FIELD_PREFERRED,true);
 
 	}
-	
+
 	public IBillingGateway getBillingGateway()
 	{
 		return billing_gateway;
 	}
-	
+
 	public boolean isConfigured()
 	{
 		return encryption_module.isConfigured();
 	}
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-		
+
 	public static String BILLINGRECORD_ENTITY = "BillingRecord";
 	public static String BILLINGRECORD_FIELD_FIRST_NAME = "first_name";
 	public static String BILLINGRECORD_FIELD_MIDDLE_INITIAL = "middle_initial";
@@ -477,7 +477,7 @@ public class BillingModule extends WebStoreModule
 	public static String BILLINGRECORD_FIELD_EXP_YEAR = "exp_year";
 	public static String BILLINGRECORD_FIELD_PREFERRED = "preferred";
 
-	
+
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
@@ -510,32 +510,32 @@ public class BillingModule extends WebStoreModule
 				ENTITY_INDEX(IDX_BY_USER_BY_PREFERRED , EntityIndex.TYPE_SIMPLE_MULTI_FIELD_INDEX, FIELD_CREATOR,BILLINGRECORD_FIELD_PREFERRED)
 		);
 	}
-	
-	
 
-	
+
+
+
 	private List<String> countries_list;
 	private Map<String,String> country_to_code_map;
 	private Map<String,String> code_to_country_map;
-	
+
 	@Export
 	public List<String> GetCountries(UserApplicationContext uctx)
 	{
 		return getCountries();
 	}
-	
+
 	public List<String> getCountries()
 	{
 		return countries_list;
 	}
-	
-	
+
+
 	@Export
 	public String GetCountryCode(UserApplicationContext uctx,String country) throws WebApplicationException
 	{
 		return getCountryCode(country);
 	}
-	
+
 	public String getCountryCode(String country) throws WebApplicationException
 	{
 		String code =  country_to_code_map.get(country);
@@ -543,21 +543,21 @@ public class BillingModule extends WebStoreModule
 			throw new WebApplicationException("BAD ISO 3166-1 COUNTRY NAME");
 		return code;
 	}
-	
+
 	@Export
 	public String GetCountry(UserApplicationContext uctx,String code) throws WebApplicationException
 	{
 		return getCountry(code);
 	}
-	
+
 	public String getCountry(String code) throws WebApplicationException
 	{
-		String country = code_to_country_map.get(code);	
+		String country = code_to_country_map.get(code);
 		if(country == null)
 			throw new WebApplicationException("BAD ISO 3166-1 COUNTRY CODE");
 		return country;
 	}
-	
+
 	public void build_iso_3166_country_code_data()
 	{
 	String[] COUNTRY_CODES_LIST = new String[]{
@@ -634,7 +634,7 @@ public class BillingModule extends WebStoreModule
 						"239", "South Georgia and the South Sandwich Islands",
 						"242", "Fiji",
 						"246", "Finland",
-						"248", "Åland Islands",
+						"248", "ï¿½land Islands",
 						"250", "France",
 						"254", "French Guiana",
 						"258", "French Polynesia",
@@ -670,7 +670,7 @@ public class BillingModule extends WebStoreModule
 						"372", "Ireland",
 						"376", "Israel",
 						"380", "Italy",
-						"384", "Côte d'Ivoire",
+						"384", "Cï¿½te d'Ivoire",
 						"388", "Jamaica",
 						"392", "Japan",
 						"398", "Kazakhstan",
@@ -741,11 +741,11 @@ public class BillingModule extends WebStoreModule
 						"626", "Timor-Leste",
 						"630", "Puerto Rico",
 						"634", "Qatar",
-						"638", "Réunion",
+						"638", "Rï¿½union",
 						"642", "Romania",
 						"643", "Russian Federation",
 						"646", "Rwanda",
-						"652", "Saint Barthélemy",
+						"652", "Saint Barthï¿½lemy",
 						"654", "Saint Helena, Ascension and Tristan da Cunha",
 						"659", "Saint Kitts and Nevis",
 						"660", "Anguilla",
@@ -807,7 +807,7 @@ public class BillingModule extends WebStoreModule
 						"882", "Samoa",
 						"887", "Yemen",
 						"894", "Zambia"};
-	
+
 		countries_list = new ArrayList<String>();
 		country_to_code_map = new HashMap<String,String>();
 		code_to_country_map = new HashMap<String,String>();
@@ -819,8 +819,8 @@ public class BillingModule extends WebStoreModule
 			country_to_code_map.put(country,code);
 			code_to_country_map.put(code,country);
 		}
-		
-		
+
+
 	}
 
 }
