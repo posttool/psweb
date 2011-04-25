@@ -111,6 +111,9 @@ public class ServerStatisticsRawUI extends RawUIModule
 				TR_START(uctx);
 				TD(uctx, "num threads:");TD(uctx,get_num_threads(r));
 				TR_END(uctx);
+				TR_START(uctx);
+				TD(uctx, "active transactions:");TD(uctx,"<PRE>"+((BDBStore)store.getStore()).getActiveTransactionSummary()+"</PRE>");
+				TR_END(uctx);
 			TABLE_END(uctx);
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ] ","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Abort Active Transactions] ","abort",true,KEY_UI_MODULE_INFO_KEY,"Did Abort");
