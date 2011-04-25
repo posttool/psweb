@@ -43,7 +43,7 @@ import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 
 
 
-public class ScriptModule extends WebStoreModule 
+public class ScriptModule extends WebStoreModule
 {
 
 	protected File[] scripts;
@@ -53,20 +53,20 @@ public class ScriptModule extends WebStoreModule
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
-		
+
 		load_scripts(app,config);
 	}
-	
+
 	private void load_scripts(WebApplication app, Map<String,Object> config)
 	{
-		
+
 		script_directory 			= new File(GET_MODULE_DATA_DIRECTORY(app),"scripts");
 		script_directory.mkdirs();
 		script_include_directory 	= new File(GET_MODULE_DATA_DIRECTORY(app),"include");
 		script_include_directory.mkdirs();
-		scripts 					= script_directory.listFiles(new FilenameFilter() 
+		scripts 					= script_directory.listFiles(new FilenameFilter()
 		{
-			public boolean accept(File dir, String name) 
+			public boolean accept(File dir, String name)
 			{
 				return !name.endsWith(".inputs");
 			}
@@ -79,17 +79,17 @@ public class ScriptModule extends WebStoreModule
 		      public int compare(final Object o1, final Object o2) {
 		        return ((File)o1).getName().compareTo(((File) o2).getName());
 		      }
-		    }); 
-		 
+		    });
+
 		 Arrays.sort( includes, new Comparator()
 		    {
 		      public int compare(final Object o1, final Object o2) {
 		        return ((File)o1).getName().compareTo(((File) o2).getName());
 		      }
-		    }); 
+		    });
 
 	}
-	
+
 	protected void defineSlots()
 	{
 		super.defineSlots();
@@ -106,26 +106,26 @@ public class ScriptModule extends WebStoreModule
 		load_scripts(getApplication(), getParams());
 		return includes;
 	}
-	
+
 	public String getScript(String filename) throws WebApplicationException
 	{
 		File f = new File(script_directory,filename);
 		if(!f.exists())
 			return null;
-		
+
 		return READ_FILE_AS_STRING(f.getAbsolutePath());
 	}
-	
+
 	public String getScriptInputs(String filename) throws WebApplicationException
 	{
 		File f = new File(script_directory,filename+".inputs");
 		if(!f.exists())
 			return null;
-		
+
 		return READ_FILE_AS_STRING(f.getAbsolutePath());
 	}
-	
-	
+
+
 	public String getInclude(String filename) throws WebApplicationException
 	{
 		File f = new File(script_include_directory,filename);
@@ -149,7 +149,7 @@ public class ScriptModule extends WebStoreModule
 		}
 		return f;
 	}
-	
+
 	public File setScriptInputs(String filename,String contents,boolean create) throws WebApplicationException
 	{
 		File f = new File(script_directory,filename+".inputs");
@@ -165,7 +165,7 @@ public class ScriptModule extends WebStoreModule
 		}
 		return f;
 	}
-	
+
 	public File setInclude(String filename,String contents,boolean create) throws WebApplicationException
 	{
 		File f = new File(script_include_directory,filename);
@@ -180,10 +180,10 @@ public class ScriptModule extends WebStoreModule
 		{
 			throw new WebApplicationException("Problem writing file "+filename+" :"+ioe.getMessage());
 		}
-		return f;	
+		return f;
 	}
-	
-	
+
+
 	public File deleteScript(String filename) throws WebApplicationException
 	{
 		File f = new File(script_directory,filename);
@@ -209,11 +209,11 @@ public class ScriptModule extends WebStoreModule
 		if(!f.exists())
 			throw new WebApplicationException(filename+" does not exist.");
 		f.delete();
-		return f;	
+		return f;
 	}
-	
-	
-	
+
+
+
 	public static final String JS_ENGINE_NAME = "JavaScript";
 	public String validateScriptSource(String source) throws WebApplicationException
 	{
@@ -221,7 +221,7 @@ public class ScriptModule extends WebStoreModule
 		ScriptEngineManager mgr = new ScriptEngineManager();
 		source = expand_includes(source,null);
 
-		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);		 
+		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);
 		ScriptContext ctx = jsEngine.getContext();
 		ctx.setAttribute("$", this,ScriptContext.ENGINE_SCOPE );
 		//check syntax//
@@ -230,28 +230,28 @@ public class ScriptModule extends WebStoreModule
 		} catch (ScriptException ex)
 		{
 			return new String("SYNTAX ERROR IN SCRIPT.\n"+ex.getMessage());
-		}    
+		}
 		return "VALIDATE OK";
 	}
-	
-	
+
+
 	private static final String USER_OUTPUT_BUF 	= "_user_output_buf_";
 	private static final String USER_SCRIPT_PARAMS 	= "_user_script_params_";
 	/* script is the source of the script not the name of a file.
-	 * 
-	 * params overrides other sources of inputs. 
+	 *
+	 * params overrides other sources of inputs.
 	 * it would be used it a thread int he system were executing a script
 	 * for instance.
 	 */
 	 private static ThreadLocal<Map<String,Object>> tl_params = new ThreadLocal<Map<String,Object>>();
 
 	public String executeScript(String script,Map<String,Object> params) throws PersistenceException,WebApplicationException
-	{	
-		
+	{
+
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
 		//System.out.println("EXECUTING SCRIPT WITH PARAMS "+params);
 		script = expand_includes(script,null);
-		
+
 		if(params == null)
 			params = new HashMap<String, Object>();
 		if(uctx != null)
@@ -263,10 +263,10 @@ public class ScriptModule extends WebStoreModule
 		{
 			tl_params.set(params);
 		}
-		
-		START_TRANSACTION();
+
+		START_TRANSACTION(getName()+" Script Execute");
 		ScriptEngineManager mgr = new ScriptEngineManager();
-		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);		 
+		ScriptEngine jsEngine = mgr.getEngineByName(JS_ENGINE_NAME);
 		ScriptContext ctx = jsEngine.getContext();
 		ctx.setAttribute(ScriptEngine.FILENAME ,getName(),ScriptContext.ENGINE_SCOPE);
 		ctx.setAttribute("$", this,ScriptContext.ENGINE_SCOPE );
@@ -279,29 +279,29 @@ public class ScriptModule extends WebStoreModule
 			ROLLBACK_TRANSACTION();
 			ERROR(ex);
 			return new String("EXCEPTION WHILE EXECUTING SCRIPT.\n"+ex.getMessage());
-		}    
-		
-		Object ret = null;  
+		}
+
+		Object ret = null;
 		try {
 			  Invocable inv = (Invocable)jsEngine;
 			  ret   = inv.invokeFunction("main",getApplication());
 		   } catch (Exception ex) {
 		      ROLLBACK_TRANSACTION();
 		      if(uctx != null)
-		      	{	
+		      	{
 		    	  output = ((StringBuilder)uctx.getProperty(USER_OUTPUT_BUF)).toString();
 		      	}
 		      return new String(output+"\n"+"EXCEPTION WHILE EXECUTING SCRIPT.\n"+ex.getMessage());
-		   }    
+		   }
 		   COMMIT_TRANSACTION();
 		   if(uctx != null)
-		      	{	
+		      	{
 		    	  output = ((StringBuilder)uctx.getProperty(USER_OUTPUT_BUF)).toString();
 				}
 		   return output+"\n"+"EXECUTE OK";
 	}
-	
-	
+
+
 	public int translate_line_number_to_before_include_expand(String script,int no)
 	{
 		try{
@@ -317,7 +317,7 @@ public class ScriptModule extends WebStoreModule
 				num_includes++;
 			}
 		}
-		
+
 		int length_after_include = 0;
 		script = expand_includes(script,null);
 		br = new BufferedReader(new StringReader(script));
@@ -331,16 +331,16 @@ public class ScriptModule extends WebStoreModule
 			return 0;
 		}
 	}
-	
+
 	private String expand_includes(String script,Map<String,String> included_files) throws WebApplicationException
 	{
-	
+
 		BufferedReader br = new BufferedReader(new StringReader(script));
 		String line = null;
 		StringBuilder buf = new StringBuilder();
 		if(included_files == null)
 			included_files = new HashMap<String,String>();
-		
+
 		try{
 			while((line = br.readLine()) != null)
 			{
@@ -358,7 +358,7 @@ public class ScriptModule extends WebStoreModule
 						system_include = true;
 					}
 					else if(bb[0] == (byte)'"')
-						parse_until = (byte)'"';	
+						parse_until = (byte)'"';
 					StringBuilder include_filename = new StringBuilder();
 					for(int i = 1;i < bb.length;i++)
 					{
@@ -369,20 +369,20 @@ public class ScriptModule extends WebStoreModule
 					}
 					String filename = include_filename.toString();
 					String include_string = null;
-					
+
 					boolean already_included = included_files.get(filename) != null;
 					if(already_included)
 						continue;
-					
-					
+
+
 					if(system_include)
 						include_string = getInclude(filename);
 					else
-						include_string = READ_FILE_AS_STRING(filename);	
-					
-					include_string = expand_includes(include_string, included_files);					
+						include_string = READ_FILE_AS_STRING(filename);
+
+					include_string = expand_includes(include_string, included_files);
 					included_files.put(filename, "yes");
-					
+
 					buf.append(include_string);
 				}
 				else
@@ -414,7 +414,7 @@ public class ScriptModule extends WebStoreModule
 			super.INFO(message);
 		}
 	}
-	
+
 	public void INFO(String message)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -428,7 +428,7 @@ public class ScriptModule extends WebStoreModule
 			super.INFO(message);
 		}
 	}
-	
+
 	public void WARNING(String message)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -442,7 +442,7 @@ public class ScriptModule extends WebStoreModule
 			super.WARNING(message);
 		}
 	}
-	
+
 	public void ERROR(String message)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -456,7 +456,7 @@ public class ScriptModule extends WebStoreModule
 			super.ERROR(message);
 		}
 	}
-	
+
 	public void ERROR(Exception e)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -471,7 +471,7 @@ public class ScriptModule extends WebStoreModule
 			super.ERROR(e);
 		}
 	}
-	
+
 	public Object GET_INPUT(String name)
 	{
 		UserApplicationContext uctx = getApplication().getCallingUserContext();
@@ -480,16 +480,16 @@ public class ScriptModule extends WebStoreModule
 			params = (Map<String,Object>)uctx.getProperty(USER_SCRIPT_PARAMS);
 		else
 			params = tl_params.get();
-		
+
 		//System.out.println("NAME IS "+name+" VALUE IS "+params.get(name));
 		return params.get(name);
 	}
-	
+
 	public ArrayList<Object> NEW_LIST()
 	{
 		return new ArrayList<Object>();
 	}
-	
+
 	public Map<Object,Object> NEW_MAP()
 	{
 		return new HashMap<Object,Object>();
@@ -501,7 +501,7 @@ public class ScriptModule extends WebStoreModule
 		 e.setType(type);
 		 return e;
 	}
-	
+
 	public int MAX_INT()
 	{
 		return Integer.MAX_VALUE;
@@ -529,7 +529,7 @@ public class ScriptModule extends WebStoreModule
 			return (Integer)o;
 		throw new RuntimeException("BAD INT CAST "+String.valueOf(o));
 	}
-	
+
 	public Float FLOAT(Object o)
 	{
 		if(o == null)
@@ -555,12 +555,12 @@ public class ScriptModule extends WebStoreModule
 			return String.valueOf((Float)o);
 		throw new RuntimeException("BAD STRING CAST "+String.valueOf(o));
 	}
-	
+
 	public Date DATE(String yyyy,String mm, String dd)
 	{
 		return DATE(yyyy,mm,dd,"0","0");
 	}
-	
+
 	public Date DATE(String yyyy,String mm, String dd,String hh,String min)
 	{
 		 GregorianCalendar newGregCal = new GregorianCalendar(
@@ -573,25 +573,25 @@ public class ScriptModule extends WebStoreModule
 		 Date d = newGregCal.getTime();
 		 return d;
 	}
-	
 
-	
+
+
 	/*QUERY FUNCTIONS*/
 	public Query NEW_QUERY(String entity_type)
 	{
 		return new Query(entity_type);
 	}
-	
+
 	public Object VAL_GLOB()
 	{
 		return Query.VAL_GLOB;
 	}
-	
+
 	public Object VAL_MIN()
 	{
 		return Query.VAL_MIN;
 	}
-	
+
 	public Object VAL_MAX()
 	{
 		return Query.VAL_MAX;
@@ -601,11 +601,11 @@ public class ScriptModule extends WebStoreModule
 	{
 		return Query.PRIMARY_IDX;
 	}
-	
-	
+
+
 	////////////////////////////////////////
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
-		
+
 
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
@@ -616,13 +616,13 @@ public class ScriptModule extends WebStoreModule
 					  PROMOTION_FIELD_PROGRAM,Types.TYPE_STRING,null,
 					  PROMOTION_FIELD_GR1,Types.TYPE_LONG,0L,
 					  PROMOTION_FIELD_GR2,Types.TYPE_LONG,0L);
-	
+
 	 */
 	}
 
 	public static final String IDX_COUPON_PROMOTION_BY_PROMO_CODE   = "byPromoCode";
 	public static final String IDX_GLOBAL_PROMOTION_BY_ACTIVE     	= "byActive";
-	
+
 	protected void defineIndexes(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 	/*	DEFINE_ENTITY_INDICES
