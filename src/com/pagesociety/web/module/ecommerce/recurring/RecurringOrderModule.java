@@ -968,7 +968,7 @@ public class RecurringOrderModule extends ResourceModule
 		try{
 			START_TRANSACTION(getName()+" billing_thread_run");
 			INFO("BILLING THREAD -- STARTING");
-			store.doFullBackup();
+
 		}catch(PersistenceException pe)
 		{
 			ERROR("FAILED STARTING TRANSACTION IN BILLING THREAD");
@@ -992,7 +992,7 @@ public class RecurringOrderModule extends ResourceModule
 				ERROR("FAILED ROLLING BACK TRANSACTION",p2);
 			}
 
-			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY OR BACKUP INTERRUPTION SEE LOGS. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
 		}
@@ -1055,6 +1055,9 @@ public class RecurringOrderModule extends ResourceModule
 
 			}catch(PersistenceException pe)
 			{
+				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
+				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
+
 				try{
 					ROLLBACK_TRANSACTION();
 				}catch(PersistenceException pe3)
@@ -1062,8 +1065,20 @@ public class RecurringOrderModule extends ResourceModule
 					ERROR("FAILED ROLLING BACK TXN "+pe3);
 				}
 
-				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
-				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
+
+				break;//break out of for loop//
+			}
+			catch(Exception ee)
+			{
+				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION.");
+				ERROR("ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION.", ee);
+				try{
+					ROLLBACK_TRANSACTION();
+				}catch(PersistenceException pe3)
+				{
+					ERROR("FAILED ROLLING BACK TXN "+pe3);
+				}
+
 				break;//break out of for loop//
 			}
 
