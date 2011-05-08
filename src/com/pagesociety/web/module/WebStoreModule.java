@@ -1708,7 +1708,10 @@ public class WebStoreModule extends WebModule
 				dd =  DELETE(store,e);
 			}catch(PersistenceException pe)
 			{
-				if(pe.getErrorCode() == PersistenceException.ENTITY_DOES_NOT_EXIST)
+				int ec = pe.getErrorCode();
+				if (pe.getCause() != null && pe.getCause() instanceof PersistenceException)
+					ec = ((PersistenceException)pe.getCause()).getErrorCode();
+				if(ec == PersistenceException.ENTITY_DOES_NOT_EXIST)
 					return e;
 				throw pe;
 			}
