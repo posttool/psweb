@@ -50,11 +50,12 @@ public abstract class WebApplication
 		_default_permissions_module = new DefaultPermissionsModule();
 	}
 
+
 	public PermissionsModule getDefaultPermissionsModule()
 	{
 		return _default_permissions_module;
 	}
-	
+
 	public void init(WebApplicationInitParams config) throws InitializationException
 	{
 
@@ -88,7 +89,7 @@ public abstract class WebApplication
 				ERROR("!!!!SERIOUS BARF GETTING SESSION ",e);
 				return null;
 			}
-			
+
 		}
 	}
 
@@ -96,7 +97,7 @@ public abstract class WebApplication
 	{
 		return _module_list;
 	}
-	
+
 	public List<ModuleDefinition> getModuleDefinitions()
 	{
 		return ModuleRegistry.getModules();
@@ -122,12 +123,12 @@ public abstract class WebApplication
 	{
 		calling_user_context.set(uctx);
 	}
-	
+
 	public void removeCallingUserContext()
 	{
 		calling_user_context.remove();
 	}
-	
+
 	public Object dispatch(ModuleRequest request) throws WebApplicationException,Throwable
 	{
 		Module module = getModule(request.getModuleName());
@@ -160,7 +161,7 @@ public abstract class WebApplication
 		return dispatch(req);
 	}
 
-	public Object execute(UserApplicationContext user_context,String moduleAndMethod, 
+	public Object execute(UserApplicationContext user_context,String moduleAndMethod,
 			freemarker.template.SimpleSequence args) throws Throwable
 	{
 		Object[] obj_args = new Object[args.size()];
@@ -188,7 +189,7 @@ public abstract class WebApplication
 				obj_args[i] = args.get(i);
 			}
 		}
-		
+
 		return execute(user_context,moduleAndMethod, obj_args);
 	}
 
@@ -205,14 +206,14 @@ public abstract class WebApplication
 			String module_name 			= m.getName();
 			logger.info("\tINSTANTIATING "+module_name);
 			String module_classname   	= m.getClassName();
-			
+
 			ModuleDefinition def = ModuleRegistry.register(module_name,module_classname);
 			Module module = ModuleRegistry.instantiate(this,def,m.getProps());
 
 			_module_instances.put(module_name, module);
 			_module_list.add(module);
 		}
-		
+
 		INFO("LINKING MODULES");
 		/*link modules */
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
@@ -220,11 +221,11 @@ public abstract class WebApplication
 			ModuleInfo m_info 	    			  = _config.getModuleInfo().get(i);
 			String module_name 					  = m_info.getName();
 			INFO("\tLINKING "+module_name);
-			
+
 			Map<String,String> module_info_slots  = m_info.getSlots();
 			Module module_instance  			  = _module_instances.get(module_name);
 			List<Module.SlotDescriptor> all_slots = module_instance.getSlotDescriptors();
-			
+
 			/* iterate through all slots so we can see if required ones are 'filled'*/
 			for(int j = 0;j < all_slots.size();j++)
 			{
@@ -233,7 +234,7 @@ public abstract class WebApplication
 				/*this is the reference to another module by name in application.xml*/
 				String slot_module_name = module_info_slots.get(slot_name);
 				Module slot_instance;
-				
+
 				if(slot_module_name == null)
 				{
 					if(d.required)/* this means the user needs to supply a value in that slot via applicatin.xml*/
@@ -273,7 +274,7 @@ public abstract class WebApplication
 						if(slot_instance == null)
 							throw new InitializationException("SLOT "+slot_name+" OF MODULE "+module_instance.getName()+" REFERS TO A MODULE NAMED "+slot_module_name+" WHICH IS UNDEFINED");
 				}
-				
+
 				try{
 					INFO("\t\tLINKING "+module_name+" SLOT "+slot_name+" WITH "+((Module)slot_instance).getName());
 					module_instance.setSlot(slot_name, slot_instance);
@@ -283,11 +284,11 @@ public abstract class WebApplication
 				}
 			}
 		}
-		
+
 		/* system init...this is the lowest level bootstrap.slots are filled out
 		 * but their init methods have not been called
 		 */
-		WebStoreModule.web_store_subsystem_init_start(this);	
+		WebStoreModule.web_store_subsystem_init_start(this);
 		for (int i = 0; i < _config.getModuleInfo().size(); i++)
 		{
 			ModuleInfo m 				= _config.getModuleInfo().get(i);
@@ -303,7 +304,7 @@ public abstract class WebApplication
 			Module module_instance 		= _module_instances.get(module_name);
 			init_module(module_instance);
 		}
-	
+
 		try{
 			WebStoreModule.web_store_subsystem_init_complete(this);
 		}catch(Exception e)
@@ -311,23 +312,23 @@ public abstract class WebApplication
 			ERROR(e);
 			throw new InitializationException(e.getMessage());
 		}
-		
+
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
 			m.loadbang(this,m.getParams());
 		}
-	
+
 	}
-	
-	
-	
+
+
+
 	private void init_module(Module m) throws InitializationException
 	{
 		if(m.isInitialized() || m.isInitializing())
 			return;
 		m.setInitializing(true);
-		
+
 		List<Integer> module_attributes = m.getModuleAttributes();
 		INFO("\tINITIALIZING "+m.getName());
 		if(m == null)
@@ -356,7 +357,7 @@ public abstract class WebApplication
 		m.setInitializing(false);
 		m.setInitialized(true);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected void registerUrls() throws InitializationException
 	{
@@ -378,7 +379,7 @@ public abstract class WebApplication
 			if (matcher.matches())
 			{
 				String template_path = url_map.getTemplatePath();
-				
+
 				Object[] ret = new Object[2];
 				ret[0] = url_map;
 				ret[1] = (template_path == null)?null:matcher.replaceAll(template_path);
@@ -387,15 +388,15 @@ public abstract class WebApplication
 		}
 		return null;
 	}
-	
+
 	//pass in null for the handler to have the httprequestrouter class handle the request
 	//for you. having the handler enables you to register a mapping that you will handle
-	
+
 	public void registerUrlMapping(String regexp,String template_path,boolean secure,IHttpRequestHandler handler) throws WebApplicationException
 	{
 		_config.getUrlMapInfo().addUrlMapping(regexp, template_path, secure,handler);
 	}
-	
+
 
 	public String getErrorMapping()
 	{
@@ -446,6 +447,11 @@ public abstract class WebApplication
 		return new File(System.getProperty("java.io.tmpdir"));
 	}
 
+	private Object APP_LOCK = new Object();
+	public Object getApplicationLock()
+	{
+		return APP_LOCK;
+	}
 	// public void setGateway(ApplicationHttpGateway gateway)
 	// {
 	// _gateway = gateway;
@@ -474,24 +480,24 @@ public abstract class WebApplication
 	{
 		System.err.println("WARNING: "+message);
 	}
-	
+
 	public void INFO(String message)
 	{
 		System.out.println("INFO "+message);
 	}
-	
+
 	public void ERROR(String message)
 	{
 		System.err.println("ERROR "+message);
 	}
-	
+
 
 
 	public void ERROR(Exception e)
 	{
 		e.printStackTrace();
 	}
-	
+
 	public void ERROR(String message,Exception e)
 	{
 		System.err.println("ERROR "+message);
@@ -500,12 +506,12 @@ public abstract class WebApplication
 
 	public void applicationDestroyed()
 	{
-		
+
 		System.out.println("APPLICATION "+_config.getName()+" IS ABOUT TO BE DESTROYED");
 		System.out.println(new Date());
 		System.out.println("******************************************************************");
 		System.out.println();
-		
+
 		List<Module> _persistence_providers = new ArrayList<Module>();
 		for(int i = 0;i < _module_list.size();i++)
 		{
@@ -517,13 +523,13 @@ public abstract class WebApplication
 				i--;
 			}
 		}
-		
+
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
 			m.onDestroy();
 		}
-		
+
 		//destroy these last//
 		for(int i = 0;i < _persistence_providers.size();i++)
 		{
@@ -534,9 +540,9 @@ public abstract class WebApplication
 		System.out.println(new Date());
 		System.out.println("******************************************************************");
 		System.out.println();
-		
+
 		_sess_name_space_mgr.destroy();
 	}
-	
-	
+
+
 }
