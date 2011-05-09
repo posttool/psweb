@@ -625,9 +625,10 @@ public class RecurringOrderModule extends ResourceModule
 
 	public Entity updateRecurringOrderStatus(Entity recurring_order,int status,Object... args) throws PersistenceException
 	{
-		int old_status = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
-		recurring_order =  UPDATE(recurring_order,
-								  RECURRING_ORDER_FIELD_STATUS,status);
+		int old_status  = (Integer)recurring_order.getAttribute(RECURRING_ORDER_FIELD_STATUS);
+		recurring_order =  FILL_REFS(UPDATE(recurring_order,
+								  	 RECURRING_ORDER_FIELD_STATUS,status));
+
 		Entity order_user = EXPAND((Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER));
 		//log the status change//
 		switch(status)
@@ -686,7 +687,7 @@ public class RecurringOrderModule extends ResourceModule
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(amount,2),
 						RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS,now);
 
-				send_system_alert_notification(order_user,"There was a problem billing your account. Please make sure you have a valid billing record.");
+				send_system_alert_notification(order_user,"There was a problem billing your account:"+ (String)args[0]+". Please make sure you have a valid billing record.");
 				send_billing_failed_email(recurring_order, (String)args[0]);
 				log_order_delinquent(recurring_order, old_status);
 				MODULE_LOG( 2,"billing failure. order now in grace period for user: "+order_user.getAttribute(UserModule.FIELD_EMAIL)+" "+order_user);
@@ -864,6 +865,8 @@ public class RecurringOrderModule extends ResourceModule
 		return amount;
 	}
 
+
+
 	private void do_catchup_billing(Entity order_user,Entity recurring_order,Entity billing_record) throws PersistenceException,BillingGatewayException, WebApplicationException
 	{
 		Date now     = new Date();
@@ -895,7 +898,7 @@ public class RecurringOrderModule extends ResourceModule
 
 	Thread billing_thread;
 	private boolean billing_thread_running;
-	private Object BILLING_LOCK = new Object();
+
 	private void start_billing_thread()
 	{
 		billing_thread_running = true;
@@ -906,13 +909,13 @@ public class RecurringOrderModule extends ResourceModule
 				{
 
 					MODULE_LOG(0,"\nSTARTING BILLING CYCLE.");
-					System.out.println(getName()+" STARTING BILLING THREAD.");
-					synchronized (BILLING_LOCK)
+					INFO("STARTING BILLING THREAD.");
+					synchronized (getApplication().getApplicationLock())
 					{
-						System.out.println(getName()+" BILLING THREAD RUNNING.");
+						INFO(" BILLING THREAD RUNNING.");
 						billing_thread_run();
 					}
-					System.out.println(getName()+" BILLING THREAD COMPLETE.");
+					INFO(" BILLING THREAD COMPLETE.");
 					MODULE_LOG(0,"BILLING CYCLE COMPLETE.\n");
 
 					if(!billing_thread_running)
@@ -965,15 +968,11 @@ public class RecurringOrderModule extends ResourceModule
 		Query q 				= null;
 		QueryResult result 		= null;
 
-		try{
-			START_TRANSACTION(getName()+" billing_thread_run");
-			INFO("BILLING THREAD -- STARTING");
 
-		}catch(PersistenceException pe)
-		{
-			ERROR("FAILED STARTING TRANSACTION IN BILLING THREAD");
-			pe.printStackTrace();
-		}
+
+		INFO("BILLING THREAD -- STARTING");
+
+
 		try{
 
 			Date now = new Date();
@@ -985,12 +984,6 @@ public class RecurringOrderModule extends ResourceModule
 			MODULE_LOG( 1,result.size()+" records to bill.");
 		}catch(PersistenceException pe1)
 		{
-			try{
-				ROLLBACK_TRANSACTION();
-			}catch(PersistenceException p2)
-			{
-				ERROR("FAILED ROLLING BACK TRANSACTION",p2);
-			}
 
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY OR BACKUP INTERRUPTION SEE LOGS. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
@@ -1002,7 +995,10 @@ public class RecurringOrderModule extends ResourceModule
 		for(int i = 0;i < orders_that_need_to_be_billed.size();i++)
 		{
 			try{
+
 				recurring_order = orders_that_need_to_be_billed.get(i);
+				MODULE_LOG("ABOUT BILL ORDER\n"+recurring_order);
+				INFO("ABOUT TO BILL ORDER "+recurring_order);
 				FILL_REFS(recurring_order);
 				order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
 
@@ -1032,17 +1028,21 @@ public class RecurringOrderModule extends ResourceModule
 				MODULE_LOG("ABOUT TO APPL PROMOTIONS ON ORDER\n"+recurring_order);
 				double amount_before_promotions = tally_order(recurring_order);
 				MODULE_LOG("\tBEFORE PROMOTIONS ORDER AMOUNT \n"+amount_before_promotions);
-
 				try{
+
 					do_regular_billing(order_user,recurring_order, billing_record,amount_after_promotions);
 				}
 				catch(PersistenceException pe4)
 				{
 					//throw pe4;
+					ERROR("WE BARFED IN OUR OWN UPDATE BUT IT APPEARS THE BILLING MAY HAVE GONE THROUGH FOR PAYPAL ON ORDER FOR USER "+order_user);
+					send_email_to_us(new Date()+" WE BARFED IN OUR OWN UPDATE BUT IT APPEARS THE BILLING MAY HAVE GONE THROUGH FOR PAYPAL ON ORDER FOR USER "+order_user+" Exception was:"+pe4.getMessage());
+					ERROR(pe4);
 					continue;//this is out fault for now//
 				}
 				catch(BillingGatewayException bge)
 				{
+					ERROR("CAUGHT BGE "+bge.isUserRecoverable()+ "bge "+bge.getMessage());
 					ERROR(bge);
 					if(bge.isUserRecoverable())
 						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,bge.getMessage());
@@ -1057,29 +1057,22 @@ public class RecurringOrderModule extends ResourceModule
 			{
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
-
-				try{
-					ROLLBACK_TRANSACTION();
-				}catch(PersistenceException pe3)
-				{
-					ERROR("FAILED ROLLING BACK TXN "+pe3);
-				}
-
-
-				break;//break out of for loop//
+				send_email_to_us(new Date()+" ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION. "+pe.getMessage());
+				return;//break out of for loop//
 			}
 			catch(Exception ee)
 			{
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION.", ee);
-				try{
-					ROLLBACK_TRANSACTION();
-				}catch(PersistenceException pe3)
-				{
-					ERROR("FAILED ROLLING BACK TXN "+pe3);
-				}
+				send_email_to_us(new Date()+" ERROR:ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION. "+ee.getMessage());
+				//	try{
+			//		ROLLBACK_TRANSACTION();
+			//	}catch(PersistenceException pe3)
+			//	{
+			//		ERROR("FAILED ROLLING BACK TXN "+pe3);
+			//	}
 
-				break;//break out of for loop//
+				return;//break out of for loop//
 			}
 
 		}
@@ -1092,13 +1085,6 @@ public class RecurringOrderModule extends ResourceModule
 			purge_expired_trial_users();
 		}
 
-		try{
-			COMMIT_TRANSACTION();
-		INFO("BILLING THREAD -- DONE");
-		}catch(PersistenceException pe5)
-		{
-			ERROR("FAILED COMMITING TRANSACTION "+pe5);
-		}
 	}
 
 	private void handle_monthly_failed_billings()
@@ -1694,7 +1680,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		super.onDestroy();
 
-		synchronized (BILLING_LOCK)
+		synchronized (getApplication().getApplicationLock())
 		{
 			billing_thread_running = false;
 			billing_thread.interrupt();
@@ -1717,6 +1703,17 @@ public class RecurringOrderModule extends ResourceModule
 			ERROR(e);
 		}
 
+	}
+
+	private void send_email_to_us(String msg)
+	{
+		Map<String,Object> data = new HashMap<String,Object>();
+		data.put("message", msg);
+		try {
+			email_module.sendEmail("support@postera.com", new String[]{"topher@topher.com","david@posttool.com"}, "BILLING PROBLEM", "generic.fm", data);
+		} catch (WebApplicationException e) {
+			ERROR(e);
+		}
 	}
 
 	public void send_billing_not_configured()
