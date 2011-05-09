@@ -223,7 +223,10 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		}
 		if(params.get("do_full_backup") != null)
 		{
-			String id = pp.doFullBackup();
+			String id = null;
+			synchronized (getApplication().getApplicationLock()) {
+				pp.doFullBackup();
+			}
 			BackupInfo b = new BackupInfo(id);
 			last_backup_map.put(b.id(), b);
 			write_backup_map();
@@ -367,7 +370,10 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 					{
 						try
 						{
-							String id = pp.doFullBackup();
+							String id = null;
+							synchronized (getApplication().getApplicationLock()) {
+								id = pp.doFullBackup();
+							}
 							full_backup_for_day_is_done = true;
 							b = new BackupInfo(id);
 							last_backup_map.put(b.id(), b);
