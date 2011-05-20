@@ -37,6 +37,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.RawUIModule;
+import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.permissions.PermissionEvaluator;
 
 
@@ -165,7 +166,6 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		pp.deleteBackup(last_backup_map.get(id).path);
 		last_backup_map.remove(id);
 		write_backup_map();
-
 	}
 
 	private void delete_backup_by_path(String path) throws PersistenceException, IOException
@@ -349,14 +349,15 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 
 	private boolean backup_thread_is_running = false;
 	private boolean full_backup_for_day_is_done = false;
-
+	private Thread backup_thread = null;
 	private void start_backup_thread()
 	{
-		Thread t = new Thread("PersistenceBackupManager")
+		backup_thread  = new Thread("PersistenceBackupManager")
 		{
 			public void run()
 			{
-				while (true)
+				backup_thread_is_running = true;
+				while (backup_thread_is_running)
 				{
 
 					backup_thread_is_running = true;
@@ -365,22 +366,31 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 					int now_hr = b.date.get(Calendar.HOUR_OF_DAY);
 					int now_min = b.date.get(Calendar.MINUTE);
 					full_backup_for_day_is_done = last_backup_map.get(b.id()) != null;
-
 					if (now_hr >= backup_time_hr && now_min >= backup_time_min && !full_backup_for_day_is_done)
 					{
 						try
 						{
 							String id = null;
+							INFO("BACKING UP AT "+new Date().toString());
 							synchronized (getApplication().getApplicationLock()) {
 								id = pp.doFullBackup();
 							}
-							full_backup_for_day_is_done = true;
 							b = new BackupInfo(id);
 							last_backup_map.put(b.id(), b);
 							write_backup_map();
-						} catch (Exception pe)
+
+						}
+						catch (Exception pe)
 						{
 							pe.printStackTrace();
+							try{
+								((IEmailModule)getApplication().getModule("Email")).sendAdminNotification(new String[]{"topherlafata@gmail.com, david@posttool.com"}, getApplication().getConfig().getName()+" Backup Failed", " Hey.  Backup failed due to an unknown exception at "+new Date().toString()+"\nmessage:"+pe.getMessage());
+							}catch(Exception ee)
+							{
+								ERROR(ee);
+							}
+							//exit backup thread//
+							backup_thread_is_running = false;
 						}
 						try
 						{
@@ -388,10 +398,10 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 						} catch (Exception e)
 						{
 							ERROR("Couldnt remove old backup", e);
+
 						}
 					}
 
-					backup_thread_is_running = false;
 					try
 					{
 						Thread.sleep(60000);
@@ -404,8 +414,19 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 
 			}
 		};
-		t.setDaemon(true);
-		t.start();
+		//t.setDaemon(true);
+		backup_thread.start();
+
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		synchronized (getApplication().getApplicationLock()) {
+			backup_thread_is_running = false;
+			backup_thread.interrupt();
+		}
+
 
 	}
 
