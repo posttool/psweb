@@ -14,7 +14,7 @@ import com.pagesociety.web.bean.BeanRegistry;
 
 public class JsonEncoder
 {
-	
+
 	public static String encode(Object o,boolean wrapwithvalue)
 	{
 		JSONStringer js = new JSONStringer();
@@ -38,7 +38,7 @@ public class JsonEncoder
 		}
 		return js.toString();
 	}
-	
+
 	public static String encode(Object o)
 	{
 		return encode(o,true);
@@ -53,7 +53,7 @@ public class JsonEncoder
 			js.value(null);
 			return;
 		}
-		
+
 		if (seen.containsKey(o))
 		{
 			String mid = seen.get(o);
@@ -109,16 +109,17 @@ public class JsonEncoder
 				Object field_val = om.get(key);
 				js.key(key.toString());
 				encode_json(js, field_val, seen);
-				js.key("_object_id");
-				js.value(mem_id);
+
 			}
+			js.key("_object_id");
+			js.value(mem_id);
 			js.endObject();
 			return;
 		}
 		bean = BeanRegistry.getBeanByClass(o.getClass());//entities get hit by this//
 		if (bean != null)
 		{
-			
+
 			seen.put(o,mem_id);
 			js.object();
 			for (int i = 0; i < bean.getReadablePropertyNames().length; i++)
@@ -127,12 +128,13 @@ public class JsonEncoder
 				Object field_val = bean.getProperty(o, name);
 				js.key(name);
 				encode_json(js, field_val,seen);
-				js.key("_ps_clazz");
-				js.value(o.getClass().getSimpleName());
-
-				js.key("_object_id");
-				js.value(mem_id);
 			}
+			js.key("_ps_clazz");
+			js.value(o.getClass().getSimpleName());
+
+			js.key("_object_id");
+			js.value(mem_id);
+
 			js.endObject();
 		}
 		else
