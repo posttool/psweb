@@ -1117,9 +1117,15 @@ public class JSONObject {
      */
     public JSONObject putOnce(String key, Object value) throws JSONException {
         if (key != null && value != null) {
-            if (opt(key) != null) {
-                throw new JSONException("Duplicate key \"" + key + "\"");
-            }
+//            if (opt(key) != null) {
+//                throw new JSONException("Duplicate key \"" + key + "\"");
+//            }
+        	
+        	//TODO look into why the "_object_id" from PSWeb JsonEncoder fires the exception
+	        if (opt(key) != null) {
+	        	System.out.println(">JSONObject warning- you are setting "+key+" more than once [value="+value+"]");
+	        	return this;
+	        }        	
             put(key, value);
         }
         return this;
