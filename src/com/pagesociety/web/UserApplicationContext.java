@@ -41,9 +41,14 @@ public class UserApplicationContext
 		return _props;
 	}
 
-	public Object getProperty(String key)
+	public Object get(String key)
 	{
 		return _props.get(key);
+	}
+
+	public Object getProperty(String key)
+	{
+		return get(key);
 	}
 
 	public void setProperty(String key, Object value)
