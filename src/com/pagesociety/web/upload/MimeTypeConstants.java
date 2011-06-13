@@ -2,23 +2,23 @@ package com.pagesociety.web.upload;
 
 /*
  * Copyright (c) 2003 - 2007 OpenSubsystems s.r.o. Slovak Republic. All rights reserved.
- * 
+ *
  * Project: OpenSubsystems
- * 
+ *
  * $Id: MimeTypeConstants.java,v 1.6 2007/01/07 06:14:01 bastafidli Exp $
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2 of the License. 
- * 
+ * the Free Software Foundation; version 2 of the License.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 
@@ -28,36 +28,36 @@ import java.util.Map;
 
 /**
  * Known mime types.
- * Originally copied from HandlerContext.java taken from Jetty 3.0.4 
+ * Originally copied from HandlerContext.java taken from Jetty 3.0.4
  * now updated from mime.properties from Jetty 5.1.10.
- * 
+ *
  * @version $Id: MimeTypeConstants.java,v 1.6 2007/01/07 06:14:01 bastafidli Exp $
  * @author Julo Legeny
  * @code.reviewer Miro Halas
  * @code.reviewed 1.4 2005/07/29 07:36:24 bastafidli
  */
-public final class MimeTypeConstants 
+public final class MimeTypeConstants
 {
    // Attributes ///////////////////////////////////////////////////////////////
-   
+
    /**
     * Default Mime type
     */
-   protected static String s_strDefaultMimeType = "text/html";
+   protected static String s_strDefaultMimeType = "text/plain";
 
    /**
     * Hash map that will be stored types in
     */
-   protected static Map s_mapMimeTypes = null;
-   
+   protected static Map<String,String> s_mapMimeTypes = null;
+
    // Constructors /////////////////////////////////////////////////////////////
-   
+
    /**
     * Static initializer;
     */
-   static 
+   static
    {
-      s_mapMimeTypes = new HashMap(164);
+      s_mapMimeTypes = new HashMap<String,String>(164);
       s_mapMimeTypes.put("3gp", "video/3gpp");
       s_mapMimeTypes.put("ai", "application/postscript");
       s_mapMimeTypes.put("aif", "audio/x-aiff");
@@ -228,10 +228,10 @@ public final class MimeTypeConstants
       s_mapMimeTypes.put("z", "application/compress");
       s_mapMimeTypes.put("zip", "application/zip");
    }
-   
+
    // Constructors /////////////////////////////////////////////////////////////
-   
-   /** 
+
+   /**
     * Private constructor since this class cannot be instantiated
     */
    private MimeTypeConstants(
@@ -239,12 +239,12 @@ public final class MimeTypeConstants
    {
       // Do nothing
    }
-   
+
    // Public methods ///////////////////////////////////////////////////////////
-   
+
    /**
     * Method getting particular Mime type for the extension (key)
-    * 
+    *
     * @param strKey - key value for returning Mime type
     * @return String
     */
@@ -255,12 +255,12 @@ public final class MimeTypeConstants
       String strMimeType = null;
 
       // get value for particular key
-      strMimeType = s_mapMimeTypes.get(strKey).toString();
+      strMimeType = s_mapMimeTypes.get(strKey.toLowerCase());
       if ((strMimeType == null) || (strMimeType.trim().length() == 0))
       {
          strMimeType = s_strDefaultMimeType;
       }
-      
+
       return strMimeType;
    }
 }
