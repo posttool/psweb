@@ -26,25 +26,25 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	private static final String PARAM_RESOURCE_BASE_URL   		  = "path-provider-base-url";
 	private static final String PARAM_IMAGE_MAGICK_PATH   		  = "path-provider-image-magick-path";
 	private static final String PARAM_DIRECTORY_DEPTH			  = "path-provider-directory-depth";
-	
+
 	protected String base_dir;
 	protected String base_url;
 	protected String image_magick_path;
 	protected String image_magick_convert_cmd;
 	protected int    depth = 8;//myst be <=32
 
-	
+
 	protected static final String SLASH = "/";
 	protected static final char	C_SLASH = '/';
-	
-	
+
+
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		base_dir = GET_REQUIRED_CONFIG_PARAM(PARAM_RESOURCE_BASE_DIR, config);
 		base_url = GET_REQUIRED_CONFIG_PARAM(PARAM_RESOURCE_BASE_URL, config);
 		image_magick_path 		  = GET_REQUIRED_CONFIG_PARAM(PARAM_IMAGE_MAGICK_PATH, config);
 		depth 		  = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_DIRECTORY_DEPTH, 8, config);
-		
+
 		if(!new File(image_magick_path).exists())
 			throw new InitializationException("CANT FIND IMAGE MAGICK INSTALL AT "+image_magick_path);
 		image_magick_convert_cmd = image_magick_path+File.separator+"convert";
@@ -59,12 +59,12 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		System.out.println("FileSystemPathProvider image magick convert path is "+image_magick_convert_path);
 		*/
 		ImageMagick.setRuntimeExecPath(image_magick_convert_cmd);
-		if(!base_dir.endsWith(SLASH) && 
+		if(!base_dir.endsWith(SLASH) &&
 		   !base_dir.endsWith(File.separator))
 			base_dir = base_dir+SLASH;
 
 	}
-	
+
 	public String getPathToken(Entity user,String filename) throws WebApplicationException
 	{
 		String relative_path = get_save_directory(user,filename);
@@ -74,9 +74,9 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		String save_filename = get_save_filename(user,dest_dir,filename);
 		return relative_path+save_filename;
 	}
-	
+
 	/* returns relative/path/to/dir/ */
-	protected String get_save_directory(Entity user,String filename) 
+	protected String get_save_directory(Entity user,String filename)
 	{
 		String guid = RandomGUID.getGUID();
 		StringBuilder path = new StringBuilder();
@@ -93,30 +93,32 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		}
 		return path.toString();
 	}
-	
-	
-	protected String get_save_filename(Entity user,File dest_dir,String filename) 
+
+
+	protected String get_save_filename(Entity user,File dest_dir,String filename)
 	{
 		StringBuilder buf = new StringBuilder();
 		buf.append(RandomGUID.getGUID().substring(16));
 		buf.append('.');
-		String ext = FileInfo.getExtension(filename); 
+		String ext = FileInfo.getExtension(filename);
 		if(ext != null)
 			buf.append(ext);
 		return buf.toString();
 	}
-	
-	
-	
+
+
+
 	/* deletes file pointed to by this token as well as all previews */
 	public void delete(String path_token) throws WebApplicationException
 	{
-		
+
 		File f = new File(base_dir,path_token);
-	
+
 		if(!f.exists())
-			throw new WebApplicationException("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
-		
+		{
+			WARNING("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
+			return;
+		}
 		/* delete file and all generated previews */
 		String filename = f.getName();
 		int dot_idx = filename.lastIndexOf('.');
@@ -139,13 +141,13 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		}
 	}
 
-	
+
 	public void deletePreviews(String path_token) throws WebApplicationException
 	{
 		File f = new File(base_dir,path_token);
 		if(!f.exists())
 			throw new WebApplicationException("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
-		
+
 		/* delete file and all generated previews */
 		String filename = f.getName();
 		int dot_idx = filename.lastIndexOf('.');
@@ -164,14 +166,14 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 				ff[i].delete();
 		}
 	}
-	
+
 	public List<String> listPreviews(String path_token) throws WebApplicationException
 	{
 		List<String> s = new ArrayList<String>();
 		File f = new File(base_dir,path_token);
 		if(!f.exists())
-			throw new WebApplicationException("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
-		
+			throw new WebApplicationException("ATTEMPTING TO LIST DIR WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
+
 		/* delete file and all generated previews */
 		String filename = f.getName();
 		int dot_idx = filename.lastIndexOf('.');
@@ -179,19 +181,50 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		if(dot_idx != -1)
 			trimmed_filename = filename.substring(0,dot_idx);
 
-		File parent_dir = f.getParentFile();
-		File[] ff = parent_dir.listFiles();
-		for(int i =0;i < ff.length;i++)
+		if(f.isDirectory())
 		{
-			if(ff[i].equals(f))
-				continue;
-			
-			if(ff[i].getName().startsWith(trimmed_filename))
-				s.add(ff[i].getName());
+			List<String> flattened_dir = new ArrayList<String>();
+			flatten_dir_listing(f,null , flattened_dir);
+			return flattened_dir;
 		}
-		
+		else
+		{
+			File parent_dir = f.getParentFile();
+			File[] ff = parent_dir.listFiles();
+			for(int i =0;i < ff.length;i++)
+			{
+				if(ff[i].equals(f))
+					continue;
+
+				if(ff[i].getName().startsWith(trimmed_filename))
+					s.add(ff[i].getName());
+			}
+		}
 		//SAME HERE//
 		return s;
+	}
+
+	private List<String> flatten_dir_listing(File dir,String name,List<String> ret)
+	{
+		File[] ff = dir.listFiles();
+		for(int i =0;i < ff.length;i++)
+		{
+			if(ff[i].isDirectory())
+			{
+				if(name == null)
+					flatten_dir_listing(ff[i], ff[i].getName(), ret);
+				else
+					flatten_dir_listing(ff[i], name+"/"+ff[i].getName(), ret);
+			}
+			else
+			{
+				if(name == null)
+					ret.add(ff[i].getName());
+				else
+					ret.add(name+"/"+ff[i].getName());
+			}
+		}
+		return ret;
 	}
 
 	public String getUrl(String path_token)	throws WebApplicationException
@@ -202,12 +235,12 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		buf.append(path_token);
 		return buf.toString();
 	}
-	
+
 	public String getBaseUrl()	throws WebApplicationException
 	{
 		return base_url;
 	}
-	
+
 	/* this should take preview params */
 	public String getPreviewUrl(String path_token,int width,int height)	throws WebApplicationException
 	{
@@ -221,11 +254,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		buf.append(C_SLASH);
 		buf.append(preview_relative_path);
 		File preview = new File(buf.toString());
-		
+
 		//TODO: right here we could queue this stuff up and return a //
 		//preview not ready. we would look in the queue and if it wasnt in//
 		//there we would create a new queue item and put it on.//
-		
+
 		if(!preview.exists())
 			create_preview(getFile(path_token),preview,options);
 
@@ -233,9 +266,9 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		buf.append(base_url);
 		buf.append(C_SLASH);
 		buf.append(preview_relative_path);
-		return buf.toString();			
+		return buf.toString();
 	}
-	
+
 	public String getPreviewUrl(String path_token,Map<String,String> options)	throws WebApplicationException
 	{
 		String preview_relative_path = get_preview_file_relative_path(path_token, options);
@@ -244,11 +277,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		buf.append(C_SLASH);
 		buf.append(preview_relative_path);
 		File preview = new File(buf.toString());
-		
+
 		//TODO: right here we could queue this stuff up and return a //
 		//preview not ready. we would look in the queue and if it wasnt in//
 		//there we would create a new queue item and put it on.//
-		
+
 		if(!preview.exists())
 			create_preview(getFile(path_token),preview,options);
 
@@ -256,12 +289,13 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		buf.append(base_url);
 		buf.append(C_SLASH);
 		buf.append(preview_relative_path);
-		return buf.toString();			
+		return buf.toString();
 	}
 
 	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_length) throws WebApplicationException
 	{
 		File f = new File(base_dir,path_token);
+		f.getParentFile().mkdirs();
 		try{
 			return new OutputStream[]{new FileOutputStream(f)};
 		}catch(FileNotFoundException fnf)
@@ -296,7 +330,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return null;
 	}
 
-	
+
 
 	private static void create_preview(File original,File dest,Map<String,String> options) throws WebApplicationException
 	{
@@ -318,8 +352,8 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
 		}
 	}
-	
-	
+
+
 	private static void create_image_preview(File original,File dest,Map<String,String> options) throws WebApplicationException
 	{
 		ImageMagick i = new ImageMagick(original,dest);
@@ -331,28 +365,28 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		catch(Exception e)
 		{
 			throw new WebApplicationException("PROBLEM CREATING PREVIEW "+dest.getAbsolutePath(),e);
-		}		
+		}
 	}
-	
-	
+
+
 	private String get_preview_file_relative_path(String path_token,Map<String,String> options) throws WebApplicationException
 	{
 		File original_file 				 = getFile(path_token);
 		if(original_file == null)
 			throw new WebApplicationException("NO FILE EXISTS FOR PATH TOKEN "+path_token+" CANT GENERATE PREVIEW.");
-		
+
 		int last_slash_index 		= path_token.lastIndexOf(C_SLASH);
 		String dir 				  	= path_token.substring(0,last_slash_index); //original_file_relative_path.getParent();
 		String original_file_name 	= path_token.substring(last_slash_index+1);
 		int dot_idx 			  	= original_file_name.lastIndexOf('.');
 		String ext 					= FileInfo.EXTENSIONS[FileInfo.JPG][0];
-		
+
 		if(dot_idx != -1)
 		{
 			ext = FileInfo.getExtension(original_file_name);
 			original_file_name = original_file_name.substring(0,dot_idx);
 		}
-		
+
 		StringBuilder preview_name = new StringBuilder();
 		preview_name.append(dir);
 		preview_name.append(C_SLASH);
@@ -366,13 +400,13 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 	@Override
 	public void beginParse(String path_token) throws WebApplicationException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void endParse(String path_token) throws WebApplicationException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 
