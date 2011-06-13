@@ -3,14 +3,10 @@ package com.pagesociety.web.module;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import javax.mail.Store;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.EntityDefinition;
@@ -27,8 +23,6 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
-import com.pagesociety.web.module.permissions.PermissionsModule;
 import com.pagesociety.web.module.persistence.IEvolutionProvider;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
 
@@ -2640,6 +2634,8 @@ public class WebStoreModule extends WebModule
 		}
 
 	}
+
+
 
 
 

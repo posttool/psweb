@@ -2,6 +2,7 @@ package com.pagesociety.web.module;
 
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,12 +24,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,48 +56,48 @@ public abstract class WebModule extends Module
 {
 	public static final String SLOT_PERMISSIONS_MODULE  = "permissions-module";
 	protected PermissionsModule permissions;
-	
+
 	public List<?> EMPTY_LIST = new ArrayList<Object>();
-	
+
 	public void system_init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.system_init(app, config);
 		permissions = (PermissionsModule)getSlot(SLOT_PERMISSIONS_MODULE);
-		exportPermissions();		
+		exportPermissions();
 	}
-	
+
 	public void init(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		super.init(app, config);
 	}
-	
-	
+
+
 	protected void defineSlots()
 	{
 		super.defineSlots();
-		DEFINE_SLOT(SLOT_PERMISSIONS_MODULE, PermissionsModule.class, false,getApplication().getDefaultPermissionsModule());	
+		DEFINE_SLOT(SLOT_PERMISSIONS_MODULE, PermissionsModule.class, false,getApplication().getDefaultPermissionsModule());
 	}
 
 	protected void exportPermissions()
 	{
 		//do nothing by default//
 	}
-	
+
 	protected void EXPORT_PERMISSION(String permission_id)
 	{
 		permissions.definePermission(getName(), permission_id);
 	}
-	
+
 	protected void DEFINE_SLOT(String slot_name,Class<?> slot_type,boolean required)
 	{
 		super.defineSlot(slot_name, slot_type, required);
 	}
-	
+
 	protected void DEFINE_SLOT(String slot_name,Class<?> slot_type,boolean required,Object default_val)
 	{
 		super.defineSlot(slot_name, slot_type, required,default_val);
 	}
-	
+
 	public String GET_REQUIRED_CONFIG_PARAM(String name,Map<String,Object> config) throws InitializationException
 	{
 		Object val = config.get(name);
@@ -113,7 +118,7 @@ public abstract class WebModule extends Module
 		Object val = config.get(name);
 		return (String)val;
 	}
-	
+
 	public String GET_OPTIONAL_CONFIG_PARAM(String name,String default_val,Map<String,Object> config) throws InitializationException
 	{
 		Object val = config.get(name);
@@ -138,9 +143,9 @@ public abstract class WebModule extends Module
 		{
 			throw new InitializationException("REQUIRED CONFIG PARAM "+name+" SHOULD BE OF TYPE INT.");
 		}
-	
+
 	}
-	
+
 	public int GET_OPTIONAL_INT_CONFIG_PARAM(String name,int default_val,Map<String,Object> config) throws InitializationException
 	{
 		Object val = config.get(name);
@@ -148,7 +153,7 @@ public abstract class WebModule extends Module
 			return default_val;
 		return Integer.parseInt((String)val);
 	}
-	
+
 	public boolean GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(String name,boolean default_val,Map<String,Object> config) throws InitializationException
 	{
 		Object val = config.get(name);
@@ -157,17 +162,17 @@ public abstract class WebModule extends Module
 		return Boolean.parseBoolean((String)val);
 	}
 
-	
+
 	protected void INFO(String message)
 	{
 		_application.INFO(getName()+": "+message);
 	}
-	
+
 	protected void WARNING(String message)
 	{
 		_application.WARNING(getName()+": "+message);
 	}
-	
+
 	protected void ERROR(String message)
 	{
 		_application.ERROR(getName()+": "+message);
@@ -177,17 +182,17 @@ public abstract class WebModule extends Module
 	{
 		_application.ERROR(e);
 	}
-	
+
 	protected void ERROR(String message,Exception e)
 	{
 		_application.ERROR(getName()+": "+message,e);
 	}
-	
+
 	protected void WAE(Exception e) throws WebApplicationException
 	{
 		throw new WebApplicationException(e.getMessage(),e);
 	}
-	
+
 	protected void WAE(String prefix,Exception e) throws WebApplicationException
 	{
 		throw new WebApplicationException(prefix+" "+e.getMessage(),e);
@@ -204,12 +209,12 @@ public abstract class WebModule extends Module
 		Map<String,Object> context = new HashMap<String, Object>();
 		for(int i = 0;i < flattened_context.length;i+=2)
 			context.put((String)flattened_context[i], flattened_context[i+1]);
-		
+
 		boolean b = permissions.checkPermission(user, getName(), permission_id, context);
 		if(!b)
 			throw new PermissionsException("NO PERMISSION");
 	}
-	
+
 	protected static void GUARD(boolean b) throws PermissionsException
 	{
 		try{
@@ -221,9 +226,9 @@ public abstract class WebModule extends Module
 		{/* if permissions exception happens in guard just forward it */
 			throw pe;
 		}
-		
+
 	}
-	
+
 	protected  File GET_MODULE_DATA_DIRECTORY(WebApplication app)
 	{
 		File f =  new File(app.getConfig().getModuleDataDirectory(),getName()+"Data");
@@ -234,7 +239,7 @@ public abstract class WebModule extends Module
 		}
 		return f;
 	}
-	
+
 	protected  File GET_MODULE_DATA_FILE(WebApplication app,String filename,boolean create) throws WebApplicationException
 	{
 		File data_dir  =  GET_MODULE_DATA_DIRECTORY(app);
@@ -250,7 +255,7 @@ public abstract class WebModule extends Module
 		}
 		return data_file;
 	}
-	
+
 	protected  File GET_MODULE_DATA_DIR(WebApplication app,String dirname,boolean create) throws WebApplicationException
 	{
 		File data_dir  =  GET_MODULE_DATA_DIRECTORY(app);
@@ -269,7 +274,7 @@ public abstract class WebModule extends Module
 		return data_file;
 	}
 
-	
+
 	protected  FileReader GET_MODULE_DATA_FILE_READER(WebApplication app,String filename,boolean create) throws WebApplicationException
 	{
 		File data_dir  =  GET_MODULE_DATA_DIRECTORY(app);
@@ -305,13 +310,13 @@ public abstract class WebModule extends Module
 		}
 		return data_file;
 	}
-	
+
 
 	protected static String GET_CONSOLE_INPUT(String prompt)throws WebApplicationException
 	{
 		return GET_CONSOLE_INPUT(5, prompt);
 	}
-	
+
 	protected static String GET_CONSOLE_INPUT(int num_times,String prompt)throws WebApplicationException
 	{
 		while(num_times > 0)
@@ -321,7 +326,7 @@ public abstract class WebModule extends Module
 				System.out.print(prompt);
 				System.out.flush();
 			}
-	    
+
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 			String input = "";
 
@@ -339,7 +344,7 @@ public abstract class WebModule extends Module
 		}
 		throw new WebApplicationException("THE APP REQUIRES CONSOLE INPUT TO STARTUP.");
 	}
-	
+
 	//string functions//
 	protected String REMOVE_WHITE_SPACE(String s)
 	{
@@ -355,7 +360,7 @@ public abstract class WebModule extends Module
 		}
 		return buf.toString();
 	}
-	
+
 	public String STRIP_TO_ALPHA_NUMERIC(String s)
 	{
 		if(s == null)
@@ -371,14 +376,14 @@ public abstract class WebModule extends Module
 		}
 		return buf.toString();
 	}
-	
+
 	protected String[] GET_REQUIRED_LIST_PARAM(String name,Map<String,Object> config) throws InitializationException
 	{
 		String p = GET_REQUIRED_CONFIG_PARAM(name, config);
 		p = REMOVE_WHITE_SPACE(p);
 		return p.split(",");
 	}
-	
+
 	protected String[] GET_OPTIONAL_LIST_PARAM(String name,Map<String,Object> config) throws InitializationException
 	{
 		String p = GET_OPTIONAL_CONFIG_PARAM(name, config);
@@ -387,7 +392,7 @@ public abstract class WebModule extends Module
 		p = REMOVE_WHITE_SPACE(p);
 		return p.split(",");
 	}
-	
+
 	protected String[] GET_OPTIONAL_LIST_PARAM(String name,Map<String,Object> config,String... default_value) throws InitializationException
 	{
 		String p = GET_OPTIONAL_CONFIG_PARAM(name, config);
@@ -396,18 +401,18 @@ public abstract class WebModule extends Module
 		p = REMOVE_WHITE_SPACE(p);
 		return p.split(",");
 	}
-	
-	
+
+
 	protected void DISPATCH_EVENT(int event_type,Object... event_context) throws WebApplicationException
 	{
 		dispatchEvent(new ModuleEvent(event_type,event_context));
 	}
-	
+
 	protected void DISPATCH_EVENT(int event_type,Map<String,Object> event_context) throws WebApplicationException
 	{
 		dispatchEvent(new ModuleEvent(event_type,event_context));
 	}
-	
+
 	//EXPERIMENTAL currently used by recurring order module//
 
 	File   current_log_file;
@@ -416,13 +421,13 @@ public abstract class WebModule extends Module
 	private Writer get_current_log_file_writer()
 	{
 		Calendar now = Calendar.getInstance();
-		
-		int n_month = now.get(Calendar.MONTH)+1; 
-		int n_day   = now.get(Calendar.DATE); 
+
+		int n_month = now.get(Calendar.MONTH)+1;
+		int n_day   = now.get(Calendar.DATE);
 		String year  = String.valueOf(now.get(Calendar.YEAR));
 		String month = String.valueOf(n_month);
 		String day   = String.valueOf(n_day);
-		
+
 		StringBuilder buf = new StringBuilder();
 		buf.append(year);
 		if(n_month < 10)
@@ -436,7 +441,7 @@ public abstract class WebModule extends Module
 		buf.append('.');
 		buf.append(LOG_EXTENSION);
 		String current_log_filename = buf.toString();
-		
+
 		try{
 			current_log_file = GET_MODULE_DATA_FILE(getApplication(), current_log_filename, false);
 			if(current_log_file == null || current_log_writer == null)
@@ -457,7 +462,7 @@ public abstract class WebModule extends Module
 		}
 		return current_log_writer;
 	}
-	
+
 	protected void MODULE_LOG(String message)
 	{
 		MODULE_LOG(0, message);
@@ -465,9 +470,9 @@ public abstract class WebModule extends Module
 
 	protected void MODULE_LOG(int indent,String message)
 	{
-		Writer output = get_current_log_file_writer(); 
+		Writer output = get_current_log_file_writer();
 		Date now = new Date();
-		
+
 		try {
 			if(message.startsWith("\n"))
 			{
@@ -484,15 +489,15 @@ public abstract class WebModule extends Module
 			ERROR("BARF ON MODULE_LOG() FUNCTION.MESSAGE WAS "+message,ioe);
 		}
     }
-	
-	
+
+
 	//just another name for a Map<String,Object> useful for talking to action script
 	public class OBJECT extends HashMap<String,Object>
 	{
 		public OBJECT(Object... args)
 		{
 			for(int i = 0;i < args.length;i+=2)
-				put((String)args[i],args[i+1]);			
+				put((String)args[i],args[i+1]);
 		}
 	}
 
@@ -525,7 +530,7 @@ public abstract class WebModule extends Module
 					ic.close();
 				if (oc!=null)
 					oc.close();
-			} 
+			}
 			catch (Exception e)
 			{
 				e.printStackTrace();
@@ -534,24 +539,24 @@ public abstract class WebModule extends Module
 		}
 
 	}
-	
+
     protected void COPY_DIR(File sourceLocation , File targetLocation)throws IOException {
-        
+
         if (sourceLocation.isDirectory()) {
             if (!targetLocation.exists()) {
                 targetLocation.mkdir();
             }
-            
+
             String[] children = sourceLocation.list();
             for (int i=0; i<children.length; i++) {
                 COPY_DIR(new File(sourceLocation, children[i]),
                         new File(targetLocation, children[i]));
             }
         } else {
-            
+
             InputStream in = new FileInputStream(sourceLocation);
             OutputStream out = new FileOutputStream(targetLocation);
-            
+
             // Copy the bits from instream to outstream
             byte[] buf = new byte[1024];
             int len;
@@ -562,13 +567,13 @@ public abstract class WebModule extends Module
             out.close();
         }
     }
-    
+
     public static String READ_FILE_AS_STRING(String filename) throws WebApplicationException
     {
     	File f = new File(filename);
     	return READ_FILE_AS_STRING(f);
     }
-    
+
     public static String READ_FILE_AS_STRING(File f) throws WebApplicationException
     {
         byte[] buffer = new byte[(int)f.length()];
@@ -585,7 +590,7 @@ public abstract class WebModule extends Module
 
 
     ///UTIL STUFF//
-    
+
     public static String PREPARE_REQUIRED_USER_INPUT(String fieldname ,String s ) throws WebApplicationException
     {
     	if(s == null )
@@ -595,19 +600,19 @@ public abstract class WebModule extends Module
     		throw new WebApplicationException(fieldname+" is required.");
     	return s;
     }
-    
-    
+
+
     public static Map<String,Object> KEY_VALUE_PAIRS_TO_MAP(Object... kvp)
     {
-    
-    		
+
+
     	Map<String,Object> map = new HashMap<String,Object>();
     	kvp_helper(map,kvp);
-    	
-    
+
+
     	return map;
     }
-    
+
     private static void kvp_helper(Map<String,Object> map,Object[] kvp)
     {
     	for(int i = 0;i < kvp.length;)
@@ -619,12 +624,12 @@ public abstract class WebModule extends Module
 			}
     		else
     		{
-    			map.put((String)kvp[i],kvp[i+1]);	
+    			map.put((String)kvp[i],kvp[i+1]);
     			i+=2;
     		}
     	}
     }
-    
+
     public static Object[] MAP_TO_KEY_VALUE_PAIRS(Map<String,Object> map)
     {
     	int size = 	map.entrySet().size();
@@ -640,8 +645,8 @@ public abstract class WebModule extends Module
     	}
     	return ret;
     }
-    
-    
+
+
     public static Object[] JOIN_KVP(Object[] kvp,Object... kvp2)
     {
     	Object[] ret = new Object[kvp.length + kvp2.length];
@@ -649,8 +654,8 @@ public abstract class WebModule extends Module
     	System.arraycopy(kvp2, 0, ret, kvp.length, kvp2.length);
     	return ret;
     }
-    
-    
+
+
     public static <T> T[] CONCAT(T[] first, T[]... rest) {
     	  int totalLength = first.length;
     	  for (T[] array : rest) {
@@ -665,12 +670,12 @@ public abstract class WebModule extends Module
     	  return result;
     	}
 
-    
+
     public Map<String,Object> JSON_CONFIG_TO_MAP(File f) throws InitializationException
 	{
 
 		Map<String,Object> map = null;
-		try{ 
+		try{
 			String contents = READ_FILE_AS_STRING(f.getAbsolutePath());
 			JSONObject o = new JSONObject(contents);
 			map = json_to_map(new LinkedHashMap<String,Object>(), o);
@@ -681,7 +686,7 @@ public abstract class WebModule extends Module
 		}
 		return map;
 	}
-	
+
 	public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
 	{
 
@@ -693,10 +698,10 @@ public abstract class WebModule extends Module
 				Object val = o.get(keys[i]);
 				if(val instanceof JSONObject)
 				{
-				
+
 					Map<String,Object> o_map = new LinkedHashMap<String,Object>();
 					ret.put(keys[i], json_to_map(o_map,(JSONObject)val));
-					
+
 				}
 				else if(val instanceof JSONArray)
 				{
@@ -710,12 +715,12 @@ public abstract class WebModule extends Module
 				}
 			}
 			return ret;
-		
+
 	}
-	
+
 	public static List<Object> parse_json_list(List<Object> list,JSONArray L) throws JSONException
 	{
-		
+
 		for(int ii = 0;ii < L.length();ii++)
 		{
 				Object vv = L.get(ii);
@@ -731,13 +736,13 @@ public abstract class WebModule extends Module
 				}
 				else
 				{
-					list.add(vv);	
+					list.add(vv);
 				}
 		}
 		return list;
 	}
-	
-	
+
+
 	 public static String GET_STACK_TRACE(Throwable aThrowable) {
 		    final Writer result = new StringWriter();
 		    final PrintWriter printWriter = new PrintWriter(result);
@@ -748,13 +753,13 @@ public abstract class WebModule extends Module
 
 	 ///MATCHER STUFF, regexp to Object//
 		@SuppressWarnings("serial")
-		protected class PS_MATCHER_LIST extends ArrayList<PSMatcher> 
+		protected class PS_MATCHER_LIST extends ArrayList<PSMatcher>
 		{
 			public PS_MATCHER_LIST()
 			{
 				super();
 			}
-			
+
 			public PS_MATCHER_LIST(Map<String,Object> match_map,boolean case_insenstive)
 			{
 				super();
@@ -763,14 +768,14 @@ public abstract class WebModule extends Module
 					add(new PSMatcher(key, match_map.get(key), case_insenstive));
 				}
 			}
-			
+
 			public PSMatcher add(String regexp,Object ret,boolean case_insensitive)
 			{
-				PSMatcher m = new PSMatcher(regexp, ret, case_insensitive); 
+				PSMatcher m = new PSMatcher(regexp, ret, case_insensitive);
 				add(m);
 				return m;
 			}
-			
+
 			public Object getFirstMatch(String in)
 			{
 				int s= this.size();
@@ -783,7 +788,7 @@ public abstract class WebModule extends Module
 				}
 				return null;
 			}
-			
+
 			public List<Object> getAllMatches(String in)
 			{
 				List<Object> ret = new ArrayList<Object>();
@@ -798,7 +803,7 @@ public abstract class WebModule extends Module
 				return ret;
 			}
 		}
-		
+
 
 		class PSMatcher
 		{
@@ -812,27 +817,27 @@ public abstract class WebModule extends Module
 					this.p = Pattern.compile(regexp);
 				this.ret = ret;
 			}
-			
+
 			public boolean matches(String in)
 			{
 				return p.matcher(in).matches();
 			}
-			
+
 			public Object getMatch(String in)
 			{
 				if(matches(in))
 					return ret;
 				return null;
 			}
-			
+
 			public String toString()
 			{
 				return p.toString()+" -> "+ret.toString();
 			}
 		}
-		
+
 	 ////END MATCHER STUFF//
-	 
+
 		protected Method LOOKUP_METHOD(Object o,String methodname,Class... params)
 		{
 				try {
@@ -850,11 +855,11 @@ public abstract class WebModule extends Module
 			            return null;
 			        }
 		}
-		
-		
+
+
 		protected Process EXEC(String cmd,String... args) throws WebApplicationException
 		{
-			
+
 			Runtime rt = Runtime.getRuntime();
 			String[] cmd_array = new String[1+args.length];
 			cmd_array[0] = cmd;
@@ -876,8 +881,8 @@ public abstract class WebModule extends Module
 			}
 
 		}
-		
-		public static boolean DELETE_DIR(File dir) 
+
+		public static boolean DELETE_DIR(File dir)
 		{
 			if (dir.isDirectory())
 			{
@@ -885,7 +890,7 @@ public abstract class WebModule extends Module
 					for (int i=0; i<children.length; i++)
 					{
 						boolean success = DELETE_DIR(new File(dir, children[i]));
-						if (!success) 
+						if (!success)
 						{
 							return false;
 						}
@@ -893,9 +898,9 @@ public abstract class WebModule extends Module
 			}
 			// The directory is now empty so delete it
 			return dir.delete();
-		} 
-		
-		
+		}
+
+
 		public static final Object CALLBACK_VOID = new Object();
 		public class CALLBACK
 		{
@@ -905,5 +910,64 @@ public abstract class WebModule extends Module
 				return CALLBACK_VOID;
 			}
 		}
-		
+
+
+		public static final void ZIP_DIRECTORY( File directory, File zip ) throws IOException {
+		    ZipOutputStream zos = new ZipOutputStream( new FileOutputStream( zip ) );
+		    zip( directory, directory, zos );
+		      zos.close();
+		  }
+
+		  private static final void zip(File directory, File base,
+		      ZipOutputStream zos) throws IOException {
+		    File[] files = directory.listFiles();
+		    byte[] buffer = new byte[8192];
+		    int read = 0;
+		    for (int i = 0, n = files.length; i < n; i++) {
+		      if (files[i].isDirectory()) {
+		    	  zip(files[i], base, zos);
+		      } else {
+		        FileInputStream in = new FileInputStream(files[i]);
+		        ZipEntry entry = new ZipEntry(files[i].getPath().substring(
+		            base.getPath().length() + 1));
+		        zos.putNextEntry(entry);
+		        while (-1 != (read = in.read(buffer))) {
+		          zos.write(buffer, 0, read);
+		        }
+		        in.close();
+		      }
+		    }
+		  }
+
+		public static final void UNZIP(File zip, File extractTo) throws IOException {
+		    ZipFile archive = new ZipFile(zip);
+		    Enumeration e = archive.entries();
+		    while (e.hasMoreElements()) {
+		      ZipEntry entry = (ZipEntry) e.nextElement();
+		      File file = new File(extractTo, entry.getName());
+		      if (entry.isDirectory() && !file.exists()) {
+		        file.mkdirs();
+		      } else {
+		        if (!file.getParentFile().exists()) {
+		          file.getParentFile().mkdirs();
+		        }
+
+		        InputStream in = archive.getInputStream(entry);
+		        BufferedOutputStream out = new BufferedOutputStream(
+		            new FileOutputStream(file));
+
+		        byte[] buffer = new byte[8192];
+		        int read;
+
+		        while (-1 != (read = in.read(buffer))) {
+		          out.write(buffer, 0, read);
+		        }
+
+		        in.close();
+		        out.close();
+		      }
+		    }
+		  }
+
+
 }
