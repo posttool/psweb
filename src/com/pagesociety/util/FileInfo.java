@@ -2,6 +2,8 @@ package com.pagesociety.util;
 
 import java.io.File;
 
+import com.pagesociety.web.upload.MimeTypeConstants;
+
 public class FileInfo
 {
 	public static final int JPG = 0;
@@ -55,14 +57,14 @@ public class FileInfo
 	public static final int SIMPLE_TYPE_VIDEO    = 102;
 	public static final int SIMPLE_TYPE_DOCUMENT = 103;
 	public static final int SIMPLE_TYPE_SWF 	 = 104;
-	
+
 	public static final String SIMPLE_TYPE_IMAGE_STRING     = "IMAGE";
 	public static final String SIMPLE_TYPE_AUDIO_STRING     = "AUDIO";
 	public static final String SIMPLE_TYPE_VIDEO_STRING     = "VIDEO";
 	public static final String SIMPLE_TYPE_DOCUMENT_STRING  = "DOCUMENT";
 	public static final String SIMPLE_TYPE_SWF_STRING 	 	= "SWF";
 
-	
+
 	public static int getType(File file)
 	{
 		if (file == null)
@@ -81,7 +83,7 @@ public class FileInfo
 		}
 		return -1;
 	}
-	
+
 	public static int getType(String filename)
 	{
 		if (filename == null)
@@ -101,12 +103,12 @@ public class FileInfo
 		return -1;
 	}
 
-	
+
 	public static int getSimpleType(File file)
 	{
 		return getSimpleType(file.getName());
 	}
-	
+
 	public static int getSimpleType(String filename)
 	{
 		int type = getType(filename);
@@ -130,22 +132,22 @@ public class FileInfo
 		case MPG:
 		case M4V:
 		case MP4:
-		case THREEGP:			
+		case THREEGP:
 			return SIMPLE_TYPE_VIDEO;
 		case PDF:
 		case DOC:
-			return SIMPLE_TYPE_DOCUMENT;	
+			return SIMPLE_TYPE_DOCUMENT;
 		case SWF:
-			return SIMPLE_TYPE_SWF;	
+			return SIMPLE_TYPE_SWF;
 		}
 		return -1;
 	}
-	
+
 	public static String getSimpleTypeAsString(File file)
 	{
 		return getSimpleTypeAsString(file.getName());
 	}
-	
+
 	public static String getSimpleTypeAsString(String filename)
 	{
 		int type = getSimpleType(filename);
@@ -157,7 +159,7 @@ public class FileInfo
 			return SIMPLE_TYPE_AUDIO_STRING;
 		case SIMPLE_TYPE_VIDEO:
 			return SIMPLE_TYPE_VIDEO_STRING;
-		case SIMPLE_TYPE_DOCUMENT:	
+		case SIMPLE_TYPE_DOCUMENT:
 			return SIMPLE_TYPE_DOCUMENT_STRING;
 		case SIMPLE_TYPE_SWF:
 			return SIMPLE_TYPE_SWF_STRING;
@@ -209,7 +211,7 @@ public class FileInfo
 			return false;
 		}
 	}
-	
+
 	public static boolean isDocument(File file)
 	{
 		int t = getType(file);
@@ -222,7 +224,7 @@ public class FileInfo
 			return false;
 		}
 	}
-	
+
 	public static boolean isSWF(File file)
 	{
 		int t = getType(file);
@@ -243,5 +245,11 @@ public class FileInfo
 			return null;
 		}
 		return name.substring(n + 1).toLowerCase();
+	}
+
+	public static String getMimeType(String filename)
+	{
+		return MimeTypeConstants.getMimeType(filename);
+
 	}
 }
