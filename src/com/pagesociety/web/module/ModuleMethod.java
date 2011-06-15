@@ -105,6 +105,7 @@ public class ModuleMethod
 		
 		catch (InvocationTargetException e)
 		{
+			e.printStackTrace();
 			throw (Throwable) e.getCause();
 		}
 		catch (IllegalArgumentException e)
