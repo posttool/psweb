@@ -67,7 +67,12 @@ public class DateTime {
 	
 	public static String getTimeStamp()
 	{
-		return timestamp.format(new Date());
+		return getTimeStamp(new Date());
+	}
+	
+	public static String getTimeStamp(Date d)
+	{
+		return timestamp.format(d);
 	}
 	
 	public static String getTimeStampNoUnderscore()
