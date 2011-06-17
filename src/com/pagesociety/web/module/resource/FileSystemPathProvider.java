@@ -129,7 +129,9 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		File[] ff = parent_dir.listFiles();
 		for(int i =0;i < ff.length;i++)
 		{
-			if(ff[i].getName().startsWith(filename))
+			String fname = ff[i].getName();
+			if(fname.equals(f.getName()) || fname.startsWith(filename) &&
+			   !fname.matches(".*_\\d+(\\.\\w+)?$"))//and doesnt end with _1.swf,_2,swf etc in other words not a preview but a unique filename provided by the path provider because the original filename existed
 			{
 				ff[i].delete();
 				continue;
