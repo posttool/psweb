@@ -81,7 +81,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		init_bucket();
 		init_scratch_directory(app, config);
 		setup_crossdomain_file(app, config);
-		start_s3_delete_consumer();	
+		start_s3_delete_consumer();
 	}
 
 	public void loadbang(WebApplication app, Map<String, Object> config)
@@ -330,7 +330,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	{
 		return base_s3_url + "/"+ path_token;
 	}
-	
+
 	public String getBaseUrl() throws WebApplicationException
 	{
 		return base_s3_url;
@@ -347,7 +347,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		options.put(PathProviderUtil.HEIGHT,Integer.toString(height));
 		return getPreviewUrl(path_token,options);
 	}
-	
+
+
 	public String getPreviewUrl(String path_token, Map<String,String> options) throws WebApplicationException
 	{
 		INFO("GETTING PREVIEW URL FOR " + path_token + " WITH " + options);
@@ -369,18 +370,20 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			{
 					synchronized (lock)
 					{
-						if(active_thumbnail_generator_locks.contains(lock))
-						{
+					//	if(active_thumbnail_generator_locks.contains(lock))
+					//	{
 							INFO(Thread.currentThread()+"PW: WAITING IN PREVIEW FOR: "+preview_key);
-							lock.wait();		
-						}
+							lock.wait(60*1000);//wait a minute max ;-)
+					//	}
 					}
 					INFO(Thread.currentThread()+" PW: NOT WAITING ANYMORE: "+preview_key);
 					boolean resized_now_exists = true;
 					resized_now_exists = conn.checkKeyExists(s3_bucket, preview_key);
-	
+
 					if (resized_now_exists)
 					{
+						//just to be sane lets remove it here as well//
+						current_thumbnail_generator_locks.remove(preview_key);
 						INFO(Thread.currentThread()+" PW: WAS WAITING NOW RETURNING: "+preview_key);
 						return base_s3_url +"/"+ preview_key;
 					}
@@ -388,45 +391,44 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 						throw new WebApplicationException(Thread.currentThread()+" PW: WAITING FOR RESOURCE TO BE RESIZED " + s3_bucket + " " + path_token + " BUT IT STILL DOESN'T EXIST");
 			}
 		}catch(Exception e){WAE(e);}
-		
-		lock = L;			
+
+		lock = L;
 		try{
-	
-			active_thumbnail_generator_locks.add(lock);
+			//active_thumbnail_generator_locks.add(lock);
 			do_generate_preview(conn, path_token, preview_key, options);
-			return base_s3_url +"/"+ preview_key;		
+			return base_s3_url +"/"+ preview_key;
 		}catch(WebApplicationException e)
-		{		
+		{
 			throw e;
 		}
 		finally
 		{
-			synchronized (lock) 
+			synchronized (lock)
 			{
-				active_thumbnail_generator_locks.remove(lock);
+				//active_thumbnail_generator_locks.remove(lock);
 				current_thumbnail_generator_locks.remove(preview_key);
-				lock.notifyAll();				
-			}			
-			
+				lock.notifyAll();
+			}
+
 		}
-	
+
 	}
 
 	public void do_generate_preview(PSAWSAuthConnection conn,String path_token,String preview_key, Map<String,String> options) throws WebApplicationException
 	{
-		
+
 		FileOutputStream fos = null;
 		try{
 			// look for it in the scratch directory//
 			File original_file = new File(scratch_directory, path_token);
-			
+
 			if (!original_file.exists())
 			{
 				INFO("DIDNT FIND " + path_token + " IN SCRATCH DIRECTORY. GOING TO AMAZON FOR ORIGINAL.");
 				GetResponse r = conn.get(s3_bucket, path_token, null);
 				if (r.object == null)
 					throw new WebApplicationException("TRYING TO RESIZE S3 RESOURCE " + s3_bucket + " " + path_token + " BUT IT DOESNT SEEM TO EXIST.");
-	
+
 				original_file.getParentFile().mkdirs();
 				fos = new FileOutputStream(original_file);
 				fos.write(r.object.data);
@@ -434,11 +436,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 				fos.close();
 				INFO("GOT "+path_token+" FROM AMAZON AND WROTE IT TO "+original_file.getAbsolutePath());
 			}
-			//now it exists in the scratch directory...lets make a preview//	
+			//now it exists in the scratch directory...lets make a preview//
 			File preview = new File(scratch_directory, preview_key);
 			preview.getParentFile().mkdirs();
 			create_preview(original_file, preview, options);
-			
+
 			//put the preview on amazon
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
 			INFO("WRITING PREVIEW TO S3 "+preview_key+" length:"+preview.length()+" content-type:"+content_type);
@@ -448,7 +450,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 					throw new WebApplicationException("PROBLEM WRITING PREVIEW TO S3 " + s3_bucket + " " + preview_key + " HTTP RESPONSE WAS " + pr.connection.getResponseCode());
 			INFO("EXITING GET PREVIEW URL " + base_s3_url +"/"+ preview_key);
 
-		
+
 		}catch(Exception e)
 		{
 			if(fos != null)
@@ -461,7 +463,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			throw new WebApplicationException("PROBLEM GENERATING PREVIEW FOR "+path_token,e);
 		}
 	}
-	
+
 	// dont forget to close output stream if you use this method
 	public OutputStream[] getOutputStreams(String path_token, String content_type,
 			long content_size) throws WebApplicationException
@@ -559,7 +561,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 	// if(r.object == null)
 	// throw new
 	// WebApplicationException("TRYING TO GET FILE "+s3_bucket+" "+path_token+" BUT IT DOESNT SEEM TO EXIST.");
-	//			
+	//
 	// File expanded_file = new File(scratch_directory,path_token);
 	// expanded_file.getParentFile().mkdirs();
 	// FileOutputStream fos = new FileOutputStream(expanded_file);
@@ -664,7 +666,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			// System.out.println("RESPONSE STATUS "+path_token+" IS "+code+" "+r.connection.getResponseMessage());
 		}
 		catch (IOException ioe)
-		{ 
+		{
 			current_transfer_map.remove(path_token);
 			throw new WebApplicationException("COULDNT END PARSE. MIGHT BE CANCELLED. MESSAGE WAS: "+ioe.getMessage());
 			//ERROR(ioe);
