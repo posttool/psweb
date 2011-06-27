@@ -252,6 +252,9 @@ public final class MimeTypeConstants
       String strKey
    )
    {
+	   if (strKey==null)
+		   return s_strDefaultMimeType;
+	   
       String strMimeType = null;
 
       // get value for particular key
