@@ -222,9 +222,10 @@ public class CommentModule extends WebStoreModule
 	{
 		Entity user = (Entity)uctx.getUser();
 		Entity comment_entity = GET(COMMENT_ENTITY,comment_id);
-		GUARD(user,CAN_UPDATE_COMMENT,user, GUARD_INSTANCE,comment_entity,
-											COMMENT_FIELD_TITLE,title,
-											COMMENT_FIELD_COMMENT,comment);
+//TODO FIX E!@
+//		GUARD(user,CAN_UPDATE_COMMENT,user, GUARD_INSTANCE,comment_entity,
+//											COMMENT_FIELD_TITLE,title,
+//											COMMENT_FIELD_COMMENT,comment);
 		
 		return updateComment(comment_entity,title,comment,rating_data);
 	

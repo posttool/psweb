@@ -386,6 +386,7 @@ public class WebStoreModule extends WebModule
 	}
 
 	/*SAVE NEW*/
+	@Deprecated
 	public static Entity CREATE_ENTITY(PersistentStore store,Entity creator,String type,Map<String,Object> value_map) throws PersistenceException
 	{
 		Date now = new Date();
@@ -941,11 +942,13 @@ public class WebStoreModule extends WebModule
 	}
 
 	//DEPRECATE THIS
+	@Deprecated
 	public Entity CREATE_ENTITY(Entity creator,Entity instance) throws PersistenceException
 	{
 		return CREATE_ENTITY(store,creator,instance);
 	}
 
+	@Deprecated
 	public Entity CREATE_ENTITY(Entity creator,String type,Map<String,Object> value_map) throws PersistenceException
 	{
 		return CREATE_ENTITY(store,creator,type,value_map);
