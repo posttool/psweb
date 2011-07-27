@@ -1,6 +1,7 @@
 package com.pagesociety.web.gateway;
 
 import java.util.Map;
+import java.util.Set;
 
 public class Form
 {
@@ -23,5 +24,12 @@ public class Form
 	public String[] getParameters(String key)
 	{
 		return _map.get(key);
+	}
+
+
+	public Set<String> keys()
+	{
+
+			return _map.keySet();
 	}
 }
