@@ -74,6 +74,7 @@ public class AmfIn
 		should_be_amf3_in_0_type = buffer.get(); // AMFType.AMF3_IN_AMF0
 		args = (List<Object>) readObject();
 		total_bytes_read = totalBytesRead;
+
 	}
 
 	@SuppressWarnings("unchecked")

@@ -49,7 +49,11 @@ public class CmdWorker
 			{
 				e.printStackTrace();
 				if (p!=null)
+				{
+				
 					p.destroy();
+				
+				}
 				throw e;
 			}
 			if (exit_val != 0)

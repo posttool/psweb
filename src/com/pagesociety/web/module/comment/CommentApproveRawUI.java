@@ -67,15 +67,43 @@ public class CommentApproveRawUI extends RawUIModule
 	@Export
 	public String Submit(UserApplicationContext uctx,Form form)
 	{
+		Entity user = (Entity)uctx.getUser();
+		if(!PermissionEvaluator.IS_ADMIN(user))
+		{
+			return "NO PERMISSION";
+		}
 		StringBuilder buf = new StringBuilder();
 		uctx.setProperty(RawUIModule.KEY_UI_MODULE_OUTPUT_BUF,buf);
 		Set<String> keys = form.keys();
 	    Iterator<String> iter = keys.iterator();
-	    while (iter.hasNext()) {
-	    String key = iter.next();
-	     SPAN(uctx,key+" = "+form.getParameter(key));
-	     BR(uctx);
-	    }
+	    try{
+		    while (iter.hasNext())
+		    {
+		    	String key 		= iter.next();
+		    	if(key.startsWith("comment_"))
+		    	{
+			    	String value 	= form.getParameter(key);
+		    		Long id = Long.parseLong(key.substring(8));
+		    		if(value.equals("Delete"))
+		    		{
+		    			comment_module.DeleteComment(uctx, id);
+		    		}
+		    		else if(value.equals("Approve"))
+		    		{
+
+		    			comment_module.ApproveComment(uctx, id);
+
+		    		}
+		    	}
+		    }
+		    GOTO_WITH_INFO(uctx, RAW_SUBMODE_DEFAULT, "Action OK. ");
+		    return buf.toString();
+	    }catch(Exception e)
+		{
+			ERROR(e);
+			GOTO_WITH_ERROR(uctx, RAW_SUBMODE_DEFAULT, "ERROR:"+e.getMessage());
+			return buf.toString();
+		}
 		/*
 		File f 					= null;
 		FileOutputStream fos 	= null;
@@ -112,27 +140,42 @@ public class CommentApproveRawUI extends RawUIModule
 		}
 
 
-		GOTO_WITH_INFO(uctx, RAW_SUBMODE_DEFAULT, "Bug Submit OK. Thank you!","show_bug",bug.getId());
+		GOTO_WITH_INFO(uctx, RAW_SUBMODE_DEFAULT, "Action OK. ");
 	*/
-		return buf.toString();
+
 
 	}
 
-	private static final String[] ACTION_NAMES = new String[]{"APPROVE","DELETE"};
+	private static final String[] ACTION_NAMES = new String[]{"Approve","Delete"};
 	public void submode_default(UserApplicationContext uctx,Map<String,Object> params)
 	{
 		try{
+			Entity user = (Entity)uctx.getUser();
+			if(!PermissionEvaluator.IS_ADMIN(user))
+			{
+				CALL_WITH_INFO(uctx,"UserModuleRawUI",RAW_SUBMODE_DEFAULT,RAW_SUBMODE_DEFAULT,getName()+" manager module requires admin login.");
+				return;
+			}
+			if(params.get("do_delete_all") != null)
+			{
+				List<Entity> cc = comment_module.getAllComments(0, Query.ALL_RESULTS).getEntities();
+				for(int i = 0;i < cc.size();i++)
+				{
+					comment_module.DeleteComment(uctx,cc.get(i));
+				}
+
+			}
 			PagingQueryResult result = comment_module.getAllUnapprovedComments(  0, Query.ALL_RESULTS);
 			List<Entity> comments = result.getEntities();
 
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
-			SPAN(uctx,"REPORT A BUG",18);
+			SPAN(uctx,"MANAGE COMMENTS",16);
 			DISPLAY_ERROR(uctx,params);
 			DISPLAY_INFO(uctx,params);
 			P(uctx);
-			MULTIPART_FORM_START(uctx,RAW_MODULE_ROOT()+"/"+getName()+"/Submit/.form");
-			TABLE_START(uctx,0,800);
+			FORM_START(uctx,RAW_MODULE_ROOT()+"/"+getName()+"/Submit/.form","POST");
+			TABLE_START(uctx,1,800);
 			TH(uctx, "Comment");
 			TH(uctx, "Action");
 
@@ -140,16 +183,43 @@ public class CommentApproveRawUI extends RawUIModule
 			{
 				Entity comment = comments.get(i);
 				TR_START(uctx);
-					TD_START(uctx);SPAN(uctx,comment.getAttribute(CommentModule.COMMENT_FIELD_TITLE)+"<br/>"+comment.getAttribute(CommentModule.COMMENT_FIELD_COMMENT));TD_END(uctx);
-					TD_START(uctx);FORM_RADIO_GROUP(uctx, "comment_"+comment.getId(), ACTION_NAMES, ACTION_NAMES, ACTION_NAMES[1]);TD_END(uctx);
+					TD_START(uctx);SPAN(uctx,comment.getAttribute(CommentModule.COMMENT_FIELD_TITLE)+"<br/><br/>"+comment.getAttribute(CommentModule.COMMENT_FIELD_COMMENT),10);TD_END(uctx);
+					TD_START(uctx);FORM_RADIO_GROUP(uctx, "comment_"+comment.getId(), ACTION_NAMES, ACTION_NAMES,ACTION_NAMES, ACTION_NAMES[1],12);TD_END(uctx);
 				TR_END(uctx);
 			}
-
+			TR_START(uctx);
+				TD_START(uctx);TD_END(uctx);
+				TD_START(uctx);INSERT(uctx,"<span onclick='mark_all_for_delete()' style='cursor:pointer;font-size:12px;'>[ Mark All For Delete ]</span><br/><span onclick='mark_all_for_approve()' style='cursor:pointer;font-size:12px;'>[ Mark All For Approve ]</span>");TD_END(uctx);
+			TR_END(uctx);
 			TABLE_END(uctx);
 			P(uctx);
 			FORM_SUBMIT_BUTTON(uctx, "Submit");
 			FORM_END(uctx);
+			HR(uctx);
+			A_GET(uctx, getName(),RAW_SUBMODE_DEFAULT , "[ delete all comments] ", "do_delete_all","true");
+			StringBuilder get_elements_by_class_js = new StringBuilder();
+			get_elements_by_class_js.append("function getElementsByClass(clazz)\n");
+			get_elements_by_class_js.append("{\n");
+			get_elements_by_class_js.append("var itemsfound = new Array();\n");
+			get_elements_by_class_js.append("var elements = document.getElementsByTagName('*');\n");
+			get_elements_by_class_js.append("for(var i=0;i<elements.length;i++)\n");
+			get_elements_by_class_js.append("{\n");
+			get_elements_by_class_js.append("if(elements[i].className == clazz)\n");
+			get_elements_by_class_js.append("{\n");
+			get_elements_by_class_js.append("itemsfound.push(elements[i]);\n");
+			get_elements_by_class_js.append("}\n");
+			get_elements_by_class_js.append("}\n");
+			get_elements_by_class_js.append("return itemsfound;\n");
+			get_elements_by_class_js.append("}\n");
+
+
+			INSERT(uctx,"<script>\n");
+			INSERT(uctx,get_elements_by_class_js.toString());
+			INSERT(uctx,"function mark_all_for_delete(){var deletees = getElementsByClass('Delete');for(var i=0;i < deletees.length;i++){deletees[i].checked=true;}}\n");
+			INSERT(uctx,"function mark_all_for_approve(){var approvees = getElementsByClass('Approve');for(var i=0;i < approvees.length;i++){approvees[i].checked=true;}}\n");
+			INSERT(uctx,"</script>\n");
 			DOCUMENT_END(uctx);
+
 		}catch(Exception e)
 		{
 			ERROR_PAGE(uctx,e);
