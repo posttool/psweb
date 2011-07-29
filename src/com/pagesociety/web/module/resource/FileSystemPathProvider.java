@@ -119,6 +119,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 			WARNING("ATTEMPTING TO DELETE FILE WHICH DOES NOT EXIST:\n"+f.getAbsolutePath());
 			return;
 		}
+		if(f.isDirectory())
+		{
+			DELETE_DIR(f);
+			return;
+		}
 		/* delete file and all generated previews */
 		String filename = f.getName();
 		int dot_idx = filename.lastIndexOf('.');
@@ -131,9 +136,11 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		{
 			String fname = ff[i].getName();
 			if(fname.equals(f.getName()) || fname.startsWith(filename) &&
-			   !fname.matches(".*_\\d+(\\.\\w+)?$"))//and doesnt end with _1.swf,_2,swf etc in other words not a preview but a unique filename provided by the path provider because the original filename existed
+			   PathProviderUtil.isLikelyPreview(filename))
 			{
 				ff[i].delete();
+				if(ff.length == 1)
+					parent_dir.delete();
 				continue;
 			}
 			// FIX ME ///
@@ -141,6 +148,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 			//	DO THE DELETE										//
 			//	OTHERWISE LEAVE IT ALONE							//
 		}
+
 	}
 
 
@@ -168,7 +176,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 				ff[i].delete();
 		}
 	}
-
+	/*in the case of a directory this will just list the files under the directory in a relative fashion */
 	public List<String> listPreviews(String path_token) throws WebApplicationException
 	{
 		List<String> s = new ArrayList<String>();

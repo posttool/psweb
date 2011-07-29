@@ -35,10 +35,16 @@ public class PathProviderUtil
 		}
 		return '_' + b.substring(0, b.length() - 1);
 	}
-	
+
+	public static boolean isLikelyPreview(String filename)
+	{
+		String regexp1 = ".*\\d+x\\d+((\\.([Pp][Nn][Gg]|[Jj][Pp][Gg]|[Jj][Pp][Ee][Gg]))$"; //old format with extension
+		String regexp2 = ".*(_\\w+\\.\\w+)+(\\.([Pp][Nn][Gg]|[Jj][Pp][Gg]|[Jj][Pp][Ee][Gg]))$"; //new options format with extension
+		return filename.matches(regexp1) || filename.matches(regexp2);
+	}
 	public static Process EXEC(String cmd,String... args) throws WebApplicationException
 	{
-		
+
 		Runtime rt = Runtime.getRuntime();
 		String[] cmd_array = new String[1+args.length];
 		cmd_array[0] = cmd;
@@ -60,7 +66,7 @@ public class PathProviderUtil
 		}
 
 	}
-	
+
 	public static String process(String cmd,String...args) throws WebApplicationException, IOException
 	{
 		Process p = EXEC(cmd, args);
@@ -75,10 +81,10 @@ public class PathProviderUtil
 				b.append(nr);
 				nr = is.read(buf);
 			}
-			
+
 			if(ret != 0)
 				throw new WebApplicationException("REWRITE ZONE FIELD PROCESS FAILED WITH EXIT CODE "+ret);
-			
+
 			return b.toString();
 		}catch(InterruptedException ie)
 		{
@@ -86,8 +92,8 @@ public class PathProviderUtil
 		}
 
 	}
-	
-	
+
+
 	public static void main(String[] args)
 	{
 		Map<String, String> options = new HashMap<String,String>();
