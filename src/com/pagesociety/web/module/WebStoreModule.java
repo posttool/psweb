@@ -2011,6 +2011,12 @@ public class WebStoreModule extends WebModule
 			actualize_entity_defs();
 			actualize_entity_indices();
 			actualize_entity_relationships();
+			if(System.getProperty("ps.persistence.abort_after_evolution") != null)
+			{
+				getApplication().applicationDestroyed();
+				INFO("EXITING EVOLUTION");
+				System.exit(0);
+			}
 		}
 
 		private void actualize_entity_defs() throws PersistenceException,InitializationException
