@@ -527,14 +527,24 @@ public abstract class WebApplication
 		for(int i = 0;i < _module_list.size();i++)
 		{
 			Module m = _module_list.get(i);
-			m.onDestroy();
+			try{
+				m.onDestroy();
+			}catch(Exception e)
+			{
+				System.out.println("DESTROY FOR "+m.getName()+" FAILED");
+			}
 		}
 
 		//destroy these last//
 		for(int i = 0;i < _persistence_providers.size();i++)
 		{
 			Module m = _persistence_providers.get(i);
-			m.onDestroy();
+			try{
+				m.onDestroy();
+			}catch(Exception e)
+			{
+				System.out.println("DESTROY FOR "+m.getName()+" FAILED");
+			}
 		}
 		System.out.println("APPLICATION "+_config.getName()+" IS NOW DESTROYED");
 		System.out.println(new Date());
