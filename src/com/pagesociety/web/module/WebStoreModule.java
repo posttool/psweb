@@ -1922,6 +1922,12 @@ public class WebStoreModule extends WebModule
 			schema_receiver s = schema_map_as_list.get(i);
 			s.actualize();
 		}
+		if(System.getProperty("ps.persistence.abort_after_evolution") != null)
+		{
+			app.applicationDestroyed();
+			System.out.println("EXITING EVOLUTION");
+			System.exit(0);
+		}
 	}
 
 
