@@ -19,6 +19,7 @@ import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.WebModule.CALLBACK;
 import com.pagesociety.web.module.ecommerce.gateway.BillingGatewayException;
 import com.pagesociety.web.module.ecommerce.gateway.IBillingGateway;
 import com.pagesociety.web.module.encryption.IEncryptionModule;
@@ -523,6 +524,24 @@ public class CommentModule extends WebStoreModule
 		return result;
 	}
 
+	public void unapproveAllComments() throws WebApplicationException,PersistenceException
+	{
+
+		PAGE_APPLY(COMMENT_ENTITY, new CALLBACK(){
+
+			public Object exec(Object... args) throws Exception
+			{
+				Entity comment = (Entity)args[0];
+				if((Integer)comment.getAttribute(COMMENT_FIELD_FLAGGED_STATUS) != FLAGGED_STATUS_UNAPPROVED)
+				{
+					UPDATE(comment,
+							COMMENT_FIELD_FLAGGED_STATUS,FLAGGED_STATUS_UNAPPROVED);
+				}
+				return CALLBACK_VOID;
+			}
+		});
+
+	}
 
 	public PagingQueryResult getAllApprovedComments(int offset,int page_size) throws WebApplicationException,PersistenceException
 	{

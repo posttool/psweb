@@ -165,6 +165,10 @@ public class CommentApproveRawUI extends RawUIModule
 				}
 
 			}
+			if(params.get("do_unapprove_all") != null)
+			{
+				comment_module.unapproveAllComments();
+			}
 			PagingQueryResult result = comment_module.getAllUnapprovedComments(  0, Query.ALL_RESULTS);
 			List<Entity> comments = result.getEntities();
 
@@ -196,7 +200,10 @@ public class CommentApproveRawUI extends RawUIModule
 			FORM_SUBMIT_BUTTON(uctx, "Submit");
 			FORM_END(uctx);
 			HR(uctx);
+			A_GET(uctx, getName(),RAW_SUBMODE_DEFAULT , "[ unapprove all comments] ", "do_unapprove_all","true");
+			BR(uctx);
 			A_GET(uctx, getName(),RAW_SUBMODE_DEFAULT , "[ delete all comments] ", "do_delete_all","true");
+
 			StringBuilder get_elements_by_class_js = new StringBuilder();
 			get_elements_by_class_js.append("function getElementsByClass(clazz)\n");
 			get_elements_by_class_js.append("{\n");
