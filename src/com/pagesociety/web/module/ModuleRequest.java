@@ -18,7 +18,7 @@ public class ModuleRequest
 	public ModuleRequest()
 	{
 	}
-	
+
 	public ModuleRequest(String module_name, String method_name)
 	{
 		_module_name = module_name;
@@ -67,6 +67,8 @@ public class ModuleRequest
 		b.append("/");
 		b.append(_method_name);
 		b.append("/");
+		if(_arguments == null)
+			return b.toString();
 		for (int i = 0; i < _arguments.length; i++)
 		{
 			Object o = _arguments[i];
