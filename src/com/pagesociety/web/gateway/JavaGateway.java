@@ -143,7 +143,7 @@ public class JavaGateway
 				    conn.disconnect();
 		    		return response_obj.value;
 		    	case HttpURLConnection.HTTP_NO_CONTENT:
-		    		response 	= convertStreamToString(conn.getInputStream());
+		    		response 	= convertStreamToString(conn.getErrorStream());
 		    		System.out.println("STRING RESPONSE WAS "+response);
 		    		response_obj = (JavaGatewayResponse)ObjectFromString(response);
 				    conn.disconnect();
