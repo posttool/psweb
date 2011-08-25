@@ -60,10 +60,6 @@ public class AmfGateway
 			response.setContentLength(responseLength);
 			response.getOutputStream().write(amf_out.buffer.array(), amf_out.buffer.position(), responseLength);
 		}
-		catch (WebApplicationException e)
-		{
-			e.printStackTrace();
-		}
 		finally
 		{
 			if (amf_in != null && amf_in.buffer != null)
