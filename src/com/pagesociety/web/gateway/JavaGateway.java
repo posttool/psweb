@@ -42,16 +42,16 @@ public class JavaGateway
 	{
 
 		int expectedLength = request.getContentLength();
-		System.out.println("EXPECTED LENGTH ISA "+expectedLength);
+
 			String request_path = request.getRequestURI().substring(request.getContextPath().length());
 			ModuleRequest module_request = GatewayUtil.parseModuleRequest(request, request_path);
 			String body 					= request.getParameter("payload");
-			System.out.println("BODY IS "+body);
+
 			JavaGatewayRequest request_obj 	= null;
 			JavaGatewayResponse jresponse 	= new JavaGatewayResponse();
 			try{
 				request_obj = (JavaGatewayRequest)ObjectFromString(body);
-				module_request.setArguments(request_obj.arguments);
+				//module_request.setArguments(request_obj.arguments);
 			}catch(ClassNotFoundException cnfe)
 			{
 				cnfe.printStackTrace();
@@ -59,7 +59,7 @@ public class JavaGateway
 				jresponse.response_time 	= new Date().getTime();
 				jresponse.routing_id		= "unknown";
 				jresponse.value				= cnfe;
-
+				response.setStatus(HttpURLConnection.HTTP_NO_CONTENT);
 			}
 
 			module_request.setUserContext(user_context);
@@ -73,18 +73,16 @@ public class JavaGateway
 				return_value 	= _web_application.dispatch(module_request);
 				jresponse.value = return_value;
 
-
 			}
 			catch (Throwable e)
 			{
 				e.printStackTrace();
 				jresponse.value = e;
-
+				response.setStatus(HttpURLConnection.HTTP_NO_CONTENT);
 			}
 
 			String text_response = ObjectToString(jresponse);
 			response.setContentType("application/octet-stream");
-			response.setContentType("text/plain");
 			response.setContentLength(text_response.length());
 			PrintWriter out = response.getWriter();
 			out.write(text_response);
@@ -125,6 +123,7 @@ public class JavaGateway
 		    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
 		    conn.setConnectTimeout(10000);
 		    conn.setDoOutput(true);
+		    conn.setDoInput(true);
 		    String encoded_request 	= ObjectToString(request);
 		    OutputStreamWriter wr 	= new OutputStreamWriter(conn.getOutputStream());
 		    wr.write("payload="+encoded_request);
@@ -145,6 +144,7 @@ public class JavaGateway
 		    		return response_obj.value;
 		    	case HttpURLConnection.HTTP_NO_CONTENT:
 		    		response 	= convertStreamToString(conn.getInputStream());
+		    		System.out.println("STRING RESPONSE WAS "+response);
 		    		response_obj = (JavaGatewayResponse)ObjectFromString(response);
 				    conn.disconnect();
 		    		Exception e = (Exception)response_obj.value;
@@ -251,8 +251,9 @@ public class JavaGateway
 
 	            char[] buffer = new char[1024];
 	            try {
-	                Reader reader = new BufferedReader(
-	                        new InputStreamReader(is, "UTF-8"));
+	                Reader reader = //new BufferedReader(
+	                        new InputStreamReader(is, "UTF-8");
+	                        //);
 	                int n;
 	                while ((n = reader.read(buffer)) != -1) {
 	                    writer.write(buffer, 0, n);
