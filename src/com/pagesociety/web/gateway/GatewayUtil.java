@@ -14,14 +14,14 @@ public class GatewayUtil
 {
 	public static final String REQUEST_PATH_SEPARATOR = "/";
 
-	public static ModuleRequest parseModuleRequest(HttpServletRequest servlet_request) throws WebApplicationException
+	public static ModuleRequest parseModuleRequest(HttpServletRequest servlet_request)
 	{
 		return parseModuleRequest(servlet_request, servlet_request.getRequestURI().
 			substring(servlet_request.getContextPath().length()));
 	}
-	
+
 	public static ModuleRequest parseModuleRequest(HttpServletRequest servlet_request,
-			String request_path) throws WebApplicationException
+			String request_path)
 	{
 		String path = request_path;
 		if (path.startsWith(REQUEST_PATH_SEPARATOR))
@@ -38,5 +38,5 @@ public class GatewayUtil
 		return module_request;
 	}
 
-	
+
 }

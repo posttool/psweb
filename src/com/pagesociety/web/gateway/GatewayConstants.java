@@ -14,11 +14,13 @@ public class GatewayConstants
 	public static final String MIME_TYPE_HTML 	= "text/html";
 	public static final String MIME_TYPE_CSS 	= "text/css";
 	public static final String MIME_TYPE_JS 	= "application/x-javascript";
+
 	// suffixes
 	public static final String SUFFIX_JSON = ".json";
 	public static final String SUFFIX_AMF  = ".amf";
 	public static final String SUFFIX_FORM = ".form";
 	public static final String SUFFIX_RAW  = ".raw";
+	public static final String SUFFIX_JAVA  = ".jso";
 	// free-marker suffixes
 	public static final String SUFFIX_FREEMARKER_HTML = ".fhtml";
 	public static final String SUFFIX_FREEMARKER_CSS  = ".fcss";

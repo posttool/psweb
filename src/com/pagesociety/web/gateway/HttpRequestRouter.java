@@ -45,6 +45,7 @@ public class HttpRequestRouter extends HttpServlet
 	private FreemarkerGateway freemarker_gateway;
 	private FormGateway form_gateway;
 	private RawGateway  raw_gateway;
+	private JavaGateway java_gateway;
 	private String	_session_cookie_domain;
 
 	public void init(ServletConfig cfg) throws ServletException
@@ -54,8 +55,8 @@ public class HttpRequestRouter extends HttpServlet
 
 		if (_web_application == null)
 			throw new ServletException("WebApplication was not initialized. Make sure ApplicationBootstrap has been loaded.");
-		
-			
+
+
 			// _web_application.setGateway(this);
 		_web_application.getSessionManager(HTTP).setTimeout(SESSION_TIMEOUT);
 		_web_url = _web_application.getConfig().getWebRootUrl();
@@ -69,15 +70,16 @@ public class HttpRequestRouter extends HttpServlet
 		freemarker_gateway = new FreemarkerGateway(_web_application);
 		form_gateway = new FormGateway(_web_application);
 		raw_gateway  = new RawGateway(_web_application);
+		java_gateway  = new JavaGateway(_web_application);
 		//
 		logger.info("ServletGateway init complete");
 	}
 
-	
+
 	private void set_session_cookie_domain() throws ServletException
 	{
 		String url = _web_application.getConfig().getWebRootUrl();
-		String[] protocol_parts = url.split("//"); 
+		String[] protocol_parts = url.split("//");
 		if(protocol_parts.length < 2)
 		{
 			throw new ServletException("PROTOCOL SHOULD BE PART OF PROPERTY WEB ROOT URL");
@@ -86,7 +88,7 @@ public class HttpRequestRouter extends HttpServlet
 		for(int i = 1;i < protocol_parts.length;i++)
 			url+=protocol_parts[i];
 
-		String[] domain_parts = url.split("\\."); 
+		String[] domain_parts = url.split("\\.");
 		if(domain_parts.length < 2)
 		{
 			//throw new ServletException("SEEMS LIKE YOU HAVE A BAD WEB ROOT URL: "+_web_application.getConfig().getWebRootUrl());
@@ -96,7 +98,7 @@ public class HttpRequestRouter extends HttpServlet
 			_session_cookie_domain = "."+domain_parts[domain_parts.length-2]+'.'+domain_parts[domain_parts.length-1];
 		System.out.println("BASE COOKIE DOMAIN IS "+_session_cookie_domain);
 	}
-	
+
 	public void open()
 	{
 		_is_closed = false;
@@ -191,45 +193,52 @@ public class HttpRequestRouter extends HttpServlet
 				return;
 			}
 			// redirect if the session id was included in requests for the following...
-			if (request.getParameter(GatewayConstants.SESSION_ID_KEY)!=null)
+			else if (request.getParameter(GatewayConstants.SESSION_ID_KEY)!=null)
 			{
 				response.sendRedirect( getPathWithoutSessionId(request) );
 				return;
 			}
 			// AMF
-			if (requestPath.endsWith(GatewayConstants.SUFFIX_AMF))
+			else if (requestPath.endsWith(GatewayConstants.SUFFIX_AMF))
 			{
 				amf_gateway.doService(uctx, request, response);
 				return;
 			}
 			// JSON
-			if (requestPath.endsWith(GatewayConstants.SUFFIX_JSON))
+			else if (requestPath.endsWith(GatewayConstants.SUFFIX_JSON))
 			{
 				json_gateway.doService(uctx, request, response);
 				return;
 			}
 			//RAW
-			if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
+			else if (requestPath.endsWith(GatewayConstants.SUFFIX_RAW))
 			{
 				raw_gateway.doService(uctx, request, response);
 				return;
 			}
+
+			//JAVA
+			else if (requestPath.endsWith(GatewayConstants.SUFFIX_JAVA))
+			{
+				java_gateway.doService(uctx, request, response);
+				return;
+			}
 			//registered gateways
-			
-	
+
+
 			// MAPPED from config file or module//
 			Object[] url_mapped_request = _web_application.getMapping(completeUrl);
-			
-			
+
+
 			if (url_mapped_request != null)
 			{
 				UrlMapInfo url_map_info = (UrlMapInfo)url_mapped_request[0];
 				//TODO here we are hackinginto the gateway and letting a module i.e. SiteConfigModule
 				//handle the whole request. need to refactor gateways and session managers into modules
-	
+
 				if(url_map_info.getHandler() != null)
 				{
-					_web_application.INFO("MATCHED HANDLER "+((WebModule)url_map_info.getHandler()).getName());			
+					_web_application.INFO("MATCHED HANDLER "+((WebModule)url_map_info.getHandler()).getName());
 					if(url_map_info.getHandler().handleRequest(uctx, request, response))
 					{
 						_web_application.INFO("HANDLER HANDLED");
@@ -240,7 +249,7 @@ public class HttpRequestRouter extends HttpServlet
 				else
 				{
 					String path = (String)url_mapped_request[1];
-					_web_application.INFO("MATCHED "+path);			
+					_web_application.INFO("MATCHED "+path);
 					if (url_map_info.isSecure()==UrlMapInitParams.SECURE && !completeUrl.startsWith(_web_url_secure))
 					{
 						response.sendRedirect( get_path(_web_url_secure,getContextPathEtc(request),uctx) );
@@ -253,24 +262,24 @@ public class HttpRequestRouter extends HttpServlet
 					}
 		//TODO
 		//this might work, but it might match make everything forward forever, too!
-					else 
+					else
 					{
-		
-						
+
+
 						RequestDispatcher dispatcher = request.getRequestDispatcher(path);
 						dispatcher.forward(request, response);
 						return;
 					}
 				}
 			}
-			
+
 			// FREEMARKER
 			if (is_freemarker_path(requestPath))
 			{
 				freemarker_gateway.doService(uctx, requestPath, request, response);
 				return;
 			}
-			
+
 			// UNKNOWN
 			File request_file = new File(_web_application.getConfig().getWebRootDir(), requestPath);
 			if(request_file.exists())
@@ -280,35 +289,35 @@ public class HttpRequestRouter extends HttpServlet
 			}
 			else
 			{
-				response.setStatus(404);	
+				response.setStatus(404);
 				return;
-			}	
-			
+			}
+
 		}finally
 		{
 			_web_application.removeCallingUserContext();
 		}
 	}
 
-	
+
 	private void set_uctx_system_info(UserApplicationContext uctx,HttpServletRequest request,HttpServletResponse response)
 	{
 		set_uctx_user_agent_info(uctx, request, response);
-		
+
 	}
-	
+
 	private void set_uctx_user_agent_info(UserApplicationContext uctx,HttpServletRequest request,HttpServletResponse response)
 	{
 		String agent_string = request.getHeader("user-agent");
 		uctx.setProperty(USER_AGENT_UCTX_KEY, agent_string);
-		
+
 		//TODO: check out the UserAgentTools below and put that crap
 		//in the usercontext
-		
+
 //		String[] os_info 	  = UserAgentTools.getOS(agent_string);
 //		String[] browser_info = UserAgentTools.getBrowser(agent_string);
 	}
-	
+
 	private void dump_http_headers(HttpServletRequest request,HttpServletResponse response)
 	{
 		Enumeration<String> header_names = (Enumeration<String>)request.getHeaderNames();
@@ -317,9 +326,9 @@ public class HttpRequestRouter extends HttpServlet
 			String header_name  = header_names.nextElement();
 			System.out.println("\t"+header_name+" = "+request.getHeader(header_name));
 		}
-		
+
 	}
-	
+
 	private boolean is_freemarker_path(String path)
 	{
 		for (int i = 0; i < GatewayConstants.SUFFIXES_FREEMARKER.length; i++)
@@ -330,7 +339,7 @@ public class HttpRequestRouter extends HttpServlet
 		return false;
 
 	}
-	
+
 	private String get_path(String root, String path, UserApplicationContext uctx)
 	{
 		StringBuilder b = new StringBuilder();
@@ -360,7 +369,7 @@ public class HttpRequestRouter extends HttpServlet
         String servletPath = req.getServletPath();   // /servlet/MyServlet
         String pathInfo = req.getPathInfo();         // /a/b;c=123
         String queryString = req.getQueryString();    // d=789
-   
+
         // Reconstruct original requesting URL
         StringBuilder b = new StringBuilder();
         b.append(scheme);
@@ -373,11 +382,11 @@ public class HttpRequestRouter extends HttpServlet
         }
         b.append(contextPath);
         b.append(servletPath);
-        if (pathInfo != null) 
+        if (pathInfo != null)
         {
         	b.append(pathInfo);
         }
-        if (queryString != null) 
+        if (queryString != null)
         {
         	StringBuilder bb = new StringBuilder();
         	bb.append("?");
@@ -406,18 +415,18 @@ public class HttpRequestRouter extends HttpServlet
         StringBuilder b = new StringBuilder();
 		b.append(contextPath);
         b.append(servletPath);
-        if (pathInfo != null) 
+        if (pathInfo != null)
         {
         	b.append(pathInfo);
         }
-        if (queryString != null) 
+        if (queryString != null)
         {
         	b.append("?");
             b.append(queryString);
         }
         return b.toString();
 	}
-	
+
 	public static String getUrl(HttpServletRequest req)
 	{
         String scheme = req.getScheme();             // http
@@ -427,7 +436,7 @@ public class HttpRequestRouter extends HttpServlet
         String servletPath = req.getServletPath();   // /servlet/MyServlet
         String pathInfo = req.getPathInfo();         // /a/b;c=123
         String queryString = req.getQueryString();   // d=789
-   
+
         // Reconstruct original requesting URL
         StringBuilder b = new StringBuilder();
         b.append(scheme);
@@ -440,31 +449,31 @@ public class HttpRequestRouter extends HttpServlet
         }
         b.append(contextPath);
         b.append(servletPath);
-        if (pathInfo != null) 
+        if (pathInfo != null)
         {
         	b.append(pathInfo);
         }
-        if (queryString != null) 
+        if (queryString != null)
         {
         	b.append("?");
             b.append(queryString);
         }
         return b.toString();
 	}
-	
-	
-	
+
+
+
 	private UserApplicationContext get_user_context(HttpServletRequest request,
 			HttpServletResponse response)
 	{
-		
+
 		String http_sess_id = null;
 		Cookie cookie = null;
 		Cookie[] cookies = request.getCookies();
-		
+
 		if (cookies != null)
 		{
-		
+
 			int s = cookies.length;
 			for (int i=0; i<s; i++)
 			{
@@ -482,12 +491,12 @@ public class HttpRequestRouter extends HttpServlet
 		{
 			if (cookie==null)
 				http_sess_id = set_session_cookie(response,null);
-			else 
+			else
 				http_sess_id = cookie.getValue();
 		}
 		return _web_application.getUserContext(HTTP, http_sess_id);
 	}
-	
+
 	private String set_session_cookie(HttpServletResponse response,String http_session_id)
 	{
 		if(http_session_id == null)
@@ -500,11 +509,11 @@ public class HttpRequestRouter extends HttpServlet
 		response.addCookie(c);
 		return http_session_id;
 	}
-	
+
 /* USER AGENT UTIL STUFF */
-	
+
 static class UserAgentTools {
-	    
+
 		  public static String getFirstVersionNumber(String a_userAgent, int a_position, int numDigits) {
 		    String ver = getVersionNumber(a_userAgent, a_position);
 		    if (ver==null) return "";
@@ -516,26 +525,26 @@ static class UserAgentTools {
 		    }
 		    return res;
 		  }
-		  
+
 		  public static String getVersionNumber(String a_userAgent, int a_position) {
 		      if (a_position<0) return "";
 		      StringBuffer res = new StringBuffer();
 		      int status = 0;
-		      
+
 		      while (a_position < a_userAgent.length()) {
 		          char c = a_userAgent.charAt(a_position);
 		          switch (status) {
-		            case 0: 
+		            case 0:
 		              if (c == ' ' || c=='/') break;
 		              if (c == ';' || c==')') return "";
 		              status = 1;
-		            case 1: 
+		            case 1:
 		              if (c == ';' || c=='/' || c==')' || c=='(' || c=='[') return res.toString().trim();
 		              if (c == ' ') status = 2;
 		              res.append(c);
 		              break;
-		            case 2: 
-		              if ((Character.isLetter(c) && 
+		            case 2:
+		              if ((Character.isLetter(c) &&
 		                   Character.isLowerCase(c)) ||
 		                  Character.isDigit(c)) {
 		                  res.append(c);
@@ -593,8 +602,8 @@ static class UserAgentTools {
 		    if (res==null) return null;
 		    return getArray(res,res,res + getVersionNumber(userAgent,pos));
 		  }
-		  
-		  
+
+
 		  public static String[] getOS(String userAgent) {
 			    if (getBotName(userAgent)!=null) return getArray("Bot","Bot","Bot");
 			    String[]res = null;
@@ -768,7 +777,7 @@ static class UserAgentTools {
 			    return res;
 			  }
 
-		  
+
 		  public static String []getBrowser(String userAgent) {
 		    String []botName;
 		    if ((botName=getBotName(userAgent))!=null) return botName;
@@ -875,6 +884,6 @@ static class UserAgentTools {
 		    	return getArray("?","?","?");
 		    return res;
 		  }
-		}  
+		}
 
 }
