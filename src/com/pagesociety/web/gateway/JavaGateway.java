@@ -41,7 +41,6 @@ public class JavaGateway
 			throws ServletException, IOException
 	{
 
-		int expectedLength = request.getContentLength();
 
 			String request_path = request.getRequestURI().substring(request.getContextPath().length());
 			ModuleRequest module_request = GatewayUtil.parseModuleRequest(request, request_path);
@@ -49,9 +48,10 @@ public class JavaGateway
 
 			JavaGatewayRequest request_obj 	= null;
 			JavaGatewayResponse jresponse 	= new JavaGatewayResponse();
+
 			try{
 				request_obj = (JavaGatewayRequest)ObjectFromString(body);
-				//module_request.setArguments(request_obj.arguments);
+
 			}catch(ClassNotFoundException cnfe)
 			{
 				cnfe.printStackTrace();
@@ -59,9 +59,11 @@ public class JavaGateway
 				jresponse.response_time 	= new Date().getTime();
 				jresponse.routing_id		= "unknown";
 				jresponse.value				= cnfe;
-				response.setStatus(HttpURLConnection.HTTP_NO_CONTENT);
+				jresponse.response_code		= JavaGatewayResponse.MODULE_METHOD_INVOKE_ERROR;
 			}
 
+			module_request.setArguments(request_obj.arguments);
+			/* need to figure out what the user context actually is here at some point*/
 			module_request.setUserContext(user_context);
 			Object return_value;
 
@@ -70,15 +72,15 @@ public class JavaGateway
 			jresponse.routing_id		= request_obj.routing_id;
 			try
 			{
-				return_value 	= _web_application.dispatch(module_request);
-				jresponse.value = return_value;
-
+				return_value 			= _web_application.dispatch(module_request);
+				jresponse.value 		= return_value;
+				jresponse.response_code = JavaGatewayResponse.MODULE_METHOD_INVOKE_OK;
 			}
 			catch (Throwable e)
 			{
 				e.printStackTrace();
 				jresponse.value = e;
-				response.setStatus(HttpURLConnection.HTTP_NO_CONTENT);
+				jresponse.response_code = JavaGatewayResponse.MODULE_METHOD_INVOKE_ERROR;
 			}
 
 			String text_response = ObjectToString(jresponse);
@@ -133,25 +135,25 @@ public class JavaGateway
 		    // Get the response
 
 		    int response_code 	= conn.getResponseCode();
-
-
 		    switch (response_code)
 		    {
 		    	case HttpURLConnection.HTTP_OK:
-		    		String response 	= convertStreamToString(conn.getInputStream());
+		    		String response 				 = convertStreamToString(conn.getInputStream());
 		    		JavaGatewayResponse response_obj = (JavaGatewayResponse)ObjectFromString(response);
-				    conn.disconnect();
-		    		return response_obj.value;
-		    	case HttpURLConnection.HTTP_NO_CONTENT:
-		    		response 	= convertStreamToString(conn.getErrorStream());
-		    		System.out.println("STRING RESPONSE WAS "+response);
-		    		response_obj = (JavaGatewayResponse)ObjectFromString(response);
-				    conn.disconnect();
-		    		Exception e = (Exception)response_obj.value;
-		    		throw e;
+		    		conn.disconnect();
+		    		switch (response_obj.response_code)
+		    		{
+	    				case JavaGatewayResponse.MODULE_METHOD_INVOKE_OK:
+	    					return response_obj.value;
+	    				case JavaGatewayResponse.MODULE_METHOD_INVOKE_ERROR:
+	    					Exception e = (Exception)response_obj.value;
+	    					throw e;
+	    				default:
+	    					throw new WebApplicationException("JavaGateway - REQUEST FAILED "+url_string);
+		    		}
 		    	default:
 				    conn.disconnect();
-		    		throw new WebApplicationException("JavaGateway - REQUEST FAILED "+url_string+" with response code: "+response_code);
+				    throw new WebApplicationException("JavaGateway - REQUEST FAILED "+url_string+" with response code: "+response_code);
 		    }
 
 
@@ -193,21 +195,25 @@ public class JavaGateway
 
 				    switch (response_code)
 				    {
-				    	case HttpURLConnection.HTTP_OK:
-				    		String response 	= convertStreamToString(conn.getInputStream());
-				    		JavaGatewayResponse response_obj = (JavaGatewayResponse)ObjectFromString(response);
-						    conn.disconnect();
-						    callback.exec(HttpURLConnection.HTTP_OK,routing_id,response_obj.value);
-				    	case HttpURLConnection.HTTP_NO_CONTENT:
-				    		response 	= convertStreamToString(conn.getInputStream());
-				    		response_obj = (JavaGatewayResponse)ObjectFromString(response);
-						    conn.disconnect();
-				    		Exception e = (Exception)response_obj.value;
-				    		callback.exec(HttpURLConnection.HTTP_NO_CONTENT,routing_id,e);
-				    	default:
-						    conn.disconnect();
-				    		Exception we = new WebApplicationException("JavaGateway - REQUEST FAILED "+url_string+" with response code: "+response_code);
-				    		callback.exec(response_code,routing_id,we);
+			    	case HttpURLConnection.HTTP_OK:
+
+			    		String response 	= convertStreamToString(conn.getInputStream());
+			    		JavaGatewayResponse response_obj = (JavaGatewayResponse)ObjectFromString(response);
+			    		conn.disconnect();
+			    		switch (response_obj.response_code)
+					    {
+					    	case JavaGatewayResponse.MODULE_METHOD_INVOKE_OK:
+					    		callback.exec(JavaGatewayResponse.MODULE_METHOD_INVOKE_OK,routing_id,response_obj.value);
+					    		break;
+					    	case JavaGatewayResponse.MODULE_METHOD_INVOKE_ERROR:
+					    		Exception e = (Exception)response_obj.value;
+					    		callback.exec(JavaGatewayResponse.MODULE_METHOD_INVOKE_ERROR,routing_id,e);
+					    		break;
+					    }
+			    	default:
+					    conn.disconnect();
+			    		Exception we = new WebApplicationException("JavaGateway - REQUEST FAILED "+url_string+" with response code: "+response_code);
+			    		callback.exec(JavaGatewayResponse.MODULE_METHOD_SERVER_ERROR,routing_id,we);
 				    }
 
 
