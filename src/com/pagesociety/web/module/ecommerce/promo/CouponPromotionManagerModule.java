@@ -17,6 +17,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.WebStoreModule;
+import com.pagesociety.web.module.ecommerce.recurring.RecurringOrderModule;
 import com.pagesociety.web.module.email.IEmailModule;
 
 
@@ -30,6 +31,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 
 	private static final String PARAM_TEMPLATE_NAME		= "email-template-name";
 	private static final String PARAM_EMAIL_SENDER		= "promo-sender-address";
+	private static final String PARAM_ORDER_ENTITY_NAME	= "order-entity-name";
 
 	private static final String DEFAULT_TEMPLATE_NAME	= "promotion.ftl";
 
@@ -38,6 +40,8 @@ public class CouponPromotionManagerModule extends WebStoreModule
 
 	private String template_name;
 	private String promo_sender_address;
+	private String order_entity_name;
+
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);
@@ -47,6 +51,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		template_name 		= GET_OPTIONAL_CONFIG_PARAM(PARAM_TEMPLATE_NAME, config);
 		if(template_name == null)
 			template_name = DEFAULT_TEMPLATE_NAME;
+		order_entity_name = GET_OPTIONAL_CONFIG_PARAM(PARAM_ORDER_ENTITY_NAME, RecurringOrderModule.RECURRING_ORDER_ENTITY, config);
 	}
 
 	protected void defineSlots()
@@ -285,7 +290,114 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		return promotion_module.createPromotion(creator, title, description, program);
 	}
 
+//*SIMPLE CODE BASED ONES *//
+	public Entity createCouponPromotionSimple(Entity creator,String title,long promotion_id,long ir1,long ir2,long ir3,long ir4,String sr1,String sr2,double fpr1,double fpr2,String code,int expr_in_days,int num_uses) throws PersistenceException,WebApplicationException
+	{
+			try{
+				START_TRANSACTION(getName()+" createCouponPromotionSimple");
 
+
+				Entity cp = NEW(COUPON_PROMOTION_SIMPLE_ENTITY,
+								creator,
+								COUPON_PROMOTION_SIMPLE_TITLE,title
+								);
+				Entity promotion = GET(PromotionModule.PROMOTION_ENTITY,promotion_id);
+				Date promo_expr;
+				if(expr_in_days == 0) /* i think 0 means never expire */
+					promo_expr = null;
+				else
+				{
+					Calendar cal = Calendar.getInstance();
+					cal.add(Calendar.DATE, expr_in_days);
+					promo_expr = cal.getTime();
+				}
+
+				Entity coupon_promo = promotion_module.createCouponPromotion(null, code, num_uses, promotion, promo_expr,
+						ir1,
+						ir2,
+						ir3,
+						ir4,
+						sr1,
+						sr2,
+						fpr1,
+						fpr2);
+
+
+				UPDATE(cp,
+						COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION,
+						coupon_promo);
+
+				COMMIT_TRANSACTION();
+				return cp;
+
+
+			}catch(PersistenceException e)
+			{
+				ROLLBACK_TRANSACTION();
+				throw e;
+			}
+
+	}
+
+	public Entity getCouponPromotionSimple(long id) throws PersistenceException,WebApplicationException
+	{
+		Entity promo_simple =  GET(COUPON_PROMOTION_SIMPLE_ENTITY,id);
+		FILL_DEEP_AND_MASK(promo_simple, FILL_ALL_FIELDS, MASK_NO_FIELDS);
+		return promo_simple;
+	}
+
+	public List<Entity> getAllCouponPromotionSimple() throws PersistenceException
+	{
+		Query q = new Query(COUPON_PROMOTION_SIMPLE_ENTITY);
+		q.idx(Query.PRIMARY_IDX);
+		q.eq(Query.VAL_GLOB);
+		q.orderBy(FIELD_LAST_MODIFIED,Query.DESC);
+		QueryResult results = QUERY(q);
+		return results.getEntities();
+	}
+
+	public List<Entity> getOrdersWhichHaveUsedSimplePromotion(Entity promo_simple) throws PersistenceException,WebApplicationException
+	{
+		final List<Entity> orders				= new ArrayList<Entity>();
+		final Entity underlying_coupon_promo 	= (Entity)EXPAND((Entity)promo_simple.getAttribute(COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION));
+		//if we want to use this with new cali we need to make the order entity it looks at
+		//configurable. in the case of new cali it is soft order not recurring order
+		//..also we need to use creator instead of filling user ref //
+		PAGE_APPLY(order_entity_name, new CALLBACK()
+			{
+				public Object exec(Object... args) throws Exception
+				{
+					Entity order = (Entity)args[0];
+					List<Entity> promotion_instances = (List<Entity>)order.getAttribute(RecurringOrderModule.RECURRING_ORDER_FIELD_PROMOTIONS);
+					if(promotion_instances == null || promotion_instances.size() == 0)
+						;
+					else
+					{
+						for(int i = 0;i < promotion_instances.size();i++)
+						{
+							Entity pi 	= EXPAND(promotion_instances.get(i));
+							Entity user = EXPAND((Entity)order.getAttribute("user"));
+							Entity instance_coupon_promo = (Entity)pi.getAttribute(PromotionModule.PROMOTION_INSTANCE_FIELD_COUPON_OR_GLOBAL_PROMOTION);
+
+							if(instance_coupon_promo != null && instance_coupon_promo.equals(underlying_coupon_promo))
+							{
+								FILL_REF(order,FIELD_CREATOR);
+								orders.add((Entity)order);
+							}
+						}
+
+					}
+					return CALLBACK_VOID;
+				}
+			});
+		return orders;
+	}
+
+	public Entity deleteCouponPromotionSimple(long id) throws PersistenceException,WebApplicationException
+	{
+		Entity cp = GET(COUPON_PROMOTION_SIMPLE_ENTITY,id);
+		return DELETE_DEEP(cp,new delete_policy(FIELD_CREATOR,COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION));
+	}
 
 
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
@@ -317,6 +429,12 @@ public class CouponPromotionManagerModule extends WebStoreModule
 	public static String COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE		= "promo_code";
 	public static String COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_COUPON_PROMOTION	= "coupon_promotion";
 
+
+	public static String COUPON_PROMOTION_SIMPLE_ENTITY 	  				= "CouponPromotionSimple";
+	public static String COUPON_PROMOTION_SIMPLE_TITLE  	  				= "title";
+	public static String COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION  			= "coupon_promotion";
+
+
 	protected void defineEntities(Map<String,Object> config) throws PersistenceException,InitializationException
 	{
 		DEFINE_ENTITY(COUPON_PROMOTION_CAMPAIGN_ENTITY,
@@ -346,6 +464,13 @@ public class CouponPromotionManagerModule extends WebStoreModule
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_PROMO_CODE,Types.TYPE_STRING,null,
 				COUPON_PROMOTION_CAMPAIGN_RECIPIENT_FIELD_COUPON_PROMOTION,Types.TYPE_REFERENCE,PromotionModule.COUPON_PROMOTION_ENTITY,null
 		);
+
+		DEFINE_ENTITY(COUPON_PROMOTION_SIMPLE_ENTITY,
+				COUPON_PROMOTION_SIMPLE_TITLE,Types.TYPE_STRING,null,
+				COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION,Types.TYPE_REFERENCE,PromotionModule.COUPON_PROMOTION_ENTITY,null
+		);
+
+
 
 	}
 
