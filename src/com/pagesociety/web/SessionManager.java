@@ -52,24 +52,24 @@ public class SessionManager
 		session_reaper_thread.setDaemon(true);
 		session_reaper_thread.start();
 	}
-	
+
 	public void destroy()
 	{
 		reaping = false;
 		session_reaper_thread.interrupt();
 	}
 
-	private class ExpiringObject
+	public class ExpiringObject
 	{
 		public Object object;
-		long time;
+		public long time;
 
 		public ExpiringObject(Object o, long t)
 		{
 			object = o;
 			time = t;
 		}
-		
+
 	}
 
 	public Object get(String sess_id)
@@ -80,7 +80,15 @@ public class SessionManager
 		eo.time = System.currentTimeMillis();
 		return eo.object;
 	}
-	
+	/*look at session object without setting its time */
+	public ExpiringObject inspect(String sess_id)
+	{
+		ExpiringObject eo = _session_map.get(sess_id);
+		if (eo == null)
+			return null;
+		return eo;
+	}
+
 	public Set<String> keySet()
 	{
 		return _session_map.keySet();
