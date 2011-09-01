@@ -38,7 +38,7 @@ public class PathProviderUtil
 
 	public static boolean isLikelyPreview(String filename)
 	{
-		String regexp1 = ".*\\d+x\\d+((\\.([Pp][Nn][Gg]|[Jj][Pp][Gg]|[Jj][Pp][Ee][Gg]))$"; //old format with extension
+		String regexp1 = ".*\\d+x\\d+(\\.([Pp][Nn][Gg]|[Jj][Pp][Gg]|[Jj][Pp][Ee][Gg]))$"; //old format with extension
 		String regexp2 = ".*(_\\w+\\.\\w+)+(\\.([Pp][Nn][Gg]|[Jj][Pp][Gg]|[Jj][Pp][Ee][Gg]))$"; //new options format with extension
 		return filename.matches(regexp1) || filename.matches(regexp2);
 	}
