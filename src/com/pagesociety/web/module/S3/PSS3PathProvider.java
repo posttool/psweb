@@ -39,7 +39,7 @@ import com.pagesociety.web.module.S3.amazon.ListEntry;
 import com.pagesociety.web.module.S3.amazon.Response;
 import com.pagesociety.web.module.S3.amazon.Utils;
 import com.pagesociety.web.module.resource.IResourcePathProvider;
-import com.pagesociety.web.module.resource.PathProviderUtil;
+import com.pagesociety.web.module.resource.PreviewUtil;
 
 public class PSS3PathProvider extends WebStoreModule implements IResourcePathProvider
 {
@@ -338,14 +338,11 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 
 	/* this should take preview params */
 	private ConcurrentHashMap<String, Object> current_thumbnail_generator_locks = new ConcurrentHashMap<String, Object>();
-	private HashSet<Object> 				  active_thumbnail_generator_locks  = new HashSet<Object>();
+	//private HashSet<Object> 				  active_thumbnail_generator_locks  = new HashSet<Object>();
 
 	public String getPreviewUrl(String path_token, int width, int height) throws WebApplicationException
 	{
-		Map<String,String> options = new HashMap<String, String>();
-		options.put(PathProviderUtil.WIDTH,Integer.toString(width));
-		options.put(PathProviderUtil.HEIGHT,Integer.toString(height));
-		return getPreviewUrl(path_token,options);
+		return getPreviewUrl(path_token, PreviewUtil.getOptions(width, height));
 	}
 
 
@@ -439,7 +436,8 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			//now it exists in the scratch directory...lets make a preview//
 			File preview = new File(scratch_directory, preview_key);
 			preview.getParentFile().mkdirs();
-			create_preview(original_file, preview, options);
+			
+			PreviewUtil.createPreview(original_file, preview, options);
 
 			//put the preview on amazon
 			String content_type = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(preview_key);
@@ -449,7 +447,6 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 			if (pr.connection.getResponseCode() != HttpURLConnection.HTTP_OK)
 					throw new WebApplicationException("PROBLEM WRITING PREVIEW TO S3 " + s3_bucket + " " + preview_key + " HTTP RESPONSE WAS " + pr.connection.getResponseCode());
 			INFO("EXITING GET PREVIEW URL " + base_s3_url +"/"+ preview_key);
-
 
 		}catch(Exception e)
 		{
@@ -582,42 +579,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		return f.exists();
 	}
 
-	private static void create_preview(File original, File dest, Map<String,String> options)
-			throws WebApplicationException
-	{
-		int type = FileInfo.getSimpleType(original);
-		switch (type)
-		{
-		case FileInfo.SIMPLE_TYPE_IMAGE:
-			create_image_preview(original, dest, options);
-			break;
-		case FileInfo.SIMPLE_TYPE_DOCUMENT:
-			throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
-		case FileInfo.SIMPLE_TYPE_SWF:
-			throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
-		case FileInfo.SIMPLE_TYPE_VIDEO:
-			throw new WebApplicationException("VIDEO PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
-		case FileInfo.SIMPLE_TYPE_AUDIO:
-			throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET "+original.getAbsolutePath());
-		default:
-			throw new WebApplicationException("UNKNOWN SIMPLE TYPE " + type +" "+original.getAbsolutePath());
-		}
-	}
 
-	private static void create_image_preview(File original, File dest, Map<String,String> options)
-			throws WebApplicationException
-	{
-		ImageMagick i = new ImageMagick(original, dest);
-		i.setOptions(options);
-		try
-		{
-			PathProviderUtil.process(i.getCmd(), i.getArgs());
-		}
-		catch (Exception e)
-		{
-			throw new WebApplicationException("PROBLEM CREATING PREVIEW " + dest.getAbsolutePath(), e);
-		}
-	}
 
 	private String get_preview_file_relative_path(String path_token, Map<String,String> options)
 			throws WebApplicationException
@@ -631,9 +593,7 @@ public class PSS3PathProvider extends WebStoreModule implements IResourcePathPro
 		}
 		StringBuilder preview_name = new StringBuilder();
 		preview_name.append(path_token);
-		preview_name.append(PathProviderUtil.getOptionsSuffix(options));
-		preview_name.append('.');
-		preview_name.append(ext);
+		preview_name.append(PreviewUtil.getOptionsSuffix(options, ext));
 		return preview_name.toString();
 	}
 

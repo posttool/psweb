@@ -2,11 +2,9 @@ package com.pagesociety.web.module.resource;
 
 
 
-import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,15 +12,13 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
-
-import javax.activation.MimetypesFileTypeMap;
-import javax.imageio.ImageIO;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
@@ -59,13 +55,13 @@ public class ResourceModule extends WebStoreModule
 	public    IResourcePathProvider 	path_provider;
 
 
-	/* look at the useage of this. this is a trempory work around to let
+	/* look at the usage of this. this is a temporary work around to let
 	 * other modules subclass this and not have to rewrite the multipart methods
-	 * and still provide their own entity.see PosteraSystemsMoudle. heritence in
-	 * store would probably clean this up a lot!!! */
+	 * and still provide their own entity.see PosteraSystemsMoudle. Inheritance in
+	 * store would probably clean this up */
 	private String resource_entity_name;
 
-	private static final List<UploadProgressInfo> EMPTY_UPLOAD_PROGRESS_LIST = new ArrayList<UploadProgressInfo>(0);
+	protected static final int CACHE_MAX_NUMBER_OF_PREVIEWS = 800;
 
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
@@ -73,10 +69,8 @@ public class ResourceModule extends WebStoreModule
 			resource_entity_name = RESOURCE_ENTITY;
 		super.init(app,config);
 		path_provider = (IResourcePathProvider)getSlot(SLOT_PATH_PROVIDER);
-		//this may have been set by some one extending the class//
-		//it needs to happen before init so that it is set when define
-		// entities is called etc...//
 		set_parameters(config);
+		init_preview_cache(CACHE_MAX_NUMBER_OF_PREVIEWS); //TODO move to a config parameter
 	}
 
 	protected void defineSlots()
@@ -349,14 +343,9 @@ public class ResourceModule extends WebStoreModule
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
 
-		// FIXME handle previews for TIFFs (& PDFs) too
-		// TODO if its a TIF or PDF, the previews should be converted to jpg
-		//		if(!resource.getAttribute(RESOURCE_FIELD_SIMPLE_TYPE).equals(FileInfo.SIMPLE_TYPE_IMAGE_STRING))
-		//			throw new WebApplicationException("RESOURCE "+resource+" IS NOT OF SIMPLE TYPE IMAGE. CAN'T RESIZE.");
-
 		String url = null;
 		try{
-			url = path_provider.getPreviewUrl(path_token,w,h);
+			url = path_provider.getPreviewUrl(path_token,PreviewUtil.getOptions(w,h));
 		}catch(WebApplicationException wae)
 		{
 			ERROR(wae);
@@ -365,12 +354,28 @@ public class ResourceModule extends WebStoreModule
 	}
 
 
-	public String getResourcePreviewUrl(Entity resource,Map<String,String>options) throws WebApplicationException
+	private Map<String,String> resource_cache;
+	private void init_preview_cache(final int max)
+	{
+		resource_cache = new LinkedHashMap<String,String>() {
+			private static final long serialVersionUID = -3214091826012179617L;
+
+			@Override
+	        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+	                return size() > max;
+	        }	        
+		};
+	}
+	
+	Object LOCK = new Object();
+	public String getResourcePreviewUrl(Entity resource,Map<String,String> options) throws WebApplicationException
 	{
 		String path_token = (String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN);
 		if(path_token == null)
 			throw new WebApplicationException("THE RESOURCE EXISTS BUT HAS NO PATH TOKEN.");
-
+		String key = "_"+path_token+"_"+PreviewUtil.getOptionsSuffix(options);
+		if (resource_cache.containsKey(key))
+			return resource_cache.get(key);
 		String url = null;
 		try{
 			url = path_provider.getPreviewUrl(path_token,options);
@@ -378,7 +383,11 @@ public class ResourceModule extends WebStoreModule
 		{
 			ERROR(wae);
 		}
-		return url;
+		synchronized (LOCK)
+		{
+			resource_cache.put(key, url);
+			return url;
+		}
 	}
 
 
@@ -499,7 +508,7 @@ public class ResourceModule extends WebStoreModule
 	public List<Map<String,Object>> GetAppResourceInfo(UserApplicationContext ctx) throws WebApplicationException
 	{
 		List<Module> modules = getApplication().getModules();
-		List ret 			 = new ArrayList<Map<String,Object>>();
+		List<Map<String,Object>> ret 			 = new ArrayList<Map<String,Object>>();
 
 
 		for(int i = 0;i < modules.size();i++)
@@ -577,26 +586,26 @@ public class ResourceModule extends WebStoreModule
 		//DONT NEED THIS ANYMORE UNLESS WE WANT BULK UPLOAD FROM ZIP OF RESOURCES//
 		//probably need a paramter treat-zips-as-bulk-uploads
 
-		if(false)//ext != null && ext.toLowerCase().equals("zip"))
-		{
-			if(update)
-			{
-				Exception ee = new WebApplicationException("YOU CANT UPDATE A RESOURCE FILE WITH A ZIP. IT NEEDS TO BE A SINGLE FILE.SINCE A RESOURCE HOLDS ONE FILE.");
-				ee.printStackTrace();
-				uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
-				return false;
-			}
-
-			bulk_upload 		= true;
-			tmp_zip_file 		= new File(System.getProperty("java.io.tmpdir")+File.separator+file_name);
-			try{
-				outs = new OutputStream[]{new FileOutputStream(tmp_zip_file)};
-			}catch(FileNotFoundException fnf)
-			{
-				//this should not happen ever//
-				fnf.printStackTrace();
-			}
-		}
+//		if(false)//ext != null && ext.toLowerCase().equals("zip"))
+//		{
+//			if(update)
+//			{
+//				Exception ee = new WebApplicationException("YOU CANT UPDATE A RESOURCE FILE WITH A ZIP. IT NEEDS TO BE A SINGLE FILE.SINCE A RESOURCE HOLDS ONE FILE.");
+//				ee.printStackTrace();
+//				uctx.setProperty(KEY_PENDING_UPLOAD_EXCEPTION, ee);
+//				return false;
+//			}
+//
+//			bulk_upload 		= true;
+//			tmp_zip_file 		= new File(System.getProperty("java.io.tmpdir")+File.separator+file_name);
+//			try{
+//				outs = new OutputStream[]{new FileOutputStream(tmp_zip_file)};
+//			}catch(FileNotFoundException fnf)
+//			{
+//				//this should not happen ever//
+//				fnf.printStackTrace();
+//			}
+//		}
 		if(!bulk_upload)
 			outs = path_provider.getOutputStreams(path_token,content_type,file_size);
 		String throw_exception_in_parse_upload = upload.getParameter("throw_exception_in_parse_upload");
@@ -680,7 +689,7 @@ public class ResourceModule extends WebStoreModule
 	{
 		ZipFile zipFile = null;
 		try {
-			Enumeration entries = null;
+			Enumeration<? extends ZipEntry> entries = null;
 			zipFile = new ZipFile(zip);
 			entries = zipFile.entries();
 			List<Entity> resources = new ArrayList<Entity>();

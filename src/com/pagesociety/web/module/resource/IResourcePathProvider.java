@@ -18,7 +18,6 @@ public interface IResourcePathProvider
 	public List<String> listPreviews(String path_token) throws WebApplicationException;
 	public String getUrl(String path_token) throws WebApplicationException;
 	public String getBaseUrl() throws WebApplicationException;
-	public String getPreviewUrl(String path_token,int width,int height) throws WebApplicationException;
 	public String getPreviewUrl(String path_token,Map<String,String> options) throws WebApplicationException;
 	public OutputStream[] getOutputStreams(String path_token,String content_type,long content_length) throws WebApplicationException;
 	public InputStream getInputStream(String path_token) throws WebApplicationException;

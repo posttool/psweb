@@ -57,6 +57,7 @@ public class FileInfo
 	public static final int SIMPLE_TYPE_VIDEO    = 102;
 	public static final int SIMPLE_TYPE_DOCUMENT = 103;
 	public static final int SIMPLE_TYPE_SWF 	 = 104;
+	public static final int SIMPLE_TYPE_UNKNOWN  = -1;
 
 	public static final String SIMPLE_TYPE_IMAGE_STRING     = "IMAGE";
 	public static final String SIMPLE_TYPE_AUDIO_STRING     = "AUDIO";
@@ -140,7 +141,7 @@ public class FileInfo
 		case SWF:
 			return SIMPLE_TYPE_SWF;
 		}
-		return -1;
+		return SIMPLE_TYPE_UNKNOWN;
 	}
 
 	public static String getSimpleTypeAsString(File file)

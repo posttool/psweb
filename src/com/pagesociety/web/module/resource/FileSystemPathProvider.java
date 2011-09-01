@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +135,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		{
 			String fname = ff[i].getName();
 			if(fname.equals(f.getName()) || fname.startsWith(filename) &&
-			   PathProviderUtil.isLikelyPreview(filename))
+			   PreviewUtil.isLikelyPreview(filename))
 			{
 				ff[i].delete();
 				if(ff.length == 1)
@@ -251,34 +250,6 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return base_url;
 	}
 
-	/* this should take preview params */
-	public String getPreviewUrl(String path_token,int width,int height)	throws WebApplicationException
-	{
-		Map<String,String> options = new HashMap<String, String>();
-		options.put(PathProviderUtil.WIDTH,Integer.toString(width));
-		options.put(PathProviderUtil.HEIGHT,Integer.toString(height));
-
-		String preview_relative_path = get_preview_file_relative_path(path_token, options);
-		StringBuilder buf = new StringBuilder();
-		buf.append(base_dir);
-		buf.append(C_SLASH);
-		buf.append(preview_relative_path);
-		File preview = new File(buf.toString());
-
-		//TODO: right here we could queue this stuff up and return a //
-		//preview not ready. we would look in the queue and if it wasnt in//
-		//there we would create a new queue item and put it on.//
-
-		if(!preview.exists())
-			create_preview(getFile(path_token),preview,options);
-
-		buf.setLength(0);
-		buf.append(base_url);
-		buf.append(C_SLASH);
-		buf.append(preview_relative_path);
-		return buf.toString();
-	}
-
 	public String getPreviewUrl(String path_token,Map<String,String> options)	throws WebApplicationException
 	{
 		String preview_relative_path = get_preview_file_relative_path(path_token, options);
@@ -293,7 +264,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		//there we would create a new queue item and put it on.//
 
 		if(!preview.exists())
-			create_preview(getFile(path_token),preview,options);
+			PreviewUtil.createPreview(getFile(path_token),preview,options);
 
 		buf.setLength(0);
 		buf.append(base_url);
@@ -340,45 +311,6 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		return null;
 	}
 
-
-
-	private static void create_preview(File original,File dest,Map<String,String> options) throws WebApplicationException
-	{
-		int type = FileInfo.getSimpleType(original);
-		switch(type)
-		{
-			case FileInfo.SIMPLE_TYPE_IMAGE:
-				create_image_preview(original, dest, options);
-				break;
-			case FileInfo.SIMPLE_TYPE_DOCUMENT:
-				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
-			case FileInfo.SIMPLE_TYPE_SWF:
-				throw new WebApplicationException("SWF PREVIEW NOT SUPPORTED YET");
-			case FileInfo.SIMPLE_TYPE_VIDEO:
-				throw new WebApplicationException("DOCUMENT PREVIEW NOT SUPPORTED YET");
-			case FileInfo.SIMPLE_TYPE_AUDIO:
-				throw new WebApplicationException("AUDIO PREVIEW NOT SUPPORTED YET");
-			default:
-				throw new WebApplicationException("UNKNOW SIMPLE TYPE "+type);
-		}
-	}
-
-
-	private static void create_image_preview(File original,File dest,Map<String,String> options) throws WebApplicationException
-	{
-		ImageMagick i = new ImageMagick(original,dest);
-		i.setOptions(options);
-		try
-		{
-			PathProviderUtil.process(i.getCmd(), i.getArgs());
-		}
-		catch(Exception e)
-		{
-			throw new WebApplicationException("PROBLEM CREATING PREVIEW "+dest.getAbsolutePath(),e);
-		}
-	}
-
-
 	private String get_preview_file_relative_path(String path_token,Map<String,String> options) throws WebApplicationException
 	{
 		File original_file 				 = getFile(path_token);
@@ -401,9 +333,7 @@ public class FileSystemPathProvider extends WebModule implements IResourcePathPr
 		preview_name.append(dir);
 		preview_name.append(C_SLASH);
 		preview_name.append(original_file_name);
-		preview_name.append(PathProviderUtil.getOptionsSuffix(options));
-		preview_name.append('.');
-		preview_name.append(ext);
+		preview_name.append(PreviewUtil.getOptionsSuffix(options, ext));
 		return preview_name.toString();
 	}
 

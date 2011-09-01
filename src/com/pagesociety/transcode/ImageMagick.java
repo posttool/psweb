@@ -3,6 +3,9 @@ package com.pagesociety.transcode;
 import java.io.File;
 import java.util.Map;
 
+import com.pagesociety.util.FileInfo;
+import com.pagesociety.util.Text;
+
 public class ImageMagick extends TranscodeWorkImpl
 {
 	private static String EXEC_PATH = "convert";
@@ -11,6 +14,8 @@ public class ImageMagick extends TranscodeWorkImpl
 	public static final String HEIGHT = "height";
 	public static final String QUALITY = "quality";
 	public static final String GRAYSCALE = "grayscale";
+
+	private static final Object OUTPUT_TYPE = "type";
 	
 
 	public static void setRuntimeExecPath(String path)
@@ -22,6 +27,8 @@ public class ImageMagick extends TranscodeWorkImpl
 	private int 	height;
 	private int 	quality = 78;
 	private boolean gray;
+	private String  output_type;
+
 
 	public ImageMagick(File input, File output)
 	{
@@ -54,18 +61,12 @@ public class ImageMagick extends TranscodeWorkImpl
 			quality = Integer.parseInt( options.get(QUALITY));
 		if (options.containsKey(GRAYSCALE))
 			gray =  options.get(GRAYSCALE).equals("true");
+		if (options.containsKey(OUTPUT_TYPE))
+			output_type =  options.get(OUTPUT_TYPE);
 	}
 
 	public void exec() throws Exception 
 	{
-//		String[] cmds = new String[] { EXEC_PATH, // convert
-//				input.getAbsolutePath(), // input
-//				"-resize", get_resize_geometry_string(), // -resize 
-//				"-quality", String.valueOf(quality), 	// -quality
-//				"-colorspace", gray ? "Gray" : "RGB", 	// -colorspace
-//				output.getAbsolutePath() };
-//		CmdWork w = new CmdWork(this, cmds);
-//		CmdWorker.doWork(w);
 		throw new Exception("ImageMagick.exec should not be called");
 	}
 	
@@ -76,12 +77,24 @@ public class ImageMagick extends TranscodeWorkImpl
 	
 	public String[] getArgs()
 	{
+		String output_path = output.getAbsolutePath();
+		if (output_type!=null)
+		{
+			if (FileInfo.getSimpleType(output_path) == FileInfo.SIMPLE_TYPE_UNKNOWN)
+			{
+				output_path += "."+output_type;
+			}
+			else
+			{
+				output_path = output_path.substring(0, output_path.lastIndexOf('.')+1) + output_type;
+			}
+		}
 		return new String[]{
 				input.getAbsolutePath(), // input
 				"-resize", get_resize_geometry_string(), // -resize 
 				"-quality", String.valueOf(quality), 	// -quality
 				"-colorspace", gray ? "Gray" : "RGB", 	// -colorspace
-				output.getAbsolutePath()
+				output_path
 			};
 	}
 	
@@ -98,7 +111,6 @@ public class ImageMagick extends TranscodeWorkImpl
 	//on the simple type.
 	public String get_resize_geometry_string()
 	{
-		//boolean is_macosx = isMacOSX();
 		StringBuilder buf = new StringBuilder();
 		if(width != 0 )
 			buf.append(String.valueOf(width));
@@ -112,10 +124,6 @@ public class ImageMagick extends TranscodeWorkImpl
 		return buf.toString();
 	}
 	
-	public static boolean isMacOSX() {
-	    String osName = System.getProperty("os.name");
-	    return osName.startsWith("Mac OS X");
-	}
 	
 
 	//
