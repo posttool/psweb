@@ -399,6 +399,14 @@ public class CouponPromotionManagerModule extends WebStoreModule
 		return DELETE_DEEP(cp,new delete_policy(FIELD_CREATOR,COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION));
 	}
 
+	public Entity changeNumSimplePromoUses(Entity promo_simple,int new_num_uses) throws PersistenceException,WebApplicationException
+	{
+		Entity underlying_promotion = EXPAND((Entity)promo_simple.getAttribute(CouponPromotionManagerModule.COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION));
+		promo_simple.setAttribute(COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION,UPDATE(underlying_promotion, PromotionModule.COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED,new_num_uses));
+		return promo_simple;
+	}
+
+
 
 	/////////////////E N D  M O D U L E   F U N C T I O N S/////////////////////////////////////////
 

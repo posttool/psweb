@@ -777,14 +777,22 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			return;
 		}
 
+
 		try{
+
+
 			long c_id 								   = Long.parseLong((String)params.get("promo_simple_id"));
 			Entity promo_simple 					   = promotion_campaign_module.getCouponPromotionSimple(c_id);
 			List<Entity> orders_which_have_used_promotion = promotion_campaign_module.getOrdersWhichHaveUsedSimplePromotion(promo_simple);
 			Entity underlying_promotion = (Entity)promo_simple.getAttribute(CouponPromotionManagerModule.COUPON_PROMOTION_SIMPLE_COUPON_PROMOTION);
-			int can_be_used = (Integer)underlying_promotion.getAttribute(PromotionModule.COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED);
 			int num_used 	= (Integer)underlying_promotion.getAttribute(PromotionModule.COUPON_PROMOTION_NO_TIMES_CODE_HAS_BEEN_USED);
 			Date expr_date  = (Date)underlying_promotion.getAttribute(PromotionModule.COUPON_PROMOTION_FIELD_EXPIRATION_DATE);
+			if(params.get("change_num_uses") != null)
+			{
+				int new_num_uses = Integer.parseInt((String)params.get("new_num_uses"));
+				promo_simple = promotion_campaign_module.changeNumSimplePromoUses(promo_simple, new_num_uses);
+			}
+			int can_be_used = (Integer)underlying_promotion.getAttribute(PromotionModule.COUPON_PROMOTION_NO_TIMES_CODE_CAN_BE_USED);
 
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR,RAW_UI_FONT_SIZE, 10,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
@@ -821,6 +829,16 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 			TABLE_END(uctx);
 			HR(uctx);
 			A(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Back ]");
+			HR(uctx);
+			FORM_START(uctx,getName(),RAW_SUBMODE_SHOW_PROMO_SIMPLE,"change_num_uses",true, "promo_simple_id", String.valueOf(c_id));
+			TABLE_START(uctx, 0, 400);
+				TR_START(uctx);
+				TD(uctx, "Change Num Uses:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "new_num_uses",30,"");TD_END(uctx);
+				TD_START(uctx);FORM_SUBMIT_BUTTON(uctx,"Change");TD_END(uctx);
+				TR_END(uctx);
+			TABLE_END(uctx);
+
+			FORM_END(uctx);
 			DOCUMENT_END(uctx);
 		}catch(Exception e)
 		{
