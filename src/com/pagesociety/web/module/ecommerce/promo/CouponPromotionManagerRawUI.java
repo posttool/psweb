@@ -813,6 +813,7 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 				for(int i = 0;i < orders_which_have_used_promotion.size();i++)
 				{
 					Entity order 		= orders_which_have_used_promotion.get(i);
+					//for new cali we need to look at creator. look in coupon promotion manager as well//
 					Entity order_user 	= (Entity)order.getAttribute(RecurringOrderModule.RECURRING_ORDER_FIELD_USER);
 					String username		= "";
 					if(order_user.getAttribute(UserModule.FIELD_USERNAME) != null)

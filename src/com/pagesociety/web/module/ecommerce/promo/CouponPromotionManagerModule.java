@@ -381,6 +381,7 @@ public class CouponPromotionManagerModule extends WebStoreModule
 
 							if(instance_coupon_promo != null && instance_coupon_promo.equals(underlying_coupon_promo))
 							{
+								//this is null in postera!!
 								FILL_REF(order,FIELD_CREATOR);
 								orders.add((Entity)order);
 							}
