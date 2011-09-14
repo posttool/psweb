@@ -52,6 +52,7 @@ import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.Query.QueryNode;
 import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
+import com.pagesociety.util.OBJECT;
 import com.pagesociety.util.Text;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
@@ -533,7 +534,15 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 	//return null if the root node is unpublished//
 	public Entity calculate_published_site_tree(Entity edit_site_root) throws PersistenceException
 	{
-		edit_site_root = CLONE_IN_MEMORY(edit_site_root);
+		edit_site_root = CLONE_IN_MEMORY(edit_site_root, new clone_policy(){
+			public int exec(Entity e,String fieldname,Entity reference_val)
+			{
+				if(fieldname.equals(FIELD_CREATOR))
+					return NULLIFY_REFERENCE;
+				else
+					return CLONE_REFERENCE;
+			}
+		}, new HashMap<Entity,Entity>());
 		Entity data = EXPAND((Entity)edit_site_root.getAttribute(TREE_NODE_FIELD_DATA));
 		if(data == null)
 			return get_empty_site_root();

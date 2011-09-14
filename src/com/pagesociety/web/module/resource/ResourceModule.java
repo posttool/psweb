@@ -24,6 +24,7 @@ import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Types;
 import com.pagesociety.util.FileInfo;
+import com.pagesociety.util.OBJECT;
 import com.pagesociety.util.Text;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;

@@ -15,12 +15,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import com.pagesociety.persistence.Entity;
+import com.pagesociety.util.OBJECT;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.Form;
 import com.pagesociety.web.gateway.RawCommunique;
-import com.pagesociety.web.module.WebModule.OBJECT;
 import com.pagesociety.web.upload.MultipartForm;
 
 public class ModuleMethod
@@ -53,7 +53,7 @@ public class ModuleMethod
 
 	private void validate_parameter_types() throws InitializationException
 	{
-		if (this.ptypes[0] != UserApplicationContext.class)
+		if (this.ptypes.length == 0 || this.ptypes[0] != UserApplicationContext.class)
 			throw new InitializationException("The first argument of every module method must be UserApplicationContext");
 		for(int i = 1;i < ptypes.length;i++)
 		{

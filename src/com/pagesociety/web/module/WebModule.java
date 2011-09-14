@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
@@ -41,6 +42,9 @@ import org.json.JSONObject;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
+import com.pagesociety.util.ARRAY;
+import com.pagesociety.util.Base64;
+import com.pagesociety.util.OBJECT;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.PermissionsException;
@@ -491,20 +495,54 @@ public abstract class WebModule extends Module
     }
 
 
-	//just another name for a Map<String,Object> useful for talking to action script
-	public class OBJECT extends HashMap<String,Object>
-	{
-		public OBJECT(Object... args)
-		{
-			for(int i = 0;i < args.length;i+=2)
-				put((String)args[i],args[i+1]);
-		}
-	}
-
-	public  OBJECT OBJECT(Object... args)
+	public OBJECT OBJECT(Object... args)
 	{
 		return new OBJECT(args);
 	}
+	
+	public ARRAY ARRAY(Object... args)
+	{
+		return new ARRAY(args);
+	}
+	
+	public static String ENCODE(Serializable o) throws WebApplicationException
+	{
+        try
+		{
+			return Base64.encodeObject(o);
+		} catch (IOException e)
+		{
+			throw new WebApplicationException("Can't encode",e);
+		}
+	}
+	
+	public static OBJECT DECODE_OBJECT(String s) throws WebApplicationException
+	{
+		if (s==null)
+			return null;
+        try
+		{
+			return (OBJECT) Base64.decodeToObject(s);
+		} catch (Exception e)
+		{
+			throw new WebApplicationException("Can't decode",e);
+		}
+	}
+	
+	public static ARRAY DECODE_ARRAY(String s) throws WebApplicationException
+	{
+		if (s==null)
+			return null;
+        try
+		{
+			return (ARRAY) Base64.decodeToObject(s);
+		} catch (Exception e)
+		{
+			throw new WebApplicationException("Can't decode",e);
+		}
+	}
+	
+	
 
 
 	protected void COPY(File file, File destination_directory,String filename) throws PersistenceException
