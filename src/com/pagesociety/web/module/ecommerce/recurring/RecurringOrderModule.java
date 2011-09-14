@@ -1157,7 +1157,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 		Date billing_failed_genesis  =  (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
 
-		long grace_period_in_ms = (long)billing_failed_grace_period_in_days * (long)(1000 * 60 * 60 * 24);
+		long grace_period_in_ms = (long)billing_failed_grace_period_in_days * get_ms_for_one_day();
 
 		if(now.getTime() > billing_failed_genesis.getTime()+grace_period_in_ms)
 		{
@@ -1239,8 +1239,8 @@ public class RecurringOrderModule extends ResourceModule
 	{
 
 		Date failed_genesis  				= (Date)failed_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
-		long grace_period_in_ms 			= (long)billing_failed_grace_period_in_days * (long)(1000 * 60 *60 * 24);
-		long failed_billing_clean_period 	= grace_period_in_ms + (long)billing_failed_grace_period_expired_reap_period_in_days * (long)(1000 * 60 * 60 * 24);
+		long grace_period_in_ms 			= (long)billing_failed_grace_period_in_days * get_ms_for_one_day();
+		long failed_billing_clean_period 	= grace_period_in_ms + (long)billing_failed_grace_period_expired_reap_period_in_days * get_ms_for_one_day();
 		if(now.getTime() > failed_genesis.getTime()+failed_billing_clean_period)
 		{
 			updateRecurringOrderStatus(failed_order, ORDER_STATUS_CLOSED);
@@ -1341,7 +1341,7 @@ public class RecurringOrderModule extends ResourceModule
 	{
 
 		Date trial_create_date  =  (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		long trial_period_in_ms = (long)trial_period_in_days * (long)(1000 * 60*60*24);
+		long trial_period_in_ms = (long)trial_period_in_days * get_ms_for_one_day();
 		if(now.getTime() > trial_create_date.getTime()+trial_period_in_ms)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_TRIAL_EXPIRED);
@@ -1360,8 +1360,8 @@ public class RecurringOrderModule extends ResourceModule
 	{
 
 		Date trial_create_date  		= (Date)trial_order.getAttribute(FIELD_DATE_CREATED);
-		long trial_period_in_ms 			= (long)trial_period_in_days * (long)(1000 * 60 *60*24);
-		long expired_trial_clean_period 	= (long)trial_period_in_ms + (long)expired_trial_reap_period_in_days * (1000 * 60*60*24);
+		long trial_period_in_ms 			= (long)trial_period_in_days * get_ms_for_one_day();
+		long expired_trial_clean_period 	= (long)trial_period_in_ms + (long)expired_trial_reap_period_in_days * get_ms_for_one_day();
 		if(now.getTime() > trial_create_date.getTime()+expired_trial_clean_period)
 		{
 			updateRecurringOrderStatus(trial_order, ORDER_STATUS_CLOSED);
@@ -1729,6 +1729,13 @@ public class RecurringOrderModule extends ResourceModule
 			ERROR(e);
 		}
 
+	}
+
+
+	private static long get_ms_for_one_day()
+	{
+		return (long)(1000 * 60 * 60 * 24);
+		//return (long)(1000 * 1);//1 seconds is one day
 	}
 
 	///BEGIN DDL STUFF
