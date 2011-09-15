@@ -107,7 +107,8 @@ public class OBJECT extends HashMap<String,Object>
 				));
 		
 		System.out.println(o);
-		
+		System.out.println("---");
+		System.out.println(o.find("x"));
 		System.out.println(o.find("x[2]"));
 		System.out.println(o.find("y.b$b.end"));
 		System.out.println(o.find("y.ccc[2].or"));
