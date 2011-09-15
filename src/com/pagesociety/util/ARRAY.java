@@ -14,14 +14,16 @@ public class ARRAY extends ArrayList<Object>
 
 	public String toString()
 	{
+		int s = size();
 		StringBuilder b = new StringBuilder();
-		b.append("[\n");
-		for (int i = 0; i < size(); i++)
+		b.append("[");
+		for (int i = 0; i < s; i++)
 		{
 			b.append(get(i));
-			b.append("\n");
+			if (i!=s-1)
+				b.append(", ");
 		}
-		b.append("]\n");
+		b.append("]");
 		return b.toString();
 	}
 

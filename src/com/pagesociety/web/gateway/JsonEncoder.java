@@ -15,7 +15,7 @@ import com.pagesociety.web.bean.BeanRegistry;
 public class JsonEncoder
 {
 
-	public static String encode(Object o,boolean wrapwithvalue)
+	public static String encode(Object o,boolean wrapwithvalue,boolean include_oid)
 	{
 		JSONStringer js = new JSONStringer();
 		try
@@ -24,12 +24,12 @@ public class JsonEncoder
 			{
 				js.object();
 				js.key("value");
-				encode_json(js, o, new HashMap<Object,String>());
+				encode_json(js, o, new HashMap<Object,String>(), include_oid);
 				js.endObject();
 			}
 			else
 			{
-				encode_json(js, o, new HashMap<Object,String>());
+				encode_json(js, o, new HashMap<Object,String>(), include_oid);
 			}
 		}
 		catch (Exception e)
@@ -41,11 +41,11 @@ public class JsonEncoder
 
 	public static String encode(Object o)
 	{
-		return encode(o,true);
+		return encode(o,true,true);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void encode_json(JSONStringer js, Object o,Map<Object,String> seen)
+	private static void encode_json(JSONStringer js, Object o,Map<Object,String> seen,boolean include_oid)
 			throws Exception
 	{
 		if (o == null)
@@ -58,10 +58,13 @@ public class JsonEncoder
 		{
 			String mid = seen.get(o);
 			js.object();
-			js.key("_object_id");
-			js.value(mid);
-			js.key("_circular_ref");
-			js.value(true);
+			if (include_oid)
+			{
+				js.key("_object_id");
+				js.value(mid);
+				js.key("_circular_ref");
+				js.value(true);
+			}
 			if(o instanceof Entity)
 			{
 				js.key("_ps_clazz");
@@ -83,7 +86,7 @@ public class JsonEncoder
 			js.array();
 			for (int i = 0; i < oa.length; i++)
 			{
-				encode_json(js, oa[i], seen);
+				encode_json(js, oa[i], seen, include_oid);
 			}
 			js.endArray();
 			return;
@@ -94,7 +97,7 @@ public class JsonEncoder
 			js.array();
 			for (int i = 0; i < oa.size(); i++)
 			{
-				encode_json(js, oa.get(i), seen);
+				encode_json(js, oa.get(i), seen, include_oid);
 			}
 			js.endArray();
 			return;
@@ -108,11 +111,14 @@ public class JsonEncoder
 			{
 				Object field_val = om.get(key);
 				js.key(key.toString());
-				encode_json(js, field_val, seen);
+				encode_json(js, field_val, seen, include_oid);
 
 			}
-			js.key("_object_id");
-			js.value(mem_id);
+			if (include_oid)
+			{
+				js.key("_object_id");
+				js.value(mem_id);
+			}
 			js.endObject();
 			return;
 		}
@@ -127,13 +133,16 @@ public class JsonEncoder
 				String name = bean.getReadablePropertyNames()[i];
 				Object field_val = bean.getProperty(o, name);
 				js.key(name);
-				encode_json(js, field_val,seen);
+				encode_json(js, field_val,seen, include_oid);
 			}
-			js.key("_ps_clazz");
-			js.value(o.getClass().getSimpleName());
-
-			js.key("_object_id");
-			js.value(mem_id);
+			if (include_oid)
+			{
+				js.key("_ps_clazz");
+				js.value(o.getClass().getSimpleName());
+	
+				js.key("_object_id");
+				js.value(mem_id);
+			}
 
 			js.endObject();
 		}

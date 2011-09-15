@@ -82,7 +82,7 @@ public class JsonGateway
 			module_return = _web_application.dispatch(module_request);
 			if(isform)
 			{
-				text_response = JsonEncoder.encode(module_return,false);
+				text_response = JsonEncoder.encode(module_return,false,true);
 			}
 			else
 			{

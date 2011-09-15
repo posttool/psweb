@@ -2,9 +2,11 @@ package com.pagesociety.util;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 
 import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.gateway.JsonEncoder;
 
 public class OBJECT extends HashMap<String,Object>
 {
@@ -31,15 +33,45 @@ public class OBJECT extends HashMap<String,Object>
 		b.append("}\n");
 		return b.toString();
 	}
-
-	public OBJECT O(String name)
+	
+	public String toJSON()
 	{
-		return (OBJECT) get(name);
+		return toJSON(this);
 	}
 
-	public ARRAY A(String name)
+	public OBJECT O(String path)
 	{
-		return (ARRAY) get(name);
+		return (OBJECT) find(path);
+	}
+
+	public ARRAY A(String path)
+	{
+		return (ARRAY) find(path);
+	}
+	
+	public String S(String path)
+	{
+		return (String) find(path);
+	}
+
+	public boolean B(String path)
+	{
+		return (Boolean) find(path);
+	}
+	
+	public int I(String path)
+	{
+		return (Integer) find(path);
+	}
+	
+	public double N(String path)
+	{
+		return (Double) find(path);
+	}
+	
+	public Date D(String path)
+	{
+		return (Date) find(path);
 	}
 
 	public Object find(String path)
@@ -56,8 +88,12 @@ public class OBJECT extends HashMap<String,Object>
 			int array_char_idx = pp.indexOf("[");
 			if (array_char_idx != -1 && pp.endsWith("]"))
 			{
+				
 				int idx = Integer.parseInt(pp.substring(array_char_idx + 1, pp.length() - 1));
-				ARRAY ta = ((OBJECT) target).A(pp.substring(0, array_char_idx));
+				pp = pp.substring(0, array_char_idx);
+				ARRAY ta = ((OBJECT) target).A(pp);
+				if (ta==null)
+					throw new NullPointerException("cannot access item "+idx+" of "+pp);
 				target = ta.get(idx);
 			}
 			else
@@ -92,6 +128,11 @@ public class OBJECT extends HashMap<String,Object>
 		}
 	}
 	
+	public String toJSON(OBJECT o)
+	{
+		return JsonEncoder.encode(o,false,false);
+	}
+	
 	public static void main(String[] args)
 	{
 		OBJECT o = new OBJECT(
@@ -102,16 +143,21 @@ public class OBJECT extends HashMap<String,Object>
 						"start", 1010101,
 						"end", "sometimes"
 					),
-					"ccc", new ARRAY("wonder","get me", new OBJECT("or","stop")
+					"ccc", new ARRAY("wonder","get me", new OBJECT("or","stop","and",true)
 					)
 				));
 		
-		System.out.println(o);
+		System.out.println(o.toJSON());
 		System.out.println("---");
 		System.out.println(o.find("x"));
 		System.out.println(o.find("x[2]"));
 		System.out.println(o.find("y.b$b.end"));
-		System.out.println(o.find("y.ccc[2].or"));
+		System.out.println(o.S("y.ccc[2].or"));
+		System.out.println(o.B("y.ccc[2].and"));
+//		System.out.println(o.I("y.ccc[2].and")); //will produce class cast exception
+//		System.out.println(o.B("y.ccd[2].x"));  // null pointer
+//		System.out.println(o.B("y.ccc[14].x")); // index out of bounds
+		System.out.println(o.find("y.ccc[2].da"));
 		
 	}
 
