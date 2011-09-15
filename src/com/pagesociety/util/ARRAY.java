@@ -17,10 +17,19 @@ public class ARRAY extends ArrayList<Object>
 	{
 		try
 		{
-			return WebModule.ENCODE(this);
+			return OBJECT.encode(this);
 		} catch (WebApplicationException e)
 		{
 			return e.getMessage();
 		}
+	}
+	
+	public OBJECT O(int idx)
+	{
+		return (OBJECT)get(idx);
+	}
+	public ARRAY getarr(int idx)
+	{
+		return (ARRAY)get(idx);
 	}
 }

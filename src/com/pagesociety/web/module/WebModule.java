@@ -507,26 +507,12 @@ public abstract class WebModule extends Module
 	
 	public static String ENCODE(Serializable o) throws WebApplicationException
 	{
-        try
-		{
-			return Base64.encodeObject(o);
-		} catch (IOException e)
-		{
-			throw new WebApplicationException("Can't encode",e);
-		}
+		return OBJECT.encode(o);
 	}
 	
 	public static OBJECT DECODE_OBJECT(String s) throws WebApplicationException
 	{
-		if (s==null)
-			return null;
-        try
-		{
-			return (OBJECT) Base64.decodeToObject(s);
-		} catch (Exception e)
-		{
-			throw new WebApplicationException("Can't decode",e);
-		}
+		return OBJECT.decode(s);
 	}
 	
 	public static ARRAY DECODE_ARRAY(String s) throws WebApplicationException
