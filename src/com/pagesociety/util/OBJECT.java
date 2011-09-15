@@ -128,7 +128,7 @@ public class OBJECT extends HashMap<String,Object>
 		}
 	}
 	
-	public String toJSON(OBJECT o)
+	public static String toJSON(OBJECT o)
 	{
 		return JsonEncoder.encode(o,false,false);
 	}
