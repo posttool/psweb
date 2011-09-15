@@ -5,40 +5,48 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.WebModule;
 
 public class OBJECT extends HashMap<String,Object>
 {
+
+	private static final long serialVersionUID = 6574754645564381545L;
+
 	public OBJECT(Object... args)
 	{
-		for(int i = 0;i < args.length;i+=2)
-			put((String)args[i],args[i+1]);
+		for (int i = 0; i < args.length; i += 2)
+			put((String) args[i], args[i + 1]);
 	}
-	
+
 	public String toString()
 	{
-		try
+		StringBuilder b = new StringBuilder();
+		b.append("{\n");
+		for (String k : keySet())
 		{
-			return WebModule.ENCODE(this);
-		} catch (WebApplicationException e)
-		{
-			return e.getMessage();
+			b.append(k);
+			b.append("=");
+			b.append(get(k));
+			b.append("\n");
 		}
+		b.append("}\n");
+		return b.toString();
 	}
-	
+
 	public OBJECT O(String name)
 	{
-		return (OBJECT)get(name);
+		return (OBJECT) get(name);
 	}
+
 	public ARRAY A(String name)
 	{
-		return (ARRAY)get(name);
+		return (ARRAY) get(name);
 	}
+
 	public Object find(String path)
 	{
-		return find(this,path);
+		return find(this, path);
 	}
-	
+
 	public static Object find(OBJECT o, String path)
 	{
 		Object target = o;
@@ -48,8 +56,8 @@ public class OBJECT extends HashMap<String,Object>
 			int array_char_idx = pp.indexOf("[");
 			if (array_char_idx != -1 && pp.endsWith("]"))
 			{
-				int idx = Integer.parseInt(pp.substring(array_char_idx+1, pp.length()-1));
-				ARRAY ta = ((OBJECT) target).A(pp.substring(0,array_char_idx));
+				int idx = Integer.parseInt(pp.substring(array_char_idx + 1, pp.length() - 1));
+				ARRAY ta = ((OBJECT) target).A(pp.substring(0, array_char_idx));
 				target = ta.get(idx);
 			}
 			else
@@ -59,7 +67,7 @@ public class OBJECT extends HashMap<String,Object>
 		}
 		return target;
 	}
-	
+
 	public static String encode(Serializable o) throws WebApplicationException
 	{
 		try
@@ -67,20 +75,20 @@ public class OBJECT extends HashMap<String,Object>
 			return Base64.encodeObject(o);
 		} catch (IOException e)
 		{
-			throw new WebApplicationException("Can't encode",e);
+			throw new WebApplicationException("Can't encode", e);
 		}
 	}
-	
+
 	public static OBJECT decode(String s) throws WebApplicationException
 	{
-		if (s==null)
+		if (s == null)
 			return null;
 		try
 		{
 			return (OBJECT) Base64.decodeToObject(s);
 		} catch (Exception e)
 		{
-			throw new WebApplicationException("Can't decode",e);
+			throw new WebApplicationException("Can't decode", e);
 		}
 	}
 	
@@ -97,6 +105,9 @@ public class OBJECT extends HashMap<String,Object>
 					"ccc", new ARRAY("wonder","get me", new OBJECT("or","stop")
 					)
 				));
+		
+		System.out.println(o);
+		
 		System.out.println(o.find("x[2]"));
 		System.out.println(o.find("y.b$b.end"));
 		System.out.println(o.find("y.ccc[2].or"));

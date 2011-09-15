@@ -2,34 +2,36 @@ package com.pagesociety.util;
 
 import java.util.ArrayList;
 
-import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.WebModule;
-
 public class ARRAY extends ArrayList<Object>
 {
+	private static final long serialVersionUID = -9108744819972018258L;
+
 	public ARRAY(Object... args)
 	{
-		for(int i = 0;i < args.length;i++)
+		for (int i = 0; i < args.length; i++)
 			add(args[i]);
 	}
-	
+
 	public String toString()
 	{
-		try
+		StringBuilder b = new StringBuilder();
+		b.append("[\n");
+		for (int i = 0; i < size(); i++)
 		{
-			return OBJECT.encode(this);
-		} catch (WebApplicationException e)
-		{
-			return e.getMessage();
+			b.append(get(i));
+			b.append("\n");
 		}
+		b.append("]\n");
+		return b.toString();
 	}
-	
+
 	public OBJECT O(int idx)
 	{
-		return (OBJECT)get(idx);
+		return (OBJECT) get(idx);
 	}
+
 	public ARRAY getarr(int idx)
 	{
-		return (ARRAY)get(idx);
+		return (ARRAY) get(idx);
 	}
 }
