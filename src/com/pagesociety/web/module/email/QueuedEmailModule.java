@@ -14,6 +14,7 @@ import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
 import javax.mail.Message;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -38,16 +39,27 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 {
 
 	private static final String PARAM_SMTP_SERVER 	 	  		 = "smtp-server";
+	private static final String PARAM_SMTP_SERVER_PORT 	 	  	 = "smtp-server-port";
+	private static final String PARAM_SMTP_SERVER_USE_SSL 	 	 = "smtp-server-use-ssl";
+	private static final String PARAM_SMTP_SERVER_USERNAME 	 	 = "smtp-server-username";
+	private static final String PARAM_SMTP_SERVER_PASSWORD 	 	 = "smtp-server-password";
 	private static final String PARAM_EMAIL_TEMPLATE_DIR  		 = "email-template-dir";
 	private static final String PARAM_EMAIL_RETURN_ADDRESS	     = "email-return-address";
 	private static final String PARAM_EMAIL_QUEUE_SIZE		     = "email-queue-size";
 	private static final String PARAM_EMBEDDED_CONTENT		     = "embedded-content";
 	private static final String PARAM_THROTTLE_IN_MS		     = "throttle-in-ms";
 
-	protected String smtp_server;
+	protected String 	smtp_server;
+	protected int 		smtp_server_port;
+	protected boolean 	smtp_server_use_ssl;
+	protected String 	smtp_server_username;
+	protected String 	smtp_server_password;
+
 	protected String email_template_dir;
 	protected String email_return_address;
 	protected Object[] embedded_content;
+
+
 
 	protected FreemarkerRenderer fm_renderer;
 
@@ -63,6 +75,11 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 		email_template_dir   = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_TEMPLATE_DIR, config);
 		email_return_address = GET_REQUIRED_CONFIG_PARAM(PARAM_EMAIL_RETURN_ADDRESS, config);
 		throttle_in_ms 		 = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_THROTTLE_IN_MS, 0, config);
+		smtp_server_use_ssl  = GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(PARAM_SMTP_SERVER_USE_SSL, false, config);
+		smtp_server_port	 = GET_OPTIONAL_INT_CONFIG_PARAM(PARAM_SMTP_SERVER_PORT, 25, config);
+		smtp_server_username = GET_OPTIONAL_CONFIG_PARAM(PARAM_SMTP_SERVER_USERNAME, null, config);
+		smtp_server_password = GET_OPTIONAL_CONFIG_PARAM(PARAM_SMTP_SERVER_PASSWORD, null, config);
+
 		setup_embedded_content(config);
 
 		File f = new File(email_template_dir);
@@ -198,15 +215,40 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	{
 	    boolean debug = false;
 	    try{
+	    	Session session = null;
+	    	if(smtp_server_use_ssl)
+	    	{
+	    		if(smtp_server_username == null || smtp_server_password == null)
+	    			throw new WebApplicationException("USERNAME AND PASSWORD ARE REQUIRED FOR SENDING MAIL USING SSL");
 
+	    		Properties props = new Properties();
+	    		props.put("mail.smtp.host", smtp_server);
+	    		props.put("mail.smtp.socketFactory.port", String.valueOf(smtp_server_port));
+	    		props.put("mail.smtp.socketFactory.class",
+	    				"javax.net.ssl.SSLSocketFactory");
+	    		props.put("mail.smtp.auth", "true");
+	    		props.put("mail.smtp.port", String.valueOf(smtp_server_port));
+
+
+	    		session = Session.getDefaultInstance(props,
+	    				new javax.mail.Authenticator() {
+	    					protected PasswordAuthentication getPasswordAuthentication() {
+	    						return new PasswordAuthentication(smtp_server_username,smtp_server_password);
+	    					}
+	    				});
+
+	    	}
+	    	else
+	    	{
 		     //Set the host smtp address
 		     Properties props = new Properties();
 		     props.put("mail.transport.protocol", "smtp");
 		     props.put("mail.smtp.host", smtp_server);
 
 		    // create some properties and get the default Session
-		    Session session = Session.getDefaultInstance(props, null);
-		    session.setDebug(debug);
+		     session = Session.getDefaultInstance(props, null);
+		     session.setDebug(debug);
+	    	}
 
 		    // create a message
 		    MimeMessage msg = new MimeMessage(session);
@@ -285,14 +327,40 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	    boolean debug = false;
 	    try{
 
+	    	Session session = null;
+	    	if(smtp_server_use_ssl)
+	    	{
+	    		if(smtp_server_username == null || smtp_server_password == null)
+	    			throw new WebApplicationException("USERNAME AND PASSWORD ARE REQUIRED FOR SENDING MAIL USING SSL");
+
+	    		Properties props = new Properties();
+	    		props.put("mail.smtp.host", smtp_server);
+	    		props.put("mail.smtp.socketFactory.port",String.valueOf( smtp_server_port));
+	    		props.put("mail.smtp.socketFactory.class",
+	    				"javax.net.ssl.SSLSocketFactory");
+	    		props.put("mail.smtp.auth", "true");
+	    		props.put("mail.smtp.port", String.valueOf(smtp_server_port));
+
+
+	    		session = Session.getDefaultInstance(props,
+	    				new javax.mail.Authenticator() {
+	    					protected PasswordAuthentication getPasswordAuthentication() {
+	    						return new PasswordAuthentication(smtp_server_username,smtp_server_password);
+	    					}
+	    				});
+
+	    	}
+	    	else
+	    	{
 		     //Set the host smtp address
 		     Properties props = new Properties();
 		     props.put("mail.transport.protocol", "smtp");
 		     props.put("mail.smtp.host", smtp_server);
 
 		    // create some properties and get the default Session
-		    Session session = Session.getDefaultInstance(props, null);
-		    session.setDebug(debug);
+		     session = Session.getDefaultInstance(props, null);
+		     session.setDebug(debug);
+	    	}
 
 		    // create a message
 		    MimeMessage msg = new MimeMessage(session);
@@ -330,14 +398,42 @@ public class QueuedEmailModule extends WebModule implements IEmailModule
 	    boolean debug = false;
 	    try{
 
+	    	Session session = null;
+	    	if(smtp_server_use_ssl)
+	    	{
+	    		if(smtp_server_username == null || smtp_server_password == null)
+	    			throw new WebApplicationException("USERNAME AND PASSWORD ARE REQUIRED FOR SENDING MAIL USING SSL");
+
+	    		Properties props = new Properties();
+	    		props.put("mail.smtp.host", smtp_server);
+	    		props.put("mail.smtp.socketFactory.port", String.valueOf(smtp_server_port));
+	    		props.put("mail.smtp.socketFactory.class",
+	    				"javax.net.ssl.SSLSocketFactory");
+	    		props.put("mail.smtp.auth", "true");
+	    		props.put("mail.smtp.port", String.valueOf(smtp_server_port));
+
+
+
+
+	    		session = Session.getInstance(props,
+	    				new javax.mail.Authenticator() {
+	    					protected PasswordAuthentication getPasswordAuthentication() {
+	    						return new PasswordAuthentication(smtp_server_username,smtp_server_password);
+	    					}
+	    				});
+
+	    	}
+	    	else
+	    	{
 		     //Set the host smtp address
 		     Properties props = new Properties();
+		     props.put("mail.transport.protocol", "smtp");
 		     props.put("mail.smtp.host", smtp_server);
 
 		    // create some properties and get the default Session
-		    Session session = Session.getDefaultInstance(props, null);
-
-
+		     session = Session.getDefaultInstance(props, null);
+		     session.setDebug(debug);
+	    	}
 
 		    // create a message
 		    MimeMessage msg = new MimeMessage(session);
