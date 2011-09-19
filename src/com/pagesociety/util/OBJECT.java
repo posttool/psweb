@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.JsonEncoder;
 
-public class OBJECT extends HashMap<String,Object>
+public class OBJECT extends LinkedHashMap<String,Object>
 {
 
 	private static final long serialVersionUID = 6574754645564381545L;
@@ -33,7 +34,7 @@ public class OBJECT extends HashMap<String,Object>
 		b.append("}\n");
 		return b.toString();
 	}
-	
+
 	public String toJSON()
 	{
 		return toJSON(this);
@@ -48,7 +49,7 @@ public class OBJECT extends HashMap<String,Object>
 	{
 		return (ARRAY) find(path);
 	}
-	
+
 	public String S(String path)
 	{
 		return (String) find(path);
@@ -58,17 +59,17 @@ public class OBJECT extends HashMap<String,Object>
 	{
 		return (Boolean) find(path);
 	}
-	
+
 	public int I(String path)
 	{
 		return (Integer) find(path);
 	}
-	
+
 	public double N(String path)
 	{
 		return (Double) find(path);
 	}
-	
+
 	public Date D(String path)
 	{
 		return (Date) find(path);
@@ -88,7 +89,7 @@ public class OBJECT extends HashMap<String,Object>
 			int array_char_idx = pp.indexOf("[");
 			if (array_char_idx != -1 && pp.endsWith("]"))
 			{
-				
+
 				int idx = Integer.parseInt(pp.substring(array_char_idx + 1, pp.length() - 1));
 				pp = pp.substring(0, array_char_idx);
 				ARRAY ta = ((OBJECT) target).A(pp);
@@ -127,16 +128,16 @@ public class OBJECT extends HashMap<String,Object>
 			throw new WebApplicationException("Can't decode", e);
 		}
 	}
-	
+
 	public static String toJSON(OBJECT o)
 	{
 		return JsonEncoder.encode(o,false,false);
 	}
-	
+
 	public static void main(String[] args)
 	{
 		OBJECT o = new OBJECT(
-				"x",new ARRAY(1,2,"you will"), 
+				"x",new ARRAY(1,2,"you will"),
 				"y", new OBJECT(
 					"a$a", 17,
 					"b$b", new OBJECT(
@@ -146,7 +147,7 @@ public class OBJECT extends HashMap<String,Object>
 					"ccc", new ARRAY("wonder","get me", new OBJECT("or","stop","and",true)
 					)
 				));
-		
+
 		System.out.println(o.toJSON());
 		System.out.println("---");
 		System.out.println(o.find("x"));
@@ -158,7 +159,7 @@ public class OBJECT extends HashMap<String,Object>
 //		System.out.println(o.B("y.ccd[2].x"));  // null pointer
 //		System.out.println(o.B("y.ccc[14].x")); // index out of bounds
 		System.out.println(o.find("y.ccc[2].da"));
-		
+
 	}
 
 }
