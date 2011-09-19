@@ -499,22 +499,22 @@ public abstract class WebModule extends Module
 	{
 		return new OBJECT(args);
 	}
-	
+
 	public ARRAY ARRAY(Object... args)
 	{
 		return new ARRAY(args);
 	}
-	
+
 	public static String ENCODE(Serializable o) throws WebApplicationException
 	{
 		return OBJECT.encode(o);
 	}
-	
+
 	public static OBJECT DECODE_OBJECT(String s) throws WebApplicationException
 	{
 		return OBJECT.decode(s);
 	}
-	
+
 	public static ARRAY DECODE_ARRAY(String s) throws WebApplicationException
 	{
 		if (s==null)
@@ -527,8 +527,8 @@ public abstract class WebModule extends Module
 			throw new WebApplicationException("Can't decode",e);
 		}
 	}
-	
-	
+
+
 
 
 	protected void COPY(File file, File destination_directory,String filename) throws PersistenceException
@@ -711,7 +711,16 @@ public abstract class WebModule extends Module
 		return map;
 	}
 
-	public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
+
+    public static OBJECT JSON_TO_OBJECT(String json) throws JSONException
+    {
+    	JSONObject o = new JSONObject(json);
+    	OBJECT ret = new OBJECT();
+    	json_to_map(ret,o);
+    	return ret;
+    }
+
+    public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
 	{
 
 			String[] keys = JSONObject.getNames(o);
@@ -993,5 +1002,10 @@ public abstract class WebModule extends Module
 		    }
 		  }
 
+
+		public static final int RANDOM(int min,int max)
+		{
+			return min + (int)(Math.random() * ((max - min) + 1));
+		}
 
 }
