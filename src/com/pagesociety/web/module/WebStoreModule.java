@@ -25,6 +25,7 @@ import com.pagesociety.web.exception.SyncException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.persistence.IEvolutionProvider;
 import com.pagesociety.web.module.persistence.IPersistenceProvider;
+import com.pagesociety.web.module.user.UserModule;
 
 public class WebStoreModule extends WebModule
 {
@@ -517,11 +518,12 @@ public class WebStoreModule extends WebModule
 	}
 
 //do_fill_deep(store,e,0,MAX_INT,FILL(dsfs, sfsf, gdgd, sdgsdg), MASK(password, email))
-	public static final String[] EMPTY_STRING_ARRAY = new String[0];
-	public static final String[] FILL_ALL_FIELDS    = EMPTY_STRING_ARRAY;
-	public static final String[] FILL_NO_FIELDS    	= null;
-	public static final String[] MASK_NO_FIELDS    	= EMPTY_STRING_ARRAY;
-	public static final String[] MASK_CREATOR    	= new String[]{FIELD_CREATOR};
+	public static final String[] EMPTY_STRING_ARRAY  = new String[0];
+	public static final String[] FILL_ALL_FIELDS     = EMPTY_STRING_ARRAY;
+	public static final String[] FILL_NO_FIELDS    	 = null;
+	public static final String[] MASK_NO_FIELDS    	 = EMPTY_STRING_ARRAY;
+	public static final String[] MASK_CREATOR    	 = new String[]{FIELD_CREATOR};
+	public static final String[] MASK_EMAIL_PASSWORD = new String[]{UserModule.FIELD_EMAIL,UserModule.FIELD_PASSWORD};
 	public static String[] MASK(String... fieldnames)
 	{
 		return fieldnames;
@@ -850,7 +852,15 @@ public class WebStoreModule extends WebModule
 	{
 		Query q = new Query(entity_type);
 		q.idx(idx_name);
-		q.eq(query_vals);
+		if(query_vals.length == 1)
+			q.eq(query_vals[0]);
+		else
+		{
+			List<Object> ll = new ArrayList<Object>();
+			for(int i = 0;i < query_vals.length;i++)
+				ll.add(query_vals[i]);
+			q.eq(ll);
+		}
 		List<Entity> ee = QUERY(store,q).getEntities();
 		int s = ee.size();
 		if(s == 0)
