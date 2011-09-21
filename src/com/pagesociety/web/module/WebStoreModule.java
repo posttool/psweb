@@ -845,6 +845,30 @@ public class WebStoreModule extends WebModule
 			return store.count(tid,q);
 	}
 
+
+	public static Entity GET_ONE(PersistentStore store,String entity_type, String idx_name, Object... query_vals) throws PersistenceException,WebApplicationException
+	{
+		Query q = new Query(entity_type);
+		q.idx(idx_name);
+		q.eq(query_vals);
+		List<Entity> ee = QUERY(store,q).getEntities();
+		int s = ee.size();
+		if(s == 0)
+			return null;
+		else if(s == 1)
+			return ee.get(0);
+		else
+		{
+			StringBuilder buf = new StringBuilder();
+			for(int i = 0;i < query_vals.length;i++)
+			{
+				buf.append(String.valueOf(query_vals[i]));
+				buf.append(' ');
+			}
+			throw new WebApplicationException("MORE THAN ONE ENTITY OF TYPE "+entity_type+" EXISTS FOR INDEX "+idx_name+" AND VALUES "+buf.toString());
+		}
+	}
+
 	public static Entity ID_TO_ENTITY(PersistentStore store,String entity_type,Long id) throws WebApplicationException,PersistenceException
 	{
 		Entity entity;
@@ -1056,6 +1080,10 @@ public class WebStoreModule extends WebModule
 		return QUERY(store, q);
 	}
 
+	public Entity GET_ONE(String entity_type, String idx_name, Object... query_vals) throws PersistenceException,WebApplicationException
+	{
+		return GET_ONE(store,entity_type,idx_name,query_vals);
+	}
 	public QueryResult QUERY_FILL(Query q) throws PersistenceException
 	{
 		return QUERY_FILL(store, q);
