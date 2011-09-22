@@ -565,7 +565,10 @@ public class WebStoreModule extends WebModule
 			fields_to_fill = fill_fields;
 
 		for(int m = 0;m < mask_fields.length;m++)
-			e.setAttribute(mask_fields[m], null);
+		{
+			if(e.getAttributes().containsKey(mask_fields[m]))
+				e.setAttribute(mask_fields[m], null);
+		}
 
 		for(int i = 0;i < fields_to_fill.length ;i++)
 		{
