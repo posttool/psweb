@@ -65,6 +65,8 @@ public class OBJECT extends LinkedHashMap<String,Object>
 		return (Integer) find(path);
 	}
 
+
+
 	public double N(String path)
 	{
 		return (Double) find(path);
