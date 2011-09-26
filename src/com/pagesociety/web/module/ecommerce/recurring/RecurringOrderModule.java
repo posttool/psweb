@@ -17,6 +17,7 @@ import com.pagesociety.persistence.Types;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
+import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.module.Export;
 import com.pagesociety.web.module.PagingQueryResult;
@@ -921,7 +922,7 @@ public class RecurringOrderModule extends ResourceModule
 					if(!billing_thread_running)
 						break;
 					try{
-						Thread.sleep(billing_thread_interval*1000*60);//TODO: right now this is in minutes
+						Thread.sleep(billing_thread_interval*1000*60);//TODO: right now this isminutes
 					}catch(InterruptedException ie)
 					{
 						//ie.printStackTrace();
@@ -968,10 +969,7 @@ public class RecurringOrderModule extends ResourceModule
 		Query q 				= null;
 		QueryResult result 		= null;
 
-
-
 		INFO("BILLING THREAD -- STARTING");
-
 
 		try{
 
@@ -995,6 +993,7 @@ public class RecurringOrderModule extends ResourceModule
 		for(int i = 0;i < orders_that_need_to_be_billed.size();i++)
 		{
 			try{
+				START_TRANSACTION("Billing Thread");
 
 				recurring_order = orders_that_need_to_be_billed.get(i);
 				MODULE_LOG("ABOUT BILL ORDER\n"+recurring_order);
@@ -1009,6 +1008,7 @@ public class RecurringOrderModule extends ResourceModule
 					//script exception//
 					ERROR(e1);
 					send_promo_script_failed_email(e1, recurring_order);
+					ROLLBACK_TRANSACTION();
 					continue;
 				}
 				billing_record = billing_module.getPreferredBillingRecord(order_user);
@@ -1021,7 +1021,9 @@ public class RecurringOrderModule extends ResourceModule
 						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,"Need user credit card info.");
 						MODULE_LOG( 1,"!!!MONTHLY BILL FAILED FOR RECURRING ORDER "+recurring_order.getId()+" "+recurring_order);
 						MODULE_LOG( 1,"USER DOES NOT HAVE PREFERRED BILLING RECORD SOMEHOW "+order_user);
+						COMMIT_TRANSACTION();
 						continue;
+
 					}
 				}
 
@@ -1031,6 +1033,7 @@ public class RecurringOrderModule extends ResourceModule
 				try{
 
 					do_regular_billing(order_user,recurring_order, billing_record,amount_after_promotions);
+					COMMIT_TRANSACTION();
 				}
 				catch(PersistenceException pe4)
 				{
@@ -1038,6 +1041,7 @@ public class RecurringOrderModule extends ResourceModule
 					ERROR("WE BARFED IN OUR OWN UPDATE BUT IT APPEARS THE BILLING MAY HAVE GONE THROUGH FOR PAYPAL ON ORDER FOR USER "+order_user);
 					send_email_to_us(new Date()+" WE BARFED IN OUR OWN UPDATE BUT IT APPEARS THE BILLING MAY HAVE GONE THROUGH FOR PAYPAL ON ORDER FOR USER "+order_user+" Exception was:"+pe4.getMessage());
 					ERROR(pe4);
+					COMMIT_TRANSACTION();
 					continue;//this is out fault for now//
 				}
 				catch(BillingGatewayException bge)
@@ -1045,7 +1049,14 @@ public class RecurringOrderModule extends ResourceModule
 					ERROR("CAUGHT BGE "+bge.isUserRecoverable()+ "bge "+bge.getMessage());
 					ERROR(bge);
 					if(bge.isUserRecoverable())
+					{
 						updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,bge.getMessage());
+						COMMIT_TRANSACTION();
+					}
+					else
+					{
+						ROLLBACK_TRANSACTION();
+					}
 					continue;
 				}
 
@@ -1058,6 +1069,13 @@ public class RecurringOrderModule extends ResourceModule
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION.", pe);
 				send_email_to_us(new Date()+" ERROR:ABORTING BILLING THREAD DUE TO PERSISTENCE EXCEPTION. "+pe.getMessage());
+				try{
+					ROLLBACK_TRANSACTION();
+				}catch(PersistenceException pe3)
+				{
+					ERROR("FAILED ROLLING BACK TXN "+pe3);
+				}
+
 				return;//break out of for loop//
 			}
 			catch(Exception ee)
@@ -1065,12 +1083,12 @@ public class RecurringOrderModule extends ResourceModule
 				MODULE_LOG( 0,"ERROR:ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION.");
 				ERROR("ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION.", ee);
 				send_email_to_us(new Date()+" ERROR:ABORTING BILLING THREAD DUE TO UNKNOWN EXCEPTION. "+ee.getMessage());
-				//	try{
-			//		ROLLBACK_TRANSACTION();
-			//	}catch(PersistenceException pe3)
-			//	{
-			//		ERROR("FAILED ROLLING BACK TXN "+pe3);
-			//	}
+				try{
+					ROLLBACK_TRANSACTION();
+				}catch(PersistenceException pe3)
+				{
+					ERROR("FAILED ROLLING BACK TXN "+pe3);
+				}
 
 				return;//break out of for loop//
 			}
@@ -1112,23 +1130,29 @@ public class RecurringOrderModule extends ResourceModule
 		List<Entity> failed_orders = result.getEntities();
 		for(int i = 0;i < failed_orders.size();i++)
 		{
+			try{
+				START_TRANSACTION("Billing Thread Failed Monthly");
 
-			recurring_order = failed_orders.get(i);
-			try {
+				recurring_order = failed_orders.get(i);
 				FILL_REFS(recurring_order);
+
 			} catch (PersistenceException e1) {
 				ERROR(e1);
 				MODULE_LOG("FAILED FILLING REFS IN HANDLE FAILED BILLING RECORDS. ORDER WAS: "+recurring_order);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe){ERROR(pe);MODULE_LOG("UNABLE TO ROLLBACK FAILED MONTHLY TRANSACTION "+pe.getMessage());}
 				continue;
 			}
 			order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
+
 			double amount = 0;
 			try{
 				amount = get_order_amount_with_promotions_applied(recurring_order);
 			}catch(WebApplicationException wae)
 			{
+
 				MODULE_LOG("GETTING ORDER AMOUNT FOR FAILED ORDER: "+recurring_order);
 				ERROR(wae);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe){ERROR(pe);MODULE_LOG("UNABLE TO TO ROLLBACK TRANSACTION "+pe.getMessage());}
 				continue;
 			}
 			//TODO: might want to check for promotion here and set order back to init and 0 outstanding balance//
@@ -1142,11 +1166,12 @@ public class RecurringOrderModule extends ResourceModule
 					    RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(balance,2));
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info!");
 				check_billing_failed_grace_period_expired(now, recurring_order);
-
+				COMMIT_TRANSACTION();
 			}catch(PersistenceException pe2)
 			{
 				MODULE_LOG("FAILED UPDATING FAILED ORDER "+recurring_order+" "+order_user);
 				ERROR(pe2);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe3){ERROR(pe3);MODULE_LOG("UNABLE TO ROLLBACK TRANSACTION - "+pe3.getMessage());}
 				continue;
 			}
 		}
@@ -1194,12 +1219,15 @@ public class RecurringOrderModule extends ResourceModule
 		List<Entity> failed_orders = result.getEntities();
 		for(int i = 0;i < failed_orders.size();i++)
 		{
-			recurring_order = failed_orders.get(i);
-			try {
+			try{
+				START_TRANSACTION("Billing Thread Purge ");
+
+				recurring_order = failed_orders.get(i);
 				FILL_REFS(recurring_order);
 			} catch (PersistenceException e1) {
 				ERROR(e1);
 				MODULE_LOG("FAILED FILLING REFS IN HANDLE FAILED BILLING RECORDS. ORDER WAS: "+recurring_order);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe3){ERROR(pe3);MODULE_LOG("UNABLE TO ROLLBACK FAILED ORDERS TRANSACTION - "+pe3.getMessage());}
 				continue;
 			}
 			order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
@@ -1210,6 +1238,7 @@ public class RecurringOrderModule extends ResourceModule
 			{
 				MODULE_LOG("GETTING ORDER AMOUNT FOR FAILED ORDER: "+recurring_order);
 				ERROR(wae);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe){ERROR(pe);MODULE_LOG("FAILED ROLLING BACK TRANSACTION IN PURGE - "+pe.getMessage());}
 				continue;
 			}
 
@@ -1223,11 +1252,12 @@ public class RecurringOrderModule extends ResourceModule
 						RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(balance,2));
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info! account in danger of being closed.");
 				check_chuck_billing_failed_user(now, recurring_order);
-
+				COMMIT_TRANSACTION();
 			}catch(PersistenceException pe2)
 			{
 				MODULE_LOG("FAILED UPDATING FAILED ORDER "+recurring_order+" "+order_user);
 				ERROR(pe2);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe3){ERROR(pe3);MODULE_LOG("UNABLE TO ROLLBACK PURGE TRANSACTION - "+pe3.getMessage());}
 				continue;
 			}
 		}
@@ -1287,11 +1317,14 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			try{
 				trial_order 			= in_trial_orders.get(i);
+				START_TRANSACTION("BILLING THREAD CHECK EXPIRED TRIAL");
 				check_expired_trial(now, trial_order);
+				COMMIT_TRANSACTION();
 			}catch(Exception e)
 			{
 				ERROR(e);
 				MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe3){ERROR(pe3);MODULE_LOG("UNABLE TO ROLLBACK EXPIRED TRIAL TRANSACTION - "+pe3.getMessage());}
 				break;
 			}
 		}
@@ -1325,11 +1358,14 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			try{
 				expired_trial_order 			= expired_trial_orders.get(i);
+				START_TRANSACTION("Billing Thread - Purge expired trial users");
 				check_chuck_trial_user(now, expired_trial_order);
+				COMMIT_TRANSACTION();
 			}catch(Exception e)
 			{
 				ERROR(e);
 				MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
+				try{ROLLBACK_TRANSACTION();}catch(PersistenceException pe3){ERROR(pe3);MODULE_LOG("UNABLE TO ROLLBACK PURGE USER TRANSACTION - "+pe3.getMessage());}
 				break;
 			}
 		}
