@@ -716,9 +716,42 @@ public abstract class WebModule extends Module
     {
     	JSONObject o = new JSONObject(json);
     	OBJECT ret = new OBJECT();
-    	json_to_map(ret,o);
+    	json_to_OBJECT(ret,o);
     	return ret;
     }
+
+    public static Map<String,Object> json_to_OBJECT(OBJECT ret, JSONObject o) throws JSONException
+	{
+
+			String[] keys = JSONObject.getNames(o);
+			if(keys == null)
+				return ret;
+			for(int i = 0;i < keys.length;i++)
+			{
+				Object val = o.get(keys[i]);
+				if(val instanceof JSONObject)
+				{
+
+					OBJECT o_map = new OBJECT();
+					ret.put(keys[i], json_to_OBJECT(o_map,(JSONObject)val));
+
+				}
+				else if(val instanceof JSONArray)
+				{
+					JSONArray L = (JSONArray)val;
+					List<Object> list = new ArrayList<Object>(L.length());
+					ret.put(keys[i], parse_json_list(list, L));
+				}
+				else
+				{
+					ret.put(keys[i],val);
+				}
+			}
+			return ret;
+
+	}
+
+
 
     public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
 	{
