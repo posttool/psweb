@@ -12,6 +12,7 @@ import com.pagesociety.persistence.PersistenceException;
 import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
+import com.pagesociety.util.CALLBACK;
 import com.pagesociety.util.RandomGUID;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;

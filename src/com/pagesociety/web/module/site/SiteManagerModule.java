@@ -52,6 +52,7 @@ import com.pagesociety.persistence.Query;
 import com.pagesociety.persistence.Query.QueryNode;
 import com.pagesociety.persistence.QueryResult;
 import com.pagesociety.persistence.Types;
+import com.pagesociety.util.CALLBACK;
 import com.pagesociety.util.OBJECT;
 import com.pagesociety.util.Text;
 import com.pagesociety.web.UserApplicationContext;

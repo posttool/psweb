@@ -167,27 +167,27 @@ public abstract class WebModule extends Module
 	}
 
 
-	protected void INFO(String message)
+	public void INFO(String message)
 	{
 		_application.INFO(getName()+": "+message);
 	}
 
-	protected void WARNING(String message)
+	public void WARNING(String message)
 	{
 		_application.WARNING(getName()+": "+message);
 	}
 
-	protected void ERROR(String message)
+	public void ERROR(String message)
 	{
 		_application.ERROR(getName()+": "+message);
 	}
 
-	protected void ERROR(Exception e)
+	public void ERROR(Exception e)
 	{
 		_application.ERROR(e);
 	}
 
-	protected void ERROR(String message,Exception e)
+	public void ERROR(String message,Exception e)
 	{
 		_application.ERROR(getName()+": "+message,e);
 	}
@@ -739,7 +739,7 @@ public abstract class WebModule extends Module
 				else if(val instanceof JSONArray)
 				{
 					JSONArray L = (JSONArray)val;
-					List<Object> list = new ArrayList<Object>(L.length());
+					ARRAY list = new ARRAY();
 					ret.put(keys[i], parse_json_list(list, L));
 				}
 				else
@@ -765,14 +765,14 @@ public abstract class WebModule extends Module
 				if(val instanceof JSONObject)
 				{
 
-					Map<String,Object> o_map = new LinkedHashMap<String,Object>();
+					OBJECT o_map = new OBJECT();
 					ret.put(keys[i], json_to_map(o_map,(JSONObject)val));
 
 				}
 				else if(val instanceof JSONArray)
 				{
 					JSONArray L = (JSONArray)val;
-					List<Object> list = new ArrayList<Object>(L.length());
+					ARRAY list = new ARRAY();
 					ret.put(keys[i], parse_json_list(list, L));
 				}
 				else
@@ -792,12 +792,12 @@ public abstract class WebModule extends Module
 				Object vv = L.get(ii);
 				if(vv instanceof JSONObject)
 				{
-					Map<String,Object> o_map = new LinkedHashMap<String,Object>();
+					OBJECT o_map = new OBJECT();
 					list.add(json_to_map(o_map,(JSONObject)vv));
 				}
 				else if(vv instanceof JSONArray)
 				{
-					List<Object> ll = new ArrayList<Object>(((JSONArray)vv).length());
+					ARRAY ll = new ARRAY();
 					list.add(parse_json_list(ll, (JSONArray)vv));
 				}
 				else
@@ -964,17 +964,6 @@ public abstract class WebModule extends Module
 			}
 			// The directory is now empty so delete it
 			return dir.delete();
-		}
-
-
-		public static final Object CALLBACK_VOID = new Object();
-		public class CALLBACK
-		{
-
-			public Object exec(Object... args) throws Exception
-			{
-				return CALLBACK_VOID;
-			}
 		}
 
 

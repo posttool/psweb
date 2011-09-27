@@ -3,8 +3,8 @@ package com.pagesociety.util;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.pagesociety.web.exception.WebApplicationException;
 import com.pagesociety.web.gateway.JsonEncoder;
@@ -94,7 +94,7 @@ public class OBJECT extends LinkedHashMap<String,Object>
 
 				int idx = Integer.parseInt(pp.substring(array_char_idx + 1, pp.length() - 1));
 				pp = pp.substring(0, array_char_idx);
-				ARRAY ta = ((OBJECT) target).A(pp);
+				List<?> ta = ((OBJECT) target).A(pp);
 				if (ta==null)
 					throw new NullPointerException("cannot access item "+idx+" of "+pp);
 				target = ta.get(idx);
