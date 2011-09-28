@@ -166,9 +166,15 @@ public class HttpRequestRouter extends HttpServlet
 		String completeUrl = getUrl(request);
 		String mime_type = _servlet_config.getServletContext().getMimeType(requestPath);
 
-		System.out.println("RequestPath is "+requestPath);
-		System.out.println("completeUrl is "+completeUrl);
-		System.out.println("mime_type is "+mime_type);
+//		System.out.println("RequestPath is "+requestPath);
+//		System.out.println("completeUrl is "+completeUrl);
+//		System.out.println("mime_type is "+mime_type);
+		
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Methods", "GET, POST");
+		response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+		response.setHeader("Access-Control-Max-Age", "86400");
+
 		if (mime_type != null)
 		{
 			for (int i = 0; i < GatewayConstants.MIME_TYPE_PREFIXES.length; i++)
