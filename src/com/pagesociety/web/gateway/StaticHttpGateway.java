@@ -59,9 +59,6 @@ public class StaticHttpGateway
 		response.setContentType(mimeType);
 		response.setContentLength((int) file.length());
 		response.setDateHeader(RESPONSE_DATE_HEADER_LAST_MOD, lastMod);
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "GET, POST");
-		response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 		FileInputStream in = new FileInputStream(file);
 		OutputStream out = response.getOutputStream();
 		byte[] buf = new byte[SERVE_BLOCK_SIZE];
