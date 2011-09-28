@@ -28,7 +28,9 @@ import java.util.Set;
  */
 public abstract class LRUCache extends AbstractCache
 {
-    private HashMap<Object, LRUListEntry> map;
+ 
+	private static final long serialVersionUID = -326817242013760756L;
+	private HashMap<Object, LRUListEntry> map;
     private LRUListEntry head;//the MRU element
     private LRUListEntry tail;//the LRU element
     private int maxSize; //the max size of this cache. If this size is exceeded, LRU elements will be purged to free cache space.
