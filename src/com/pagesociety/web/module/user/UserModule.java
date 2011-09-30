@@ -305,6 +305,19 @@ public class UserModule extends WebStoreModule
 		return updated_user;
 	}
 
+	@Export(ParameterNames={"user_entity_id","old_password","new_password"})
+	public Entity UpdatePassword(UserApplicationContext uctx,String new_password,boolean password_is_md5) throws PersistenceException,WebApplicationException
+	{
+		Entity editor    = (Entity)uctx.getUser();
+		Entity target    = editor;
+		GUARD(editor,CAN_EDIT_USER,GUARD_USER,target);
+
+		Entity updated_user =  updatePassword(target, new_password,password_is_md5);
+		if(editor.equals(target))
+			uctx.setUser(updated_user);
+		return updated_user;
+	}
+
 	public Entity updatePassword(Entity user,String password,boolean md5_password) throws PersistenceException
 	{
 		if(md5_password)
