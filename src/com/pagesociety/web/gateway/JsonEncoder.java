@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import com.pagesociety.persistence.Entity;
@@ -20,6 +21,8 @@ public class JsonEncoder
 		JSONStringer js = new JSONStringer();
 		try
 		{
+
+
 			if(wrapwithvalue)
 			{
 				js.object();
@@ -48,7 +51,7 @@ public class JsonEncoder
 	private static void encode_json(JSONStringer js, Object o,Map<Object,String> seen,boolean include_oid)
 			throws Exception
 	{
-		if (o == null)
+		if (o == null )//|| o == JSONObject.NULL)
 		{
 			js.value(null);
 			return;
@@ -139,7 +142,7 @@ public class JsonEncoder
 			{
 				js.key("_ps_clazz");
 				js.value(o.getClass().getSimpleName());
-	
+
 				js.key("_object_id");
 				js.value(mem_id);
 			}
@@ -155,6 +158,10 @@ public class JsonEncoder
 	private static void encode_value(JSONStringer js, Object o)
 			throws Exception
 	{
+		if(o == null)
+		{
+			js.value(null);
+		}
 		if (o.getClass() == Boolean.class)
 		{
 			js.value((Boolean) o);
