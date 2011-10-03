@@ -158,10 +158,7 @@ public class JsonEncoder
 	private static void encode_value(JSONStringer js, Object o)
 			throws Exception
 	{
-		if(o == null)
-		{
-			js.value(null);
-		}
+
 		if (o.getClass() == Boolean.class)
 		{
 			js.value((Boolean) o);
