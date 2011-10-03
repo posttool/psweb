@@ -714,9 +714,25 @@ public abstract class WebModule extends Module
 
     public static OBJECT JSON_TO_OBJECT(String json) throws JSONException
     {
-    	JSONObject o = new JSONObject(json);
     	OBJECT ret = new OBJECT();
-    	json_to_OBJECT(ret,o);
+    	if(json.startsWith("["))
+    	{
+    		ARRAY a = JSON_TO_ARRAY(json);
+    		ret.put("values",a);
+    	}
+    	else
+    	{
+    		JSONObject o = new JSONObject(json);
+    		json_to_OBJECT(ret,o);
+    	}
+    	return ret;
+    }
+
+    public static ARRAY JSON_TO_ARRAY(String json) throws JSONException
+    {
+    	JSONArray a = new JSONArray(json);
+    	ARRAY ret = new ARRAY();
+    	json_to_ARRAY(ret,a);
     	return ret;
     }
 
@@ -744,13 +760,46 @@ public abstract class WebModule extends Module
 				}
 				else
 				{
-					ret.put(keys[i],val);
+					if(val == JSONObject.NULL)
+						ret.put(keys[i],null);
+					else
+						ret.put(keys[i],val);
+
 				}
 			}
 			return ret;
 
 	}
 
+    public static ARRAY json_to_ARRAY(ARRAY ret, JSONArray a) throws JSONException
+	{
+
+			for(int i = 0;i < a.length();i++)
+			{
+				Object val = a.get(i);
+				if(val instanceof JSONObject)
+				{
+
+					OBJECT o_map = new OBJECT();
+					ret.add(json_to_OBJECT(o_map,(JSONObject)val));
+				}
+				else if(val instanceof JSONArray)
+				{
+					JSONArray L = (JSONArray)val;
+					ARRAY list = new ARRAY();
+					ret.add( parse_json_list(list, L));
+				}
+				else
+				{
+					if(val == JSONObject.NULL)
+						ret.add(null);
+					else
+						ret.add(val);
+				}
+			}
+			return ret;
+
+	}
 
 
     public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
@@ -777,7 +826,10 @@ public abstract class WebModule extends Module
 				}
 				else
 				{
-					ret.put(keys[i],val);
+					if(val == JSONObject.NULL)
+						ret.put(keys[i],null);
+					else
+						ret.put(keys[i],val);
 				}
 			}
 			return ret;
@@ -802,7 +854,10 @@ public abstract class WebModule extends Module
 				}
 				else
 				{
-					list.add(vv);
+					if(vv == JSONObject.NULL)
+						list.add(null);
+					else
+						list.add(vv);
 				}
 		}
 		return list;
