@@ -978,11 +978,13 @@ public class RecurringOrderModule extends ResourceModule
 			q.idx(IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE);
 			q.betweenDesc(q.list(ORDER_STATUS_OPEN,now), q.list(ORDER_STATUS_OPEN,Query.VAL_MIN));
 			q.cacheResults(false);
+			START_TRANSACTION("Billing thread Query 1");
 			result = QUERY(q);
+			COMMIT_TRANSACTION();
 			MODULE_LOG( 1,result.size()+" records to bill.");
 		}catch(PersistenceException pe1)
 		{
-
+			try{ROLLBACK_TRANSACTION();}catch(Exception e){ERROR(e);MODULE_LOG("UNABLE TO ROLLBACK Q1");}
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY OR BACKUP INTERRUPTION SEE LOGS. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
@@ -1118,10 +1120,13 @@ public class RecurringOrderModule extends ResourceModule
 			q.idx(IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE);
 			q.betweenDesc(q.list(ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,now), q.list(ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD,Query.VAL_MIN));
 			q.cacheResults(false);
+			START_TRANSACTION("Billing Thread Q-2");
 			result = QUERY(q);
+			COMMIT_TRANSACTION();
 			MODULE_LOG( 1,result.size()+" records in monthly billing failed grace period state.");
 		}catch(PersistenceException pe1)
 		{
+			try{ROLLBACK_TRANSACTION();}catch(Exception e){ERROR(e);MODULE_LOG("UNABLE TO ROLLBACK Q2");}
 			MODULE_LOG( 1,"ERROR: ABORTING HANDLE MONTHLY BILLING FAILED CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
@@ -1207,10 +1212,13 @@ public class RecurringOrderModule extends ResourceModule
 			q.idx(IDX_RECURRING_ORDER_BY_STATUS_BY_NEXT_BILL_DATE);
 			q.betweenDesc(q.list(ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED,now), q.list(ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED,Query.VAL_MIN));
 			q.cacheResults(false);
+			START_TRANSACTION("Billing Thread - Query 3");
 			result = QUERY(q);
+			COMMIT_TRANSACTION();
 			MODULE_LOG( 1,result.size()+" records in monthly billing failed grace period expired state.");
 		}catch(PersistenceException pe1)
 		{
+			try{ROLLBACK_TRANSACTION();}catch(Exception e){ERROR(e);MODULE_LOG("UNABLE TO ROLLBACK Q3");}
 			MODULE_LOG( 1,"ERROR: ABORTING HANDLE MONTHLY BILLING GRACE PERIOD EXPIRED FAILED CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING PURGING BILLING FAILED USERS DUE TO FAILED QUERY. "+q);
 			return;
@@ -1300,10 +1308,13 @@ public class RecurringOrderModule extends ResourceModule
 			q = new Query(RECURRING_ORDER_ENTITY);
 			q.idx(IDX_RECURRING_ORDER_BY_STATUS);
 			q.eq(ORDER_STATUS_IN_TRIAL_PERIOD);
+			START_TRANSACTION("Billing thread Q-4");
 			result = QUERY(q);
+			COMMIT_TRANSACTION();
 			MODULE_LOG( 1,result.size()+" records currently in trial state.");
 		}catch(PersistenceException pe1)
 		{
+			try{ROLLBACK_TRANSACTION();}catch(Exception e){ERROR(e);MODULE_LOG("UNABLE TO ROLLBACK Q4");}
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
@@ -1341,10 +1352,13 @@ public class RecurringOrderModule extends ResourceModule
 			q = new Query(RECURRING_ORDER_ENTITY);
 			q.idx(IDX_RECURRING_ORDER_BY_STATUS);
 			q.eq(ORDER_STATUS_TRIAL_EXPIRED);
+			START_TRANSACTION("Billing thread Q-5");
 			result = QUERY(q);
+			COMMIT_TRANSACTION();
 			MODULE_LOG( 1,result.size()+" records currently in trial expired state.");
 		}catch(PersistenceException pe1)
 		{
+			try{ROLLBACK_TRANSACTION();}catch(Exception e){ERROR(e);MODULE_LOG("UNABLE TO ROLLBACK Q5");}
 			MODULE_LOG( 1,"ERROR: ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			ERROR("ABORTING BILLING CYCLE DUE TO FAILED QUERY. "+q);
 			return;
