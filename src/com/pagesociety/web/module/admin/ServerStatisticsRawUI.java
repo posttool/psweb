@@ -88,6 +88,30 @@ public class ServerStatisticsRawUI extends RawUIModule
 					SET_ERROR("PERSISTENCE EXCEPTION WHILE CHECKPOINTING", params);
 				}
 			}
+			boolean do_dump = params.get("threaddump") != null;
+			String dump = null;
+			if(do_dump)
+			{
+				try{
+					Map<Thread,StackTraceElement[]> map = Thread.getAllStackTraces();
+					StringBuilder buf = new StringBuilder();
+					for(Map.Entry<Thread,StackTraceElement[]> entry: map.entrySet())
+					{
+						Thread t 		= entry.getKey();
+						StackTraceElement[] ss = entry.getValue();
+						buf.append("THREAD - "+t.getName()+" "+t.getState()+"\n");
+						for(int i = 0;i < ss.length;i++)
+							buf.append("\t"+ss[i].toString()+"\n");
+						buf.append("\n");
+					}
+					dump = buf.toString();
+				}catch(Exception pe)
+				{
+					pe.printStackTrace();
+					SET_ERROR("ERROR WHILE DUMPING STACK TRACE", params);
+				}
+			}
+
 			DOCUMENT_START(uctx, getName(), RAW_UI_BACKGROUND_COLOR, RAW_UI_FONT_FAMILY, RAW_UI_FONT_COLOR, RAW_UI_FONT_SIZE,RAW_UI_LINK_COLOR,RAW_UI_LINK_HOVER_COLOR);
 			P(uctx);
 			SPAN(uctx,"SERVER STATISTICS",18);
@@ -115,9 +139,16 @@ public class ServerStatisticsRawUI extends RawUIModule
 				TD(uctx, "active transactions:");TD(uctx,"<PRE>"+((BDBStore)store.getStore()).getActiveTransactionSummary()+"</PRE>");
 				TR_END(uctx);
 			TABLE_END(uctx);
+			if(do_dump)
+			{
+
+				PRE(uctx,dump);
+				BR(uctx);
+			}
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ] ","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Abort Active Transactions] ","abort",true,KEY_UI_MODULE_INFO_KEY,"Did Abort");
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Checkpoint ] ","checkpoint",true,KEY_UI_MODULE_INFO_KEY,"Did Checkpoint");
+			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ ThreadDump ] ","threaddump",true,KEY_UI_MODULE_INFO_KEY,"Did Dump");
 			P(uctx);
 			SPAN(uctx,"<PRE>"+store.getStatistics()+"</PRE>",10);
 
