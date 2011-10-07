@@ -1137,9 +1137,9 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			try{
 				START_TRANSACTION("Billing Thread Failed Monthly");
-				System.out.println("ABOUT TO GET ORDER");
+				MODULE_LOG("ABOUT TO GET ORDER");
 				recurring_order = failed_orders.get(i);
-				System.out.println("GOT ORDER "+recurring_order);
+				MODULE_LOG("GOT ORDER "+recurring_order);
 				FILL_REFS(recurring_order);
 
 			} catch (PersistenceException e1) {
@@ -1153,7 +1153,7 @@ public class RecurringOrderModule extends ResourceModule
 			double amount = 0;
 			try{
 				amount = get_order_amount_with_promotions_applied(recurring_order);
-				System.out.println("AMOUNT IS "+amount);
+				MODULE_LOG("AMOUNT IS "+amount);
 			}catch(WebApplicationException wae)
 			{
 
@@ -1167,17 +1167,17 @@ public class RecurringOrderModule extends ResourceModule
 				Date now = new Date();
 				double balance 	= (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
 				balance 		+= amount;
-				System.out.println("ABOUT TO UPDATE ORDER TID IS "+CURRENT_TRANSACTION_ID());
+				MODULE_LOG("ABOUT TO UPDATE ORDER TID IS "+CURRENT_TRANSACTION_ID());
 				UPDATE(recurring_order,
 						RECURRING_ORDER_FIELD_LAST_BILL_DATE,now,
 						RECURRING_ORDER_FIELD_NEXT_BILL_DATE,calculate_next_bill_date(recurring_order, now),
 					    RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(balance,2));
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info!");
-				System.out.println("ABOUT TO CHECK BILLING GRACE PERIOD FAILED");
+				MODULE_LOG("ABOUT TO CHECK BILLING GRACE PERIOD FAILED");
 				check_billing_failed_grace_period_expired(now, recurring_order);
-				System.out.println("ABOUT TO COMMIT");
+				MODULE_LOG("ABOUT TO COMMIT");
 				COMMIT_TRANSACTION();
-			}catch(PersistenceException pe2)
+			}catch(Exception pe2)
 			{
 				MODULE_LOG("FAILED UPDATING FAILED ORDER "+recurring_order+" "+order_user);
 				ERROR(pe2);
@@ -1193,10 +1193,18 @@ public class RecurringOrderModule extends ResourceModule
 		Date billing_failed_genesis  =  (Date)recurring_order.getAttribute(RECURRING_ORDER_FIELD_BILLING_FAILED_GENESIS);
 
 		long grace_period_in_ms = (long)billing_failed_grace_period_in_days * get_ms_for_one_day();
-
+		if(billing_failed_genesis == null)
+		{
+			MODULE_LOG("BILLING FAILED GENESIS WAS NULL FOR "+recurring_order);
+			MODULE_LOG("FIXING ORDER - resetting balance and setting to open");
+			billing_failed_genesis = new Date();//lets cut them a break//
+			UPDATE(recurring_order, RECURRING_ORDER_FIELD_STATUS,ORDER_STATUS_OPEN,
+									RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,0);
+			return;
+		}
 		if(now.getTime() > billing_failed_genesis.getTime()+grace_period_in_ms)
 		{
-			System.out.println(" GRACE PERIOD EXPIRED FOR ORDER "+recurring_order);
+			MODULE_LOG(" GRACE PERIOD EXPIRED FOR ORDER "+recurring_order);
 			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED);
 		}
 		else
@@ -1267,7 +1275,7 @@ public class RecurringOrderModule extends ResourceModule
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info! account in danger of being closed.");
 				check_chuck_billing_failed_user(now, recurring_order);
 				COMMIT_TRANSACTION();
-			}catch(PersistenceException pe2)
+			}catch(Exception pe2)
 			{
 				MODULE_LOG("FAILED UPDATING FAILED ORDER "+recurring_order+" "+order_user);
 				ERROR(pe2);
