@@ -142,7 +142,7 @@ public class ServerStatisticsRawUI extends RawUIModule
 			if(do_dump)
 			{
 
-				PRE(uctx,dump);
+				SPAN(uctx,"<PRE>"+dump+"</PRE>",10);
 				BR(uctx);
 			}
 			A_GET(uctx,getName(),RAW_SUBMODE_DEFAULT,"[ Run Garbage Collector ] ","gc",true,KEY_UI_MODULE_INFO_KEY,"Ran GC");
@@ -155,7 +155,8 @@ public class ServerStatisticsRawUI extends RawUIModule
 
 			P(uctx);
 
-			JS_TIMED_REDIRECT(uctx,getName(),RAW_SUBMODE_DEFAULT,5000);
+			if(!do_dump)
+				JS_TIMED_REDIRECT(uctx,getName(),RAW_SUBMODE_DEFAULT,5000);
 			DOCUMENT_END(uctx);
 
 		}
