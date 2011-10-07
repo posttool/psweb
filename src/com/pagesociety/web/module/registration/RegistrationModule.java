@@ -22,6 +22,7 @@ import com.pagesociety.web.module.WebStoreModule;
 import com.pagesociety.web.module.email.IEmailModule;
 import com.pagesociety.web.module.user.UserModule;
 import com.pagesociety.web.module.util.Util;
+import com.sun.org.apache.regexp.internal.RESyntaxException;
 
 
 
@@ -35,8 +36,9 @@ public class RegistrationModule extends WebStoreModule
 	private static final String PARAM_ACTIVATE_ACCOUNT_URL		 = "activate-account-url";
 
 
-	private static final String SLOT_USER_MODULE  = "user-module";
-	private static final String SLOT_EMAIL_MODULE = "email-module";
+	private static final String SLOT_USER_MODULE  		  = "user-module";
+	private static final String SLOT_EMAIL_MODULE		  = "email-module";
+	private static final String SLOT_RESTRICT_LIST_MODULE = "restrict-list-module";
 
 	private boolean				do_email_confirmation;
 	private String				email_template_name;
@@ -44,6 +46,7 @@ public class RegistrationModule extends WebStoreModule
 	private String				activate_account_url;
 	private UserModule 			user_module;
 	private IEmailModule 		email_module;
+	private RestrictListModule	restrict_list;
 
 	private static final int LOCKED_PENDING_REGISTRATION = 0x2000;
 	private static final String LOCK_MESSAGE = " Your account registration is pending."+
@@ -76,6 +79,8 @@ public class RegistrationModule extends WebStoreModule
 		}
 		else
 			do_email_confirmation = false;
+
+		restrict_list = (RestrictListModule)getSlot(SLOT_RESTRICT_LIST_MODULE);
 	}
 
 
@@ -84,6 +89,7 @@ public class RegistrationModule extends WebStoreModule
 		super.defineSlots();
 		DEFINE_SLOT(SLOT_USER_MODULE,UserModule.class,true);
 		DEFINE_SLOT(SLOT_EMAIL_MODULE,IEmailModule.class,false,null);
+		DEFINE_SLOT(SLOT_RESTRICT_LIST_MODULE,RestrictListModule.class,false,null);
 	}
 
 	/// B E G I N      M O D U L E      F U N C T I O N S //////////
@@ -103,6 +109,7 @@ public class RegistrationModule extends WebStoreModule
 	@TransactionProtect
 	public Entity Register(UserApplicationContext uctx,String email,String username,String password,boolean md5ed) throws WebApplicationException,PersistenceException
 	{
+
 		if(md5ed)
 			return Register(uctx, email, username, password);
 		else
@@ -111,6 +118,14 @@ public class RegistrationModule extends WebStoreModule
 
 	public Entity register(Entity creator,String email,String username,String password,Object... xtra_event_context_params) throws WebApplicationException,PersistenceException
 	{
+		if(restrict_list != null)
+		{
+			if(!restrict_list.isAllowed(email))
+			{
+				throw new WebApplicationException("Sorry you are not allowed to register at this time.");
+			}
+		}
+
 		Entity user = user_module.createSystemUser(creator, email, password, username,xtra_event_context_params);
 		/*creator is null. means system created this user */
 		if(do_email_confirmation)
