@@ -68,6 +68,15 @@ public class OBJECT extends LinkedHashMap<String,Object>
 		else
 			return (Integer)val;
 	}
+	public Double F(String path)
+	{
+		Object val =  find(path);
+		if(val instanceof String)
+			return Double.parseDouble((String)val);
+		else
+			return (Double)val;
+	}
+
 
 
 
