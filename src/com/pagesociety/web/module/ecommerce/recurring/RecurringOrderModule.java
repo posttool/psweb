@@ -1137,8 +1137,9 @@ public class RecurringOrderModule extends ResourceModule
 		{
 			try{
 				START_TRANSACTION("Billing Thread Failed Monthly");
-
+				System.out.println("ABOUT TO GET ORDER");
 				recurring_order = failed_orders.get(i);
+				System.out.println("GOT ORDER "+recurring_order);
 				FILL_REFS(recurring_order);
 
 			} catch (PersistenceException e1) {
@@ -1148,10 +1149,11 @@ public class RecurringOrderModule extends ResourceModule
 				continue;
 			}
 			order_user     = (Entity)recurring_order.getAttribute(RECURRING_ORDER_FIELD_USER);
-
+			System.out.println("ORDER USER IS "+order_user);
 			double amount = 0;
 			try{
 				amount = get_order_amount_with_promotions_applied(recurring_order);
+				System.out.println("AMOUNT IS "+amount);
 			}catch(WebApplicationException wae)
 			{
 
@@ -1165,12 +1167,15 @@ public class RecurringOrderModule extends ResourceModule
 				Date now = new Date();
 				double balance 	= (Double)recurring_order.getAttribute(RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE);
 				balance 		+= amount;
+				System.out.println("ABOUT TO UPDATE ORDER TID IS "+CURRENT_TRANSACTION_ID());
 				UPDATE(recurring_order,
 						RECURRING_ORDER_FIELD_LAST_BILL_DATE,now,
 						RECURRING_ORDER_FIELD_NEXT_BILL_DATE,calculate_next_bill_date(recurring_order, now),
 					    RECURRING_ORDER_FIELD_OUTSTANDING_BALANCE,roundDouble(balance,2));
 				log_order_billing_failed(recurring_order, amount," balance accruing. need updated card info!");
+				System.out.println("ABOUT TO CHECK BILLING GRACE PERIOD FAILED");
 				check_billing_failed_grace_period_expired(now, recurring_order);
+				System.out.println("ABOUT TO COMMIT");
 				COMMIT_TRANSACTION();
 			}catch(PersistenceException pe2)
 			{
@@ -1191,6 +1196,7 @@ public class RecurringOrderModule extends ResourceModule
 
 		if(now.getTime() > billing_failed_genesis.getTime()+grace_period_in_ms)
 		{
+			System.out.println(" GRACE PERIOD EXPIRED FOR ORDER "+recurring_order);
 			updateRecurringOrderStatus(recurring_order, ORDER_STATUS_BILLING_FAILED_GRACE_PERIOD_EXPIRED);
 		}
 		else
