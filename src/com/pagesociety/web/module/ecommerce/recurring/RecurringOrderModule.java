@@ -902,6 +902,8 @@ public class RecurringOrderModule extends ResourceModule
 
 	private void start_billing_thread()
 	{
+		if(billing_thread_interval == 0)
+			return;
 		billing_thread_running = true;
 		billing_thread = new Thread("Recurring Order Billing Thread"){
 			public void run()
