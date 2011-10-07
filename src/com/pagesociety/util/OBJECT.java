@@ -62,7 +62,11 @@ public class OBJECT extends LinkedHashMap<String,Object>
 
 	public int I(String path)
 	{
-		return (Integer) find(path);
+		Object val =  find(path);
+		if(val instanceof String)
+			return Integer.parseInt((String)val);
+		else
+			return (Integer)val;
 	}
 
 
