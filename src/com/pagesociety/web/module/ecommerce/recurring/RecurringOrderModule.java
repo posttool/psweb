@@ -903,7 +903,7 @@ public class RecurringOrderModule extends ResourceModule
 	private void start_billing_thread()
 	{
 		billing_thread_running = true;
-		billing_thread = new Thread(){
+		billing_thread = new Thread("Recurring Order Billing Thread"){
 			public void run()
 			{
 				while(billing_thread_running)
