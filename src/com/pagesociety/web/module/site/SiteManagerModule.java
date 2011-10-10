@@ -272,7 +272,7 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 		return deletePageInstance(tn);
 	}
 
-	public Entity deletePageInstance(Entity tn) throws PersistenceException
+	public Entity deletePageInstance(Entity tn) throws PersistenceException, WebApplicationException
 	{
 		deleteSubTree(tn, true, false, null);
 		update_site_trees();
@@ -357,18 +357,21 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 	}
 
 
-	private void update_site_trees() throws PersistenceException
+	private void update_site_trees() throws PersistenceException, WebApplicationException
 	{
 		set_edit_tree();
 		set_published_site_root();
 	}
 
 	Map<String,Entity> site_manager_site_roots = new HashMap<String,Entity>();
-	private void set_edit_tree() throws PersistenceException
+	private void set_edit_tree() throws PersistenceException, WebApplicationException
 	{
 		site_tree = getTreeForUserByName(admin_user, "the_site_tree");
 		if(site_tree == null)
-			site_tree = createTree(admin_user, "the_site_tree", null, null, null);
+		{
+			Entity data = NEW(get_home_page_data_type(),admin_user);
+			site_tree = createTree(admin_user, "the_site_tree", null, null, data);
+		}
 		FILL_DEEP_AND_MASK((Entity)site_tree.getAttribute(TREE_FIELD_ROOT_NODE), FILL_ALL_FIELDS, MASK_NO_FIELDS);
 		site_manager_site_roots.put(DEFAULT_LANGUAGE,translate_page_data(DEFAULT_LANGUAGE, (Entity)site_tree.getAttribute(TREE_FIELD_ROOT_NODE)));
 		for(int i = 0;i < additional_languages.length;i++)
@@ -380,7 +383,7 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 	}
 
 	Map<String,Entity> published_site_roots = new HashMap<String,Entity>();
-	private void set_published_site_root() throws PersistenceException
+	private void set_published_site_root() throws PersistenceException, WebApplicationException
 	{
 		Entity published_site_root = calculate_published_site_tree((Entity)site_tree.getAttribute(TREE_FIELD_ROOT_NODE));
 		published_site_roots.put(DEFAULT_LANGUAGE,translate_page_data(DEFAULT_LANGUAGE, published_site_root));
@@ -533,7 +536,7 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 
 
 	//return null if the root node is unpublished//
-	public Entity calculate_published_site_tree(Entity edit_site_root) throws PersistenceException
+	public Entity calculate_published_site_tree(Entity edit_site_root) throws PersistenceException, WebApplicationException
 	{
 		edit_site_root = CLONE_IN_MEMORY(edit_site_root, new clone_policy(){
 			public int exec(Entity e,String fieldname,Entity reference_val)
@@ -576,17 +579,22 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 		tn.setAttribute(TREE_NODE_FIELD_CHILDREN, published_children);
 	}
 
-	private Entity get_empty_site_root()
+	private Entity get_empty_site_root() throws WebApplicationException
 	{
 		Entity e = new Entity();
 		e.setType(TREE_NODE_ENTITY);
 		e.setAttribute(TREE_NODE_FIELD_CHILDREN,new ArrayList<Entity>());
 		Entity data = new Entity();
-		data.setType(TEXT_PAGE_TYPE_ENTITY);
+		data.setType(get_home_page_data_type());
 		data.setAttribute(PAGE_TYPE_FIELD_IN_NAV, false);
 		data.setAttribute(PAGE_TYPE_FIELD_MENU_NAME, "");
 		e.setAttribute(TREE_NODE_FIELD_DATA, data);
 		return e;
+	}
+	
+	protected String get_home_page_data_type() throws WebApplicationException
+	{
+		throw new WebApplicationException("Extending class must define get_home_page_data_type.");
 	}
 
 	///utility stuff//
@@ -1465,7 +1473,11 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 
 		INFO("DEFINING "+entity_name);
 		List<FieldDefinition> ff = UNFLATTEN_FIELD_DEFINITIONS(args);
-
+		return DEFINE_ENTITY(entity_name,atts,ff);
+	}
+	
+	public EntityDefinition DEFINE_ENTITY(String entity_name,OBJECT atts,List<FieldDefinition> ff) throws PersistenceException,InitializationException
+	{
 		handle_managable_pre_def(atts,entity_name,ff);
 		handle_publishable_pre_def(atts,entity_name,ff);
 		handle_page_type_pre_def(atts,entity_name,ff);
@@ -2797,8 +2809,8 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 	public static final String PAGE_TYPE_FIELD_MENU_NAME 		 		= "menu_name";
 	public static final String PAGE_TYPE_FIELD_IN_NAV 		 	 		= "in_nav";
 
-	public static final String TEXT_PAGE_TYPE_ENTITY					= "TextPage";
-	public static final String TEXT_PAGE_TYPE_ENTITY_FIELD_CONTENT		= "content";
+//	public static final String TEXT_PAGE_TYPE_ENTITY					= "TextPage";
+//	public static final String TEXT_PAGE_TYPE_ENTITY_FIELD_CONTENT		= "content";
 
 	public static final String SEARCH_HANDLE_ENTITY						= "SMMSearchHandle";
 	public static final String SEARCH_HANDLE_FIELD_TEXT					= "text";
@@ -2817,13 +2829,13 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 		ADD_FIELDS(TREE_NODE_ENTITY,
 				   PUBLISHABLE_ENTITY_PUBLICATION_STATUS_FIELD_NAME,Types.TYPE_INT,SITE_MANAGER_STATUS_UNPUBLISHED);
 
-		DEFINE_ENTITY(
-				TEXT_PAGE_TYPE_ENTITY,
-				OBJECT(ENTITY_ATT_IS_PAGE_TYPE,true,
-						   ENTITY_ATT_PAGE_TYPE_TEMPLATE_PATH,"text-page.fhtml",
-						   ENTITY_ATT_MULTILINGUAL_FIELDS,new String[]{"content"}),
-			     TEXT_PAGE_TYPE_ENTITY_FIELD_CONTENT,Types.TYPE_TEXT,""
-		);
+//		DEFINE_ENTITY(
+//				TEXT_PAGE_TYPE_ENTITY,
+//				OBJECT(ENTITY_ATT_IS_PAGE_TYPE,true,
+//						   ENTITY_ATT_PAGE_TYPE_TEMPLATE_PATH,"text-page.fhtml",
+//						   ENTITY_ATT_MULTILINGUAL_FIELDS,new String[]{"content"}),
+//			     TEXT_PAGE_TYPE_ENTITY_FIELD_CONTENT,Types.TYPE_TEXT,""
+//		);
 
 		DEFINE_ENTITY(SEARCH_HANDLE_ENTITY,
 					SEARCH_HANDLE_FIELD_DATA,Types.TYPE_REFERENCE,FieldDefinition.REF_TYPE_UNTYPED_ENTITY,null,

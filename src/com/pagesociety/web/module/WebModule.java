@@ -495,12 +495,12 @@ public abstract class WebModule extends Module
     }
 
 
-	public OBJECT OBJECT(Object... args)
+	public static OBJECT OBJECT(Object... args)
 	{
 		return new OBJECT(args);
 	}
 
-	public ARRAY ARRAY(Object... args)
+	public static ARRAY ARRAY(Object... args)
 	{
 		return new ARRAY(args);
 	}

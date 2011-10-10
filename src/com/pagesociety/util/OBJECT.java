@@ -39,6 +39,14 @@ public class OBJECT extends LinkedHashMap<String,Object>
 	{
 		return toJSON(this);
 	}
+	
+	public boolean hasValue(String path)
+	{
+		Object o = null;
+		try { o = find(path); }
+		catch (NullPointerException e) { return false; }
+		return o != null;
+	}
 
 	public OBJECT O(String path)
 	{
@@ -68,6 +76,7 @@ public class OBJECT extends LinkedHashMap<String,Object>
 		else
 			return (Integer)val;
 	}
+	
 	public Double F(String path)
 	{
 		Object val =  find(path);
@@ -76,9 +85,6 @@ public class OBJECT extends LinkedHashMap<String,Object>
 		else
 			return (Double)val;
 	}
-
-
-
 
 	public double N(String path)
 	{
@@ -101,6 +107,8 @@ public class OBJECT extends LinkedHashMap<String,Object>
 		String[] p = path.split("\\.");
 		for (String pp : p)
 		{
+			if (target==null)
+				throw new NullPointerException("cannot access item "+pp);
 			int array_char_idx = pp.indexOf("[");
 			if (array_char_idx != -1 && pp.endsWith("]"))
 			{
