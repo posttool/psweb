@@ -129,6 +129,7 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 		try{
 
 			admin_user = GET(UserModule.USER_ENTITY,1);
+			INFO("GOT ADMIN USER");
 			set_edit_tree();
 			do_define_site();
 			definePageInputTypes();
