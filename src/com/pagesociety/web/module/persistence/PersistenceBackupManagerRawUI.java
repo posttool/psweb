@@ -85,7 +85,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			backup_time_hr	= Integer.parseInt(backup_time[0]);
 			backup_time_min	= Integer.parseInt(backup_time[1]);
-			String incremental_backup_interval = GET_REQUIRED_CONFIG_PARAM(PARAM_INCREMENTAL_BACKUP_INTERVAL,config);
+			String incremental_backup_interval = GET_OPTIONAL_CONFIG_PARAM(PARAM_INCREMENTAL_BACKUP_INTERVAL,config);
 			if (incremental_backup_interval != null)
 				inc_backup_interval	= Integer.parseInt(incremental_backup_interval);
 			start_backup_thread();
@@ -225,7 +225,7 @@ public class PersistenceBackupManagerRawUI extends RawUIModule
 		{
 			String id = null;
 			synchronized (getApplication().getApplicationLock()) {
-				pp.doFullBackup();
+				id = pp.doFullBackup();
 			}
 			BackupInfo b = new BackupInfo(id);
 			last_backup_map.put(b.id(), b);
