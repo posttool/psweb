@@ -2583,6 +2583,38 @@ public class WebStoreModule extends WebModule
 	}
 
 
+	public static final Object PAGE_APPLY_BREAK = new Object();
+	protected void PAGE_APPLY(Query q,CALLBACK c) throws PersistenceException,WebApplicationException
+	{
+		int page_size 	= q.getPageSize();
+		if(page_size == Query.ALL_RESULTS)
+			page_size = 100;
+		int num_results = page_size;
+		int page = 0;
+		outer:do
+		{
+			q.offset(page*page_size);
+			q.pageSize(page_size);
+			QueryResult result = QUERY(q);
+			num_results 		= result.size();
+			List<Entity> ee 	= result.getEntities();
+			for(int i = 0;i < ee.size();i++)
+			{
+				try{
+					Object ret = c.exec(ee.get(i));
+					if(ret == PAGE_APPLY_BREAK)
+						break outer;
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+					throw new WebApplicationException("PROBLEM APPLYING FUNCTION "+e.getMessage());
+				}
+			}
+			page++;
+		}while(num_results >= page_size);
+	}
+	
 	//TRANSACTIONS///
 	private static ThreadLocal<List<Integer>> current_transaction_id_list = new ThreadLocal<List<Integer>>();
 	public void START_TRANSACTION(String tag) throws PersistenceException
