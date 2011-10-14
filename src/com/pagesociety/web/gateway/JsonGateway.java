@@ -51,7 +51,7 @@ public class JsonGateway
 		try
 		{
 			module_request 		= GatewayUtil.parseModuleRequest(request, requestPath);
-			String json_args 	= request.getParameter("args");
+			String json_args 	= Text.decode(request.getParameter("args"));
 			boolean isform = false;
 			if(json_args == null)//assume form submit
 			{
