@@ -94,15 +94,17 @@ public class CmsModuleWithDeletePolicyA extends CmsModule
 		                    {
 		                        for(int i = 0;i < refval.size();i++)
 		                        {
-		                            Entity v = refval.get(i);
+				                    /* remember that type might be *. this was causing some headaches
+				                     * as things were just being set to null on restart for any untyped ref field */
+		                        	Entity v = refval.get(i);
 		                            if (v == null)
 		                            	continue;
 		                            try{
-		                                GET(r.getReferenceType(),v.getId());
+		                                GET(v.getType(),v.getId());
 		                            }
 		                            catch(Exception ex)
 		                            {
-		                                refval.remove(v);
+		                            	refval.remove(v);
 		                                i--;
 		                                UPDATE(e,r.getName(),refval);
 		                                INFO("deleted reference to "+v+" from "+e);
@@ -112,11 +114,14 @@ public class CmsModuleWithDeletePolicyA extends CmsModule
                     	}
                     	else
                     	{
-		                    Entity refval =(Entity) e.getAttribute(r.getName());
+		                    /* remember that type might be *. this was causing some headaches
+		                     * as things were just being set to null on restart for any untyped ref field */
+
+                    		Entity refval =(Entity) e.getAttribute(r.getName());
 		                    if (refval == null)
 		                    	continue;
 		                    try{
-                                GET(r.getReferenceType(),refval.getId());
+                                GET(refval.getType(),refval.getId());
                             }
                             catch(Exception ex)
                             {
@@ -178,7 +183,7 @@ public class CmsModuleWithDeletePolicyA extends CmsModule
                     	} else
                     	{
                     		Entity refval = (Entity) e.getAttribute(r.getName());
-                    		if (refval==deleted)
+                    		if (refval.equals(deleted))
                     		{
 		                        UPDATE(e,r.getName(),null);
                                 INFO("deleted reference to "+deleted+" from "+e);
