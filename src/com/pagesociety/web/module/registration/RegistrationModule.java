@@ -171,7 +171,7 @@ public class RegistrationModule extends WebStoreModule
 			q.eq(token);
 			QueryResult result = QUERY(q);
 			if (result.size() == 0)
-				throw new WebApplicationException("BAD REGISTRATION TOKEN");
+				throw new WebApplicationException("BAD REGISTRATION TOKEN "+token);
 
 			Entity activation_record = result.getEntities().get(0);
 			user = GET(UserModule.USER_ENTITY, (Long) activation_record.getAttribute(FIELD_ACTIVATION_UID));
