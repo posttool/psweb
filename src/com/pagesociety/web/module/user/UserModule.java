@@ -471,7 +471,7 @@ public class UserModule extends WebStoreModule
 		//with the blanked out password when the update happend afterwards
 
 		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
-				   		USER_EVENT_USER, user);
+		   		USER_EVENT_USER, user);
 		return user;
 	}
 
@@ -486,6 +486,24 @@ public class UserModule extends WebStoreModule
 			return Login(uctx, email, Util.stringToHexEncodedMD5(password));
 	}
 
+	//DO NOT EXPORT//
+	public Entity ForceLogin(UserApplicationContext uctx,String email) throws WebApplicationException,PersistenceException
+	{
+		Entity user = forceLogin(email); 
+		uctx.setUser(user);
+		DISPATCH_EVENT(EVENT_USER_LOGGED_IN,
+		   		USER_EVENT_USER, user);
+		return user;
+	}
+	
+	public Entity forceLogin(String email) throws WebApplicationException,PersistenceException
+	{
+		Entity user = getUserByEmail(email);	
+		if(user == null)
+			throw new LoginFailedException("LOGIN FAILED",ERROR_LOGIN_FAILED);
+		return user;
+	}
+	
 	public Entity loginViaEmail(String email,String password)throws WebApplicationException,PersistenceException
 	{
 

@@ -8,17 +8,20 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.LoginFailedException;
 import com.pagesociety.web.module.RawUIModule;
+import com.pagesociety.web.module.permissions.PermissionEvaluator;
 import com.pagesociety.web.module.util.Util;
 
 public class UserModuleRawUI extends RawUIModule
 {
-	private static final String SLOT_USER_MODULE = "user-module";
+	private static final String SLOT_USER_MODULE 		   = "user-module";
+	private static final String PARAM_POST_FORCE_LOGIN_URL = "post-force-login-url";
 	protected UserModule user_module;
-	
+	protected String post_force_login_url;
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
 	{
 		super.init(app,config);	
 		user_module = (UserModule)getSlot(SLOT_USER_MODULE);
+		post_force_login_url = GET_OPTIONAL_CONFIG_PARAM(PARAM_POST_FORCE_LOGIN_URL, config);
 	}
 
 	protected void defineSlots()
@@ -30,6 +33,7 @@ public class UserModuleRawUI extends RawUIModule
 	private static final int RAW_SUBMODE_DO_LOGIN 	  = 0x01;
 	private static final int RAW_SUBMODE_DO_LOGOUT 	  = 0x02;
 	private static final int RAW_SUBMODE_SHOW_USER 	  = 0x03;
+	private static final int RAW_SUBMODE_FORCE_LOGIN  = 0x04;
 	protected void declareSubmodes(WebApplication app,Map<String,Object> config) throws InitializationException
 	{
 		try{
@@ -37,6 +41,7 @@ public class UserModuleRawUI extends RawUIModule
 			declareSubmode(RAW_SUBMODE_DO_LOGIN,  "submode_do_login");
 			declareSubmode(RAW_SUBMODE_DO_LOGOUT, "submode_do_logout");
 			declareSubmode(RAW_SUBMODE_SHOW_USER, "submode_showuser");
+			declareSubmode(RAW_SUBMODE_FORCE_LOGIN, "submode_do_forcelogin");
 		}catch(Exception e)
 		{
 			ERROR(e);
@@ -46,7 +51,9 @@ public class UserModuleRawUI extends RawUIModule
 	
 	protected boolean canExecSubmode(Entity user,int submode,Map<String,Object> params)
 	{
-			return true;
+		if(submode == RAW_SUBMODE_FORCE_LOGIN && !PermissionEvaluator.IS_ADMIN(user))	
+			return false;
+		return true;
 	}
 	
 	public void submode_default(UserApplicationContext uctx,Map<String,Object> params)
@@ -101,6 +108,27 @@ public class UserModuleRawUI extends RawUIModule
 		}
 	}
 	
+	public void submode_do_forcelogin(UserApplicationContext uctx,Map<String,Object> params)
+	{
+		String e = (String)params.get("email");//arg_email
+		
+		try{
+			user_module.ForceLogin(uctx,e);
+			if(post_force_login_url == null)
+				GOTO(uctx,RAW_SUBMODE_SHOW_USER);
+			else
+				JS_REDIRECT(uctx, post_force_login_url);
+			return;
+		}catch(LoginFailedException lfe)
+		{
+			GOTO_WITH_ERROR(uctx,RAW_SUBMODE_DEFAULT,"Bad Email.",params);
+		}
+		catch(Exception ee)
+		{
+			ERROR_PAGE(uctx,ee);
+		}
+	}
+	
 	public void submode_do_logout(UserApplicationContext uctx,Map<String,Object> params)
 	{
 		Entity user = (Entity)uctx.getUser();
@@ -130,6 +158,18 @@ public class UserModuleRawUI extends RawUIModule
 			DOCUMENT_END(uctx);//DOCUMENT_END_RETURN_IN(uctx,3000);
 			P(uctx);
 			A(uctx,getName(),RAW_SUBMODE_DO_LOGOUT,"[ LOGOUT ]","do_logout","true");
+			P(uctx);
+			if(PermissionEvaluator.IS_ADMIN((Entity)uctx.getUser()))
+			{
+				FORM_START(uctx,getName(),RAW_SUBMODE_FORCE_LOGIN);
+				TABLE_START(uctx, 0, 400);
+					TR_START(uctx);
+					TD(uctx, "email:");TD_START(uctx);FORM_INPUT_FIELD(uctx, "email", 30,(String)params.get("email"));TD_END(uctx);
+					TR_END(uctx);
+				TABLE_END(uctx);
+				P(uctx);
+				FORM_SUBMIT_BUTTON(uctx, "Change User");
+			}
 			DOCUMENT_END(uctx);
 		} 
 	}
