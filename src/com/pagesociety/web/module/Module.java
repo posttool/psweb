@@ -68,6 +68,11 @@ public abstract class Module
 	{
 		return _config;
 	}
+	
+	public Map<String, Object> getConfig()
+	{
+		return _config;
+	}
 
 	public void setProperty(String key, String value)
 	{
