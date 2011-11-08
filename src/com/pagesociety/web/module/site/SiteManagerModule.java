@@ -205,7 +205,9 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 		ret.put(KEY_SITEMANAGER_METAINFO_MULTILINGUAL_ENTITIES, multilingual_entities);
 		ret.put(KEY_SITEMANAGER_METAINFO_MULTILINGUAL_ENTITY_FIELD_MAP, multilingual_entity_field_map);
 		List<String> publishable_entities = new ArrayList<String>(publishable_entity_field_map.keySet());
-		publishable_entities.addAll(managable_entities);
+		for (String m : managable_entities)
+			if (!publishable_entities.contains(m))
+				publishable_entities.add(m);
 		Collections.sort(publishable_entities);
 		ret.put(KEY_SITEMANAGER_METAINFO_PUBLISHABLE_ENTITIES, publishable_entities);
 		List<String> page_type_entities = new ArrayList<String>();

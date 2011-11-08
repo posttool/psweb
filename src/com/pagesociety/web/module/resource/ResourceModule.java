@@ -2,6 +2,7 @@ package com.pagesociety.web.module.resource;
 
 
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +20,8 @@ import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+
+import javax.imageio.ImageIO;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
@@ -848,7 +851,19 @@ public class ResourceModule extends WebStoreModule
 
 	protected Entity do_add_resource(MultipartForm upload,Entity creator,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
-
+		BufferedImage img = null;
+		try
+		{
+			img = ImageIO.read(path_provider.getInputStream(path_token));
+		} catch (Exception e)
+		{
+			throw new WebApplicationException("Can't get width/height of image.",e);
+		} 
+		catch (OutOfMemoryError o)
+		{
+			throw new WebApplicationException("Can't read image. Too large!",o);
+		}
+		
 		Object[] annotations = annotate(upload,creator,content_type,simple_type,filename,ext,file_size,path_token);
 		Entity resource = NEW(resource_entity_name,
 				creator,
@@ -858,6 +873,8 @@ public class ResourceModule extends WebStoreModule
 				RESOURCE_FIELD_EXTENSION,ext,
 				RESOURCE_FIELD_FILE_SIZE,file_size,
 				RESOURCE_FIELD_PATH_TOKEN,path_token,
+				RESOURCE_FIELD_WIDTH,((img == null)?-1:img.getWidth()), 
+				RESOURCE_FIELD_HEIGHT,((img == null)?-1:img.getHeight()),
 				annotations);
 
 
@@ -866,8 +883,19 @@ public class ResourceModule extends WebStoreModule
 
 	protected Entity do_update_resource(MultipartForm upload,Entity resource,String content_type,String simple_type,String filename,String ext,long file_size,String path_token) throws WebApplicationException,PersistenceException
 	{
-		//DONT NEED THIS ANYMORE SINCE THE STREAM SHOULD WRITE RIGHT OVER THE FILE
-		// path_provider.delete((String)resource.getAttribute(RESOURCE_FIELD_PATH_TOKEN));
+		BufferedImage img = null;
+		try
+		{
+			img = ImageIO.read(path_provider.getInputStream(path_token));
+		} catch (Exception e)
+		{
+			throw new WebApplicationException("Can't get width/height of image.",e);
+		} 
+		catch (OutOfMemoryError o)
+		{
+			throw new WebApplicationException("Can't read image. Too large!",o);
+		}
+
 		Object[] annotations = annotate(upload, (Entity)resource.getAttribute(FIELD_CREATOR), content_type, simple_type, filename, ext, file_size,path_token);
 		Entity r = UPDATE(resource,
 				RESOURCE_FIELD_CONTENT_TYPE,content_type,
@@ -876,6 +904,8 @@ public class ResourceModule extends WebStoreModule
 				RESOURCE_FIELD_EXTENSION,ext,
 				RESOURCE_FIELD_FILE_SIZE,file_size,
 				RESOURCE_FIELD_PATH_TOKEN,path_token,
+				RESOURCE_FIELD_WIDTH,((img == null)?-1:img.getWidth()), 
+				RESOURCE_FIELD_HEIGHT,((img == null)?-1:img.getHeight()),
 				annotations);
 
 		return r;
