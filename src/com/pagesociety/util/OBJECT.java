@@ -130,6 +130,8 @@ public class OBJECT extends LinkedHashMap<String,Object>
 
 	public static String encode(Serializable o) throws WebApplicationException
 	{
+		if(o == null)
+			return null;
 		try
 		{
 			return Base64.encodeObject(o);
