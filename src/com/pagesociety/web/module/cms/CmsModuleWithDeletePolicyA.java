@@ -18,32 +18,43 @@ import com.pagesociety.web.module.ModuleEvent;
 
 public class CmsModuleWithDeletePolicyA extends CmsModule
 {
+	
+	public static final String PARAM_RUN_CHECK_ON_STARTUP = "run-check-on-startup";
+	protected boolean run_check_on_startup = true;
+	
+	public static final String PARAM_RUN_CHECK_ON_DELETE = "run-check-on-delete";
+	protected boolean run_check_on_delete = true;
+	
 	@Override
 	public void init(WebApplication app, Map<String, Object> config)
 			throws InitializationException
 	{
 		super.init(app, config);
-		addEventListener(new IEventListener()
+		run_check_on_startup = GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(PARAM_RUN_CHECK_ON_STARTUP, true, config);
+		run_check_on_delete = GET_OPTIONAL_BOOLEAN_CONFIG_PARAM(PARAM_RUN_CHECK_ON_DELETE, true, config);
+		if(run_check_on_delete)
 		{
-			@Override
-			public void onEvent(Module src, ModuleEvent e) throws WebApplicationException
+			addEventListener(new IEventListener()
 			{
-				switch (e.type)
+				@Override
+				public void onEvent(Module src, ModuleEvent e) throws WebApplicationException
 				{
-				case EVENT_ENTITY_PRE_DELETE:
-	                Entity instance  = (Entity)e.getProperty("candidate");
-	                try
+					switch (e.type)
 					{
-						remove_deleted(instance);
-					} catch (PersistenceException ex)
-					{
-						ex.printStackTrace();
-						throw new WebApplicationException("cant delete references to "+instance,ex);
+					case EVENT_ENTITY_PRE_DELETE:
+		                Entity instance  = (Entity)e.getProperty("candidate");
+		                try
+						{
+							remove_deleted(instance);
+						} catch (PersistenceException ex)
+						{
+							ex.printStackTrace();
+							throw new WebApplicationException("cant delete references to "+instance,ex);
+						}
 					}
 				}
-			}
-		});
-		
+			});
+		}
 	}
 	
 	@Override
@@ -51,6 +62,8 @@ public class CmsModuleWithDeletePolicyA extends CmsModule
 		throws InitializationException
 	{
 		super.loadbang(app, config);
+		if(!run_check_on_startup)
+			return;
 		try
 		{
 			fix_data();
