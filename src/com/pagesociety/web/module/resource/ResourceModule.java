@@ -307,6 +307,20 @@ public class ResourceModule extends WebStoreModule
 		return getResourcePreviewUrl( resource, options);
 
 	}
+	
+	@Export(ParameterNames={"resource_id", "options"})
+	public String GetResourcePreviewURL(UserApplicationContext uctx,long resource_id,OBJECT options) throws WebApplicationException,PersistenceException
+	{
+		Entity user = (Entity)uctx.getUser();
+		Entity resource = GET(resource_entity_name,resource_id);
+		GUARD(user, CAN_GET_RESOURCE_URL,
+				 GUARD_INSTANCE,resource);
+		Map<String,String> map = new HashMap<String,String>();
+		for (String k : options.keySet())
+			map.put(k,(String)options.get(k));
+		return getResourcePreviewUrl( resource, map);
+
+	}
 
 	//@Export
 	public void TestPreviewConcurrency(UserApplicationContext uctx,RawCommunique c) throws WebApplicationException,PersistenceException
