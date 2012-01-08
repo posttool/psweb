@@ -120,6 +120,29 @@ public class BillingModule extends WebStoreModule
 				   );
 
 	}
+	
+	@Export
+	public Entity CreateBillingRecord(UserApplicationContext uctx,com.pagesociety.util.OBJECT billing_record) throws WebApplicationException,PersistenceException,BillingGatewayException
+	{
+
+		return CreateBillingRecord(uctx,
+				   billing_record.S(BILLINGRECORD_FIELD_FIRST_NAME),
+				   billing_record.S(BILLINGRECORD_FIELD_MIDDLE_INITIAL),
+				   billing_record.S(BILLINGRECORD_FIELD_LAST_NAME),
+				   billing_record.S(BILLINGRECORD_FIELD_ADDRESS_LINE_1),
+				   billing_record.S(BILLINGRECORD_FIELD_ADDRESS_LINE_2),
+				   billing_record.S(BILLINGRECORD_FIELD_CITY),
+				   billing_record.S(BILLINGRECORD_FIELD_STATE),
+				   billing_record.S(BILLINGRECORD_FIELD_COUNTRY),
+				   billing_record.S(BILLINGRECORD_FIELD_POSTAL_CODE),
+				   billing_record.I(BILLINGRECORD_FIELD_CC_TYPE),
+				   billing_record.S(BILLINGRECORD_FIELD_CC_NO),
+				   billing_record.I(BILLINGRECORD_FIELD_EXP_MONTH),
+				   billing_record.I(BILLINGRECORD_FIELD_EXP_YEAR),
+				   billing_record.S("ccvn"),
+				   true
+				   );
+	}
 
 
 	@Export

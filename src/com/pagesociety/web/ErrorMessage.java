@@ -19,7 +19,7 @@ public class ErrorMessage
 	public ErrorMessage(Throwable exception)
 	{
 		super();
-		this.message = exception.getMessage();
+		this.message = exception.getMessage().replace('"', '\'');
 		this.exception = exception;
 		this.exceptionType = exception.getClass().getName();
 	}
@@ -36,33 +36,33 @@ public class ErrorMessage
 		return exceptionType;
 	}
 	
-	public Throwable getException()
-	{
-		return exception;
-	}
+//	public Throwable getException()
+//	{
+//		return exception;
+//	}
 
-	public String getStacktrace()
-	{
-		if (stacktrace != null)
-		{
-			return stacktrace;
-		}
-		CharArrayWriter caw = new CharArrayWriter();
-		PrintWriter pw = new PrintWriter(caw)
-		{
-			/*
-			 * ignore system settings - AS3 uses \n only (never \r)
-			 */
-			@Override
-			public void println()
-			{
-				super.print('\n');
-			}
-		};
-		exception.printStackTrace(pw);
-		stacktrace = caw.toString();
-		return stacktrace;
-	}
+//	public String getStacktrace()
+//	{
+//		if (stacktrace != null)
+//		{
+//			return stacktrace;
+//		}
+//		CharArrayWriter caw = new CharArrayWriter();
+//		PrintWriter pw = new PrintWriter(caw)
+//		{
+//			/*
+//			 * ignore system settings - AS3 uses \n only (never \r)
+//			 */
+//			@Override
+//			public void println()
+//			{
+//				super.print('\n');
+//			}
+//		};
+//		exception.printStackTrace(pw);
+//		stacktrace = caw.toString();
+//		return stacktrace;
+//	}
 
 	public void setExceptionType(String exceptionType)
 	{

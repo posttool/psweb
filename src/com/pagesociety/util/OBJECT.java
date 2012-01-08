@@ -71,7 +71,9 @@ public class OBJECT extends LinkedHashMap<String,Object>
 	public int I(String path)
 	{
 		Object val =  find(path);
-		if(val instanceof String)
+		if (val == null)
+			return -1;
+		else if(val instanceof String)
 			return Integer.parseInt((String)val);
 		else
 			return (Integer)val;
@@ -80,7 +82,9 @@ public class OBJECT extends LinkedHashMap<String,Object>
 	public Double F(String path)
 	{
 		Object val =  find(path);
-		if(val instanceof String)
+		if (val == null)
+			return -1D;
+		else if(val instanceof String)
 			return Double.parseDouble((String)val);
 		else
 			return (Double)val;
