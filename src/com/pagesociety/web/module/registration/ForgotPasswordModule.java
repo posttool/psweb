@@ -39,6 +39,7 @@ public class ForgotPasswordModule extends WebStoreModule
 	private UserModule 			user_module;
 	private IEmailModule 		email_module;
 
+	public static final int EVENT_USER_FORGOT_PASSWORD_LOGGED_IN = 0x9001;
 	
 	
 	public void init(WebApplication app, Map<String,Object> config) throws InitializationException
@@ -118,7 +119,9 @@ public class ForgotPasswordModule extends WebStoreModule
 		Entity user = GET(UserModule.USER_ENTITY, (Long) forgot_password_record.getAttribute(FIELD_ACTIVATION_UID));
 		DELETE(forgot_password_record);
 		// log them in//		
+
 		uctx.setUser(user);
+		DISPATCH_EVENT(EVENT_USER_FORGOT_PASSWORD_LOGGED_IN, "user",user);
 		return user;
 	}
 	
