@@ -1407,6 +1407,15 @@ public class SiteManagerModule extends TreeModule implements IHttpRequestHandler
 				return "";
 			return stripTags(s).trim();
 		}
+		
+		public String STRIP_ROOT(String s)
+		{
+			if (s==null)
+				return "";
+			s =  s.replaceAll("\\<.?ROOT.?\\>","");
+			INFO("S IS "+s);
+			return s;
+		}
 
 
 		private String stripTags(String s)
