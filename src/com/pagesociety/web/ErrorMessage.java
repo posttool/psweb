@@ -36,10 +36,10 @@ public class ErrorMessage
 		return exceptionType;
 	}
 	
-//	public Throwable getException()
-//	{
-//		return exception;
-//	}
+	public Throwable getException()
+	{
+		return exception;
+	}
 
 //	public String getStacktrace()
 //	{

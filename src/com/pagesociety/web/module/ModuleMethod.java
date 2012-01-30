@@ -114,7 +114,7 @@ public class ModuleMethod
 			b.append("Error invoking " + module.getClass().getSimpleName() + "/" + getName() + " with arguments [");
 			for (int i = 0; i < args.length; i++)
 			{
-				b.append(args[i].toString());
+				b.append(args[i]);
 				if (i != args.length - 1)
 					b.append(", ");
 			}

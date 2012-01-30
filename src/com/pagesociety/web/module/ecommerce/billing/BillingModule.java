@@ -186,24 +186,25 @@ public class BillingModule extends WebStoreModule
 
 	}
 
-	public void validateBillingRecord(Entity billing_record,String ccvn) throws BillingGatewayException,WebApplicationException
-	{
-		   String first_name      = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME);
-		   String middle_initial  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL);
-		   String last_name       = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME);
-		   String add_1 		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1);
-		   String add_2 		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2);
-		   String city 			  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY);
-		   String state           = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE);
-		   String country         = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY);
-		   String postal_code     = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE);
-		   int cc_type            = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE);
-		   String cc_no  		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO);
-		   int exp_month          = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH);
-		   int exp_year           = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR);
-		   exp_year = 			   validate_and_normalize_year(exp_year);
-		   billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
-	}
+//NOTE the only place this was used is was postera trial activation, but create does the validate before insert, so its looks redundant
+//	public void validateBillingRecord(Entity billing_record,String ccvn) throws BillingGatewayException,WebApplicationException
+//	{
+//		   String first_name      = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_FIRST_NAME);
+//		   String middle_initial  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_MIDDLE_INITIAL);
+//		   String last_name       = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_LAST_NAME);
+//		   String add_1 		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_1);
+//		   String add_2 		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_ADDRESS_LINE_2);
+//		   String city 			  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CITY);
+//		   String state           = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_STATE);
+//		   String country         = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_COUNTRY);
+//		   String postal_code     = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_POSTAL_CODE);
+//		   int cc_type            = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_TYPE);
+//		   String cc_no  		  = (String)billing_record.getAttribute(BILLINGRECORD_FIELD_CC_NO);
+//		   int exp_month          = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_MONTH);
+//		   int exp_year           = (Integer)billing_record.getAttribute(BILLINGRECORD_FIELD_EXP_YEAR);
+//		   exp_year = 			   validate_and_normalize_year(exp_year);
+//		   billing_gateway.doValidate(first_name,middle_initial,last_name,add_1,add_2,city,state,country,postal_code,cc_type,cc_no,exp_month,exp_year,ccvn);
+//	}
 
 	public Entity createBillingRecord(Entity creator,String first_name,String middle_initial,String last_name,String add_1,String add_2,String city,String state,String country,String postal_code,int cc_type,String cc_no,int exp_month,int exp_year,String ccvn,Boolean preferred) throws WebApplicationException,PersistenceException,BillingGatewayException
 	{
