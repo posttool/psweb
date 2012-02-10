@@ -823,6 +823,10 @@ public class CouponPromotionManagerRawUI extends RawUIModule
 						TD(uctx,(String)order_user.getAttribute(UserModule.FIELD_EMAIL));
 						TD(uctx,username);
 						TD(uctx,order.getAttribute(WebStoreModule.FIELD_DATE_CREATED).toString());
+						//^ this is the order create date,
+						//not the promo start date...
+						//TODO maybe we should show the registers too
+						//or the create date of the promo itself...?
 						TD(uctx,String.valueOf(order.getId()));
 						TD(uctx,String.valueOf(order_user.getId()));
 					TR_END(uctx);
