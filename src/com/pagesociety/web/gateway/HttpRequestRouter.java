@@ -295,7 +295,7 @@ public class HttpRequestRouter extends HttpServlet
 			}
 			else
 			{
-				response.setStatus(404);
+				response.sendError(404);
 				return;
 			}
 
