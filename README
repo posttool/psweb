@@ -1,2 +1,5 @@
-Hi
-Welcome to our project.
+PSWeb is a web application framework. It provides a gateway, an RPC mechanism
+for JSON and AMF calls, Freemarker integration and many modules for common tasks
+like registration, uploading to S3, billing, ...
+ 
+http://www.apache.org/licenses/LICENSE-2.0.txt
