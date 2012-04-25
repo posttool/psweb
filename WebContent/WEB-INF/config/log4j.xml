@@ -21,10 +21,7 @@
 		<appender-ref ref="stdout" />
 	</logger>
 
-	<logger name="com.limelife">
-		<level value="debug" />
-		<appender-ref ref="stdout" />
-	</logger>
+
 
 </log4j:configuration>
 

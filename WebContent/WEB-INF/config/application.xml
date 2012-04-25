@@ -1,33 +1,113 @@
-<application name="PSWeb Test" version="0.1" class="com.pagesociety.web.test.TestApplication" >
+<application name="RJDServer" 
+			 version="0.1" 
+			 class="org.myorganization.MyApplication"
+			 web-root-directory="$WEB_ROOT_DIR"
+			 web-root-url="$WEB_ROOT_URL">
 
-	<web-root-url>http://localhost:8080/PSWeb</web-root-url>
-	<web-root-directory>
-		C:\eclipse_workspace\PSWeb\WebContent
-	</web-root-directory>
+	<modules>
+	
+	
+		<module name="ApplicationInfoModule">
+			<module-class>com.pagesociety.web.module.application.ApplicationInfoModule</module-class>
+		</module>
+	
+		<module name="Store">
+			<module-class>com.pagesociety.web.module.persistence.BDBPersistenceModule</module-class>
+				<module-params>
+					<store-root-directory>$DB_ROOT_DIR</store-root-directory>
+					<store-backup-directory>$BACKUP_DIR</store-backup-directory>
+				</module-params>
+		</module>	
+		
+		<module name="PermissionsModule">
+			<module-class>org.myorganization.MyPermissionsModule</module-class>
+			<module-slots>
+				<module-slot name="store" instance="Store"/>
+			</module-slots>
+		</module>
+			
+		<module name="User">
+			<module-class>com.pagesociety.web.module.user.UserModule</module-class>
+			<module-slots>
+				<module-slot name="store" instance="Store"/>
+			</module-slots>
+			<module-params>
+				<admin-email>admin@myorganization.net</admin-email>
+				<admin-password></admin-password>
+			</module-params>
+		</module>
+	
 
-	<static-web-root-url>
-		http://localhost:8080/PSWeb
-	</static-web-root-url>
-	<static-web-root-directory>
-		C:\eclipse_workspace\PSWeb\WebContent
-	</static-web-root-directory>
+		<module name="CMS">
+			<module-class>com.pagesociety.web.module.cms.CmsModuleWithDeletePolicyA</module-class>
+			<module-slots>
+				<module-slot name="store" instance="Store"/>
+			</module-slots>
+		</module>
+	
+		<module name="ImagePathProvider">
+			<module-class>com.pagesociety.web.module.resource.FileSystemPathProvider</module-class>	
+			<module-params>
+				<path-provider-base-dir>$RESOURCE_BASE_DIR</path-provider-base-dir>
+				<path-provider-base-url>$RESOURCE_BASE_URL</path-provider-base-url>
+				<path-provider-image-magick-path>$IMAGE_MAGICK_BASE_PATH</path-provider-image-magick-path>
+			</module-params>
+		</module>
+	
+	
+		
+		<module name="Resource">
+			<module-class>com.pagesociety.web.module.resource.ResourceModule</module-class>
+			<module-slots>
+				<module-slot name="store" instance="Store"/>
+				<module-slot name="permissions-module" instance="PermissionsModule"/>
+				<module-slot name="resource-path-provider" instance="ImagePathProvider"/>
+			</module-slots>
+			<module-params>
+				<upload-max-file-size>0</upload-max-file-size><!--  0 is unlimited. this is an optional param -->
+			</module-params>
+		</module>
+		
 
-	<resource-root-url>
-		http://localhost:8080/PSWeb
-	</resource-root-url>
-	<resource-root-directory>
-		C:\Users\david\Desktop\LL\Resources
-	</resource-root-directory>
 
-	<image-magick-path>
-		C:/Program Files/ImageMagick-6.3.5-Q16/convert
-	</image-magick-path>
+	
+		<module name="RawUI">
+			<module-class>com.pagesociety.web.module.raw.RawUIAggregator</module-class>
+		</module>	
+		
+		<module name="ExcelDumpModule">
+			<module-class>com.pagesociety.web.module.dump.ExcelDumpModule</module-class>
+			<module-slots>		
+				<module-slot name="store" instance="Store"/>
+			</module-slots>
+		</module>
 
-	<email-service-smtp-server>
-		mail.posttool.com
-	</email-service-smtp-server>
-	<email-service-from-address>
-		noreply@posttool.com
-	</email-service-from-address>
+		<module name="ExcelDumpModuleRawUI">
+			<module-class>com.pagesociety.web.module.dump.ExcelDumpModuleRawUI</module-class>
+			<module-slots>		
+				<module-slot name="dump-module" instance="ExcelDumpModule"/>
+			</module-slots>
+		</module>
+
+		<module name="UserModuleRawUI">
+			<module-class>com.pagesociety.web.module.user.UserModuleRawUI</module-class>
+			<module-slots>
+				<module-slot name="user-module" instance="User"/>
+			</module-slots>	
+		</module>
+		
+		<module name="PersistenceBackupManagerRawUI">
+			<module-class>com.pagesociety.web.module.persistence.PersistenceBackupManagerRawUI</module-class>
+			<module-slots>		
+				<module-slot name="store" instance="Store"/>
+			</module-slots>
+			<module-params>
+			<full-backup-time>3,00</full-backup-time>
+			<incremental-backup-interval>60</incremental-backup-interval>
+			</module-params>
+		</module>
+		
+	   </modules>
 
 </application>
+

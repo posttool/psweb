@@ -2,22 +2,22 @@
 
 	<url-mapping name="index">
 		<url>/</url>
-		<template-path>/debug/index.fhtml</template-path>
+		<template-path>/index.fhtml</template-path>
+	</url-mapping>
+	
+	<url-mapping name="project">
+		<url>.*/project/(\d+)/(.*)\.html</url>
+		<template-path>/project.fhtml?id=$1</template-path>
 	</url-mapping>
 
-	<url-mapping name="testing">
-		<url>/test-(.+)/(\d+).html</url>
-		<template-path>
-			/debug/index.fhtml?age=$1&amp;id=$2
-		</template-path>
+	<url-mapping name="index">
+		<url>http://(www\.)?richardjohnsondesign.com/</url>
+		<template-path>/index.fhtml</template-path>
 	</url-mapping>
-
-	<url-mapping type="error" name="error">
-		<url>/debug/error.html</url>
-	</url-mapping>
-
-	<url-mapping type="maintenance" name="maintenance">
-		<url>/debug/maintenance.html</url>
+	
+	<url-mapping name="index">
+		<url>http://(www\.)?richardjohnsondesign.net/</url>
+		<template-path>/index.fhtml</template-path>
 	</url-mapping>
 
 </url-mappings>
