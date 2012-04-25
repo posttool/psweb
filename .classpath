@@ -15,6 +15,7 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mail.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/bcprov-jdk16-141.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-3.2-FINAL-20081019.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/gson-2.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PSPersistence"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
 		<attributes>

@@ -10,14 +10,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
-import com.pagesociety.web.exception.WebApplicationException;
+import com.pagesociety.web.json.JsonDecoder;
 import com.pagesociety.web.module.RawUIModule;
 import com.pagesociety.web.module.permissions.PermissionEvaluator;
 
@@ -210,16 +207,17 @@ public class ScriptModuleRawUI extends RawUIModule
 			{
 				try{
 
-					JSONArray input_specs = new JSONArray(inputs);
-					for(int i = 0;i < input_specs.length();i++)
+					List input_specs = JsonDecoder.decodeAsList(inputs);
+
+					for(int i = 0;i < input_specs.size();i++)
 					{
-						JSONObject input_desc = input_specs.getJSONObject(i);
-						String type = input_desc.getString("type");
+						Map input_desc = (Map)input_specs.get(i);
+						String type = (String)input_desc.get("type");
 						Object value = null;
 						if(type == null)
 							type = "string";
 
-						String name = input_desc.getString("name");
+						String name = (String)input_desc.get("name");
 						value = input_desc.get("value");
 						//change into a date in the execute context//
 						String svalue=null;
@@ -521,13 +519,13 @@ public class ScriptModuleRawUI extends RawUIModule
 				List<String> date_keys = new ArrayList<String>();
 				if(inputs != null && !(inputs = inputs.trim()).equals(""))
 				{
-					JSONArray input_specs = new JSONArray(inputs);
+					List input_specs = JsonDecoder.decodeAsList(inputs);
 
-					for(int i = 0;i < input_specs.length();i++)
+					for(int i = 0;i < input_specs.size();i++)
 					{
-						JSONObject input_desc = input_specs.getJSONObject(i);
-						String type = input_desc.getString("type");
-						String name = input_desc.getString("name");
+						Map input_desc = (Map) input_specs.get(i);
+						String type = (String)input_desc.get("type");
+						String name = (String)input_desc.get("name");
 
 						if("date".equals(type))
 						{
@@ -591,12 +589,13 @@ public class ScriptModuleRawUI extends RawUIModule
 			if(inputs != null && !(inputs = inputs.trim()).equals(""))
 			{
 				try{
-					JSONArray input_specs = new JSONArray(inputs);
-					for(int i = 0;i < input_specs.length();i++)
+					List input_specs = JsonDecoder.decodeAsList(inputs);
+
+					for(int i = 0;i < input_specs.size();i++)
 					{
 
-						JSONObject input_desc = input_specs.getJSONObject(i);
-						String type = input_desc.getString("type");
+						Map input_desc = (Map)input_specs.get(i);
+						String type = (String) input_desc.get("type");
 						Object value = null;
 						if(type == null)
 							type = "text";
@@ -604,25 +603,25 @@ public class ScriptModuleRawUI extends RawUIModule
 						TR_START(uctx);
 						if("text".equalsIgnoreCase(type))
 						{
-							String name 	= input_desc.getString("name");
+							String name = (String) input_desc.get("name");
 							//optional//
 							int width = 30;
 							try{
-								width 	= input_desc.getInt("width");
+								width = (Integer) input_desc.get("width");
 							}catch(Exception e){}
 							String desc = "";
 							try{
-								desc = input_desc.getString("description");
+								desc = (String) input_desc.get("description");
 							}catch(Exception e){}
 							String default_val = (String)params.get(name);
 							if(default_val == null)
 							{
 								try{
-									default_val = input_desc.getString("default_value");
+									default_val = (String) input_desc.get("default_value");
 								}catch(Exception e)
 								{
 									try{
-										default_val = input_desc.getString("value");
+										default_val = (String) input_desc.get("value");
 									}catch(Exception ee)
 									{
 										default_val = "";
@@ -638,29 +637,29 @@ public class ScriptModuleRawUI extends RawUIModule
 						}
 						else if("textarea".equalsIgnoreCase(type))
 						{
-							String name 	= input_desc.getString("name");
+							String name = (String) input_desc.get("name");
 							//optional//
 							int rows= 5;
 							try{
-								rows 	= input_desc.getInt("rows");
+								rows = (Integer) input_desc.get("rows");
 							}catch(Exception e){}
-							int cols= 30;
+							int cols = 30;
 							try{
-								cols 	= input_desc.getInt("cols");
+								cols = (Integer) input_desc.get("cols");
 							}catch(Exception e){}
 							String desc = "";
 							try{
-								desc = input_desc.getString("description");
+								desc = (String) input_desc.get("description");
 							}catch(Exception e){}
 							String default_val = (String)params.get(name);
 							if(default_val == null)
 							{
 								try{
-									default_val = input_desc.getString("default_value");
+									default_val = (String) input_desc.get("default_value");
 								}catch(Exception e)
 								{
 									try{
-										default_val = input_desc.getString("value");
+										default_val = (String) input_desc.get("value");
 									}catch(Exception ee)
 									{
 										default_val = "";
@@ -676,20 +675,20 @@ public class ScriptModuleRawUI extends RawUIModule
 						}
 						else if("pulldown".equalsIgnoreCase(type) || "popup".equalsIgnoreCase(type))
 						{
-							String name 	= input_desc.getString("name");
+							String name = (String) input_desc.get("name");
 							//optional//
 							int rows= 5;
 
-							String[] options	= input_desc.getString("options").split(",");
+							String[] options = ((String) input_desc.get("options")).split(",");
 							String default_val = (String)params.get(name);
 							if(default_val == null)
 							{
 								try{
-									default_val = input_desc.getString("default_value");
+									default_val = (String) input_desc.get("default_value");
 								}catch(Exception e)
 								{
 									try{
-										default_val = input_desc.getString("value");
+										default_val = (String) input_desc.get("value");
 									}catch(Exception ee)
 									{
 										default_val = "";
@@ -700,7 +699,7 @@ public class ScriptModuleRawUI extends RawUIModule
 								default_val = "";
 							String desc = "";
 							try{
-								desc = input_desc.getString("description");
+								desc = (String) input_desc.get("description");
 							}catch(Exception e){}
 							TD(uctx,name);
 							TD_START(uctx);
@@ -720,20 +719,20 @@ public class ScriptModuleRawUI extends RawUIModule
 						}
 						else if("radio".equalsIgnoreCase(type))
 						{
-							String name 	= input_desc.getString("name");
+							String name = (String) input_desc.get("name");
 							//optional//
 							int rows= 5;
 
-							String[] options	= input_desc.getString("options").split(",");
+							String[] options = ((String) input_desc.get("options")).split(",");
 							String default_val = (String)params.get(name);
 							if(default_val == null)
 							{
 								try{
-									default_val = input_desc.getString("default_value");
+									default_val = (String) input_desc.get("default_value");
 								}catch(Exception e)
 								{
 									try{
-										default_val = input_desc.getString("value");
+										default_val = (String) input_desc.get("value");
 									}catch(Exception ee)
 									{
 										default_val = "";
@@ -744,7 +743,7 @@ public class ScriptModuleRawUI extends RawUIModule
 								default_val = "";
 							String desc = "";
 							try{
-								desc = input_desc.getString("description");
+								desc = (String) input_desc.get("description");
 							}catch(Exception e){}
 
 							TD(uctx,name);
@@ -765,16 +764,16 @@ public class ScriptModuleRawUI extends RawUIModule
 						}
 						else if("date".equalsIgnoreCase(type))
 						{
-							String name 	= input_desc.getString("name");
+							String name = (String) input_desc.get("name");
 							String default_val = (String)params.get(name);
 							if(default_val == null)
 							{
 								try{
-									default_val = input_desc.getString("default_value");
+									default_val = (String) input_desc.get("default_value");
 								}catch(Exception e)
 								{
 									try{
-										default_val = input_desc.getString("value");
+										default_val = (String) input_desc.get("value");
 									}catch(Exception ee)
 									{
 										default_val = "";
@@ -787,7 +786,7 @@ public class ScriptModuleRawUI extends RawUIModule
 							TD_START(uctx);
 							String desc = "";
 							try{
-								desc = input_desc.getString("description");
+								desc = (String) input_desc.get("description");
 							}catch(Exception e){}
 							desc = " mm-dd-yyyy [hh:mm]" + desc;
 							StringBuilder date_input = new StringBuilder();

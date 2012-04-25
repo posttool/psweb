@@ -2,10 +2,6 @@ package com.pagesociety.web.gateway;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -13,21 +9,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.pagesociety.persistence.Entity;
 import com.pagesociety.util.Text;
 import com.pagesociety.web.ErrorMessage;
 import com.pagesociety.web.UserApplicationContext;
 import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.ModuleDefinition;
-import com.pagesociety.web.module.ModuleMethod;
-import com.pagesociety.web.module.ModuleRegistry;
+import com.pagesociety.web.json.JsonDecoder;
+import com.pagesociety.web.json.JsonEncoder;
 import com.pagesociety.web.module.ModuleRequest;
-import com.pagesociety.web.module.WebModule;
 import com.pagesociety.web.upload.MultipartForm;
 import com.pagesociety.web.upload.MultipartFormException;
 
@@ -86,7 +75,7 @@ public class JsonGateway
 			}
 			else
 			{
-				text_response = JsonEncoder.encode(module_return);	
+				text_response = JsonEncoder.encode(module_return,true,true);	
 			}
 			
 			if (request.getParameter("callback") != null)
@@ -128,15 +117,16 @@ public class JsonGateway
 	public Object[] unpackJSONArgs(String args_s) throws WebApplicationException
 	{
 
-		List<Object> l_args = new ArrayList<Object>();
-		try{
-			JSONArray args = new JSONArray(args_s);
-			WebModule.parse_json_list(l_args, args);
-		}catch(JSONException jse)
-		{
-			throw new WebApplicationException("UNABLE TO UNPACK JSON ARGS: "+jse.getMessage());
+		try {
+			List v = JsonDecoder.decodeAsList(args_s);
+			Object[] o = v.toArray();
+			return o;
 		}
-		return l_args.toArray();
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			throw new WebApplicationException("ARG "+e.getMessage());
+		}
 	}
 	
 }

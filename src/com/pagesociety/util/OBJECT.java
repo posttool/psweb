@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.gateway.JsonEncoder;
+import com.pagesociety.web.json.JsonEncoder;
 
 public class OBJECT extends LinkedHashMap<String,Object>
 {
@@ -161,6 +161,11 @@ public class OBJECT extends LinkedHashMap<String,Object>
 	public static String toJSON(OBJECT o)
 	{
 		return JsonEncoder.encode(o,false,false);
+	}
+	
+	public static String toJSON(OBJECT o, boolean pretty, boolean enc_html)
+	{
+		return JsonEncoder.encode(o,pretty,enc_html);
 	}
 
 	public static void main(String[] args)

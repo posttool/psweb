@@ -28,17 +28,12 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.pagesociety.persistence.Entity;
 import com.pagesociety.persistence.PersistenceException;
@@ -49,8 +44,7 @@ import com.pagesociety.web.WebApplication;
 import com.pagesociety.web.exception.InitializationException;
 import com.pagesociety.web.exception.PermissionsException;
 import com.pagesociety.web.exception.WebApplicationException;
-import com.pagesociety.web.module.permissions.DefaultPermissionsModule;
-import com.pagesociety.web.module.permissions.PermissionEvaluator;
+import com.pagesociety.web.json.JsonDecoder;
 import com.pagesociety.web.module.permissions.PermissionsModule;
 
 
@@ -701,167 +695,15 @@ public abstract class WebModule extends Module
 		Map<String,Object> map = null;
 		try{
 			String contents = READ_FILE_AS_STRING(f.getAbsolutePath());
-			JSONObject o = new JSONObject(contents);
-			map = json_to_map(new LinkedHashMap<String,Object>(), o);
+			return JsonDecoder.decodeAsMap(contents);
 		}catch(Exception e)
 		{
 			ERROR(e);
 			throw new InitializationException("PROBLEM READING CONFIG FILE: "+f.getAbsolutePath());
 		}
-		return map;
 	}
 
 
-    public static OBJECT JSON_TO_OBJECT(String json) throws JSONException
-    {
-    	OBJECT ret = new OBJECT();
-    	if(json.startsWith("["))
-    	{
-    		ARRAY a = JSON_TO_ARRAY(json);
-    		ret.put("values",a);
-    	}
-    	else
-    	{
-    		JSONObject o = new JSONObject(json);
-    		json_to_OBJECT(ret,o);
-    	}
-    	return ret;
-    }
-
-    public static ARRAY JSON_TO_ARRAY(String json) throws JSONException
-    {
-    	JSONArray a = new JSONArray(json);
-    	ARRAY ret = new ARRAY();
-    	json_to_ARRAY(ret,a);
-    	return ret;
-    }
-
-    public static Map<String,Object> json_to_OBJECT(OBJECT ret, JSONObject o) throws JSONException
-	{
-
-			String[] keys = JSONObject.getNames(o);
-			if(keys == null)
-				return ret;
-			for(int i = 0;i < keys.length;i++)
-			{
-				Object val = o.get(keys[i]);
-				if(val instanceof JSONObject)
-				{
-
-					OBJECT o_map = new OBJECT();
-					ret.put(keys[i], json_to_OBJECT(o_map,(JSONObject)val));
-
-				}
-				else if(val instanceof JSONArray)
-				{
-					JSONArray L = (JSONArray)val;
-					ARRAY list = new ARRAY();
-					ret.put(keys[i], parse_json_list(list, L));
-				}
-				else
-				{
-					if(val == JSONObject.NULL)
-						ret.put(keys[i],null);
-					else
-						ret.put(keys[i],val);
-
-				}
-			}
-			return ret;
-
-	}
-
-    public static ARRAY json_to_ARRAY(ARRAY ret, JSONArray a) throws JSONException
-	{
-
-			for(int i = 0;i < a.length();i++)
-			{
-				Object val = a.get(i);
-				if(val instanceof JSONObject)
-				{
-
-					OBJECT o_map = new OBJECT();
-					ret.add(json_to_OBJECT(o_map,(JSONObject)val));
-				}
-				else if(val instanceof JSONArray)
-				{
-					JSONArray L = (JSONArray)val;
-					ARRAY list = new ARRAY();
-					ret.add( parse_json_list(list, L));
-				}
-				else
-				{
-					if(val == JSONObject.NULL)
-						ret.add(null);
-					else
-						ret.add(val);
-				}
-			}
-			return ret;
-
-	}
-
-
-    public static Map<String,Object> json_to_map(Map<String,Object> ret, JSONObject o) throws JSONException
-	{
-
-			String[] keys = JSONObject.getNames(o);
-			if(keys == null)
-				return ret;
-			for(int i = 0;i < keys.length;i++)
-			{
-				Object val = o.get(keys[i]);
-				if(val instanceof JSONObject)
-				{
-
-					OBJECT o_map = new OBJECT();
-					ret.put(keys[i], json_to_map(o_map,(JSONObject)val));
-
-				}
-				else if(val instanceof JSONArray)
-				{
-					JSONArray L = (JSONArray)val;
-					ARRAY list = new ARRAY();
-					ret.put(keys[i], parse_json_list(list, L));
-				}
-				else
-				{
-					if(val == JSONObject.NULL)
-						ret.put(keys[i],null);
-					else
-						ret.put(keys[i],val);
-				}
-			}
-			return ret;
-
-	}
-
-	public static List<Object> parse_json_list(List<Object> list,JSONArray L) throws JSONException
-	{
-
-		for(int ii = 0;ii < L.length();ii++)
-		{
-				Object vv = L.get(ii);
-				if(vv instanceof JSONObject)
-				{
-					OBJECT o_map = new OBJECT();
-					list.add(json_to_map(o_map,(JSONObject)vv));
-				}
-				else if(vv instanceof JSONArray)
-				{
-					ARRAY ll = new ARRAY();
-					list.add(parse_json_list(ll, (JSONArray)vv));
-				}
-				else
-				{
-					if(vv == JSONObject.NULL)
-						list.add(null);
-					else
-						list.add(vv);
-				}
-		}
-		return list;
-	}
 
 
 	 public static String GET_STACK_TRACE(Throwable aThrowable) {
