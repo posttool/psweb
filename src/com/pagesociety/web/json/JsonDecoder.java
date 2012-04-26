@@ -103,7 +103,15 @@ public class JsonDecoder
 			{
 				element = parser.next();
 				if (element.isJsonObject())
+				{
 					return (OBJECT) process(element);
+				}
+				else 
+				{
+					OBJECT O = new OBJECT();
+					O.put("values", process(element));
+					return O;
+				}
 			}
 		}
 		return new OBJECT();
