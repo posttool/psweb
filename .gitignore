@@ -1,3 +1,7 @@
 /build
 /dbEnv
 /.settings
+
+.DS_Store
+
+.classpath
